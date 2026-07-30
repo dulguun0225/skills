@@ -8,12 +8,17 @@ A skills repository: it publishes the engineering-decision corpus in `raw/` as
 Agent Skills, installed with Vercel's `skills` CLI (skills.sh) and **not listed
 in the public skills.sh directory**.
 
-State as of 2026-07-30: `raw/` is the only content — no skill has been authored
-yet, and there is no build, lint, or test tooling. What does exist is the project
-setup (node and the `skills` CLI pinned, LF enforced repo-wide, commands as npm
-scripts — see *Commands*) and the decided skill decomposition and layout
-(*Where skills live*). **Milestone 1 is to turn the content of `raw/` into
-skills.**
+State as of 2026-07-30: there is no build, lint, or test tooling beyond the
+discovery check. What exists is the project setup (node and the `skills` CLI
+pinned, LF enforced repo-wide, commands as npm scripts — see *Commands*), the
+decided skill decomposition and layout (*Where skills live*), and **the whole
+money family, authored 2026-07-30 in two phases** — `skills/money/`,
+`skills/money-api/`, `skills/money-storage/` and `skills/money-java/`
+(`SKILL.md` + `api.md` + `storage.md`), all four discovered by `npm run check`,
+all 43 directives `M-1` … `M-43` defined exactly once. **Milestone 1 is to turn
+the content of `raw/` into skills**; the money family is done and every other row
+of the table in *Where skills live* is unwritten. What authoring decided that the
+spec left open is *Phase 1, as shipped* and *Phase 2, as shipped*.
 
 **`raw/` is raw data — input material, never output.** It holds source text
 imported from elsewhere, to be read and converted; nothing in it is a published
@@ -26,6 +31,29 @@ Today's `raw/` is a lifted subtree — it was the `packs/` directory of a larger
 spec-driven-development bundle (nc-ears preset over spec-kit). Its internal
 relative links resolve here; everything pointing outside it does not (see
 *Dangling references* below).
+
+**Converting a source does not retire its raw text, and the money family is the
+worked case.** Deleting the money material from `raw/` was considered on
+2026-07-30, after the money skills were audited, and rejected — not only on the
+never-author-in-`raw/` rule above, but because none of it is unreferenced:
+
+- `raw/rule-sources/money-grade.md` is cited **eight times from the two sources
+  nobody has converted yet**. `cache-discipline.md` and
+  `event-broker-discipline.md` each name money-grade §2's **fourteen check kinds
+  as the copy of record** — §2 says so itself, and says a fifteenth entry would
+  have to be added in three files or drift in two — and they cite `M-17`, `M-5`'s
+  re-open trigger and the float ban besides. Deleting the file would either
+  dangle those or force the kind list to be copied into a sibling, which is the
+  duplication §2 exists to prevent.
+- The Java money text does not lift out cleanly. The `java-backend-rules` row in
+  *Where skills live* is defined as `raw/seed/java-backend.md` **excluding lines
+  442–744**, so cutting those lines moves the anchor; and §4's general
+  `API contract` and `Observability` evidence is shared — `M-15` … `M-19` and
+  `M-20` … `M-22` rest on it beside non-money rules.
+
+The general rule this settles: **`raw/` shrinks only when a file has no inbound
+citation from unconverted material, which is not the case for anything money
+today.**
 
 ## Commands
 
@@ -41,9 +69,10 @@ npm run try -- <name>         # run one skill from the working tree without inst
 
 `npm run check` is the only self-check that exists: it answers whether a skill is
 in a discoverable location with valid frontmatter. Anything it does not list is
-invisible to every consumer. **It exits non-zero while no skill has been
-authored** — the CLI treats "no skills found" as a failure, which is the correct
-answer today.
+invisible to every consumer. Since 2026-07-30 it lists four — `money`,
+`money-api`, `money-storage`, `money-java`. It says nothing about resource files:
+`evidence.md`, `api.md` and `storage.md` are unlisted and unchecked, so a broken
+relative link inside a skill passes it.
 
 Two more CLI commands are not wrapped, because each is a one-off:
 `npx skills init <name>` scaffolds `<name>/SKILL.md` at the repo root, so anything
@@ -96,9 +125,9 @@ about to be cached.
 
 | Skill | Content drawn from |
 | ----- | ------------------ |
-| `java-backend-rules` | `raw/seed/java-backend.md`, split by area; evidence and dates from `raw/java-backend.md` §4 |
+| `java-backend-rules` | `raw/seed/java-backend.md` **excluding lines 442–744**, split by area; evidence and dates from `raw/java-backend.md` §4. Those lines are the money sections and belong to `money-java` |
 | `llm-default-traps` | `raw/seed/agent-traps.md`; evidence from `raw/agent-traps.md` §3 |
-| `money-values` | `raw/rule-sources/money-grade.md` |
+| `money`, `money-api`, `money-storage`, `money-java` | `raw/rule-sources/money-grade.md` and `raw/seed/java-backend.md` lines 442–744 — the per-skill split and the evidence map are in *The money skill family* below |
 | `caching` | `raw/rule-sources/cache-discipline.md` |
 | `async-handoff` | `raw/rule-sources/event-broker-discipline.md` |
 | `tech-decision-research` | `raw/research-protocol.md` §1–4, §6 |
@@ -129,17 +158,30 @@ answer either the same way:
 
 - Whether a directive ships with the *kind* of check it needs and the tool left to
   the adopting repo, or appears only where a tool can be named. This decides how
-  much of `money-values`, `caching` and `async-handoff` exists outside
+  much of the money skills, `caching` and `async-handoff` exists outside
   `java-backend-rules`.
 - Whether the skill instructs the agent directly, or its job is to write a rules
   file the consumer repo commits.
 
-### Where the first skill stands
+**Both are answered for the money family, and only for it** (2026-07-30 — *The
+money skill family* below). First question: the directive ships with its check
+*kind* in a language-neutral skill, and the tool is named in a per-stack skill, so
+each directive's text exists exactly once. Second question: the skill instructs
+the agent, and the stack skill additionally carries a one-time section that wires
+the build gates in. `caching` and `async-handoff` are not bound by either answer,
+but the money answer is the first candidate for both — all three are cross-stack
+sources whose enforcement is per stack.
+
+### Where `llm-default-traps` stands
+
+**No longer first.** The money family is authored first (2026-07-30, *The money
+skill family* below). Everything else in this subsection still holds — only the
+claim to being first is superseded.
 
 The banned-default-picks skill — nine directives from `raw/seed/agent-traps.md`,
-five dated evidence entries in `raw/agent-traps.md` §3 — is the one to author
-first: it is the smallest, and every one of its directives already names a real
-check with its enforcement marker.
+five dated evidence entries in `raw/agent-traps.md` §3 — was chosen as the one to
+author first: it is the smallest, and every one of its directives already names a
+real check with its enforcement marker.
 
 **Settled by the content, not open:**
 
@@ -147,7 +189,8 @@ check with its enforcement marker.
   dependency, pin a tool, or wire CI; there is nothing to generate into a repo
   file.
 - **The check question does not arise.** No directive here is check-kind-only, so
-  this skill decides nothing for `money-values`, `caching` or `async-handoff`.
+  this skill decides nothing for the money skills, `caching` or `async-handoff`.
+  The money family has since answered it for itself (*The money skill family*).
 
 **Open. A recommendation is given for each so the next session can accept or
 overturn one, not re-derive all three:**
@@ -167,6 +210,369 @@ overturn one, not re-derive all three:**
 - **The name.** `llm-default-traps` in the table above is provisional. It says
   what the content is — the picks an LLM makes by training-data default, banned by
   name — but it is not decided.
+
+## The money skill family
+
+Decided 2026-07-30 in one interview pass. This is the authoring spec, and it
+supersedes the single `money-values` row the table above used to carry.
+**Both phases are written (2026-07-30) — see *Phase 1, as shipped* and *Phase 2,
+as shipped* at the end of this section for what authoring settled and what it
+left standing.**
+
+### The set
+
+```
+skills/money/          SKILL.md  evidence.md             M-1…M-9, M-20…M-29     19
+skills/money-api/      SKILL.md  evidence.md             M-12…M-19               8
+skills/money-storage/  SKILL.md  evidence.md             M-10, M-11, M-30…M-43  16
+skills/money-java/     SKILL.md  api.md  storage.md      no directives of its own
+```
+
+Forty-three directives, each in exactly one place. A Java repo installs all four,
+and `money-java/SKILL.md` says so on its first line, because every check in it is
+keyed to an id that lives in one of the other three.
+
+### The ten decisions
+
+1. **Write-once.** The neutral skill carries the directive, the rejected default,
+   and the *kind* of check. The stack skill names the tool and adds only what is
+   stack-shaped. No directive's text exists twice, so there is no diff to run and
+   nothing to drift. **This is the one place the skills depart from `raw/`**, where
+   duplication between stack packs is deliberate — and that only holds because a
+   seed file is *pasted* into a repo holding no copy of the corpus, so the paste
+   has to be whole. An installed skill is not pasted.
+2. **Shipped skills cite `M-n`.** See the narrowed invariant under *Invariants when
+   converting `raw/` into skills* above.
+3. **A stack skill is a whole stack, not a language.** `money-java` is Java +
+   Spring Boot MVC + jOOQ + PostgreSQL, matching `raw/java-backend.md`. There is
+   **no `money-sql`**: the storage checks weld an engine fact to an ecosystem tool
+   and do not separate. The `NaN` `CHECK` is a PostgreSQL fact asserted by a schema
+   lint over committed **Flyway** migrations; over-scale rejection is a PostgreSQL
+   behaviour asserted by an integration test against a real engine in a **throwaway
+   container**; the query-arithmetic ban is half PostgreSQL and half the **jOOQ**
+   trap. `squawk` is the one clean separation, and one case does not carry an axis.
+4. **Three neutral skills**, cut on the extra conditions `money-grade.md` §1 itself
+   states. Observability is **not** cut out: its condition — nobody watches the
+   running system between incidents — is the corpus's own premise, so it is always
+   on and stays in the core.
+5. **One stack skill per stack**, bulky parts in reference files inside its own
+   directory. Adding `money-go` adds one directory and edits nothing. Rejected:
+   folding stacks into the neutral skills as `java.md`, `go.md`, `python.md`, which
+   would make every new stack edit all three neutral skills and ship every consumer
+   every other stack's checks.
+6. **Instruct the agent, plus a one-time gate setup.** These directives are two
+   kinds welded together — instinct-overrides that fire at authoring time, and
+   build gates that have to exist in the repo. Instructing an agent does nothing
+   for the second kind: the gate is what catches the *next* agent. So each stack
+   skill carries a `## Wiring the gates` section, run once, which also records what
+   was wired and what was skipped with the reason. The neutral skills have no such
+   section — they are the only place no tool can be named.
+7. **Marker and date inline on every directive**; evidence one hop away in the
+   skill's own `evidence.md` (source quotes, the do-not-cite list, re-open
+   triggers). The lapse rule is the reason: past `review-by` **2027-01-21** every
+   *confirmed* marker reads as *convention* with no maintainer action, which only
+   works if the reader can see the date beside the claim.
+8. **Every ban carries four things inline** — its ground, the org fact it rests on,
+   that no panel argued the other side, and the condition that reopens it. This
+   binds the two bans in `money-storage`'s composite-shape table.
+9. **Names**: `money`, `money-api`, `money-storage`, `money-java`. `money-values`
+   retired. `monetary-value` rejected — the name is not the trigger, the
+   description is, and the content is not only values (columns, payload fields,
+   alert rules, migrations, CI gates). `money-persistence` rejected because in a
+   Java shop it reads as the persistence layer, the exact scoping `money-grade.md`
+   §1 calls fatal: these rules must reach a hand-written query, a view definition,
+   a migration and a support script, **none of which import a client library**.
+10. **Phase 1 is `money` + `money-api` + `money-java` (`SKILL.md` + `api.md`).**
+    Phase 2 is `money-storage` + `money-java/storage.md`. The order is forced by
+    the citation graph below: no phase ships an id pointing at an unwritten skill.
+
+### The split, and where each part's evidence lives
+
+| Directives | Skill | Directive text | Evidence trail |
+| ---------- | ----- | -------------- | -------------- |
+| M-1 … M-9 | `money` | `money-grade.md` §2, *Money* and *Rounding* | `java-backend.md` §4 under `Money-grade rules`, same subsection names |
+| M-20 … M-22 | `money` | §2, *Observability* | `java-backend.md` §4, the **general** `Observability` heading — not under `Money-grade rules` |
+| M-23 … M-29 | `money` | §2, *Evidence gates* | `java-backend.md` §4 under `Money-grade rules` |
+| M-12 … M-14 | `money-api` | §2, *Wire* | `java-backend.md` §4 under `Money-grade rules` → `Wire` |
+| M-15 … M-19 | `money-api` | §2, *API contract* | `java-backend.md` §4, the **general** `API contract` heading |
+| M-10, M-11 | `money-storage` | §2, *Storage* | `java-backend.md` §4 under `Money-grade rules` → `Storage` |
+| M-30 … M-43, composite shapes | `money-storage` | §2, *Persistence* and *Composite shapes a repo assembles out of stored money* | `money-grade.md` §4, *The Persistence pass — 2026-07-29* — the only money trail that lives in the source itself |
+
+The Java checks come from `raw/seed/java-backend.md`. Line numbers are against the
+file as imported; the `####` headings are the durable anchors.
+
+| Seed subsection | Lines | Lands in |
+| --------------- | ----- | -------- |
+| preamble, `Money`, `Rounding` | 442–496 | `money-java/SKILL.md` |
+| `Observability (money-grade)`, `Evidence gates for money` | 698–744 | `money-java/SKILL.md` |
+| `Wire`, `API contract (money-grade)` | 646–697 | `money-java/api.md` |
+| `Storage`, `Persistence` | 497–645 | `money-java/storage.md` |
+
+### What every money `SKILL.md` carries
+
+- **The premise, stated.** *Code is written by LLM agents and no human reads it
+  line by line; a feature carries an amount of money the system computes with.*
+  Without it these read as generic engineering advice and get argued with — a
+  verdict is portable exactly as far as its premise.
+- **The rejected default, by name** (`P-6`). "Use a money type" does not override
+  an agent's instinct. "The default is a raw decimal or a float, rejected because
+  no check can tell which one holds an amount" does. Binary floating-point is the
+  corpus default by a wide margin and is banned at three separate layers because it
+  re-enters at each one.
+- **Named blind spots, still named.** M-35's lint cannot reach query text assembled
+  at runtime from fragments. That sentence ships, because a green lint otherwise
+  reads as coverage.
+- **The check kind with its enforcement marker**, never a bare directive (`P-1`).
+
+**M-29 changes meaning and the change is deliberate.** In `raw/` it arms the
+tripwire: the rules sit in a repo's constitution before any money field exists, and
+the plan introducing the first money feature cites them. A skill is not pasted, so
+the always-loaded **description** is the tripwire instead — arguably stronger, since
+it fires without anyone remembering to re-read a constitution. M-29 therefore ships
+as an obligation to record the decision in the plan, not as the arming mechanism.
+Write the descriptions accordingly: they must match the moment an agent is about to
+add a field, a column, a payload, or a computation that holds an amount.
+
+### The citation graph — what fixes the phase order
+
+`M-n` citations are load-bearing under decisions 1 and 2, so a phase that ships a
+citation to an unwritten skill ships a dangling pointer.
+
+- **Inside `money-api`:** M-15 extends M-12; M-16 sharpens M-13.
+- **Inside `money`:** M-21 makes M-5 observable; M-22 covers M-28's invariants.
+- **Inside `money-storage`:** M-31 sharpens M-10; M-36 is the one exception to
+  M-35; M-42's ground is M-30's rounding evidence; M-43 completes M-10.
+- **`money-api` → `money`:** M-19 extends M-26.
+- **`money` → `money-api`:** M-26 names M-19 as the money cases it must cover.
+  **This is the one back-edge, and it is why the two ship together.**
+- **`money-storage` → `money-api`:** M-37 is M-16 in the read direction; M-39 is
+  M-18 at the store, on the same version column; M-40 needs the idempotency record
+  M-17 requires.
+- **`money-storage` → `money`:** M-30 reintroduces what M-7 bans and M-1 rejects;
+  M-32 cites the class M-5 exists for; M-35 is M-2 over query text; M-40 needs
+  M-20's event; M-41 needs M-25's worked example.
+- **Out of this family:** two rows of the composite-shape table hand off to the
+  `caching` and `async-handoff` skills — a cached amount is a copy no column
+  constraint reaches, and M-40 names the outbox seam. Those citations resolve only
+  if those skills exist; until they do, the rows say the verdict is owned elsewhere
+  and name the seam, which is what the source does.
+
+So the dependency runs **storage → api → core**, with one back-edge core → api.
+
+### Distribution
+
+`metadata.internal` stays **unset**. Absence from the skills.sh directory already
+keeps these unlisted; setting `internal` would hide them from `npx skills --list`,
+which is what `npm run check` — the only self-check in this repo — depends on.
+
+### Carried forward, undecided
+
+- **What a repo on an uninstantiated stack receives.** Deferred on 2026-07-30. A Go
+  or Python repo would install the neutral skills and get 43 directives whose
+  checks are named only by kind, which `P-1` calls a wish. Today every consumer
+  installs `money-java`, so the tool is always named. The options considered were:
+  state the kind and oblige the repo to name and record its own tool (which would
+  make that record the raw material `money-go` is authored from); state the kind
+  and stop; or have the neutral skills declare themselves unenforced. **Revisit
+  when a second stack is real.**
+- **Whether `money-storage`'s two bans survive a panel.** They ship marked as
+  decided without one — `money-grade.md` §4 is explicit that the case for each
+  banned shape was written by whoever rejected it, which is the failure the
+  protocol's panel rule exists to prevent. Running the panel is that source's first
+  re-open trigger, and until it runs nothing in M-30 … M-43 may be promoted to
+  *confirmed*.
+- **`money-grade.md` §3 gains no row.** Its instantiation table tracks stack packs,
+  and a skill is not one. Worth a sentence in that file so the absence is not read
+  as a missed instantiation — not yet written.
+
+### Phase 1, as shipped
+
+Authored 2026-07-30. Six files, all three skills listed by `npm run check`:
+
+```
+skills/money/          SKILL.md  evidence.md    M-1…M-9, M-20…M-29
+skills/money-api/      SKILL.md  evidence.md    M-12…M-19
+skills/money-java/     SKILL.md  api.md         the Java checks, keyed to those ids
+```
+
+`money-java/SKILL.md` opens by saying to install it with `money` and `money-api`
+— **three, not the spec's four**, until phase 2 exists.
+
+**Rewritten wholesale, not carried verbatim.** No skill file holds a
+byte-identical copy of any `raw/` text, so the diff gate in *Where skills live*
+does not apply to phase 1 and there is nothing to diff. The reason is that a
+half-copy was never available: `money-grade.md` §2's directive text carries
+corpus vocabulary that means nothing to a consumer ("a stack pack states it
+once"), and each skill adds the premise, the rejected default, and instructions
+to the agent around every directive.
+
+**Markers, as they actually landed.** `money-grade.md` §2 gives each directive a
+check *kind* plus a *confidence* marker; the enforcement marker
+(off-the-shelf / bespoke / convention) exists only where a tool is named. So the
+neutral skills carry **kind + confidence marker + date**, and `money-java`
+carries **tool + enforcement marker**. Read the bullet "the check kind with its
+enforcement marker" in *What every money `SKILL.md` carries* that way — the
+enforcement marker cannot be in a file that names no tool.
+
+**Every directive got a date, and where the source gave none the pass date was
+used** — 2026-07-21 for the founding pass, 2026-07-25 for the two scoped
+additions passes (M-3, M-5, M-15 … M-19, M-26), 2026-07-27 for observability
+(M-20 … M-22). Those dates are inherited, not invented; decision 7's lapse rule
+needs a date beside every claim, and an undated *convention* marker would have
+disabled it.
+
+**Java evidence is inline, because the spec gives `money-java` no
+`evidence.md`.** Both `SKILL.md` and `api.md` end with a dated claim table, a
+do-not-cite list, and the review-by date. The money-library evaluation
+(Joda-Money, Moneta, the thin-wrapper runner-up) sits in `money-java/SKILL.md`
+under *The Java library decision*, per `money-grade.md` §4's rule that
+stack-specific evidence stays with the stack.
+
+**The one phase-order leak the citation graph missed — closed by phase 2.**
+M-2's check cites the M-10 schema lint for the float-column half of its ban, and
+M-10 was phase 2, so phase 1 shipped that half as a named blind spot with **no
+id**. Phase 2 replaced it with the citation and rewrote the four places that said
+the store side was missing: `money/SKILL.md` (*What is here and what is not*, and
+M-2's clause), `money-api/SKILL.md` (*What is here and what is elsewhere*), and
+`money-java/SKILL.md` (the *Named gap* paragraph and M-2's entry). Recorded
+because the citation graph in this spec did not predict it: **a check's own text
+can cite across the phase boundary even when no directive does.**
+
+**One contradiction was carried by phase 1 and decided by phase 2 — as
+unreconciled, deliberately.** `raw/java-backend.md` §4 *Storage* says ISO 4217
+exponent 4 is CLF-only; its *API contract* note (the 2026-07-25 pass) says
+exponent 4 is not CLF-only and names UYW. **Neither skill depends on which is
+right**: both notes agree the *maximum* exponent is 4, which is all M-10's
+scale-4 clause needs, and M-14 says to read the counterparty's published table
+rather than derive an exponent. So both `money-api/evidence.md` and
+`money-storage/evidence.md` record both readings, attributed and dated, each with
+a re-open trigger, and neither picks one. Picking one would have been authoring a
+research finding, which is not what conversion does.
+
+**What phase 1 did not build, and phase 2 did not either.** No check enforces the
+conversion invariants: nothing verifies that a skill holds no link into `raw/`,
+cites no `P-n` or `B-n`, and keeps every relative link inside its own directory.
+That was checked by hand on 2026-07-30 over all four skills and is clean.
+`npm run check` does not see resource files at all, so a broken `evidence.md`
+link passes it.
+
+### Phase 2, as shipped
+
+Authored 2026-07-30, straight after phase 1. Three files:
+
+```
+skills/money-storage/  SKILL.md  evidence.md    M-10, M-11, M-30…M-43 + composite shapes
+skills/money-java/     storage.md               the PostgreSQL, jOOQ, Flyway and squawk checks
+```
+
+All 43 directives are now defined exactly once across `money`, `money-api` and
+`money-storage`, and each has a Java entry in `money-java`. Every cross-skill
+citation resolves to an installed skill.
+
+**The neutral skill names the engines, and that is not a departure.** Decision 1
+puts the tool in the stack skill, and `money-storage` holds none — squawk, jOOQ,
+Flyway, ArchUnit and Testcontainers appear only in `storage.md`. But
+`money-grade.md` §2 names PostgreSQL, MySQL and SQL Server **inside its
+directives**, because an engine's documented behaviour is the rule's **ground**,
+not its enforcement. `money-storage` does the same: the directive stays
+engine-neutral ("the store rounds, and it does it quietly"), and the sentence
+that proves it names the vendor. A first draft wrote "one engine documents…" and
+that was corrected — it left a reader unable to tell whether their own engine was
+affected, which is the decision the rule exists to inform.
+
+**The marker ceiling is stated at the top of `SKILL.md`, not only in
+`evidence.md`.** This is phase 2's one addition to the shape decision 7 fixed.
+The missing panel is a property of the whole 2026-07-29 group rather than of any
+one claim, and fourteen rules marked *primary-source verified* read as settled to
+anyone who never opens `evidence.md`. So the file opens with the ceiling, the
+no-panel fact, and the instruction that **no marker there may be promoted to
+confirmed until the panel runs** — least of all the two bans.
+
+**The two bans ship as a four-bullet block each**, not as a prose sentence:
+ground, the org fact it rests on, that no independent panel argued the other
+side, and the re-open condition. Decision 8 requires all four inline, and four
+things in one sentence is where one gets dropped.
+
+**The two out-of-family composite rows say the verdict is owned elsewhere and
+name the seam** — a cached amount is a copy no column constraint reaches, and
+M-40 names the outbox seam. No link, no id, and both say plainly that those rule
+sets are not published in this skill set. That is what the source does, and it is
+what the `caching` and `async-handoff` skills will replace.
+
+**squawk is the one clean stack separation the spec predicted (decision 3), and
+it shipped with its ungated half named.** It flags the `numeric` scale change
+off the shelf for the lock; it says nothing about the values already in the
+column, so that half is spec-and-review and `storage.md` refuses to describe it
+as gated. `storage.md`'s wiring record lists that, M-35's runtime-SQL blind spot,
+and M-43 as the three things a repo must record as *not gated* on the first run.
+
+**Still open, and now blocked on a rule conflict.** *`money-grade.md` §3 gains
+no row* (above) wants a sentence written into `raw/rule-sources/money-grade.md`
+so the absence of a skills row is not read as a missed instantiation. **Writing
+it would be authoring in `raw/`, which *What this repo is* forbids** — `raw/` is
+edited only to correct an import. Decide which rule wins before touching that
+file; the cheap alternative is that this sentence in `CLAUDE.md` is the record
+instead.
+
+### The audit, 2026-07-30
+
+All nine files re-read against `money-grade.md`, `raw/seed/java-backend.md`
+442–744 and `raw/java-backend.md` §4, straight after phase 2. **The structure
+held**: 43 directives defined exactly once, every `M-n` citation resolving to an
+installed skill, no `P-n`, no `B-n`, no link out of a skill directory, all four
+skills listed by `npm run check`, and every directive carrying its check kind, a
+marker and a date. Six content defects were found and fixed, and the two that
+generalise are worth carrying:
+
+- **A cross-skill claim can decay in prose that cites no id.** `money/SKILL.md`
+  still said the float ban's third layer was "the store rules, absent here"
+  inside *The defaults these rules override*, because phase 2 rewrote the four
+  places that named the gap and the id-free prose was not one of them. Now
+  `money-storage`, `M-10`. The phase-1 note above predicted the reverse case — a
+  check's text citing across the boundary — and this is the same leak with no id
+  to grep for.
+- **A tool the evidence names must be named in the stack skill, not described.**
+  `money-java` said "a Schemathesis-class generator" throughout while its own
+  *Do not cite* list warned off a "Rust core" claim that is only about
+  Schemathesis, and `money-api/evidence.md` promised the oracle tool was "named
+  in the stack skill". `P-1` wants the tool; the hedge was a general-gate wording
+  from the seed leaking into the money instantiation. Now named, with the
+  `[generation] deterministic` / `seed` keys recorded as **4.x-specific**, which
+  the raw re-open trigger says and no skill had carried.
+
+The other four:
+
+- **`money/SKILL.md` called the observability condition "this rule set's own
+  premise".** `raw/java-backend.md` §4 is explicit that it is a *different*
+  premise, stated as its own condition, and `money-grade.md` §1 files it as one
+  of three extra conditions. Decision 4 — observability stays in the core skill,
+  always on — is unaffected and does not need that claim: the condition now
+  stands on its own, with the staffed-rota carve-out kept and the emission rules
+  named as code rules.
+- **`money-storage/SKILL.md` twice pointed inside itself for a defect that
+  happened elsewhere** — "corrected twice elsewhere in this rule set" (the
+  library-scoped seam) and "a sibling rule set" (the five unsurfaced composite
+  shapes). Both are the caching and asynchronous-handoff rules. Named, so a
+  consumer can stop looking for them in the money skills. **Neither `caching` nor
+  `async-handoff` is published, and both sentences say so** — the names are what
+  those skills will resolve.
+- **`money-java`'s jqwik pin now says it is cross-cutting, not a money rule.**
+  `raw/java-backend.md` §4 records that the caveat was *moved to the agent-traps
+  pack* for exactly that reason. The pin stays in `money-java` — dropping it
+  would leave a consumer of only the money skills with no pin at all — but it is
+  the **one known overlap with `llm-default-traps`**, and decision 1's write-once
+  rule has to be settled between them when that skill is authored.
+
+**What the audit did not change.** Naming PostgreSQL, MySQL and SQL Server in
+`money-storage` (ground, not enforcement — phase 2's note stands); `M-2`'s Java
+marker reading "off-the-shelf tool, the predicate authored per repo" where the
+seed says plainly "off-the-shelf" (the skill is the more honest of the two);
+`M-23`'s *convention* marker, which the source leaves unmarked and
+`money-grade.md` §4's own default — silence in the trail means convention —
+supplies.
+
+**Still unbuilt, same as after phase 2**: no check enforces any of this. The
+audit was a hand pass.
 
 ## The `raw/` corpus — the model to preserve
 
@@ -248,10 +654,16 @@ quietly.
   whether to trust it. Progressive disclosure maps onto this directly — but the
   Java seed text alone is 1757 lines, so a single always-loaded `SKILL.md` body
   cannot hold it.
-- **Rule ids (`P-n`, `M-n`, `C-n`, `E-n`) and links back into this corpus never
-  appear in anything that leaves this repo** — neither text a consumer pastes nor
-  a file a consumer installs. The consumer has no copy of this corpus, so a cited
-  id or a relative link lands there as a dangling pointer. Ids stay in `raw/`.
+- **Rule ids and links back into this corpus never appear in text a consumer
+  pastes into their own repo.** The reason is dangling pointers: a repo holding no
+  copy of this corpus cannot resolve a cited id or a relative link.
+  **Narrowed 2026-07-30 for installed skills.** An id that resolves inside a skill
+  directory the consumer has installed is not dangling, so the money skills ship
+  `M-1` … `M-43` (*The money skill family*, decision 2) — `money-java` cites them
+  and `money/`, `money-api/`, `money-storage/` are on the same disk. This does not
+  extend to `P-n` or `DECISIONS.md`'s `B-n`: nothing installed carries a copy of
+  `raw/README.md`, and `DECISIONS.md` is not in this repo at all. A relative link
+  into `raw/` never leaves either, installed or pasted.
 - **Name the corpus favourite and why it lost** (`P-6`). "Use X" does not
   override an agent's instinct; "the default is Y, rejected because Z" does.
   That sentence is the most important line in a pack — do not compress it away.
@@ -261,8 +673,9 @@ quietly.
   check in parentheses with its enforcement marker.
 
 Where the converted skills live, and what one skill is: *Where skills live*
-above. Two questions about the shape of a directive in a skill are still open and
-are listed at the end of that section.
+above. Two questions about the shape of a directive in a skill are open per skill
+and are listed at the end of that section; both are answered for the money family
+in *The money skill family*, and for no other skill yet.
 
 ## Dangling references in `raw/`
 
