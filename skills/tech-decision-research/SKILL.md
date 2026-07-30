@@ -20,8 +20,9 @@ none of those is an opinion with a timestamp.
 **Writing the decision down as a rule is a separate job with its own bar**, and
 it is published as `enforceable-rules` in this skill set: the shape of a rule,
 the filter a rule clears before it earns space in an agent's context, the
-enforcement markers, and three checks a rule set passes while still being
-incomplete. This skill stops at the verdict; that one starts there.
+enforcement markers, and the five checks a rule set passes while still being
+incomplete — the predicate, composite-shape, layer, enumeration and
+token-placement checks. This skill stops at the verdict; that one starts there.
 
 **There are no rule ids here, and that is deliberate.** Every directive is
 referred to by its subject — *the frame*, *the canary rule*, *the three votes*,
@@ -30,7 +31,7 @@ id would have been. Cite one from anywhere else as this skill's name plus the
 subject, which resolves whether or not the reader installed this skill; a number
 would resolve for one install and dangle for the other.
 
-## Read the markers first — this skill is the weakest-marked in the set
+## Read the markers first — nothing here is above convention
 
 **Every directive here is *convention*, and the material it was drawn from
 carries no confidence marker and no date on any claim.** Nothing here survived a
@@ -54,8 +55,9 @@ Two consequences to hold onto:
   anything in it was *verified*. Do not read that date as a verification date;
   no verification happened.
 
-Status tier: **decided, not yet validated** — decided and in use, with **no
-production record of the method's outcomes**. Nobody has measured whether a
+Status tier: **decided, not yet validated** — researched and decided, with **no
+production use yet**. The method produced every rule set behind this skill set,
+which is usage and not validation. Nobody has measured whether a
 decision run this way survives longer than one run without it. That measurement
 is the single most valuable thing that could happen to this skill, and *Named
 gaps* says so.
@@ -129,8 +131,11 @@ Convention.*
 
 ### Name the decision owner, verbatim
 
-**Record who decides — the user, the panel, or a named delegate — and record it
-verbatim in the provenance line.** Not paraphrased. A decision whose owner is
+**Record who decides — the user, the panel, or *delegated* — and record which,
+verbatim, in the provenance line.** Not paraphrased: *delegated* is a value in
+its own right, and a pass that writes it also writes what it was delegated on
+(the standing case is that there is no in-house expertise to defer to). A
+decision whose owner is
 unrecorded is re-opened by whoever disagrees with it next, because there is
 nobody it can be referred back to.
 
@@ -261,7 +266,7 @@ attack. This is not a penalty. It is what keeps the marker vocabulary meaning
 something, and it is the rule the rest of this skill set leans on hardest.
 
 **A whole rule set can land here honestly.** In this skill set the caching rules
-are the worked case: every one of their sixteen directives is marked *convention*
+are the worked case: every one of their directives is marked *convention*
 because each is a design argument rather than an execution result, and the rule
 set says so at the top rather than in a footnote. That is not a weak rule set. It
 is an honestly marked one, and it is more useful than the same text with markers
@@ -289,10 +294,12 @@ strengths, and one marker on the whole thing takes the strongest.
 
 **These four are the vocabulary the rest of this skill set marks its claims
 in**, which is why they are defined here and not in each skill. All four are in
-live use across the published skills, *production-confirmed* only in order to
-record that nothing has reached it. One skill adds a fifth value, **recorded**,
-for a dated observation carried as history rather than as a current fact — that is
-a local extension, defined where it is used, and not part of this vocabulary.
+live use across the published skills. `llm-default-traps` adds a fifth value,
+**recorded**, for a dated observation carried as history rather than as a current
+fact — that is a local extension, defined where it is used, and not part of this
+vocabulary. **Do not reach for *production-confirmed* here**: that is a status
+tier for a whole rule set, owned by `enforceable-rules`, not a confidence marker
+on a claim — and no skill in this set has reached it.
 
 **The failure this vocabulary exists to prevent is a one-word one.** Dropping a
 *convention* marker promotes a design argument to a verified fact, silently, and
@@ -408,8 +415,12 @@ artifacts are cheap to produce honestly and expensive to fake convincingly**, an
 that a reader who doubts one can read the panel's own output.
 
 So: **no `## Wiring the gates` section in this skill, because there is nothing to
-wire** — the first skill in this set without one, and the absence is deliberate
-rather than unfinished work. What a repo adopting this should do instead is name
+wire**, and the absence is deliberate rather than unfinished work. Other skills
+in this set have no such section either — `money`, `money-api`, `money-storage`,
+`caching`, `async-handoff` and `async-handoff-shapes` — but for the opposite
+reason: their gates are real and are wired by a stack skill installed beside
+them. **This skill has no such sibling and never will**, because its directives
+bind a process. What a repo adopting this should do instead is name
 the place these artifacts live, so that "the frame is missing" is a sentence
 someone can say about a specific file.
 

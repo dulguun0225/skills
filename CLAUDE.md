@@ -267,8 +267,13 @@ skills* below). Neither is neutral-versus-stack and neither is a pack. **Their
 subject is a process rather than code, so most of their directives have no build
 gate at all and cannot get one** — the check is a written artifact whose absence is
 visible. Both say so at the top rather than hedging a tool name, and
-`tech-decision-research` is **the first skill in the set with no
-`## Wiring the gates` section**, because there is nothing to wire.
+`tech-decision-research` has no `## Wiring the gates` section, because there is
+nothing to wire. **It is not the first skill in the set without one — that claim
+was written here and copied into the skill, and both were false**: the six
+neutral skills (`money`, `money-api`, `money-storage`, `caching`,
+`async-handoff`, `async-handoff-shapes`) carry no such section either, because
+their gates are real and a stack sibling wires them. What is new here is having
+no sibling and no gate to defer, which is what the skill now says.
 `enforceable-rules` has one, holding the two checks that genuinely can be
 mechanised. On the second question both answer as everything else did: they
 instruct the agent. **Nothing in `raw/` is left to raise either question again.**
@@ -1961,6 +1966,86 @@ checks, marked as additions; and the two skills' unusual marker tables — three
 six rows rather than one per directive — because the marker is a property of the
 whole material, not of each claim.
 
+### The second review, 2026-07-30
+
+Run straight after the first, against `raw/research-protocol.md`, `raw/README.md`
+and the thirteen previously published skills. **The structure held again and was
+re-checked by script**: 15 and 13 `###` directives each carrying a `*Check:` line
+with an enforcement marker; no `P-n`, no `B-n`, no `DECISIONS.md`, no
+`ci/check_packs.py`, no `.specify`, no `speckit`, no reference into `raw/`; the
+only links being `SKILL.md` ↔ `evidence.md` in each directory; fifteen skills
+listed by `npm run check`. **Content defects were fixed in all four files, plus
+two in the asynchronous-handoff family. Five findings generalise:**
+
+- **The publisher of a check is not exempt from it, and nothing in this repo
+  assumed otherwise until it happened.** The two skills that publish the
+  enumeration check failed it throughout, hours after shipping it:
+  `tech-decision-research` told its reader the sibling carries **three**
+  incompleteness checks where it carries five (in both its files); both evidence
+  files named **five** frontmatter fields and called them six; `enforceable-rules`
+  counted "the other twelve skills in this set" where there are fourteen; and its
+  own false-green ground counted **three** independent instances of a defect that
+  is two. **A cross-document count is at its worst between a back-edge pair
+  published in one pass** — there is no publish boundary between them to trigger
+  the sweep, so the count is written once and never re-read from the other side.
+- **A fix recorded in this file was never made in the file it names, and that is
+  worse than the sixth instance, which at least reached one copy.** The first
+  review recorded finding `verified` and `review-by` de-named in
+  `enforceable-rules`; the de-naming was still there, untouched, in the sentence
+  the note describes. The same review recorded replacing `caching`'s "sixteen
+  directives" — done in `tech-decision-research/evidence.md`, left standing in its
+  `SKILL.md`. **A note in `CLAUDE.md` is evidence that a defect was seen, never
+  that it was fixed**; the only check is the file.
+- **A worked case that counts instances has to be checked for double-counting one
+  defect seen from two sides.** The false-green clause claimed three independent
+  instances; the erasure trap is one defect recorded twice — `llm-default-traps`
+  bans ArchUnit as the host for the "never log this type" rule, and `caching`
+  refuses the same host for a value-round-trip check **citing that same
+  shipment**. Two instances, not three, and the corrected version is the stronger
+  argument: the second occurrence was stopped only because the first was written
+  down.
+- **Follow-the-pointer reaches across families, and the pointer was false.**
+  `async-handoff/evidence.md` said the false-green contract tool "is named in
+  `async-handoff-java`"; that skill describes it by ecosystem, plugin parameters
+  and repository state and **prints no name**, while claiming it "names it so
+  nobody wires it". Both sentences were corrected rather than inventing a name the
+  pass never recorded, and `enforceable-rules` now states that the product is not
+  citable by name from anywhere in this skill set.
+- **A vocabulary one skill owns leaks into the section where the other defines
+  its own.** *production-confirmed* — a **status tier**, owned by
+  `enforceable-rules` — was listed inside `tech-decision-research`'s definition of
+  the four **confidence** markers, in both its files, as though it were a fifth
+  value nothing had reached. The split of the three vocabularies is this pair's
+  own decision, which makes it the pair most likely to break it.
+
+The rest, which do not generalise: the status-tier gloss read "decided and in
+use" in both skills, which asserts the production use the definition denies — now
+"researched and decided, with no production use yet" in both, with the usage
+stated separately; two false superlatives, *the weakest-marked skill in the set*
+(`enforceable-rules` is marked identically) and *the first skill in this set with
+no wiring section* (six neutral skills have none, for the opposite reason), the
+second of which **this file wrote first and the skill copied**;
+`tech-decision-research` said its source carries no dates "beyond two" where
+`raw/research-protocol.md` carries one, and `enforceable-rules` said neither of
+its source's two dates attaches to a directive it carries — **2026-07-28 does**,
+being the amendment that added the accounting walk and the no-ids rule, now
+recorded as an amendment date and still not used to date a directive; the
+decision-owner directive offered "a named delegate" where the source's own value
+is ***delegated*** and every published pass writes it that way; ArchUnit and Error
+Prone were restored to the *off-the-shelf* definition, which had reduced the
+source's two named examples to "an architecture test, a compiler check" — the
+de-naming defect inside the definition of the marker that requires a named tool;
+"one skill adds a fifth value, **recorded**" now names `llm-default-traps`; and a
+do-not-cite entry warned against citing marker counts that the same file had
+already replaced with the grep.
+
+**The enumeration check's own text was rewritten to survive this.** Its instance
+count is now a **dated floor** — ten as of 2026-07-30 — under the exception it
+already states for a count that *is* the evidence, and the new instances are
+stated **by name rather than added to a total**. Its superlative list gained the
+two found here. **Nothing about this is verified by a check**; both reviews were
+scratch scripts plus reading.
+
 ### Still open for these two
 
 - **No outcome measurement for either.** Nobody has compared a decision made under
@@ -1980,7 +2065,11 @@ whole material, not of each claim.
   `enforceable-rules` tells a reader to wire an evidence-order check and a
   dangling-pointer check, and **this repo runs neither over its own skills.** That
   is the same gap this file has recorded after every family, now stated inside a
-  published skill where a consumer can see it.
+  published skill where a consumer can see it. **Narrowed by the second review:
+  they are not unbuilt in general** — `raw/research-protocol.md` §5 records both
+  implemented as one script (`ci/check_packs.py`, a dangling reference here), so
+  the skill's gap now says a reader is being told to rebuild something that
+  exists and cannot be obtained, rather than something nobody has written.
 - **`raw/research-protocol.md` and `raw/README.md` gain no row, and this hits no
   rule conflict.** Neither has an instantiation table, so there is nothing to write
   into `raw/` and nothing to decide — the same clean case as the two packs. **The

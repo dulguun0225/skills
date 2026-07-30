@@ -53,16 +53,17 @@ the person who set it.
 - **No directive carries a per-claim date.** The material is undated. **The
   conversion happened on 2026-07-30**, stated once, here; that is not a
   verification date and must not be repeated as one.
-- **Five of the checks below are the exception that matters**, because each rests
-  on an observed failure rather than on an argument. The failures are real and
-  three of the five are **verifiable by anyone who installed the other skills in
-  this set** — the worked case is named beside each. The *check* is still
-  convention: nobody voted on whether it is the right response to the failure.
+- **The five incompleteness checks below are the exception that matters**,
+  because each rests on an observed failure rather than on an argument. The
+  failures are real, and the predicate, composite-shape and layer checks are
+  **verifiable by anyone who installed the other skills in this set** — the
+  worked case is named beside each. The *check* is still convention: nobody voted
+  on whether it is the right response to the failure.
 
-Status tier: **decided, not yet validated** — decided and in use, with **no
-production record**. What exists is every other skill in this set, written against
-this bar, which is usage rather than validation: no repo has operated any of them
-long enough to report whether the bar predicted anything.
+Status tier: **decided, not yet validated** — researched and decided, with **no
+production use yet**. What exists is every other skill in this set, written
+against this bar, which is usage rather than validation: no repo has operated any
+of them long enough to report whether the bar predicted anything.
 
 ## The premise, and the review model that forces this kind of rule
 
@@ -128,15 +129,26 @@ False assurance is worse than none.** A rule with no gate is a known gap that a
 reader can act on. A gate with a blind spot is a *green build* over the thing it
 was installed to prevent, and it also removes the pressure to build a real one.
 
-**Three worked cases are published in this skill set, and all three are false
-greens rather than missing gates** — which is the ratio worth noticing.
-`llm-default-traps` bans a specific architecture-test tool as the host for a
-"never log this type" rule, because that tool reads erased signatures and so the
-rule passes while protecting nothing. `caching` records the same false green
-having been shipped once already for a serialization rule. And
-`async-handoff-java` names a published contract-comparison tool that detects
-incompatibilities, writes a report, and exits zero — **a false-green gate shipped
-as a product**, named so nobody wires it.
+**Every worked case published in this skill set is a false green rather than a
+missing gate** — which is the ratio worth noticing. There are two, and the first
+of them recurs:
+
+- **The erasure false green.** `llm-default-traps` bans **ArchUnit** as the host
+  for a "never log this type" rule, because it reads an erased signature and so
+  the rule passes while protecting nothing; **Error Prone** is the host instead.
+  That gate was shipped before it was caught. `caching` then reaches the identical
+  trap from a different rule — a value-round-trip check written against the cache
+  adapter's type parameter would read the same erased top type — and refuses that
+  host by name, citing the earlier shipment. **One defect, two rules, and it was
+  only stopped the second time because the first was written down.**
+- **The false-green gate shipped as a product.** `async-handoff-java` records a
+  published contract-comparison tool that detects incompatibilities, writes a
+  report file, and exits green regardless. That skill refuses it and names two
+  usable alternatives, but **identifies the refused product by ecosystem and
+  repository signature rather than by name** — so the instance is real and the
+  product is not citable by name from anywhere in this skill set. That is the
+  anonymised-subject defect `tech-decision-research` states under *Record the
+  negative results*, surviving in the one place a reader would go to obey it.
 
 *Check: every rule has a named check and an enforcement marker; every gate's
 blind spot is stated. Bespoke — the marker is greppable, the blind spot is not.*
@@ -340,8 +352,9 @@ here supplies it in that case.
 
 **Enforcement, per rule — a ban without a named check is a wish, not a rule:**
 
-- **off-the-shelf** — a named tool rule exists (an architecture test, a compiler
-  check, a linter rule); the adopting repo copies it and wires it.
+- **off-the-shelf** — a named tool rule exists (an ArchUnit rule, an Error Prone
+  check, a linter rule — those two are the material's own examples, and any
+  ecosystem's equivalents count); the adopting repo copies it and wires it.
 - **bespoke** — the check has to be authored by the adopting repo. **The rule set
   says so and names the tool that can host it** — "bespoke" with no named host is
   an admission dressed as a marker.
@@ -465,10 +478,12 @@ the languages are enumerable, but only a reader knows which ones a value reaches
 contents **by name, not by count.** A sentence that counts or enumerates decays
 silently when the set changes, and **has no id to grep for.**
 
-The failure was found **nine separate times** while this skill set was written and
-reviewed, and a tenth is recorded below. It is the most reproducible defect in the
-whole effort, and it recurred in files an earlier pass had already called clean.
-What was learned about where it strikes:
+**Every authoring and review pass over this skill set has found new instances,
+without exception — including the review of this skill, which found them inside
+the two files publishing this very check.** It is the most reproducible defect in
+the whole effort, and it recurs in files an earlier pass has already called
+clean. The running total stood at **ten as of 2026-07-30**; treat that as a floor
+and a dated observation, not a rate. What was learned about where it strikes:
 
 - **A split is the highest-risk moment**, because each half inherits the whole's
   number and nothing re-derives it. Two instances were created by a single split.
@@ -477,10 +492,15 @@ What was learned about where it strikes:
   contents, wrong at the moment they were written.
 - **Publishing a new document obliges a sweep** of every sentence elsewhere that
   counts, and of every sentence that says the new thing does not exist. That sweep
-  was run four times here, and it missed a sentence twice.
+  has been run after every publish in this set and has still left stale sentences
+  behind — each time caught by a later adversarial review rather than by the
+  sweep.
 - **A superlative is a count in disguise** — "the one rule here with a panel
   behind it", "the strongest group in this set", "the only rule set here that is
-  not predominantly convention". Each of those three was false when written.
+  not predominantly convention", "the weakest-marked skill in the set", "the
+  first skill in this set with no wiring section". Every one of those was false
+  when written, and a reader has no way to tell a checked superlative from an
+  unchecked one.
 - **Fixing a count in one file does not fix its copy in the sibling**, and a note
   recording the fix reads as coverage for a file the fix never reached.
 
@@ -495,18 +515,29 @@ of these fourteen" does not.
 check the reader can re-run rather than a fact to cite. Its decay is then the point
 rather than the defect.
 
-**The tenth instance was created by publishing this skill, which is the sharpest
-evidence available for the check.** A draft of `tech-decision-research`'s evidence
-file grounded a claim about this set's marker vocabulary in four tallies of other
-files' contents. Publishing these two skills changed all four within the hour,
-because both files use the vocabulary they were counting. The counts were correct
-when measured, correct when written, and false on arrival — **and nothing but
+**Publishing this skill produced the sharpest evidence available for the check,
+twice over.** First: a draft of `tech-decision-research`'s evidence file grounded
+a claim about this set's marker vocabulary in four tallies of other files'
+contents. Publishing these two skills changed all four within the hour, because
+both files use the vocabulary they were counting. The counts were correct when
+measured, correct when written, and false on arrival — **and nothing but
 re-running the grep could have told anyone.** They were replaced by the grep
 itself.
 
+Second, and worse: **the review of these two skills found the failure throughout
+both of them**, hours after they shipped the check against it.
+`tech-decision-research` told its reader that this skill carries **three**
+incompleteness checks when it carries five, in two files; both evidence files
+named five frontmatter fields and called them six; a count of the other skills in
+this set was two short; and a count already corrected in one file survived
+untouched in its sibling — the sub-finding directly above, reproduced by the pair
+of files that state it. **Publishing a check does not exempt the publisher**, and
+nothing in the authoring of these two skills caught any of it.
+
 *Check: a lint over number words adjacent to list structures is possible and
-noisy. **Convention** in practice, plus the publish-time sweep. **Ten observed
-instances are the ground; the response is unvalidated.***
+noisy. **Convention** in practice, plus the publish-time sweep. **The observed
+instances are the ground — a dated floor of ten as of 2026-07-30, with more found
+in every pass since; the response is unvalidated.***
 
 ### The token-placement check
 
@@ -609,11 +640,14 @@ Silence reads as coverage, so each is stated.
    largest gap here and it does not close — the mitigation is that the checks are
    cheap to run by hand and that a record of which rule set has had which one
    makes a skipped check visible.
-2. **The two wireable checks are described here and not shipped.** No published
-   tool does either, including in this skill set: **the invariant sweeps behind
-   the skills in this set were run by hand and by throwaway scripts**, and neither
-   check exists in a repository. A reader is being told to build something the
-   author has not.
+2. **The two wireable checks are described here and not shipped.** They are not
+   hypothetical — the material behind this skill records both of them implemented
+   as one script in its own build, failing the build and printing what it does not
+   decide. **That implementation is not published, and nothing in this skill set
+   runs either check**: the invariant sweeps behind these skills were run by hand
+   and by throwaway scripts. So a reader is told to build something that has been
+   built before and that they cannot obtain, which is a shorter distance than
+   starting from nothing and still a gap.
 3. **The eight principles have never been tested by exclusion.** Nobody has
    recorded a rule that served none of them and was kept anyway, so nothing
    establishes that the eight are exhaustive — only that no rule so far needed a
@@ -627,9 +661,9 @@ Silence reads as coverage, so each is stated.
    between a rule set's markers and a repo's actual build is checkable in
    principle and checked nowhere.**
 6. **The enumeration and token-placement checks rest on observations from one
-   effort.** Ten instances and two token-sweep yields are a real ground and a
-   narrow one: one corpus, one author, one review style. Neither check has been
-   run against a rule set written by anyone else.
+   effort.** The enumeration instances and the two token-sweep yields are a real
+   ground and a narrow one: one corpus, one author, one review style. Neither
+   check has been run against a rule set written by anyone else.
 
 ## Markers
 
@@ -643,8 +677,8 @@ markers, and the status tier*, which is this skill's own subject.
 | ----- | ------ |
 | Every directive in this skill | convention — no execution, no primary source, no vote |
 | That a rule set can pass every machine check and fail the predicate, composite-shape and layer checks | convention — but each rests on an observed failure of a shipped rule set, and each has a worked case published in this skill set |
-| That the enumeration failure recurs — ten observed instances, the tenth created by publishing this skill | convention as a rule; the instances are observations from this skill set's own authoring, and the response to them is unvalidated |
-| That token extraction catches described-not-named tools — twelve and twenty-three found | convention as a rule; the yields are observations from two passes over one corpus |
+| That the enumeration failure recurs — a dated floor of ten instances as of 2026-07-30, one of them created by publishing this skill and more found in its own review the same day | convention as a rule; the instances are observations from this skill set's own authoring, and the response to them is unvalidated |
+| That token extraction catches described-not-named tools — twelve and twenty-three found, 2026-07-30 | convention as a rule; the yields are observations from two passes over one corpus |
 | That the eight principles are exhaustive | **uncertain** — see gap 3 |
 | That the premise-specificity test discriminates | **uncertain** — see gap 4 |
 

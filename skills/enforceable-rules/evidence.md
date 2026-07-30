@@ -15,17 +15,23 @@ that document, this file says so.
 
 What it lacked, which is what forced every marker in `SKILL.md`:
 
-- **No frontmatter.** No status, no premise list, no verification date, no expiry
-  date, no maintainer — while requiring all six of every rule set it governed.
+- **No frontmatter.** None of the six fields it required of every rule set it
+  governed: `id`, `status`, `holds-when` (the premise list), `verified` (the date
+  of the last research pass), `review-by` (the date the rule set goes stale),
+  `maintained-by`.
 - **No confidence marker on any claim in it.** Not one.
-- **Two dates in the whole document, and neither attaches to a directive this
-  skill carries.** One, **2026-07-28**, marks an amendment that split
-  never-adopted cross-platform rule sets from adopted ones and added the
-  accounting checks for the adopted kind — bookkeeping about a corpus structure
-  this skill does not convert. The other, **2026-07-29**, is the day the eight
-  principles were given stable numbers, which is the one decision this skill
-  deliberately reverses. **So no directive here got a date, and none was
-  invented.**
+- **Two dates across the material, both marking amendments, and neither of them
+  a verification date.** **2026-07-28** split never-adopted cross-platform rule
+  sets from adopted ones and, in the same amendment, added the group of ship
+  checks that includes the accounting walk and the no-ids rule — **so it does
+  attach to material this skill carries**, in *When the same rule lives in more
+  than one place* and in the wiring step, and it says when those were added to
+  the bar rather than when anything was checked. **2026-07-29** is the day the
+  eight principles were given stable numbers, which is the one decision this
+  skill deliberately reverses. **No directive here got a date, and none was
+  invented**: an amendment date is not a claim about the world, and dating those
+  directives from it while every other one stayed undated would have read as a
+  verification the material never ran.
 
 **The markers were therefore derived, once, by applying the sibling skill's rule
 to this material**: a claim backed by neither execution nor a primary source is
@@ -48,8 +54,10 @@ copy of the corpus reads a cited number as **that repository's own** numbering.
    a consumer installs carries the source document, so a number here is a pointer
    into text the reader does not have — the same dangling pointer the source
    itself bans, arriving through a different door.
-2. **The other twelve skills in this set already refer to these principles in
-   prose**, having been written under the same ban. Shipping numbers now would
+2. **The other skills in this set already refer to these principles in prose**,
+   having been written under the same ban — `caching`, `async-handoff` and
+   `async-handoff-shapes` state the false-green clause almost verbatim, and the
+   named-loser rule appears in most of the rest. Shipping numbers now would
    create the asymmetry this skill set has already settled against: an id that
    resolves for a reader who installed this skill and dangles for one who did not.
    A name resolves either way, because it reads as an instruction rather than as a
@@ -85,15 +93,29 @@ run rather than as facts to cite:
   `SKILL.md` and the reason exhaustiveness is marked *uncertain*.
 
 **The strongest of the eight, on the evidence available, is the false-green clause
-under *Machine-enforced or it is not a rule*** — and it is the only one with
-three independent instances rather than an argument. The instances are all
-published here: an architecture-test tool that cannot see a static type through an
-erased signature, so a "never log this type" rule passes while protecting
-nothing; the same false green shipped once already for a serialization rule; and a
-published contract-comparison tool that detects incompatibilities, writes a
-report, and exits zero. **The clause's ground is therefore better than the
-principle's**, and a reader who trusts only one thing in `SKILL.md` should trust
-that clause.
+under *Machine-enforced or it is not a rule*** — and it is the only one grounded
+in observed instances rather than in an argument. Both are published here:
+
+- **The erasure false green**, which is one defect that reached two rules.
+  ArchUnit reads an erased signature, so a "never log this type" rule hosted
+  there passes while protecting nothing; `llm-default-traps` bans that host and
+  names Error Prone instead. `caching` then refuses the same host for a
+  value-round-trip check written against the cache adapter's type parameter,
+  citing the earlier shipment. **The second occurrence was stopped only because
+  the first had been written down**, which is a stronger argument for recording
+  false greens than for any particular gate.
+- **A false-green gate shipped as a product**: a published contract-comparison
+  tool that detects incompatibilities, writes a report file and exits green
+  regardless, recorded by `async-handoff-java`. **The product is identified there
+  by ecosystem and repository signature and not by name**, so this instance is
+  real and is not citable by name from anywhere in this skill set — the
+  anonymised-subject defect surviving inside the evidence for a principle about
+  false assurance.
+
+Counting these as three independent instances, which an earlier draft of this
+file did, double-counts the erasure case. **The clause's ground is still better
+than the principle's**, and a reader who trusts only one thing in `SKILL.md`
+should trust that clause.
 
 ## The three inherited incompleteness checks
 
@@ -162,21 +184,51 @@ directive text, in the marker table, and here.
 
 ### The enumeration check
 
-**Nine observed instances** during the authoring and review of this skill set, and
-a tenth created by publishing this skill — the most reproducible defect in the
-effort, and it recurred in files an earlier pass had already declared clean. The five sub-findings in `SKILL.md`
+**A dated floor of ten observed instances as of 2026-07-30**, across the
+authoring and review of this skill set, the last of them created by publishing
+this skill. It is the most reproducible defect in the effort, and it recurs in files
+an earlier pass has already declared clean. The five sub-findings in `SKILL.md`
 (splits create it, cross-document counts are worse, publishing obliges a sweep,
 superlatives are counts in disguise, fixing one copy misses the sibling) are each
 drawn from specific instances rather than reasoned out.
 
+**The count is stated as a floor on purpose.** It is the one place this skill's
+own exception applies — the count *is* the evidence — so it carries the date it
+was taken, and it only ever grows. Anyone re-running the check adds to it.
+
+**The review of these two skills, hours after they shipped, found the failure
+throughout both.** Named rather than counted, because the point is where they
+struck and not how many:
+
+- `tech-decision-research` described this skill as carrying **three**
+  incompleteness checks when it carries five — a cross-document count, wrong when
+  written, in **two** files.
+- Both evidence files enumerated **five** frontmatter fields and called them six,
+  and both de-named `verified`, `review-by` and `maintained-by` while doing it.
+- This file counted "the other twelve skills in this set" when there are
+  fourteen.
+- This file's own false-green ground counted **three** independent instances of
+  one defect that is two.
+- A count corrected in `tech-decision-research`'s evidence file — `caching`'s
+  "sixteen directives" — survived untouched in its `SKILL.md`, which is the
+  sub-finding directly below, reproduced by the pair of files that state it.
+- Two superlatives were false as written: "the weakest-marked skill in the set"
+  and "the first skill in this set with no wiring section" (six others have
+  none).
+
+**Publishing a check does not exempt the publisher**, and no part of authoring
+these two skills caught any of it.
+
 **What is not established:** whether the response works. Nobody has written a rule
 set under a name-not-count discipline and measured a lower rate. **The instances
-are the ground; the practice is unvalidated.**
+are the ground; the practice is unvalidated** — and the evidence directly above
+is that stating the practice is not enough on its own.
 
 **One sub-finding is worth more than the others** and is the one to carry if only
 one survives: **a note recording that a count was fixed reads as coverage for a
-file the fix never reached.** That happened here — an identical decayed phrase
-sat in a sibling file while the record said it had been caught.
+file the fix never reached.** That has now happened twice — an identical decayed
+phrase sat in a sibling file while the record said it had been caught, and then
+the same shape recurred in these two skills.
 
 ### The token-placement check
 
@@ -221,10 +273,10 @@ and no implementation, which `SKILL.md` states as a gap rather than a plan.
 - **Do not cite the enumeration or token-placement checks as inherited practice.**
   Both are additions from this skill set's own authoring, and saying otherwise
   borrows credibility the source material never lent them.
-- **Do not cite "ten instances", "twelve tools" or "twenty-three more" as
-  general rates.** They are counts from one corpus. Repeating them as a finding
-  about rule-set authoring in general is the precise failure the enumeration check
-  is about.
+- **Do not cite the instance floor, "twelve tools" or "twenty-three more" as
+  general rates.** They are dated counts from one corpus, and the first of them
+  is a floor that grows. Repeating any of them as a finding about rule-set
+  authoring in general is the precise failure the enumeration check is about.
 - **Do not cite 2026-07-30 as a verification date**, nor 2026-07-28 or 2026-07-29
   as verification dates for anything here. The first is when this text was
   written; the other two mark amendments to material this skill does not carry.
@@ -243,8 +295,9 @@ and no implementation, which `SKILL.md` states as a gap rather than a plan.
   incompleteness checks.** All five ground out in failures of rule sets written by
   one author under one bar. An outside rule set either reproduces the failures or
   narrows the checks.
-- **Either wireable check actually being built.** Gap 2 says a reader is being
-  told to build something the author has not; building it closes the gap and, more
+- **Either wireable check actually being built here.** Gap 2 records that both
+  existed once, in an unpublished build nobody installing this skill can reach;
+  building one closes the gap and, more
   usefully, produces the first evidence about how often the two failures they
   catch actually occur.
 - **A false-green gate found in this skill set's own rules.** The first principle's

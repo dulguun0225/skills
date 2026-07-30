@@ -122,8 +122,10 @@ and is why several wordings in `SKILL.md` look indirect:
    absence is not asserted for them.**
 8. **One contract-tooling product is a false-green gate shipped as a product** —
    it detects incompatibilities, writes a report and exits green regardless.
-   `E-19` names the shape so nobody wires it; the product is named in
-   `async-handoff-java`.
+   `E-19` names the shape so nobody wires it; `async-handoff-java` carries the
+   signature a repo matches it against — its ecosystem, its plugin's parameters
+   and its repository's state — **but the pass recorded no artifact coordinates,
+   so the product is not named there either.**
 
 ## The hostile audit, and the six findings that changed rules
 

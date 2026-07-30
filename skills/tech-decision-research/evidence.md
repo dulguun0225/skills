@@ -14,13 +14,14 @@ Where a claim's only ground is that document, it says so.
 
 What matters about it is what it lacked:
 
-- **No frontmatter.** No `status`, no `holds-when`, no `verified`, no
-  `review-by`, no maintainer. Every other rule set behind this skill set carries
-  all six.
+- **No frontmatter.** None of the six fields the corpus it belonged to required
+  of every rule set — `id`, `status`, `holds-when`, `verified`, `review-by`,
+  `maintained-by` — while the method itself instructs a pass to set `verified`
+  and `review-by` and to move them on re-verification.
 - **No confidence marker on any claim in it, anywhere.** Not one *confirmed*, not
   one *convention*.
-- **No dates**, beyond two attached to amendments of material that is not part of
-  this skill's scope.
+- **No dates**, beyond a single one attached to an amendment of the
+  pack-authoring material that is not part of this skill's scope.
 
 **So the markers in `SKILL.md` were not inherited — they were derived, once, by
 applying the method to itself.** A method recorded by the person who ran it, with
@@ -78,8 +79,7 @@ directives wearing markers they did not earn.
 **A second verifiable consequence: the marker vocabulary is in live use across
 this skill set**, which is the ground for `SKILL.md`'s claim that these four
 values are the set's vocabulary rather than a local invention. All four appear in
-the published skills; *production-confirmed* appears only in order to record that
-nothing has reached it. **Grep for each value across the installed skills** — the
+the published skills. **Grep for each value across the installed skills** — the
 check is reproducible and its result is not stated here on purpose, because a
 count of another document's contents decays the moment a skill is added. That is
 not a hypothetical: a draft of this file stated the four tallies, and publishing
@@ -110,8 +110,9 @@ happening to be sceptical.
   odd and affordable. Anyone repeating it as a finding is manufacturing evidence.
 - **Do not cite 2026-07-30 as a verification date for anything in this skill.** It
   is the date the text was written.
-- **Do not cite the marker counts above as a stable fact.** They are a
-  reproducible check as of 2026-07-30, and they change whenever a skill is added.
+- **Do not turn the marker grep above into a cited count.** Its result is a
+  reproducible check, not a fact about this skill set: it changes whenever a
+  skill is added or a marker is corrected, which is why no tally is written here.
 - **Do not present the artifact checks in *What checks this* as build gates.**
   They are written artifacts whose absence is visible. Describing them as
   enforcement is the specific dishonesty the enforcement-marker vocabulary exists
@@ -151,8 +152,9 @@ Recorded so the absences are not read as oversights.
   configuration.** It named files in a project scaffold that has nothing to do
   with this skill, and any repo adopting these directives has its own answer.
 - **The rules for how a rule set is written down** — the shape of a directive,
-  the enforcement markers, the filter a rule clears, and three checks a rule set
-  passes while still being incomplete. **Those are published as
+  the enforcement markers, the filter a rule clears, and the five checks a rule
+  set passes while still being incomplete (predicate, composite-shape, layer,
+  enumeration, token-placement). **Those are published as
   `enforceable-rules` in this skill set**, which is the other half of this
   procedure: this skill produces a verdict, that one turns it into a rule. A repo
   doing only the research needs this skill; a repo writing rules needs both.

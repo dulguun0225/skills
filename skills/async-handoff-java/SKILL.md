@@ -386,8 +386,9 @@ over the committed schema files.)*
   build** — its plugin declares three parameters, never throws a build-failing
   exception, writes a report file and exits green regardless; its repository has
   one published version, two stars and no commit since 2024. **That is a
-  false-green gate shipped as a product, and this skill names it so nobody wires
-  it.** The usable routes are the AsyncAPI **CLI** `diff` command, which does fail
+  false-green gate shipped as a product, and the signature above is what a repo
+  matches it against — this pass recorded the shape and not the artifact
+  coordinates, so no name is printed here and none should be inferred.** The usable routes are the AsyncAPI **CLI** `diff` command, which does fail
   on breaking changes against a committed file with no network unless an opt-out
   flag is passed but is a Node binary invoked through an exec plugin; or **`buf
   breaking`** for Protobuf, which compares against a committed baseline including
