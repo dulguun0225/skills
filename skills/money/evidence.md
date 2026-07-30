@@ -57,7 +57,8 @@ scalar can stay at the minor-unit scale; division has no exact form, so it
 rounds and must name its mode (`M-7`).
 
 **`M-5` — fail loud on money paths, no swallowed catch. Convention, verified
-2026-07-25.** Prior research in this corpus carries "silent catches" as a
+2026-07-25.** Prior research behind these rules — **not published in this skill
+set**, so a reader cannot check it — carries "silent catches" as a
 standing defect class hunted by an adversarial AI reviewer — a
 non-deterministic backstop, not a deterministic gate. Marked convention
 because the rule is defensible, cheap, and fails safe, but no independent

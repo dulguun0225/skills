@@ -11,9 +11,10 @@ in the public skills.sh directory**.
 State as of 2026-07-30: there is no build, lint, or test tooling beyond the
 discovery check. What exists is the project setup (node and the `skills` CLI
 pinned, LF enforced repo-wide, commands as npm scripts — see *Commands*), the
-decided skill decomposition and layout (*Where skills live*), and **four
-authored families plus one standalone skill — every cross-stack source in
-`raw/rule-sources/` is converted, and both *packs* are converted too**:
+decided skill decomposition and layout (*Where skills live*), and **every row of
+the table in *Where skills live* authored — Milestone 1 is complete. Every
+cross-stack source in `raw/rule-sources/` is converted, both *packs* are
+converted, and both corpus-derived method skills are written**:
 
 - **The money family, authored 2026-07-30 in two phases** — `skills/money/`,
   `skills/money-api/`, `skills/money-storage/` and `skills/money-java/`
@@ -41,12 +42,21 @@ authored families plus one standalone skill — every cross-stack source in
   directives, **no rule ids**. The second pack-derived conversion and **the first
   stack-only family — there is no neutral sibling, because the pack *is* the
   stack.** See *The Java-backend skill family*.
+- **The two method skills, authored 2026-07-30 last** —
+  `skills/tech-decision-research/` and `skills/enforceable-rules/` (each
+  `SKILL.md` + `evidence.md`), 15 and 13 directives, **no rule ids**. The two
+  corpus-derived conversions, **the first whose subject is a process rather than
+  code**, and the first drawn from material carrying no frontmatter, no marker
+  and no date. See *The method skills*.
 
-All thirteen are discovered by `npm run check`. **Milestone 1 is to turn the
-content of `raw/` into skills**; the three cross-stack sources and **both** packs
-are done, and the only remaining unwritten rows of the table in *Where skills
-live* are the two corpus-derived ones — `tech-decision-research` and
-`enforceable-rules`.
+All fifteen are discovered by `npm run check`. **Milestone 1 — turning the content
+of `raw/` into skills — is complete**: the three cross-stack sources, both packs,
+and both corpus-derived rows are converted, and no row of the table in *Where
+skills live* is unwritten. **What `raw/` still holds that no skill carries is
+listed in *What becomes no skill*** under that table, and it is bookkeeping and
+consuming-repo machinery by construction rather than by omission. Expect more
+material in `raw/` later; a new source or pack restarts the conversion work under
+the same invariants.
 
 **`raw/` is raw data — input material, never output.** It holds source text
 imported from elsewhere, to be read and converted; nothing in it is a published
@@ -104,13 +114,15 @@ npm run try -- <name>         # run one skill from the working tree without inst
 
 `npm run check` is the only self-check that exists: it answers whether a skill is
 in a discoverable location with valid frontmatter. Anything it does not list is
-invisible to every consumer. Since 2026-07-30 it lists thirteen —
-`async-handoff`, `async-handoff-java`, `async-handoff-shapes`, `caching`,
-`caching-java`, `java-backend-api`, `java-backend-observability`,
-`java-backend-rules`, `llm-default-traps`, `money`, `money-api`, `money-storage`,
-`money-java`. It says nothing about resource files: `evidence.md`, `api.md`,
-`storage.md` and `shapes.md` are unlisted and unchecked, so a broken relative
-link inside a skill passes it.
+invisible to every consumer. Since 2026-07-30 it lists every directory under
+`skills/` — `async-handoff`, `async-handoff-java`, `async-handoff-shapes`,
+`caching`, `caching-java`, `enforceable-rules`, `java-backend-api`,
+`java-backend-observability`, `java-backend-rules`, `llm-default-traps`, `money`,
+`money-api`, `money-storage`, `money-java`, `tech-decision-research`. **Compare it
+against `ls skills/` rather than against a count in this file** — a count here is
+the failure this repo has now recorded ten times. It says nothing about resource
+files: `evidence.md`, `api.md`, `storage.md` and `shapes.md` are unlisted and
+unchecked, so a broken relative link inside a skill passes it.
 
 **It caught a real defect on 2026-07-30, and it is the only thing that would
 have.** `llm-default-traps` was written with a `: ` — colon then space — inside
@@ -180,8 +192,8 @@ about to be cached.
 | `money`, `money-api`, `money-storage`, `money-java` | `raw/rule-sources/money-grade.md` and `raw/seed/java-backend.md` lines 442–744 — the per-skill split and the evidence map are in *The money skill family* below |
 | `caching`, `caching-java` | `raw/rule-sources/cache-discipline.md` and `raw/seed/java-backend.md` lines 745–935; Java evidence from `raw/java-backend.md` §4 under `Cache discipline`. The split is in *The caching skill family* below |
 | `async-handoff`, `async-handoff-shapes`, `async-handoff-java` | `raw/rule-sources/event-broker-discipline.md` and `raw/seed/java-backend.md` lines 937–1757; Java evidence from `raw/java-backend.md` §4 under `Event broker discipline`. The split is in *The asynchronous-handoff skill family* below |
-| `tech-decision-research` | `raw/research-protocol.md` §1–4, §6 |
-| `enforceable-rules` | `raw/README.md`'s design principles and premise-specificity test; the portable checks in `raw/research-protocol.md` §5 |
+| `tech-decision-research` | `raw/research-protocol.md` §1–4, §6. Its §3 confidence markers land here; `raw/README.md`'s duplicate definition of the same four is not carried twice. The split is in *The method skills* below |
+| `enforceable-rules` | `raw/README.md`'s design principles and premise-specificity test; the portable checks in `raw/research-protocol.md` §5; plus `raw/README.md`'s *Markers* — the **enforcement** markers and the **status tier** only — and its Anatomy tripwire, which the table did not assign. The split is in *The method skills* below |
 
 **What becomes no skill**, recorded so its absence is not read as an oversight:
 
@@ -190,7 +202,16 @@ about to be cached.
   maintain the corpus; they are not a capability anyone installs.
 - The six-step adoption procedure in `raw/README.md` and everything around
   `.specify/memory/constitution.md`. That machinery is not in this repo, and its
-  files are dangling references here.
+  files are dangling references here. **Narrowed 2026-07-30**: two of its steps do
+  generalise and `enforceable-rules` carries them — re-verify the dated facts at
+  adoption rather than on a calendar, and wire the checks in the same change, with
+  an unwired check marked deferred and **never described as enforced**. What stays
+  out is every step naming a file in that scaffold.
+- The pack-versus-source distinction itself, and the roster of which is which. It
+  is load-bearing inside `raw/` — it is why some rules live under stable ids and
+  are never pasted — but it is a fact about how *that* corpus is filed.
+  `enforceable-rules` carries only what generalises from it: prefer one owner, and
+  where duplication is deliberate, one index is the only thing that catches drift.
 
 **`raw/` stays exactly where it is**, unchanged, as the record of what was
 imported. Skills are new files under `skills/`.
@@ -239,6 +260,18 @@ there is no third pack:**
   stack and there is no sibling to defer a tool to. *The Java-backend skill
   family* records the consequence that bit — a stack skill with no neutral sibling
   will still hedge tool names out of habit, and twelve did.
+
+**The two corpus-derived skills answered the first question in a third way, and
+this closes both questions for every row of the table** (2026-07-30 — *The method
+skills* below). Neither is neutral-versus-stack and neither is a pack. **Their
+subject is a process rather than code, so most of their directives have no build
+gate at all and cannot get one** — the check is a written artifact whose absence is
+visible. Both say so at the top rather than hedging a tool name, and
+`tech-decision-research` is **the first skill in the set with no
+`## Wiring the gates` section**, because there is nothing to wire.
+`enforceable-rules` has one, holding the two checks that genuinely can be
+mechanised. On the second question both answer as everything else did: they
+instruct the agent. **Nothing in `raw/` is left to raise either question again.**
 
 ### Where `llm-default-traps` stands
 
@@ -1399,7 +1432,8 @@ skills/java-backend-observability/  SKILL.md  evidence.md   the general Observab
 ```
 
 Sixty-seven directives, each defined exactly once, one `###` heading each. All
-three listed by `npm run check`, which now lists thirteen. Drawn from
+three listed by `npm run check`, which listed thirteen when this family shipped.
+Drawn from
 `raw/seed/java-backend.md` **lines 1–441** — the whole file minus the three
 already-converted conditional sections — with evidence from `raw/java-backend.md`
 §4's eight matching headings, the rejections in §3, and the triggers in §5.
@@ -1647,7 +1681,8 @@ entries the group-level marker covers; 115 of the seed's 116 directive-region
 tokens present, the one absentee being a concatenated method list whose parts are
 each named; no `P-n`, no `B-n`, no `DECISIONS.md`, no reference into `raw/`, no
 prior-art document named, every link `SKILL.md` ↔ `evidence.md` inside its own
-directory, and thirteen skills listed by `npm run check`. **Five findings
+directory, and the thirteen skills that existed then listed by `npm run check`.
+**Five findings
 generalise, and the first three are one finding wearing three faces:**
 
 - **The de-naming defect has a second home, and the first review's check could not
@@ -1731,6 +1766,227 @@ which is the caching review's finding applied to a trigger rather than a claim.
 from a scratch script, and neither the widened token extraction nor the
 per-directive placement check exists in the repo.
 
+## The method skills
+
+Authored 2026-07-30, last of six, in one pass. Four files:
+
+```
+skills/tech-decision-research/  SKILL.md  evidence.md   15 directives, no ids
+skills/enforceable-rules/       SKILL.md  evidence.md   13 directives, no ids
+```
+
+**The two corpus-derived conversions, and the last rows of the table in *Where
+skills live*.** Both listed by `npm run check`. Drawn from `raw/research-protocol.md`
+§1–4 and §6 (`tech-decision-research`) and from `raw/README.md`'s *Markers*,
+*Authoring a pack* and one Anatomy item plus `raw/research-protocol.md` §5
+(`enforceable-rules`).
+
+**These are the first skills in the set whose subject is a process rather than
+code**, and the first drawn from material that carries **no frontmatter, no
+confidence marker on any claim, and no date.** Both facts drove most of what
+follows.
+
+### The split, which the table decided and authoring confirmed
+
+`tech-decision-research` fires when an agent is **deciding** something;
+`enforceable-rules` fires when it is **writing the decision down as a rule.**
+Different moments, which is the *what is the agent doing* test. The interlock runs
+both ways — the research protocol's §5 says to write the rule set, and the
+authoring bar needs the confidence markers the research produces — so this is a
+back-edge pair like `money` ↔ `money-api`, and both shipped together.
+
+**The marker vocabularies were split three ways, which the table did not
+assign.** `raw/README.md` defines all three sets and `raw/research-protocol.md` §3
+redefines the confidence four. Write-once forced a call:
+
+- **Confidence** — *confirmed* / *primary-source verified* / *convention* /
+  *uncertain* → `tech-decision-research`. They are the **output of the research
+  method**, and the refutation votes that promote one live there.
+- **Enforcement** — *off-the-shelf* / *bespoke* / *convention* → and **status
+  tier** → `enforceable-rules`. Both are properties of **a rule's check**.
+- Each skill names the other's set, says where it is defined, and **states plainly
+  what a repo installing only one of them does not get.** That is the money and
+  caching precedent for a vocabulary neither owns alone.
+
+### What these two decided that no predecessor did
+
+1. **No dates on any directive, and no date invented — the first conversion where
+   there was nothing to inherit.** Every previous family took its dates from a
+   research pass, using the pass date where a directive gave none. **These sources
+   have no pass.** So each skill states the **conversion date, 2026-07-30, once**,
+   labelled as a conversion date and explicitly not a verification date. Using it
+   per directive would have manufactured a verification that never happened.
+2. **The lapse rule is stated as vacuous rather than omitted.** Neither source has
+   a `review-by`, so none was invented — and the rule would do nothing anyway,
+   because it demotes *confirmed* to *convention* and **nothing here is above
+   convention.** Both skills say so, and both say what it costs: nothing makes
+   their age visible. **Every other skill in the set has a `review-by`, so silence
+   would have read as an omission.**
+3. **The markers were derived by applying the method to itself.** `raw/`'s own
+   rule — a claim backed by neither execution nor a primary source is *convention*
+   — lands a method recorded by the person who ran it at convention. That is the
+   whole derivation, and it is why both marker tables have three rows and six rows
+   rather than one per directive.
+4. **`P-1` … `P-8` are dropped, and this is the sharpest id call in the repo.**
+   The source assigns those ids *precisely so that a citation survives reordering*,
+   and the conversion reverses it. Three grounds, recorded in
+   `enforceable-rules/evidence.md`: nothing installed carries `raw/README.md`, so a
+   number is a pointer into text the reader lacks; the other skills already refer
+   to these principles in prose, so shipping ids would create the asymmetry the
+   caching family settled against (**resolves for one install, dangles for the
+   other**); and **the transferable half survives** — each principle gets a stable
+   *name* as its `###` heading, and the shipped rule is *cite by a stable anchor,
+   never by list position*, which is what the never-renumber rule is actually for.
+   The cost is stated: a name can be paraphrased and a number cannot.
+5. **The check for a process directive is a written artifact whose absence is
+   visible**, and both skills say so instead of hedging a tool name. Which produces
+   the one genuine contradiction in the set, **stated rather than glossed**:
+   `enforceable-rules` publishes *machine-enforced or it is not a rule*, and by
+   that standard **nothing in `tech-decision-research` is a rule.** The resolution
+   is a scope distinction — that principle governs rules that bind code, and a
+   decision happens before there is code to check — plus the honest limit: **these
+   checks catch an omission and cannot catch a lie.** A frame document written
+   after the candidates were chosen passes every one of them.
+6. **`tech-decision-research` has no `## Wiring the gates` section — the first in
+   the set — and the absence is deliberate.** `enforceable-rules` has one, holding
+   the **two** things in either source that can genuinely be mechanised: an
+   evidence-order check and a dangling-pointer check. Both are **bespoke and
+   unbuilt**, which that skill states as a named gap rather than as a plan — a
+   reader is being told to build something the author has not.
+7. **Two checks were *added*, not converted, and they are marked as additions in
+   the directive text, the marker table and `evidence.md`.** This is the one place
+   these skills author rather than convert, and the ground for allowing it is the
+   source's own pattern: two of its three ship checks exist because a shipped rule
+   set failed them. **The enumeration check** (state contents by name, not by
+   count) rests on the failure this file has recorded **ten** times. **The
+   token-placement check** (extract identifier-shaped tokens from every source
+   region; require each per directive, not per file) is the mechanical form the
+   Java-backend reviews recorded twice and nobody built. The case against is
+   recorded too: every other skill converts, so a reader trusting these because
+   the rest of the set is conversion is getting something with a different
+   provenance.
+8. **The tripwire and dormancy rule was carried although the table did not assign
+   it.** `raw/README.md`'s Anatomy item 2 and adoption step 4 hold it — *dormant,
+   not inapplicable*; delete when the capability is absent **by design**, keep when
+   it is merely absent **so far**; deleting a dormant group removes the tripwire.
+   It is about how a rule set is *written* rather than about the paste mechanism,
+   and **every family in this set had to decide it** (`M-29`, `C-16`, `E-28`, and
+   the dormancy cut that produced `async-handoff-shapes` and the Java-backend
+   three-way split). Two sentences in *The shape of a rule*.
+9. **Three of the five incompleteness checks have their worked case published in
+   this skill set**, which makes this the first method material in the repo grounded
+   in the repo's own output rather than in unpublished passes. All four citations
+   were verified in the defining file before being written: the **predicate** check
+   → `money-storage`'s "none of which imports a client library" predicate, plus
+   `async-handoff`'s any-shape predicate surviving the 2026-07-29 threshold
+   withdrawal; the **composite-shape** check → `money-storage`'s shape table and
+   the five shapes now published as `async-handoff-shapes` plus two bans in
+   `async-handoff`; the **layer** check → `money-storage`'s ban on arithmetic in
+   the store's query language, shipping its runtime-SQL blind spot beside it.
+
+### The publish sweep, which resolved six sentences in five skills
+
+**`tech-decision-research` publishes the protocol that five published skills refer
+to as unnamed material**, and the sweep found it: `async-handoff/SKILL.md` ("both
+fell short of the protocol they were written under"),
+`async-handoff-java/SKILL.md` ("did not finish the protocol"),
+`caching/evidence.md` (the downgrade rule that makes all sixteen directives
+convention), and **three** sentences in `java-backend-observability/evidence.md`
+about the panel and the three-vote refutation. All six now name the skill.
+
+**Wholesale naming was correct here and the `llm-default-traps` lesson was still
+applied** — each sentence was checked against what the new skill actually
+publishes, and all six are about votes, panels or the downgrade rule, every one of
+which it carries. `caching/evidence.md` gained the stronger statement: that skill
+**names the caching rule set as its worked case for the downgrade**, so the
+interlock is two-way, and the marker is the rule applied without flinching rather
+than a shortfall.
+
+**One unrelated pre-existing defect was fixed in passing** and is called out so it
+is not read as part of the sweep: `money/evidence.md`'s `M-5` note said "Prior
+research in **this corpus** carries silent catches as a standing defect class" — a
+consumer-facing pointer at unpublished material, which is the caching review's
+finding, still uncorrected there. Now marked as not published in this skill set.
+
+### The review, 2026-07-30
+
+Run straight after authoring, against `raw/research-protocol.md`,
+`raw/README.md`, and the thirteen previously published skills. **The structure was
+checked by script and held**: 15 and 13 directives each carrying a `*Check:` line
+with an enforcement marker; no `P-n`, no `B-n`, no `DECISIONS.md`, no
+`ci/check_packs.py`, no `.specify`, no `speckit`, no reference into `raw/`; the
+only links being `SKILL.md` ↔ `evidence.md` in each directory; and fifteen skills
+listed by `npm run check`. **Three findings, and the first two are the ones to
+carry:**
+
+- **The tenth instance of the counting failure was created by publishing the skill
+  that publishes the check against it.** `tech-decision-research/evidence.md`
+  grounded its claim about the set's marker vocabulary in four tallies of other
+  files' contents — *primary-source verified* in 17 files, *uncertain* in 4,
+  *production-confirmed* in 1. **Publishing these two skills changed all four
+  within the hour**, because both files use the vocabulary they were counting: 19,
+  8 and 4. The counts were correct when measured, correct when written, and false
+  on arrival. They were replaced by the grep itself, and the instance is now the
+  worked case inside `enforceable-rules`' enumeration check. **The new half of the
+  lesson: a count of another document's contents can be invalidated by the act of
+  publishing the document that states it** — no sweep of *other* files would have
+  caught this one, because the decay was self-inflicted. It also forced the check
+  to state its one honest exception: **where the count *is* the evidence, state it
+  with the date it was taken and call it a re-runnable check, so its decay is the
+  point rather than the defect.**
+- **A cross-family citation was false, and running the check on its own source
+  caught a second defect in the author's own work.** `enforceable-rules/evidence.md`
+  claimed "the money skills record that the obvious layer-shaped name was
+  rejected" — that rejection is recorded **in this file and in no skill**, so the
+  claim was about contents that do not exist. Dropped; the predicate half, which
+  *is* in `money-storage`, was kept. Separately, **running the token-placement
+  check over `raw/`'s own tokens** found `verified` and `review-by` de-named as
+  "the verification date and the expiry date" in `enforceable-rules` while
+  `tech-decision-research` and every other skill name them literally — the
+  de-naming defect, found by the check the same file was publishing.
+- Counts that were re-derived and fixed rather than trusted: "thirteen rule sets
+  written against this bar" (they are skills, not rule sets, and the number moves —
+  now "every other skill in this set"); "six of their sixteen directives are type
+  design" in `caching` (replaced by naming two of them, in the source's own
+  wording — an expiry constructible only at catalog registration, a factory
+  accepting no free-text parameter); "three of the nine were superlatives"
+  (replaced by naming the three false superlatives); and "every one of their
+  sixteen directives" for `caching` (correct, but "every one of their directives"
+  cannot decay).
+
+**Left standing deliberately.** No rule ids, including the `P-n` reversal; the
+contradiction with *machine-enforced or it is not a rule*, stated rather than
+resolved away; `tech-decision-research` having no wiring section; the two added
+checks, marked as additions; and the two skills' unusual marker tables — three and
+six rows rather than one per directive — because the marker is a property of the
+whole material, not of each claim.
+
+### Still open for these two
+
+- **No outcome measurement for either.** Nobody has compared a decision made under
+  `tech-decision-research` against one made without it, and no rule cut by the
+  premise-specificity test has been recorded, so that test's discriminating power
+  is unmeasured. Both are stated as *uncertain* rather than as caveats. **These are
+  the first two skills in the set whose central claim is marked uncertain.**
+- **Refuter independence is asserted, not enforced.** Three fresh contexts of the
+  **same model** share one training corpus, so where the corpus holds the wrong
+  consensus the votes reproduce it three times. `tech-decision-research` states
+  this as the failure mode it is least protected against; the mitigation is
+  preferring a primary source, and a second model family would be the structural
+  fix.
+- **The eight principles have never been tested by exclusion.** No rule serving
+  none of them has been recorded, so nothing establishes that eight is enough.
+- **The two mechanisable checks are described and unbuilt** — including here.
+  `enforceable-rules` tells a reader to wire an evidence-order check and a
+  dangling-pointer check, and **this repo runs neither over its own skills.** That
+  is the same gap this file has recorded after every family, now stated inside a
+  published skill where a consumer can see it.
+- **`raw/research-protocol.md` and `raw/README.md` gain no row, and this hits no
+  rule conflict.** Neither has an instantiation table, so there is nothing to write
+  into `raw/` and nothing to decide — the same clean case as the two packs. **The
+  conflict still stands for `money-grade.md` §3 and `event-broker-discipline.md`
+  §3, and it is now the only decision Milestone 1 left open.**
+
 ## The `raw/` corpus — the model to preserve
 
 Read `raw/README.md` first; it is the authority on the corpus's own rules. The
@@ -1775,7 +2031,11 @@ it prevents turns invisible-forever or unbounded. `raw/research-protocol.md` is
 the method (§1–4, §6 apply to any decision at this bar; §5 is the pack-specific
 ship checks, including the B-13 predicate, B-15 composite-shape and B-16 layer
 checks). `raw/index.md` carries the *Audits owed* backlog for those three —
-**an empty cell there is a check nobody ran, not a clean file.**
+**an empty cell there is a check nobody ran, not a clean file.** **All of this is
+converted as of 2026-07-30**: §1–4 and §6 into `tech-decision-research`, and the
+principles, the premise test and §5's three checks into `enforceable-rules`, which
+names them by the source's own names since the `B-n` ids cannot ship. The
+audits-owed backlog stays here — it is bookkeeping.
 
 **Every pack's shared premise** (`holds-when`): code is written by LLM agents
 and no human reads it line by line. Rules are conditioned on it; verdicts are
@@ -1821,6 +2081,16 @@ quietly.
   extend to `P-n` or `DECISIONS.md`'s `B-n`: nothing installed carries a copy of
   `raw/README.md`, and `DECISIONS.md` is not in this repo at all. A relative link
   into `raw/` never leaves either, installed or pasted.
+  **Tested and upheld 2026-07-30 by the one conversion that could have overturned
+  it.** `enforceable-rules` publishes the eight design principles themselves, so an
+  installed skill now *does* carry them — which removes the narrowing's stated
+  ground. **The ids still stayed out**, on two grounds the narrowing did not
+  anticipate: the other skills already refer to those principles in prose, so
+  shipping ids would make one resolve for a reader who installed
+  `enforceable-rules` and dangle for one who did not; and a stable `###` heading
+  name carries the whole point of never-renumbering. **So the rule for `P-n` is now
+  absolute rather than contingent** — see *The method skills*, decision 4. `B-n` is
+  unchanged and unreachable.
 - **Name the corpus favourite and why it lost** (`P-6`). "Use X" does not
   override an agent's instinct; "the default is Y, rejected because Z" does.
   That sentence is the most important line in a pack — do not compress it away.
@@ -1829,17 +2099,36 @@ quietly.
 - Directive shape in seed text: **bold directive**, then the reasoning, then the
   check in parentheses with its enforcement marker.
 
+**Two of these invariants were narrowed by the last conversion, and the narrowings
+are the ones to know about** (2026-07-30, *The method skills*):
+
+- **"Dates and markers travel with the claim" assumes the source has a date.**
+  `raw/research-protocol.md` and `raw/README.md` carry no frontmatter, no marker
+  and no date at all. The rule holds by being applied honestly rather than
+  literally: **no date was invented**, the conversion date is stated once and
+  labelled as such, and the markers were derived by applying `raw/`'s own downgrade
+  rule to the material — which lands every directive in both skills at
+  *convention*. **Inventing a per-directive date would have been the exact failure
+  this invariant exists to prevent, in reverse.**
+- **"A rule ships with its named check, or it is not a rule" is about rules that
+  bind code.** Both method skills' directives bind a *process*, and their check is
+  a written artifact whose absence is visible. That contradiction is stated inside
+  the skills rather than hidden by hedged tool names, and it is the one place a
+  converted skill declares that a `raw/` principle does not reach it.
+
 Where the converted skills live, and what one skill is: *Where skills live*
 above. Two questions about the shape of a directive in a skill are open per skill
 and are listed at the end of that section. **Every authored skill set has now
-answered both, and nothing in `raw/` is left to raise them again** — see *The
-money skill family*, *The caching skill family*, *The asynchronous-handoff skill
-family*, *The `llm-default-traps` skill* and *The Java-backend skill family*. The
-three cross-stack families answered identically. Both pack-derived sets answered
-the second question the same way and the first differently, because neither is a
-neutral/stack pair: each names the tool beside the check kind in the same file,
-`llm-default-traps` as one skill and the Java-backend family as three cut by what
-the agent is doing.
+answered both, `raw/` is fully converted, and nothing in it is left to raise
+either question again** — see *The money skill family*, *The caching skill
+family*, *The asynchronous-handoff skill family*, *The `llm-default-traps` skill*,
+*The Java-backend skill family* and *The method skills*. The three cross-stack
+families answered identically. Both pack-derived sets answered the second question
+the same way and the first differently, because neither is a neutral/stack pair:
+each names the tool beside the check kind in the same file, `llm-default-traps` as
+one skill and the Java-backend family as three cut by what the agent is doing. The
+two corpus-derived skills answered the first in a third way — **most of their
+directives can have no gate at all** — and the second as everything else did.
 
 ## Dangling references in `raw/`
 

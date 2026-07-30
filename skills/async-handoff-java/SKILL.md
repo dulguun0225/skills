@@ -723,9 +723,10 @@ survey, and what reopens a decision — is in the `async-handoff` skill's own
 `evidence.md`.
 
 **Two passes, both 2026-07-29, and between them the two weakest passes behind any
-skill in this set.** Pass 1 wrote `E-1` … `E-28` and did not finish the protocol:
-the three refutation votes were not run, because the session's agent budget was
-exhausted mid-pass. **A hostile audit carrying a planted canary stands in their
+skill in this set.** Pass 1 wrote `E-1` … `E-28` and did not finish the protocol —
+published here as `tech-decision-research`, which is where the requirement it
+missed is stated: the three refutation votes were not run, because the session's
+agent budget was exhausted mid-pass. **A hostile audit carrying a planted canary stands in their
 place, and the canary was caught, so the audit's findings count.** Pass 2 closed
 the composite shapes — including `E-32` and `E-33` here — with **one researcher,
 no panel and no audit at all.**

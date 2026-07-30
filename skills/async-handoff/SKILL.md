@@ -1258,7 +1258,9 @@ survived three independent refutation votes against primary sources, because eac
 is a **design argument rather than an execution result**. There is **no
 production use of this rule set anywhere.**
 
-**Two passes, and both fell short of the protocol they were written under.** The
+**Two passes, and both fell short of the protocol they were written under — which
+is published in this skill set as `tech-decision-research`, so what they fell
+short of can be read rather than taken on trust.** The
 first wrote `E-1` … `E-28`: it ran a design steelman, two tool-evidence passes
 against primary sources, a candidate comparison, and a hostile audit carrying a
 planted defect of its own class — **the canary was caught, so that audit's

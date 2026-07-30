@@ -20,7 +20,10 @@ expertise to defer to.
 **No directive in `SKILL.md` is confirmed, and that is not a defect to be tidied
 away.** Each of the sixteen is a design argument rather than an execution result
 or a primary-source finding, and the research protocol these rules were written
-under auto-downgrades those to **convention**. **There is no production use of this
+under auto-downgrades those to **convention**. **That protocol is published in
+this skill set as `tech-decision-research`**, and it names this rule set as its
+worked case for the downgrade — so the marker below is the rule applied without
+flinching rather than a shortfall. **There is no production use of this
 rule set anywhere.** Read that before trusting a rule harder than its marker.
 
 **Review by 2027-01-29.** Past that date every **confirmed** marker reads as

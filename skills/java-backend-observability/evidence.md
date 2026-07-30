@@ -15,7 +15,8 @@ is distinguished from evidence.
 
 **It was short of the panel.** Exactly one claim — whether a logging context
 reaches a forked subtask — went through the adversarial panel and the three-vote
-refutation that this organisation's research protocol requires. **It produced two
+refutation that this organisation's research protocol requires — that protocol is
+published in this skill set as `tech-decision-research`. **It produced two
 directives**, the fan-out context capture and the backend pin, and **those two are
 the only ones carrying *confirmed*.** Every other claim was checked by one
 researcher against a primary source, or is convention. Treat each marker as written; do not read a neighbour's *confirmed*
@@ -95,7 +96,8 @@ drops only part of a rule set, which is why [SKILL.md](SKILL.md) says which part
 
 - **The fan-out context rule — confirmed 2026-07-27 under a three-vote
   adversarial pass, with the claim's wording corrected by the panel.** This is
-  the one claim in this area that got the protocol's refutation panel: three
+  the one claim in this area that got the refutation panel `tech-decision-research`
+  requires: three
   fresh-context refuters, given distinct attack surfaces — the platform's
   inheritance mechanism, backend variance, and the inference itself — each
   instructed to refute and to **default to refuted when uncertain.** All three
@@ -280,7 +282,8 @@ Recorded by the 2026-07-27 pass, plus the items its own notes flag.
 - **The panel that has never run over this area.** Every rule here except the
   fan-out context capture was verified against primary sources but **never put
   through the adversarial panel and three-vote refutation** the research protocol
-  requires. **Running that panel is the named condition that promotes these
+  requires — published in this skill set as `tech-decision-research`, where both
+  are stated. **Running that panel is the named condition that promotes these
   markers.** Until then, read them as an unrefuted claim should be read.
 - **Structured concurrency finalizes.** The same event that reopens the fan-out
   helper in `java-backend-rules` reopens this rule, because `StructuredTaskScope`
