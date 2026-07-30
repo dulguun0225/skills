@@ -130,7 +130,12 @@ and are priced for repos where money moves.
 **`M-26` was promoted out of the money rules on 2026-07-25.** Contract
 conformance fuzzing is now a general rule wherever an HTTP contract exists;
 what stays money-specific is the edge-case input set, which is `M-19` in
-`money-api`. One gate, one tool, two sets of inputs.
+`money-api`. One gate, one tool, two sets of inputs. **The general rule is
+published for one stack — it is *the committed document is the single conformance
+oracle* in `java-backend-api`**, which carries the gate's machinery (deterministic generation, a pinned seed, one
+synthetic tenant, no retries) and names `M-26` and `M-19` as the money side.
+`M-26` stays as written, because a repo on any other stack installs the money
+skills and no general contract rule at all.
 
 **`M-25` — the worked-example-plus-golden-test rule. Convention,
 2026-07-21.** No external evidence survived and the rule carries no citation.

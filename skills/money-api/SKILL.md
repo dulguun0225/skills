@@ -145,7 +145,10 @@ own; see [evidence.md](evidence.md).*
 required, not merely honored:** absent → **428**, stale → **412**, and the
 effect never runs. This is the money-grade refinement of the repo's
 optimistic-concurrency rule and reuses the same version column, so a repo with
-no such general rule states one here rather than assuming one.
+no such general rule states one here rather than assuming one. **On a Java
+backend that general rule is published** — *the guarded version-column update*
+and *strong ETags* in `java-backend-api`, which name this directive as the money
+refinement of both.
 *Contract lint keyed off the money tag. Convention, 2026-07-25 — the mechanism
 it rests on is confirmed: a guarded update affects zero rows when the row is
 stale or absent, and treating zero rows as a no-op is the lost-update failure.*

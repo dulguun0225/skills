@@ -219,11 +219,12 @@ rules unchanged.
 
 **Do not use the phrase "rebuildable-cache premise" for a cache.** It is already
 in use, for **telemetry's disposability** — "no correctness rule, audit claim, or
-business record depends on it" — by a platform rule set that is **not published
-in this skill set**, and it carries a live re-open trigger there that fires when
-someone proposes reading a business answer out of metrics. The collision is
-therefore invisible from inside these two skills, which is exactly why it is
-written down. A derived store rebuilt from the authoritative store is a *different*
+business record depends on it" — by the `java-backend-observability` skill, and
+it carries a live re-open trigger there that fires when someone proposes reading
+a business answer out of metrics. **That skill now states the collision from its
+own side too.** It remains worth writing down here, because these cache rules are
+language-neutral and that skill covers one stack, so a repo on any other stack
+holds this half of the collision and not the other. A derived store rebuilt from the authoritative store is a *different*
 property: yesterday's histogram is not recomputable from the database.
 Redefining the existing phrase would make that trigger incoherent. This rule set
 says **derived-store premise** instead.

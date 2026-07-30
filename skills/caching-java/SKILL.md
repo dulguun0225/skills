@@ -164,9 +164,10 @@ repo.)*
   protecting nothing. That is the same erasure trap as the unloggable-domain-type
   rule on this stack, where ArchUnit sees a logger's erased `Object...` signature
   rather than the argument's static type. **`llm-default-traps` carries that
-  case's tool ban and the erasure ground behind it; the domain-type rule the ban
-  enforces belongs to a platform rule set not published in this skill set**, so
-  the trap is stated here too rather than left to a pointer. The concrete type
+  case's tool ban and the erasure ground behind it, and the domain-type rule the
+  ban enforces is in `java-backend-observability`** — install it, since a repo on
+  this stack wants both; the trap is stated here too rather than left to a
+  pointer, because this rule has to hold whether or not that skill is installed. The concrete type
   is known at the **catalog registration site** and a source-level checker sees
   static types, so the check goes there. A stack with reified generics will not
   have this divergence; a structurally typed one will have it worse. (Error Prone

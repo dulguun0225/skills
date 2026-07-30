@@ -211,10 +211,12 @@ nothing** — a false green, which is worse than no rule at all, because the bui
 now reports that the type cannot leak.
 
 **This directive bans a tool, and does not state the rule the tool would
-enforce.** The domain-type-unloggability rule itself belongs to this stack's
-platform rule set, which is **not published in this skill set** — so what ships
-here is the enforcement ban and the erasure ground behind it, which is the half
-an agent gets wrong. The same erasure trap is recorded by the caching skills for
+enforce.** The domain-type-unloggability rule itself is a platform rule, and it
+is published — **it is in `java-backend-observability`**, which carries it as the
+rule and points here for the tool ban. What ships here is the enforcement ban and
+the erasure ground behind it, which is **the half an agent gets wrong**, and it
+ships here rather than there because the trap binds every JVM repo while that
+skill covers one backend stack. The same erasure trap is recorded by the caching skills for
 their own serialization rule, where a bytecode-reading tool sees an erased type
 parameter and decides nothing; a source-level checker sees static types, and that
 is where any check of this kind goes.

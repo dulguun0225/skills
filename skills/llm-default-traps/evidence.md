@@ -129,9 +129,11 @@ carry this skill's.
 
 - **The domain-type-unloggability rule itself.** This skill bans ArchUnit as its
   host and states the erasure ground; the rule requiring domain types to be
-  unloggable belongs to this stack's platform rule set, which is **not published
-  in this skill set**. The ban is the half an agent gets wrong, which is why it
-  is the half that ships here.
+  unloggable is **published in `java-backend-observability`**, which states it as
+  a directive and points back here for the host ban. The ban is the half an agent
+  gets wrong, which is why it is the half that ships here — and it stays here
+  rather than moving there, because the erasure trap binds every JVM repo while
+  that skill binds one backend stack.
 - **The version pin, restated per stack.** The pin is stated once, in
   [SKILL.md](SKILL.md), and the money, caching and asynchronous-handoff Java
   skills point here without repeating the version. **Their side was read before

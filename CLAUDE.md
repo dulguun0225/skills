@@ -11,10 +11,9 @@ in the public skills.sh directory**.
 State as of 2026-07-30: there is no build, lint, or test tooling beyond the
 discovery check. What exists is the project setup (node and the `skills` CLI
 pinned, LF enforced repo-wide, commands as npm scripts — see *Commands*), the
-decided skill decomposition and layout (*Where skills live*), and **three
+decided skill decomposition and layout (*Where skills live*), and **four
 authored families plus one standalone skill — every cross-stack source in
-`raw/rule-sources/` is now converted, and the first *pack* has been converted
-too**:
+`raw/rule-sources/` is converted, and both *packs* are converted too**:
 
 - **The money family, authored 2026-07-30 in two phases** — `skills/money/`,
   `skills/money-api/`, `skills/money-storage/` and `skills/money-java/`
@@ -31,17 +30,23 @@ too**:
   `skills/async-handoff-java/` (`SKILL.md` + `shapes.md`), all 36 directives
   `E-1` … `E-36` defined exactly once. See *The asynchronous-handoff skill
   family*.
-- **`llm-default-traps`, authored 2026-07-30 last** — `skills/llm-default-traps/`
+- **`llm-default-traps`, authored 2026-07-30 fourth** — `skills/llm-default-traps/`
   (`SKILL.md` + `evidence.md`), nine directives, **no rule ids**. The first
   pack-derived skill and the first single-skill conversion, and it is now the
   **owner of record for the jqwik version pin** that three stack skills name. See
   *The `llm-default-traps` skill*.
+- **The Java-backend family, authored 2026-07-30 after that** —
+  `skills/java-backend-rules/`, `skills/java-backend-api/` and
+  `skills/java-backend-observability/` (each `SKILL.md` + `evidence.md`), 67
+  directives, **no rule ids**. The second pack-derived conversion and **the first
+  stack-only family — there is no neutral sibling, because the pack *is* the
+  stack.** See *The Java-backend skill family*.
 
-All ten are discovered by `npm run check`. **Milestone 1 is to turn the content
-of `raw/` into skills**; the three cross-stack sources and one of the two packs
-are done, and the remaining unwritten rows of the table in *Where skills live*
-are one pack-derived (`java-backend-rules`) and two corpus-derived
-(`tech-decision-research`, `enforceable-rules`).
+All thirteen are discovered by `npm run check`. **Milestone 1 is to turn the
+content of `raw/` into skills**; the three cross-stack sources and **both** packs
+are done, and the only remaining unwritten rows of the table in *Where skills
+live* are the two corpus-derived ones — `tech-decision-research` and
+`enforceable-rules`.
 
 **`raw/` is raw data — input material, never output.** It holds source text
 imported from elsewhere, to be read and converted; nothing in it is a published
@@ -99,12 +104,13 @@ npm run try -- <name>         # run one skill from the working tree without inst
 
 `npm run check` is the only self-check that exists: it answers whether a skill is
 in a discoverable location with valid frontmatter. Anything it does not list is
-invisible to every consumer. Since 2026-07-30 it lists ten — `async-handoff`,
-`async-handoff-java`, `async-handoff-shapes`, `caching`, `caching-java`,
-`llm-default-traps`, `money`, `money-api`, `money-storage`, `money-java`. It says
-nothing about resource files: `evidence.md`, `api.md`, `storage.md` and
-`shapes.md` are unlisted and unchecked, so a broken relative link inside a skill
-passes it.
+invisible to every consumer. Since 2026-07-30 it lists thirteen —
+`async-handoff`, `async-handoff-java`, `async-handoff-shapes`, `caching`,
+`caching-java`, `java-backend-api`, `java-backend-observability`,
+`java-backend-rules`, `llm-default-traps`, `money`, `money-api`, `money-storage`,
+`money-java`. It says nothing about resource files: `evidence.md`, `api.md`,
+`storage.md` and `shapes.md` are unlisted and unchecked, so a broken relative
+link inside a skill passes it.
 
 **It caught a real defect on 2026-07-30, and it is the only thing that would
 have.** `llm-default-traps` was written with a `: ` — colon then space — inside
@@ -169,7 +175,7 @@ about to be cached.
 
 | Skill | Content drawn from |
 | ----- | ------------------ |
-| `java-backend-rules` | `raw/seed/java-backend.md` **excluding lines 442–744**, split by area; evidence and dates from `raw/java-backend.md` §4. Those lines are the money sections and belong to `money-java` |
+| `java-backend-rules`, `java-backend-api`, `java-backend-observability` | `raw/seed/java-backend.md` **lines 1–441 only** — everything from 442 on is the money, cache and broker sections, already converted; evidence and dates from `raw/java-backend.md` §4 under the same eight `###` headings, plus §3's rejections and §5's triggers. The split is in *The Java-backend skill family* below |
 | `llm-default-traps` | `raw/seed/agent-traps.md`; evidence from `raw/agent-traps.md` §3 |
 | `money`, `money-api`, `money-storage`, `money-java` | `raw/rule-sources/money-grade.md` and `raw/seed/java-backend.md` lines 442–744 — the per-skill split and the evidence map are in *The money skill family* below |
 | `caching`, `caching-java` | `raw/rule-sources/cache-discipline.md` and `raw/seed/java-backend.md` lines 745–935; Java evidence from `raw/java-backend.md` §4 under `Cache discipline`. The split is in *The caching skill family* below |
@@ -220,15 +226,23 @@ rather than merely inheriting it** (2026-07-30 — *The asynchronous-handoff ski
 family*). What settles it is the shape all three share: a portable directive set
 whose enforcement is per stack. **The rule is now closed for cross-stack sources,
 because there is no fourth one.** A skill drawn from a *pack* rather than a
-source — `java-backend-rules`, `llm-default-traps` — has no such split to make and
-is not covered by this. **`llm-default-traps` confirmed that on authoring**
-(2026-07-30): it shipped as one skill naming both the check kind and the tool in
-one file, and *The `llm-default-traps` skill* records the two grounds beyond this
-one.
+source has no such split to make and is not covered by this. **Both packs
+confirmed that on authoring, and the rule is now closed for them too, because
+there is no third pack:**
+
+- **`llm-default-traps`** (2026-07-30) shipped as **one** skill naming both the
+  check kind and the tool in one file. *The `llm-default-traps` skill* records the
+  two grounds beyond this one.
+- **The Java-backend family** (2026-07-30) shipped as **three** skills, and that
+  is not a counter-example: **the split is by what the agent is doing, not
+  neutral-versus-stack.** All three name their tools, because the pack *is* the
+  stack and there is no sibling to defer a tool to. *The Java-backend skill
+  family* records the consequence that bit — a stack skill with no neutral sibling
+  will still hedge tool names out of habit, and twelve did.
 
 ### Where `llm-default-traps` stands
 
-**Authored 2026-07-30, last of the four — this subsection is superseded by *The
+**Authored 2026-07-30, fourth of five — this subsection is superseded by *The
 `llm-default-traps` skill* below**, which is the record. What it used to hold was
 a plan: that the skill instructs the agent directly, that no directive in it is
 check-kind-only, and three open questions carried with a recommendation each.
@@ -1106,7 +1120,7 @@ than rhetorical.
 
 ## The `llm-default-traps` skill
 
-Authored 2026-07-30, last of the four, in one pass. Two files:
+Authored 2026-07-30, fourth of five, in one pass. Two files:
 
 ```
 skills/llm-default-traps/  SKILL.md  evidence.md   nine directives, no ids
@@ -1222,11 +1236,10 @@ deliberately points back at the directive rather than restating the number.
 Two caching sentences — one in `caching/SKILL.md`, one in `caching-java` — said
 the unloggable-domain-type rule belongs to "a platform rule set not published in
 this skill set". This skill publishes the **tool ban** (Error Prone, never
-ArchUnit) and the erasure ground behind it; the **rule itself** lives in
-`raw/seed/java-backend.md`'s Observability section and belongs to
-`java-backend-rules`, still unwritten. So both sentences were **narrowed, not
-resolved**: they now name `llm-default-traps` as carrying the ban and the ground,
-and keep saying the domain-type rule is unpublished.
+ArchUnit) and the erasure ground behind it; the **rule itself** is the platform
+Observability rule, which was unwritten at the time. So both sentences were
+**narrowed, not resolved**: they named `llm-default-traps` as carrying the ban and
+the ground, and kept saying the domain-type rule was unpublished.
 
 **The lesson: the publish-obliges-a-sweep rule needs a second step — check what
 the new skill actually publishes against what the old sentence actually
@@ -1235,6 +1248,17 @@ this is the first where wholesale replacement would have been **false**. The oth
 two "not published in this skill set" sentences in the caching family are about
 telemetry's disposability and the `rebuildable-cache premise` collision; both were
 read and correctly left alone.
+
+**Both halves resolved later the same day**, when `java-backend-observability` was
+authored (*The Java-backend skill family*). The domain-type rule is now published
+there, the two caching sentences and this skill's two matching ones were rewritten
+to name it — each stating why the ban stays in `llm-default-traps` rather than
+moving, since the erasure trap binds every JVM repo while that skill binds one
+backend stack — and **the two sentences correctly left alone were rewritten too**,
+because that publish resolved the telemetry-disposability half as well. **The
+lesson survives its own resolution:** narrowing was the right call at the time,
+and the sentences that were right to leave alone were right for a reason that then
+changed. Nothing checks either step.
 
 ### Still open for this skill
 
@@ -1364,6 +1388,349 @@ injection-surface rules — the loser there is a habit rather than a package —
 is the source's own sentence and holds for all nine on the reading that the
 rejected default is named inline.
 
+## The Java-backend skill family
+
+Authored 2026-07-30, straight after `llm-default-traps`, in one pass. Six files:
+
+```
+skills/java-backend-rules/          SKILL.md  evidence.md   Platform, Concurrency, Time, Null, ban list, evidence toolchain  31
+skills/java-backend-api/            SKILL.md  evidence.md   the general API contract                                        22
+skills/java-backend-observability/  SKILL.md  evidence.md   the general Observability section                               14
+```
+
+Sixty-seven directives, each defined exactly once, one `###` heading each. All
+three listed by `npm run check`, which now lists thirteen. Drawn from
+`raw/seed/java-backend.md` **lines 1–441** — the whole file minus the three
+already-converted conditional sections — with evidence from `raw/java-backend.md`
+§4's eight matching headings, the rejections in §3, and the triggers in §5.
+
+### What was forced by the four precedents
+
+- **Both open questions from *Where skills live* answered as every skill
+  answered them**: each skill instructs the agent directly, and each carries a
+  one-time `## Wiring the gates` section with a record of what was wired and what
+  was skipped, because **the gate is what catches the next agent.**
+- **No rule ids**, following `llm-default-traps` decision 2 — a pack has none to
+  inherit, `###` headings are the durable anchor, and cross-skill citation is by
+  skill name plus subject. **No `P-n`, no `B-n`, no `DECISIONS.md`, no reference
+  into `raw/`, no link leaving a skill directory** — verified by script.
+- **Marker and date inline on every directive**, evidence one hop away, the
+  marker ceiling stated near the top of each file, `review-by` **2027-01-21** with
+  the lapse rule, and the status tier **decided, not yet validated** glossed as
+  *no production use yet* — checked against the definition rather than written
+  from the phrase.
+
+### What this family decided that no predecessor did
+
+1. **A stack-only family: three skills, no neutral sibling, and the split rule
+   in *Where skills live* does not reach this case.** That rule is closed for
+   cross-stack sources and does not cover a pack; `llm-default-traps` shipped as
+   one skill. Here the pack **is** the stack — every directive names a Java tool,
+   so there is nothing portable to lift out and no per-stack instantiation to defer
+   a tool to. **The consequence that bites: a tool named only in the evidence trail
+   must be named in the directive, because there is no stack sibling to name it
+   in.** That is the money audit's finding arriving through a different door, and
+   the review below found twelve instances of it.
+2. **The cut is by *what the agent is doing*, and two of the three lines are the
+   source's own stated conditions.** The API-contract section states that it binds
+   when an OpenAPI document exists; the Observability section states that it binds
+   when nobody watches the running system. Those became skills. **Unlike
+   `async-handoff-shapes` this is not a pure dormancy cut**, and the difference is
+   recorded because it looks like one: `raw/java-backend.md` §1 is explicit that a
+   repo with a staffed rota **keeps the observability emission rules** — they are
+   code rules under the pack's main premise — and re-decides only the alerting
+   ones. So that skill's condition is partial, and the skill says which half
+   survives dropping the premise. **This is the only place in the set where
+   dropping a premise drops part of a rule set.**
+3. **The third ground for the cut is progressive disclosure, stated because the
+   dormancy argument alone does not carry it.** An agent writing a jOOQ query
+   should not load 22 contract directives or 14 telemetry directives. The
+   always-loaded bodies are ~700, ~640 and ~460 lines rather than one ~1800-line
+   file, and three descriptions each fire at their own moment — adding an endpoint,
+   adding a log line, writing a query.
+4. **Names keep the `java-backend-` prefix so the family is visible in a flat
+   list**, and `java-backend-rules` keeps the name the table already carried.
+   `java-backend` alone was rejected: it reads as "everything about Java backends"
+   for a skill that excludes contracts, telemetry, money, caching and asynchronous
+   handoffs.
+5. **The ban list is the one place a marker and date are *not* inline per
+   directive, and the skill says so.** Its six entries share one ground and one
+   enforcement host — the source states the check once, in the last bullet — so the
+   marker (**convention, 2026-07-21**) and the host are stated once at the group
+   head with an explicit note that this is deliberate rather than a dropped marker.
+   Every other directive in the family carries both inline.
+6. **Three Platform directives have no evidence note anywhere**, and their dates
+   are an inference rather than a verification. The WebFlux paradigm ban, the
+   Flyway-migrations rule and the Jackson pick are dated **2026-06-11..14** because
+   that is the only pass whose scope covers them, and all three skills say the
+   dating was drawn during conversion. **The WebFlux ban is the consequential
+   one** — no pass ever examined the alternative it bans, so `evidence.md` states
+   it as an unexamined ban rather than a refuted alternative and adds a re-open
+   trigger the passes did not write down.
+7. **`confirmed` means two different things inside `java-backend-rules`, and the
+   date is what tells them apart.** The 2026-07-24 concurrency pass ran three
+   refutation votes; the 2026-07-25 persistence pass wrote *confirmed* against
+   single-researcher documentation checks. Both usages are carried rather than
+   re-graded — **re-marking someone else's verdict is not what converting it
+   does** — with the ambiguity stated at the top of the file. `java-backend-api` is
+   the pure case: **every** *confirmed* there is a documentation check, because
+   that pass cast no vote at all.
+
+### The interlocks, and which ones now resolve
+
+- **`llm-default-traps` → resolved, and this is the interlock the previous
+  conversion could only narrow.** That skill publishes the ban on ArchUnit as the
+  host for a non-loggability rule; **the rule itself is now
+  *domain types are unloggable by type* in `java-backend-observability`.** Both
+  sentences that said the domain-type rule was unpublished were rewritten, in
+  `llm-default-traps/SKILL.md` and its `evidence.md`, each stating why the ban
+  stays there rather than moving here — the erasure trap binds every JVM repo,
+  this skill binds one backend stack.
+- **`caching` → resolved twice.** Its erasure-trap paragraph and `caching-java`'s
+  `C-10` both said the domain-type rule belonged to an unpublished platform rule
+  set; both now name the skill. And **the "rebuildable-cache premise" naming
+  collision now has both sides published** — `caching` deliberately says
+  *derived-store premise* to avoid redefining telemetry's disposability, and that
+  directive is now *telemetry is rebuildable, disposable data* here, which states
+  the collision from its own side. Three edits in `caching/SKILL.md` and
+  `caching/evidence.md`, one in `caching-java`.
+- **`money` and `money-api` → pointers added, not resolutions.** `M-26`'s note in
+  `money/evidence.md` said contract conformance fuzzing "is now a general rule"
+  with no published home; it now names *the committed document is the single
+  conformance oracle*. `M-18` said "a repo with no such general rule states one
+  here"; it now names the general rule. **Both original sentences stay true and
+  neither was replaced wholesale** — which is the `llm-default-traps` lesson
+  applied: check what the new skill publishes against what the old sentence
+  claimed, because wholesale replacement is sometimes false.
+- **`java-backend-rules` → `caching` and `async-handoff`, a new outbound
+  interlock.** The transaction seam is a shared resource and **two published
+  skills add requirements to it that this family's directive does not state** —
+  `C-9` needs cache invalidation reachable only from its post-commit
+  registration, and `E-5` needs a general-purpose post-commit callback *not* to
+  exist. The seam directive names both and says plainly that it fixes the
+  transaction boundary and not the post-commit surface.
+- **Cross-family reference style unchanged: name the skill, never link to it.**
+  No relative link leaves any skill directory in the family.
+
+### Still open for this family
+
+- **No panel has run over two of the three areas.** The contract pass ran one
+  researcher and cast no refutation vote; the observability pass panelled exactly
+  one claim. Only the 2026-07-24 concurrency group and the 2026-07-21 founding
+  group had votes. **Running the panels is what promotes those markers**, and both
+  skills say so at the top rather than only in `evidence.md`.
+- **`java-backend-api` has no decimal-string directive, and the source claims it
+  does.** `raw/java-backend.md` §3's integer-minor-units rejection says the
+  API-contract rules "extend the string-decimal choice to every decimal field" —
+  but no directive in the general section states it. The rule that does is `M-15`
+  in `money-api`, filed under money-grade. **So a repo with a rate or percentage
+  field on the wire and no money feature has no rule at all.** Found while
+  authoring, stated as that skill's first named gap, and it is the family's
+  clearest content gap rather than an enforcement one.
+- **The mutation-testing gap in the general tier.** The coverage floor cannot see
+  whether a test asserted anything, and mutation testing is scoped to money
+  packages only — verified in `money-java`, which pins pitest "scoped to the money
+  packages". So a general-tier package can sit green over vacuous machine-written
+  tests with nothing detecting it. The source names the triggers that would extend
+  it; none has fired.
+- **The `ExecutorService.close()` ground is thinner than the rule built on it.**
+  The fan-out helper's ban on the raw shape rests on close semantics asserted only
+  in the rejected-alternatives record, with **no javadoc citation anywhere in the
+  trail and no pass listing the helper in scope.** Marked convention, with a
+  re-verify-at-adoption instruction. The helper is worth building regardless; the
+  *ban* is only as strong as that claim.
+- **The three-Platform-directives gap and the WebFlux question** — item 6 above.
+- **`java-backend.md` §3 and §5 gain no row, and this hits no rule conflict.**
+  Unlike `money-grade.md` §3 and `event-broker-discipline.md` §3, a **pack** has
+  no instantiation table, so there is nothing to write into `raw/` and nothing to
+  decide. That conflict still stands for the two sources.
+- **No check enforces any conversion invariant**, same as after every previous
+  family. The sweep over these six files was run **by script** on 2026-07-30 and is
+  clean: 67 directives across three skills totalling exactly the seed's 67
+  directive bullets in lines 1–441; every directive carrying a check, a marker and
+  a date except the six ban-list entries covered by the group-level marker; no
+  `P-n`, no `B-n`, no `DECISIONS.md`, no reference into `raw/`, no link leaving a
+  skill directory, and no reference to the unpublished prior-art documents by
+  name. `npm run check` sees none of the three `evidence.md` files.
+
+### The adversarial review, 2026-07-30
+
+Run against `raw/seed/java-backend.md` 1–441, `raw/java-backend.md` §1, §3, §4
+and §5, and the ten previously published skills. **The structure held and was
+checked mechanically**: the 67 directive statements' distinctive tokens — every
+backticked identifier, RFC number and status code in the seed's directive region —
+diffed against the three skills, with 121 distinct tokens checked. **Five
+findings generalise:**
+
+- **A stack skill with no neutral sibling will hedge tool names anyway, and the
+  hedge is invisible to every other check.** Twelve of the 121 seed tokens were
+  missing, and **every one was a tool the skill described instead of naming**:
+  `ProblemDetail`, `ResponseEntityExceptionHandler`, `@PatchMapping`,
+  `ISO_LOCAL_DATE`, `MeterFilter`, `promtool test rules`,
+  `GeneralCodingRules.NO_CLASSES_SHOULD_ACCESS_STANDARD_STREAMS`,
+  `NO_CLASSES_SHOULD_USE_JAVA_UTIL_LOGGING`, `jacoco-maven-plugin`,
+  `COVEREDRATIO`. Plus springdoc, HikariCP and Prometheus, which the seed names
+  unbackticked and the skills had reduced to "the code-first generator", "the
+  connection pool" and "the metrics vendor". **The cause is a style carried from
+  the neutral skills, where withholding the tool is correct** — and the money audit
+  found the same defect from the other direction, as a hedge in a stack skill whose
+  evidence named the tool. **The mechanical form of the check is the finding worth
+  keeping: extract every identifier-shaped token from the source's directive region
+  and require each in the converted text.** It caught all twelve; no marker, id or
+  link sweep would have caught any.
+- **A superlative about the other skills is a count in disguise — the async-handoff
+  review's finding, repeating on the very next conversion.** `java-backend-rules`
+  called the fan-out context rule "the one rule in this skill set with a full
+  three-vote adversarial panel behind it." **False**: the money founding pass ran
+  three votes per claim, the caching pass ran three on its load-bearing claims, and
+  this family's own 2026-07-24 concurrency group had one. Narrowed to "the one rule
+  in that skill's area." **Seventh instance of the counting failure in this repo.**
+- **A ceiling stated as "exactly one confirmed claim" must be checked against the
+  marker table, not against the pass note.** `java-backend-observability` said one
+  claim alone carries *confirmed* while its own table gave the marker to two
+  directives — the fan-out capture and the backend pin — because the panel produced
+  **both** ("pin the backend, and do not depend on inheritance even where it
+  works" is one conclusion, not two findings). Three places said one; a named gap
+  said "thirteen of these fourteen." All now say two, and the gap **names** the
+  exception instead of counting the remainder.
+- **A dormancy claim needs the enforcement halves enumerated, or it is wrong in
+  both directions.** `java-backend-api` said that without an OpenAPI document
+  "most of them are dormant, and the two directives that survive say so inline."
+  Neither half was true: most directives survive in some form, because ArchUnit or
+  a test hosts them, and more than two do. Replaced with the actual split — six
+  gates plus every lint go dormant; eleven ArchUnit-or-test-hosted rules do not —
+  **stated before the first directive, because a reader without a document needs it
+  to know whether the skill applies at all.**
+- **A write-once violation between a new skill and a published one hides inside a
+  rejected-alternatives bullet.** The ban-list entry for the caching annotations
+  restated **all four** of `caching`'s rejection grounds, which that skill already
+  carries as its language-neutral rejected alternative. The source's own division
+  is that the neutral grounds live in the cache source and *the pack adds the
+  Spring-specific one*. Now the entry states the ban, adds only the stack-shaped
+  ground (the size of the corpus pull on this stack), defers the four, and warns
+  that a repo installing this skill without `caching` **has the ban and no
+  replacement**. **Rejected-alternative prose is where duplication survives an
+  id-uniqueness sweep**, because it carries no id.
+
+The rest, which do not generalise: the exponent-4 contradiction was attributed to
+"the same pass's storage note" when the disagreement is **between** the 2026-07-21
+storage pass and the 2026-07-25 contract pass — a cross-file citation getting the
+*provenance* wrong rather than the id; five vendors were anonymised as "one large
+vendor", "a well-known payments API", "a second well-known API", "one payments
+vendor" and "the metrics vendor" where `money-api` names Stripe, Adyen and PayPal
+outright, so all are now named (Stripe, GitHub, Salesforce, Google's AIP-158,
+Prometheus) for consistency and because a named loser is the load-bearing half;
+"two of the three halves" of the logger ban conflated ArchUnit's two public rules
+with the per-repo raw-logger predicate and is now stated without a count; three
+directives lacked a date or a confidence marker (*the ban list is an executable
+test class*, *no offset parameter in the contract*, and the ban-list group), all
+now carrying one; and the prior-art references — an internal decision record and
+deep-research result of another repository — were consumer-facing pointers at
+unpublished material, now stated as such in all three `evidence.md` files, which
+is the caching review's finding applied to a provenance note rather than to a
+claim.
+
+**Left standing deliberately.** The three-way split and its non-dormancy third
+ground; no rule ids; naming PostgreSQL, jOOQ, Flyway, squawk, springdoc, vacuum,
+oasdiff, Schemathesis, Logback, Log4j 2, reload4j, Micrometer, Prometheus,
+promtool, JaCoCo, HikariCP, ArchUnit, Error Prone, NullAway, JSpecify, Jackson and
+Testcontainers in what are stack skills by construction; carrying the source's own
+inconsistent use of *confirmed* rather than re-grading it, with the inconsistency
+stated; and the ban list's group-level marker.
+
+### The second review, 2026-07-30
+
+Run straight after the first, against the same sources. **The structure was
+re-verified by script and held**: 67 directive headings totalling the seed's 67
+bullets, each carrying a check, a marker and a date except the six ban-list
+entries the group-level marker covers; 115 of the seed's 116 directive-region
+tokens present, the one absentee being a concatenated method list whose parts are
+each named; no `P-n`, no `B-n`, no `DECISIONS.md`, no reference into `raw/`, no
+prior-art document named, every link `SKILL.md` ↔ `evidence.md` inside its own
+directory, and thirteen skills listed by `npm run check`. **Five findings
+generalise, and the first three are one finding wearing three faces:**
+
+- **The de-naming defect has a second home, and the first review's check could not
+  see it.** That check extracted identifier tokens from **the seed's directive
+  region** and caught twelve hedges. Running the same extraction over
+  `raw/java-backend.md` §4 — the *evidence* source — surfaced **23 more, every one
+  in an `evidence.md`**: `Byte Buddy`, `LogbackMDCAdapter`, `BasicMDCAdapter`,
+  `ContextPropagatingTaskDecorator`, `spring.task.execution.propagate-context`,
+  `Slf4jThreadLocalAccessor`, `ContextSnapshot`, `MDC.setContextMap(null)`,
+  `CommonStructuredLogFormat`, `@JsonCreator`, Jackson's `required`, the
+  idempotency draft's full name, Fowler's Optimistic Offline Lock, JPA `@Version`,
+  and springdoc issue numbers. **The check was right and its input region was too
+  narrow** — the previous session recorded the mechanical form as the finding worth
+  keeping, and the form is worth keeping; run it over every source region a skill
+  draws from, not only the paste text.
+- **A do-not-cite entry whose subject is anonymised cannot be obeyed, and is worse
+  than no entry** — it tells the reader a trap exists and withholds which thing is
+  the trap. Four shipped: "Cite the order-flag issue, not the earlier unrelated
+  one" (#1362 versus #857), "Cite the fix version and the commit" (LOGBACK-624,
+  1.1.5, `aa7d584`), "Cite the repository" (`micrometer-metrics/context-propagation`),
+  and — the sharpest — "its two open or closed issues **named above**", which names
+  neither, in the sentence that claims they are named. **The async-handoff review's
+  rule was that a claim to have verified is itself a claim to check; this adds that
+  a claim to have *named* is too.**
+- **A tool the seed names was dropped in exactly the two places the seed names it,
+  and inserted in the two places the seed leaves it generic.** `vacuum` hosts all
+  five OpenAPI lints; the seed names it for the offset-parameter and
+  temporal-naming rules and says only "a lint" / "an OpenAPI lint" for the
+  problem-schema and `PATCH` rules. The conversion inverted all four, and the
+  wiring step, the named gap and the re-open trigger hedged it as "the lint host"
+  besides. **The first review's sweep passed because the string was present
+  somewhere in the file. Presence is not placement — a token check has to be
+  per-directive, not per-file**, which is the one respect in which the mechanical
+  form recorded above is insufficient as recorded.
+- **Eighth instance of the counting failure, and the first where a skill's count
+  contradicts its own `evidence.md` *and* the source.**
+  `java-backend-observability` said "**Seven** of the directives below are
+  convention"; six are, and the seventh item is a *claim* inside a directive whose
+  tool split is primary-source verified. Its own `evidence.md` lists six and so
+  does `raw/java-backend.md` §4. Now stated by name with no count, and the mixed
+  directive called out separately with the instruction to read the marker beside
+  each half. **The lesson that is new: a count can be wrong by silently promoting a
+  claim to a directive**, which no id or marker sweep sees because both halves are
+  correctly marked where they sit.
+- **A "*confirmed* means N things and the date tells you which" gloss is an
+  enumeration, and it decays like one.** `java-backend-rules` mapped **2026-07-24**
+  and **2026-07-25** and omitted **2026-07-21**, which also ran the three-vote
+  panel — so a reader holding the one 2026-07-21 *confirmed* in the file (nullness)
+  was told nothing by the sentence written to tell them. Now every date appearing
+  in the file is mapped, including 2026-07-27 (whose panelled claim belongs to the
+  sibling skill) and 2026-06-11..14 (which carries no *confirmed* at all, stated so
+  the absence is not read as an omission). **This is the marker-gloss finding from
+  the `llm-default-traps` review arriving through the date axis rather than the
+  definition axis.**
+
+The rest, which do not generalise: `java-backend-rules` called the fan-out context
+capture "the one rule in that skill's area with an adversarial panel behind it"
+while `java-backend-observability` says **twice** that the panel produced **two**
+rules there — ninth instance of the counting failure, and the second time this
+exact cross-reference needed narrowing; "Concurrency is the strongest group in
+**this skill set**" was a superlative in disguise twice over (nullness is panelled
+too, and "this skill set" reads as all thirteen), now stated as the fact with the
+ranking dropped; "**Four** more corpus defaults are rejected elsewhere" counted
+sentences, not defaults, and the count is gone; "**one of them** is an ArchUnit ban
+that reuses the same host" where six are; the dormancy split claimed "**every**
+lint" while enumerating four of five — omitting the problem-schema lint its own
+wiring step lists — and the two lists now cross-reference each other with an
+explicit tie-breaker (**when the same set must be enumerated twice, say which copy
+is authoritative**), plus the two directives that sit in neither list are now named
+as sitting in neither and why; the WebFlux ban said "the one-concurrency-model
+ground it rests on is the confirmed part" when no pass examined that argument, now
+stated as nothing about the ban being confirmed; "two markers were corrected
+**downward-to-upward**" garbled an *enforcement* correction (bespoke →
+off-the-shelf) into a confidence one, now stated as an enforcement change with
+"nothing about their confidence changed"; and *the closed page catalog*, carried
+verbatim from the source's re-open trigger, is a consumer-facing pointer at a
+construct **no directive in the skill establishes** — now kept with that said,
+which is the caching review's finding applied to a trigger rather than a claim.
+
+**Still unbuilt, unchanged.** No check enforces any of this; both sweeps were run
+from a scratch script, and neither the widened token extraction nor the
+per-directive placement check exists in the repo.
+
 ## The `raw/` corpus — the model to preserve
 
 Read `raw/README.md` first; it is the authority on the corpus's own rules. The
@@ -1464,12 +1831,15 @@ quietly.
 
 Where the converted skills live, and what one skill is: *Where skills live*
 above. Two questions about the shape of a directive in a skill are open per skill
-and are listed at the end of that section. **All four authored skill sets have now
-answered both** — see *The money skill family*, *The caching skill family*, *The
-asynchronous-handoff skill family* and *The `llm-default-traps` skill*. The three
-cross-stack families answered identically; `llm-default-traps` answered the second
-question the same way and the first differently, because it is one skill rather
-than a neutral/stack pair.
+and are listed at the end of that section. **Every authored skill set has now
+answered both, and nothing in `raw/` is left to raise them again** — see *The
+money skill family*, *The caching skill family*, *The asynchronous-handoff skill
+family*, *The `llm-default-traps` skill* and *The Java-backend skill family*. The
+three cross-stack families answered identically. Both pack-derived sets answered
+the second question the same way and the first differently, because neither is a
+neutral/stack pair: each names the tool beside the check kind in the same file,
+`llm-default-traps` as one skill and the Java-backend family as three cut by what
+the agent is doing.
 
 ## Dangling references in `raw/`
 

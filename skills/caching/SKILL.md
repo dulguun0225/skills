@@ -375,11 +375,11 @@ erasing type system a tool that reads compiled output sees only the erased top
 type there and decides nothing. That false green has been shipped once already,
 by a rule banning unloggable domain types on an erasing stack. **The
 `llm-default-traps` skill carries that case's tool ban and the erasure ground
-behind it; the domain-type rule the ban enforces belongs to a platform rule set
-not published in this skill set**, so the trap is recorded here and in the stack
-skill rather than left to a pointer. The concrete type is known at the **registration
-site**, and a source-level checker sees static types; that is where the check
-goes.
+behind it, and the domain-type rule the ban enforces is the `java-backend-observability`
+skill's** — published, but only for that one stack, which is why the trap is
+still recorded here and in the stack skill rather than left to a pointer. The
+concrete type is known at the **registration site**, and a source-level checker
+sees static types; that is where the check goes.
 *Static rule at the registration site plus a property test (serialize, then
 deserialize, equals the original) per cached type. Convention, 2026-07-29.*
 
@@ -522,9 +522,10 @@ visible there rather than only in the code.
 - **This skill says "derived-store premise"** for a store that can be rebuilt
   from the authoritative store. It deliberately avoids the phrase
   "rebuildable-cache premise": that phrase is already taken, for **telemetry's
-  disposability**, by a platform rule set **not published in this skill set**, so
-  the collision is one no consumer here can see and it is recorded so nobody
-  reintroduces it — see [evidence.md](evidence.md).
+  disposability**, by the `java-backend-observability` skill, which states it as
+  a directive with a live re-open trigger. A repo that installs only this skill
+  cannot see the collision, which is why it is recorded rather than assumed
+  visible — see [evidence.md](evidence.md).
 
 ## Markers, dates, and what they mean
 
