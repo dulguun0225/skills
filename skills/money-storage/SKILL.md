@@ -33,11 +33,14 @@ stores none of it skips the group.
 repo uses a client library or an ORM."** These rules must reach a hand-written
 query, a view definition, a migration, and a support script — **none of which
 imports a client library**. Scoping the seam around the obvious library is the
-mistake two neighbouring rule sets each had to correct — the **`caching` skill,
-which is published**, and an asynchronous-handoff rule set, which is not.
-`caching`'s seam had been scoped to a cache client library, which left every
-in-process cache outside every one of its checks. If a check here is written
-against a library's API, it reports green over every one of those four.
+mistake two neighbouring rule sets each had to correct, and **both are now
+published** — `caching` and `async-handoff`. `caching`'s seam had been scoped to a
+cache client library, which left every in-process cache outside every one of its
+checks; `async-handoff`'s seam had been scoped to a broker client, which left a
+polled table, an in-process event bus and a bare executor submit outside all of
+its, and `E-1` is an allow-list rather than a ban list because of it. If a check
+here is written against a library's API, it reports green over every one of those
+four.
 
 ## Why this group exists at all
 
@@ -75,9 +78,11 @@ The gap was never a missing rule. It was a missing **layer**.
   no `CHECK` and no schema lint reaches, and its serialization rule is where the
   float ban re-enters at a fourth layer, after the field, the column and the
   wire. Install it in any repo that caches an amount.
-- **One shape is still owned by a rule set that is not published here** — a
-  money amount in a message payload or an outbox row. The composite shape table
-  names the seam rather than pretending to a verdict.
+- **`async-handoff`** — published, and it owns the other money shape this skill
+  does not: a money amount in a message payload or an outbox row. `E-21` is where
+  the float ban re-enters at a **fifth** layer, over a committed message schema,
+  and `E-5` is the outbox rule `M-40` depends on. Install it in any repo that
+  publishes an amount.
 
 ## The defaults these rules override, by name
 
@@ -321,9 +326,12 @@ This adds no mechanism. It is stated because it is the one place these rules
 and a repo's asynchronous-handoff rules must agree, and the money path is where
 a lost event costs a cent nobody can reconstruct.
 *The same-transaction integration test `M-17` already requires, extended to
-assert the event's durable row. Convention, 2026-07-29.* **Named residue:** this
-rule depends on a second rule set agreeing, and that rule set is not published
-here.
+assert the event's durable row. Convention, 2026-07-29.* **The residue is
+discharged:** `E-5` in the published `async-handoff` skill requires exactly this —
+application code's only enqueue path is a row in the outbox table, written in the
+state change's transaction, and a publish after commit does not satisfy it. The
+two agree. Install that skill in any repo that publishes a money event; without
+it, `M-40` names an obligation with nothing on the other side of it.
 
 ## Persistence — migrations and precision
 
@@ -370,7 +378,10 @@ set.** The asynchronous-handoff rules named the undecidable properties inside
 each of their directives, read as thorough because of it, and still passed over
 five whole shapes a repo assembles *out of* their primitives in complete
 silence. Naming gaps rule by rule does nothing to surface a shape nobody wrote
-a rule about. So
+a rule about. **Those five were closed on 2026-07-30 and are published as
+`async-handoff-shapes` and the two bans in `async-handoff`** — which does not
+weaken the lesson, because the defect was that nothing in the rule set made the
+absences visible. So
 every shape below is marked, and **silence about a shape is a defect in this
 section rather than the reader's problem**.
 
@@ -383,16 +394,17 @@ section rather than the reader's problem**.
 | A money amount inside a document or JSON column | **banned** — grounds below |
 | A void or reversal of a posted effect | **permitted** — it is an append (`M-38`), never a flag flipped on the original row |
 | A money amount in a cache | **out of scope here, and owned by the published `caching` skill** — install it if the repo caches an amount. The seam it owns: a cached amount is a copy that no column constraint reaches, and a serializer that loses scale or turns the amount into a binary float is the float ban's fourth layer |
-| A money amount in a message payload or an outbox row | **out of scope here** — a repo's asynchronous-handoff rules own it, and they are not published in this skill set. `M-40` names the seam |
+| A money amount in a message payload or an outbox row | **out of scope here, and owned by the published `async-handoff` skill** — install it if the repo publishes an amount. The seams it owns: `E-21` bans a binary floating-point field anywhere in a committed message schema and requires a decimal amount to carry its currency, which is the float ban's fifth layer; `E-5` is the outbox rule `M-40` depends on |
 | Money rows in a read replica or a reporting store | **permitted for reads that are not inputs to a money effect; banned as an input to one** — replica lag makes the input stale, and the reporting store's columns sit outside this repo's schema lint |
 | Money columns spread over per-tenant schemas or table partitions | **permitted — and this is where this group's checks silently under-cover.** Every constraint here is per table, so the schema lint must enumerate every schema and every partition or it reports green over the ones it never visited |
 
 **A fold over stored rows is permitted; a fold over a message history is
 banned.** Those two read as a contradiction, so state it once: `M-38` recommends
 deriving a balance from durable, ordered rows inside one transaction domain,
-which is a query. A repo's asynchronous-handoff rules ban state rebuilt from a
-**message** stream, where ordering, retention and redelivery are the
-transport's to define. Same word, different mechanism, opposite verdict.
+which is a query. `E-32`, in the published `async-handoff` skill, bans state
+rebuilt from a **message** stream, where ordering, retention and redelivery are
+the transport's to define. Same word, different mechanism, opposite verdict — and
+that skill states the same contrast from its side.
 
 ### The two bans
 
@@ -452,7 +464,8 @@ marker reads as **convention** until a new pass re-dates it.
 one that is finished.** It closed no gap in `M-1` … `M-29`, and it added
 residues of its own: `M-35`'s blind spot on runtime-assembled query text,
 `M-37`'s inability to see a value written by a system outside the repo, and
-`M-40`'s dependence on a second rule set agreeing.
+`M-40`'s dependence on a second rule set agreeing — **the last of which was
+discharged on 2026-07-30, when `async-handoff` published `E-5`.**
 
 The vendor quotations, the dated claims, the citations that did not survive, and
 the conditions that reopen a decision are in [evidence.md](evidence.md).

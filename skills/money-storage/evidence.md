@@ -204,8 +204,11 @@ with them, new residues of their own:
 
 - `M-35`'s blind spot on runtime-assembled query text.
 - `M-37`'s inability to see a value written by a system outside the repo.
-- `M-40`'s dependence on a second rule set agreeing — one that is not published
-  in this skill set.
+- `M-40`'s dependence on a second rule set agreeing. **Discharged 2026-07-30**:
+  `async-handoff` was published, and its `E-5` requires exactly what `M-40`
+  assumes — the outbox row in the state change's own transaction, with a
+  post-commit publish explicitly refused as the primary rule. A repo that installs
+  the money skills without it still carries the residue.
 
 Read the group as a layer that was missing and is now **covered thinly**, not as
 one that is finished.

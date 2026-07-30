@@ -11,8 +11,9 @@ in the public skills.sh directory**.
 State as of 2026-07-30: there is no build, lint, or test tooling beyond the
 discovery check. What exists is the project setup (node and the `skills` CLI
 pinned, LF enforced repo-wide, commands as npm scripts — see *Commands*), the
-decided skill decomposition and layout (*Where skills live*), and **two authored
-families**:
+decided skill decomposition and layout (*Where skills live*), and **three
+authored families — every cross-stack source in `raw/rule-sources/` is now
+converted**:
 
 - **The money family, authored 2026-07-30 in two phases** — `skills/money/`,
   `skills/money-api/`, `skills/money-storage/` and `skills/money-java/`
@@ -23,10 +24,18 @@ families**:
   (`SKILL.md` + `evidence.md`) and `skills/caching-java/` (`SKILL.md`), all 16
   directives `C-1` … `C-16` defined exactly once. See *The caching skill
   family*.
+- **The asynchronous-handoff family, authored 2026-07-30 after that** —
+  `skills/async-handoff/` (`SKILL.md` + `evidence.md`),
+  `skills/async-handoff-shapes/` (`SKILL.md` + `evidence.md`) and
+  `skills/async-handoff-java/` (`SKILL.md` + `shapes.md`), all 36 directives
+  `E-1` … `E-36` defined exactly once. See *The asynchronous-handoff skill
+  family*.
 
-All six are discovered by `npm run check`. **Milestone 1 is to turn the content
-of `raw/` into skills**; money and caching are done and every other row of the
-table in *Where skills live* is unwritten.
+All nine are discovered by `npm run check`. **Milestone 1 is to turn the content
+of `raw/` into skills**; the three cross-stack sources are done and the remaining
+unwritten rows of the table in *Where skills live* are all pack-derived
+(`java-backend-rules`, `llm-default-traps`) or corpus-derived
+(`tech-decision-research`, `enforceable-rules`).
 
 **`raw/` is raw data — input material, never output.** It holds source text
 imported from elsewhere, to be read and converted; nothing in it is a published
@@ -45,14 +54,21 @@ worked case.** Deleting the money material from `raw/` was considered on
 2026-07-30, after the money skills were audited, and rejected — not only on the
 never-author-in-`raw/` rule above, but because none of it is unreferenced:
 
-- `raw/rule-sources/money-grade.md` is cited **eight times from the two sources
-  nobody has converted yet**. `cache-discipline.md` and
-  `event-broker-discipline.md` each name money-grade §2's **fourteen check kinds
-  as the copy of record** — §2 says so itself, and says a fifteenth entry would
-  have to be added in three files or drift in two — and they cite `M-17`, `M-5`'s
-  re-open trigger and the float ban besides. Deleting the file would either
-  dangle those or force the kind list to be copied into a sibling, which is the
-  duplication §2 exists to prevent.
+- `raw/rule-sources/money-grade.md` is cited **eight times from the other two
+  sources**. `cache-discipline.md` and `event-broker-discipline.md` each name
+  money-grade §2's **fourteen check kinds as the copy of record** — §2 says so
+  itself, and says a fifteenth entry would have to be added in three files or
+  drift in two — and they cite `M-17`, `M-5`'s re-open trigger and the float ban
+  besides. Deleting the file would either dangle those or force the kind list to
+  be copied into a sibling, which is the duplication §2 exists to prevent.
+
+  **The premise of that bullet decayed the same day and the conclusion did not.**
+  It said "the two sources nobody has converted yet"; both were converted on
+  2026-07-30, so no source in `raw/rule-sources/` is unconverted now. The
+  citations are unchanged, `raw/` is still the record of what was imported, and
+  authoring in it is still forbidden — so nothing may be deleted. **Recorded
+  because it is the third instance of the same failure this repo keeps finding: a
+  sentence that counts or enumerates decays silently and has no id to grep for.**
 - The Java money text does not lift out cleanly. The `java-backend-rules` row in
   *Where skills live* is defined as `raw/seed/java-backend.md` **excluding lines
   442–744**, so cutting those lines moves the anchor; and §4's general
@@ -77,10 +93,12 @@ npm run try -- <name>         # run one skill from the working tree without inst
 
 `npm run check` is the only self-check that exists: it answers whether a skill is
 in a discoverable location with valid frontmatter. Anything it does not list is
-invisible to every consumer. Since 2026-07-30 it lists six — `caching`,
-`caching-java`, `money`, `money-api`, `money-storage`, `money-java`. It says
-nothing about resource files: `evidence.md`, `api.md` and `storage.md` are
-unlisted and unchecked, so a broken relative link inside a skill passes it.
+invisible to every consumer. Since 2026-07-30 it lists nine — `async-handoff`,
+`async-handoff-java`, `async-handoff-shapes`, `caching`, `caching-java`, `money`,
+`money-api`, `money-storage`, `money-java`. It says
+nothing about resource files: `evidence.md`, `api.md`, `storage.md` and
+`shapes.md` are unlisted and unchecked, so a broken relative link inside a skill
+passes it.
 **`npm ci` must have run first** — `npm run check` shells out to the pinned CLI
 in `node_modules`, and on a machine where it has not, the script fails with
 `'skills' is not recognized` rather than reporting zero skills.
@@ -140,7 +158,7 @@ about to be cached.
 | `llm-default-traps` | `raw/seed/agent-traps.md`; evidence from `raw/agent-traps.md` §3 |
 | `money`, `money-api`, `money-storage`, `money-java` | `raw/rule-sources/money-grade.md` and `raw/seed/java-backend.md` lines 442–744 — the per-skill split and the evidence map are in *The money skill family* below |
 | `caching`, `caching-java` | `raw/rule-sources/cache-discipline.md` and `raw/seed/java-backend.md` lines 745–935; Java evidence from `raw/java-backend.md` §4 under `Cache discipline`. The split is in *The caching skill family* below |
-| `async-handoff` | `raw/rule-sources/event-broker-discipline.md` |
+| `async-handoff`, `async-handoff-shapes`, `async-handoff-java` | `raw/rule-sources/event-broker-discipline.md` and `raw/seed/java-backend.md` lines 937–1757; Java evidence from `raw/java-backend.md` §4 under `Event broker discipline`. The split is in *The asynchronous-handoff skill family* below |
 | `tech-decision-research` | `raw/research-protocol.md` §1–4, §6 |
 | `enforceable-rules` | `raw/README.md`'s design principles and premise-specificity test; the portable checks in `raw/research-protocol.md` §5 |
 
@@ -182,13 +200,13 @@ per-stack skill, so each directive's text exists exactly once. Second question:
 the skill instructs the agent, and the stack skill additionally carries a one-time
 section that wires the build gates in.
 
-**Two families answering identically is now the default for a cross-stack
-source, not a coincidence to re-derive.** `async-handoff` is the third and last
-one, and it should adopt the same answer unless something in
-`event-broker-discipline.md` argues otherwise. What settles it is the shape all
-three share: a portable directive set whose enforcement is per stack. A skill
-drawn from a *pack* rather than a source — `java-backend-rules`,
-`llm-default-traps` — has no such split to make and is not covered by this.
+**All three cross-stack families answered identically, and the third confirmed it
+rather than merely inheriting it** (2026-07-30 — *The asynchronous-handoff skill
+family*). What settles it is the shape all three share: a portable directive set
+whose enforcement is per stack. **The rule is now closed for cross-stack sources,
+because there is no fourth one.** A skill drawn from a *pack* rather than a
+source — `java-backend-rules`, `llm-default-traps` — has no such split to make and
+is not covered by this.
 
 ### Where `llm-default-traps` stands
 
@@ -208,8 +226,9 @@ real check with its enforcement marker.
   file.
 - **The check question does not arise.** No directive here is check-kind-only, so
   this skill decides nothing for the money skills, `caching` or `async-handoff`.
-  The money and caching families have since answered it for themselves, and
-  identically (*The money skill family*, *The caching skill family*).
+  **All three cross-stack families have since answered it for themselves, and
+  identically** (*The money skill family*, *The caching skill family*, *The
+  asynchronous-handoff skill family*).
 
 **Open. A recommendation is given for each so the next session can accept or
 overturn one, not re-derive all three:**
@@ -376,8 +395,12 @@ citation to an unwritten skill ships a dangling pointer.
   if those skills exist; until they do, the rows say the verdict is owned elsewhere
   and name the seam, which is what the source does. **The caching row was resolved
   on 2026-07-30** when `caching` was authored (*The caching skill family*); it now
-  names the published skill and tells the reader to install it. The outbox row
-  still says the rule set is unpublished, because it is.
+  names the published skill and tells the reader to install it. **The outbox row
+  was resolved later the same day** when `async-handoff` was authored (*The
+  asynchronous-handoff skill family*): it now names `E-21` for the payload and
+  `E-5` for the outbox row, and `M-40`'s recorded residue — "this rule depends on a
+  second rule set agreeing" — is discharged, because `E-5` requires exactly what
+  `M-40` assumes. **Both out-of-family rows now resolve to installed skills.**
 
 So the dependency runs **storage → api → core**, with one back-edge core → api.
 
@@ -519,9 +542,10 @@ things in one sentence is where one gets dropped.
 name the seam** — a cached amount is a copy no column constraint reaches, and
 M-40 names the outbox seam. No link, no id, and both say plainly that those rule
 sets are not published in this skill set. That is what the source does, and it is
-what the `caching` and `async-handoff` skills will replace. **The caching row was
-replaced on 2026-07-30**, so that half of this note is now history — see *The
-caching skill family*.
+what the `caching` and `async-handoff` skills will replace. **Both rows were
+replaced on 2026-07-30 — the caching one when `caching` was authored and the
+outbox one when `async-handoff` was — so this whole note is now history**; see
+*The caching skill family* and *The asynchronous-handoff skill family*.
 
 **squawk is the one clean stack separation the spec predicted (decision 3), and
 it shipped with its ungated half named.** It flags the `numeric` scale change
@@ -579,16 +603,23 @@ The other four:
   shapes). Both are the caching and asynchronous-handoff rules. Named, so a
   consumer can stop looking for them in the money skills. At the time of the audit
   neither `caching` nor `async-handoff` was published and both sentences said so;
-  **`caching` was authored later the same day and the caching half of both
-  sentences was rewritten** (*The caching skill family*, *The interlocks*).
+  **both were authored later the same day and both sentences were rewritten in two
+  steps** (*The caching skill family* and *The asynchronous-handoff skill family*,
+  *The interlocks* in each). The five unsurfaced composite shapes are now
+  `async-handoff-shapes` plus the two bans in `async-handoff`, **which does not
+  weaken the lesson `money-storage` draws from them**: the defect was that nothing
+  in that rule set made the absences visible, and naming gaps rule by rule did not
+  help.
 - **`money-java`'s jqwik pin now says it is cross-cutting, not a money rule.**
   `raw/java-backend.md` §4 records that the caveat was *moved to the agent-traps
   pack* for exactly that reason. The pin stays in `money-java` — dropping it
   would leave a consumer of only the money skills with no pin at all — but it is
   the **one known overlap with `llm-default-traps`**, and decision 1's write-once
   rule has to be settled between them when that skill is authored. **Since
-  2026-07-30 `caching-java` names jqwik too**, without the pin — see *Still open
-  for this family* under *The caching skill family*.
+  2026-07-30 `caching-java` and `async-handoff-java` both name jqwik too**,
+  without the pin, so the overlap is three-way — see *Still open for this family*
+  under *The caching skill family* and under *The asynchronous-handoff skill
+  family*.
 
 **What the audit did not change.** Naming PostgreSQL, MySQL and SQL Server in
 `money-storage` (ground, not enforcement — phase 2's note stands); `M-2`'s Java
@@ -694,17 +725,19 @@ keyed in `caching-java`. Both listed by `npm run check`.
   row for a cached amount, its *What is here and what is elsewhere* list, and its
   library-scoped-seam paragraph all said the caching rules were "not published in
   this skill set". Three edits, and **only the caching half** — the
-  asynchronous-handoff sentences are still true. **The general rule: publishing a
+  asynchronous-handoff sentences were still true then, and were swept in turn when
+  `async-handoff` was authored later the same day. **The general rule: publishing a
   skill obliges a sweep for every sentence in every other skill that says it does
-  not exist.** Nothing checks this.
-- **`caching` → an asynchronous-handoff rule set, which does not resolve.**
-  `C-9`'s post-commit registration is exactly the seam an outbox-confinement rule
-  needs, so both skills carry the interlock the way the money family carries its
-  unresolved rows: name the seam, say the verdict is owned elsewhere, and say
-  plainly that the rule set is not published here. `caching-java` additionally
-  carries the delete-after-commit / publish-after-commit contrast from
-  `raw/seed/java-backend.md`, because carrying one verdict over to the other is
-  the specific mistake that text exists to prevent.
+  not exist.** Nothing checks this, and it has now had to be run twice.
+- **`caching` → an asynchronous-handoff rule set. ~~Does not resolve.~~ Resolved
+  2026-07-30**, when `async-handoff` was authored. `C-9`'s post-commit registration
+  is exactly the seam `E-5` confines, so the interlock now names that id from the
+  caching side and names `C-9` from the other; both sentences that said the rule
+  set was unpublished were rewritten, in `caching/SKILL.md` and `caching-java`, and
+  the matching re-open trigger in `caching/evidence.md` is struck through.
+  `caching-java` additionally carries the delete-after-commit /
+  publish-after-commit contrast, because carrying one verdict over to the other is
+  the specific mistake that source text exists to prevent.
 - **Cross-family reference style: name the skill, never link to it, and prefer
   the skill name over an id.** A relative link out of a skill directory breaks
   the invariant in *Where skills live* — three were written and removed during
@@ -738,9 +771,11 @@ keyed in `caching-java`. Both listed by `npm run check`.
   cross-cutting dependency rule, not a money or a cache rule, and it is a
   *confirmed* trap. `money-java` carries it as `M-24`; `caching-java` names jqwik
   in `C-6` and `C-10` and states as a named gap that a caching-only install has
-  no pin, deliberately without copying the value. **This is now the second known
-  overlap with `llm-default-traps`** — the first is the same pin seen from
-  `money-java` — and both are settled when that skill is authored. Whatever it
+  no pin, deliberately without copying the value. **This was the second known
+  overlap with `llm-default-traps`; `async-handoff-java` made it the third later
+  the same day**, naming jqwik in `E-7` and `E-13` and recording the same gap — so
+  three stack skills depend on a pin only one of them states, and all are settled
+  when that skill is authored. Whatever it
   decides must not leave a repo installing one family and not the other unpinned.
 - **Same as after the money family: no check enforces any conversion
   invariant.** The id-uniqueness, no-`P-n`, no-`B-n`, no-link-out-of-directory
@@ -819,6 +854,266 @@ needs it. `caching-java`'s `C-6` property test asserts key injectivity where
 neutral `C-6` states "equal keys imply equal uncached results" — a stack skill
 changing *what is asserted* rather than only the tool, which the skill reconciles
 inline and the seed requires.
+
+## The asynchronous-handoff skill family
+
+Authored 2026-07-30, straight after the caching family, in one pass. Six files:
+
+```
+skills/async-handoff/         SKILL.md  evidence.md   E-1 … E-28, E-32, E-33   30
+skills/async-handoff-shapes/  SKILL.md  evidence.md   E-29 … E-31, E-34 … E-36  6
+skills/async-handoff-java/    SKILL.md  shapes.md     the Java checks, keyed to those ids
+```
+
+Thirty-six directives, each defined exactly once; every one keyed in
+`async-handoff-java`. All three listed by `npm run check`. This is the largest
+source in `raw/` (2533 lines) and the largest family here.
+
+### What was forced by the two precedents, and needed no re-deriving
+
+- **The neutral / stack split, and both open questions answered as the money and
+  caching families answered them** (*Where skills live*). The source is the same
+  shape: portable directives, per-stack enforcement.
+- **`E-28` is `M-29`'s and `C-16`'s shape** — the **description** is the tripwire,
+  and `E-28` ships as the obligation to record the decision in the plan.
+- **`E-1` … `E-36` ship as ids**; no `P-n`, no `B-n`, every citation of those
+  rewritten as prose.
+- **No `evidence.md` in the stack skill.** Java evidence is inline, ending in a
+  dated claim table, a *Do not cite* list and the review-by date.
+- **The transport pick is a directive in `async-handoff-java` with no `E-n` id**,
+  exactly as `caching-java` carries the engine pick, and the stack skill says so on
+  its first screen. The source keeps the pick out for the same three grounds.
+- **The nine-candidate transport survey ships in `async-handoff/evidence.md`** as
+  evidence, because it is platform-neutral.
+
+### What this family decided that neither precedent did
+
+1. **Two neutral skills, cut on the dormancy conditions the source's own
+   `holds-when` states.** Thirty-six directives will not fit one always-loaded
+   `SKILL.md`, and the source states per-group conditions: a flow across
+   transactions (`E-29` … `E-31`), HTTP across the organisation's boundary
+   (`E-34`, `E-35`), an oversized payload (`E-36`). Those six became
+   `async-handoff-shapes`. **`E-32` and `E-33` stayed in the core skill because
+   the source says they are never dormant** — "a ban with a precondition is a ban
+   an agent can argue its way past" — which is the same call decision 4 made for
+   the money family's observability rules: the condition is always on, so the rule
+   stays in the core.
+2. **The split is also an evidence-provenance split, and that is the stronger
+   reason.** Pass 1 wrote `E-1` … `E-28` and had a hostile audit whose planted
+   canary was caught; pass 2 wrote the composite shapes and the two bans with **one
+   researcher, no panel, no steelman duel and no hostile audit.** Two files let
+   each state its own ceiling honestly, and `async-handoff-shapes/SKILL.md` says
+   plainly that its pass is the weakest behind any skill here.
+3. **A three-way name split for the stack skill: `SKILL.md` + `shapes.md`, keyed
+   to two different neutral skills.** `money-java` and `caching-java` each face one
+   neutral family; this stack skill's `shapes.md` is keyed to
+   `async-handoff-shapes` while its `SKILL.md` is keyed to `async-handoff`. Each
+   file states which.
+4. **Transports and engines are named in the neutral skills; frameworks,
+   libraries and analysers are not.** This is phase 2 of the money family's rule
+   ("an engine's documented behaviour is the rule's *ground*, not its
+   enforcement") turned into a usable line. So Kafka's `enable.auto.commit`,
+   RabbitMQ's quorum-queue delivery limit, SQS's absent automatic
+   acknowledgement, PostgreSQL's `SKIP LOCKED` caveat and Kafka Streams' late-record
+   drop are all in `async-handoff`, while Spring's `BATCH` ack default,
+   `DefaultErrorHandler`, `@RetryableTopic`, ArchUnit, Error Prone, jOOQ and
+   Toxiproxy appear only in `async-handoff-java`.
+5. **Anonymised subjects were named, per the caching review's finding.** Where the
+   source writes "one widely used queue-shaped broker" or "a managed queue" and
+   the Java pack names the product, the neutral skill names it too — because a
+   named gap or a named ground whose subject is hidden is one no reader can tell
+   applies to them.
+6. **The withdrawn thresholds ship as history plus a do-not-reintroduce entry, not
+   as a deleted branch.** The source reversed itself the same day it was written:
+   a polled table was the recommended default and the broker a conditional
+   escalation above three thresholds, all three withdrawn as undecidable at the
+   plan gate. `async-handoff/SKILL.md` states the reversal and the three reasons,
+   because **"an agent reading a broker-versus-table argument out of its training
+   corpus will reconstruct something close to the first threshold."** The excluded
+   ninth survey candidate keeps its full row and its steelman for the same reason.
+7. **Two claims the source makes about other files were checked before being
+   repeated, and one was narrowed.** `E-13`'s source text says a three-way
+   interlock is carried by all three rule sets. `M-17` (in `money-api`) requires
+   the idempotency record in the money effect's transaction and **mentions neither
+   a cache nor a broker**; `C-5` (in `caching`) carries the cache ban. So `E-13`
+   ships saying it carries the **broker** half alone and names who carries the
+   other two. **This is the caching review's rule applied prospectively: a
+   cross-family citation is a claim about another file's contents, so verify it
+   there.**
+8. **The float ban's layer count moved and the enumerations were swept.** `E-21`
+   is the fifth layer, so `money/SKILL.md`'s bullet went from four to five and
+   named `async-handoff`. `caching`'s "fourth layer" for a cached copy is still
+   correct and was left alone.
+9. **`async-handoff/SKILL.md` is 1282 lines, the largest always-loaded body here,
+   and splitting the core further was considered and rejected.** The candidate cut
+   was producer path / consumer path / shared machinery. It fails because **the
+   machinery is shared by both directions**: `E-1`'s seam covers publish and
+   subscribe, `E-26`'s catalog is read by eleven directives on both sides, and
+   `E-24`'s gate enumerates it — so the cut needs a third skill every repo installs
+   anyway. That is the same token cost, plus three descriptions competing to fire
+   and more cross-skill citation surface. **The dormancy cut that produced
+   `async-handoff-shapes` is the only one the source supports.** Revisit only if
+   context cost is measured as a real problem, and record the measurement.
+
+### The interlocks, and which ones now resolve
+
+- **`caching` → `async-handoff`, and it resolves.** `C-9`'s post-commit callback
+  is the exact seam `E-5` confines; a general `afterCommit(Runnable)` defeats
+  `E-5` entirely. Three sentences in `caching/SKILL.md` and `caching-java` said
+  that rule set was not published; all now name it, and one re-open trigger in
+  `caching/evidence.md` is struck through as resolved.
+- **`money-storage` → `async-handoff`, and `M-40`'s residue is discharged.**
+  `M-40` required the durable row a money event will be published from to be in the
+  money effect's transaction and recorded a residue: it depended on a second rule
+  set agreeing. `E-5` requires exactly that. Six sentences across
+  `money-storage/SKILL.md`, `money-storage/evidence.md` and `money/SKILL.md` were
+  rewritten.
+- **`async-handoff` → `money` and `caching`**, all resolving: `E-13` → `M-17`,
+  `M-40`, `C-5`; `E-20` → `M-13` and the `C-11` inversion; `E-21` → `M-2`, `M-10`,
+  `M-12`, `C-10`; `E-32` → `M-38`; `E-15` → `C-6`'s challenged ground; `E-10` →
+  `M-5` and `C-12`.
+- **Cross-family reference style is unchanged: name the skill, never link to it.**
+  No relative link leaves any skill directory in the family.
+
+### Still open for this family
+
+- **The panel that neither pass had, and it is two triggers rather than one.**
+  Pass 1 owes three refutation votes; pass 2 owes a steelman duel plus a hostile
+  audit, **which ranks with the votes rather than below them because two of its
+  outputs are bans that remove an option from every future repo.** Nothing may be
+  promoted to *confirmed* until both run.
+- **What a repo on an uninstantiated stack receives** — the third family to carry
+  this, and the largest surface yet: **eleven directives lean on type design**,
+  against the caching family's six. Revisit when a second stack is real; the answer
+  should match whatever the money and caching families settle.
+- **The four-configuration gate's cost is unmeasured, and it is now the most
+  expensive gate in this repo's skills** — it quadruples integration CI time
+  against a real broker in a container, where the caching gate merely triples it.
+  If it is cut, five directives degrade to declarations while the catalog still
+  reports green.
+- **The cross-repository union check has no host anywhere**, which makes `E-19`
+  and `E-26` repo-local hygiene wearing the clothes of a contract. Both skills say
+  so. It is the most consequential gap in the family for an eighteen-team
+  organisation.
+- **The jqwik pin is now a three-way overlap with `llm-default-traps`, not a
+  two-way one.** `money-java` carries it as `M-24` at ≤ 1.9.3 with the CI
+  version-ceiling check; `caching-java` names jqwik in `C-6` and `C-10` and
+  `async-handoff-java` names it in `E-7` and `E-13`, and both record the gap
+  **without copying the value**, because a pin in three skills drifts in two. When
+  `llm-default-traps` is authored, whatever it decides must not leave a repo
+  installing one family and not the others unpinned. All three stack skills now
+  point at the same unsettled question.
+- **The webhook signing standard has no pick, and the reason is an unverified
+  belief.** `E-34` requires one of RFC 9421 or Standard Webhooks to be committed,
+  and neither `async-handoff-shapes` nor `async-handoff-java/shapes.md` names a
+  winner: the pass never checked what maintained JVM implementations either has,
+  and its own re-open trigger ("RFC 9421 gains a maintained implementation on the
+  stack") implies a belief it did not verify. **The 2026-07-30 review found the
+  neutral skill promising a pick the stack file withholds, and fixed the promise
+  rather than inventing the pick.** One implementation survey closes it.
+- **`event-broker-discipline.md` §3's instantiation table gains no row, and this
+  hits the same rule conflict the money family left open.** A skill is not a stack
+  pack, so the absence is correct; writing a sentence into `raw/` to say so would
+  be authoring in `raw/`, which *What this repo is* forbids. **Same decision owed
+  as for `money-grade.md` §3, and the cheap alternative is the same: this sentence
+  in `CLAUDE.md` is the record.**
+- **No check enforces any conversion invariant, same as after the money and
+  caching families.** The sweep over these six files was run by hand on 2026-07-30
+  and is clean: 36 directives defined exactly once, every `E-n` reference resolving
+  to a defined id, no `P-n`, no `B-n`, no `DECISIONS.md`, no reference into `raw/`,
+  no relative link leaving a skill directory, every directive carrying a kind, a
+  marker and a date, and every cited `M-n` and `C-n` read in the file that defines
+  it before being cited. `npm run check` sees none of the four resource files.
+  **The last clause of that sentence was not true** — the adversarial review below
+  found one cross-family citation naming the wrong rule — and the structural half
+  of the sweep is confirmed clean by a second, mechanical pass.
+
+### The adversarial review, 2026-07-30
+
+All six files re-read against `event-broker-discipline.md`, `raw/seed/java-backend.md`
+937–1757 and `raw/java-backend.md` §4 under `Event broker discipline`, plus the
+four money skills and the two caching skills. **The structure held, and this time
+it was checked by script rather than by eye**: 36 directives defined exactly once
+and every one carrying a check kind, a *convention* marker and the date; the 36
+directive *statements* diffed word-for-word against the source with no clause
+dropped (six diffs, all of them punctuation or the deliberate `E-28` removal
+below); all 19 of the source's named gaps, residues and weakest-clause notes
+carried; no `P-n`, no `B-n`, no `DECISIONS.md`, no reference into `raw/`, no link
+leaving a skill directory; nine skills listed by `npm run check`. Ten content
+defects were fixed, in five of the six files. **Five findings generalise:**
+
+- **A marker word inside prose is a claim, and *confirmed* is the one that
+  leaks.** Five places used it as ordinary English over material their own tables
+  mark *primary-source verified*: `E-2`'s meta-annotation fact, `E-12`'s
+  arithmetic, and the "the confirmed material is…" sentences in both
+  `async-handoff/SKILL.md` and its `evidence.md`, plus `async-handoff-java`'s
+  "all three are confirmed for this stack". **The source does the same in two of
+  those places, so the conversion inherited the defect rather than inventing it** —
+  which is the case for checking marker words in prose the way a table row is
+  checked. And where a claim here genuinely *is* confirmed, a **different family's
+  pass** confirmed it: `caching-java` carries the ArchUnit lambda-body and
+  catch-body limits and the no-op cache manager as *confirmed*, because the cache
+  pass ran the three refutation votes. This pass confirmed nothing, so the
+  attribution has to travel with the claim.
+- **A count in prose decayed again — twice, both in the newest file, and both
+  created by the split itself.** `async-handoff-shapes` said its six directives
+  add "seven named gaps of their own" (five are theirs; two belong to the bans that
+  shipped in `async-handoff`), and its `evidence.md` said "three of the six lean on
+  type design" while listing a construct `E-22` defines in the core skill (two do).
+  This is the fourth instance of the failure this file keeps recording. The new
+  half of the lesson: **a count is at its most dangerous exactly where a family was
+  split, because each half inherits the whole's number and nothing re-derives it.**
+- **A cross-family citation naming the wrong id is invisible to every structural
+  check.** `async-handoff/evidence.md` cited `C-5` for the swallowing-catch
+  residue, where the rule is `C-12` — and cited `C-12` correctly 300 lines later.
+  Both ids exist and resolve, so an id sweep passes and only reading the cited rule
+  catches it. **The caching review's rule was to verify the other side; this adds
+  that the verification cannot be delegated to the id sweep, and that the previous
+  session's claim to have done it was itself the thing to check.**
+- **A "named in the stack skill" pointer has to be checked against the stack
+  skill, in both polarities.** `async-handoff-shapes` said the signing-standard
+  pick "is stated in the stack skill"; `shapes.md` deliberately names **no**
+  winner, because the pass never checked what maintained implementations either
+  standard has. The money audit found this defect as a hedge where the tool should
+  have been named; here it arrives inverted — a neutral skill promising a pick the
+  stack skill was right to withhold. **Both are the same check: follow the
+  pointer.**
+- **A claim with no evidence row anywhere is worse in a stack skill than in a
+  neutral one**, because the stack skill is where a reader expects a sourced tool
+  fact. `async-handoff-java`'s "Kafka share groups move a past-limit record to an
+  archived state and route it nowhere" is the only claim in the family with no
+  primary source in **either** pass — it exists in the Java seed text alone, and it
+  sat one sentence away from the RabbitMQ delivery-limit fact, which is
+  primary-source verified. It now carries **not verified — do not cite as
+  documented**, and the sentence says which half is sourced.
+
+The five that do not generalise: `E-26` carried none of the second-consumer extra
+condition the source states for **both** cross-repository directives, only `E-19`
+did (added, with the generated catalog itself explicitly *not* dormant, because
+eleven directives read it inside one repo); `E-24`'s kind note said "a fifteenth
+is not added", pointing at a fourteen-item vocabulary no consumer can see, and now
+matches `caching`'s self-contained wording; `E-13` said neither `M-17` nor `M-40`
+"mentions a cache or a broker", which is true of `M-17` and false of `M-40` as
+published — `M-40` reaches the broker to require that the row an event is published
+from shares the effect's transaction — so it is narrowed to what both actually
+constrain, which is *when* the record is written and not *where* it lives;
+RabbitMQ's 4.2 support window was written as having "ended 2026-07-31", a future
+date in the past tense; `evidence.md` named **Microsoft Azure** where the pass
+recorded only "one major provider" plus its retail-prices API, and the name is kept
+with the identification marked as an inference drawn during conversion rather than
+a vendor name the pass wrote down; and `E-28`'s Java entry used "the Decision Trace
+citation line" with no gloss, where `money-java` and `caching-java` both gloss it —
+a consuming repo without that spec machinery has no Decision Trace to write in.
+
+**Left standing deliberately.** The 1282-line core skill and the dormancy split
+(the rejected producer/consumer/machinery cut is still the right rejection);
+naming Kafka, RabbitMQ, SQS, NATS and Kafka Streams in the neutral skills (ground,
+not enforcement); `E-28` dropping the source's "in its Decision Trace" from the
+neutral text while the stack skill keeps and now glosses it; and the claim that
+this family's passes are **worse than the caching family's** — checked against
+`cache-discipline.md`'s own frontmatter, which records an evidence panel and a
+three-vote refutation the broker pass never ran, so the comparison is exact rather
+than rhetorical.
 
 ## The `raw/` corpus — the model to preserve
 

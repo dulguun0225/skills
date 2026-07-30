@@ -201,17 +201,19 @@ version is in every case the one that reads better.
 ### The one challenged ground, unresolved on purpose
 
 **`C-6`'s bytecode-impossibility claim is challenged and unverified.** A hostile
-audit run for the asynchronous-handoff rule set argued that the claim behind the
-original wording is too strong: a string-concatenation recipe travels as a
-constant-pool bootstrap argument, so a bytecode-reading rule may well have an
+audit run for the rules now published as `async-handoff` argued that the claim
+behind the original wording is too strong: a string-concatenation recipe travels
+as a constant-pool bootstrap argument, so a bytecode-reading rule may well have an
 operand to match after all. **The auditor could not reach the primary
 specification — it returned HTTP 403 — so nothing was decided.**
 
 `SKILL.md` is written so that the answer does not matter: `C-6` rests on
 **unwritability** (a factory that cannot take a free-text parameter makes the
-wrong call uncompilable), which holds regardless of any tool's capabilities. If
-the fact is ever verified, drop the impossibility claim wherever it survives in
-a stack skill and keep the rule unchanged.
+wrong call uncompilable), which holds regardless of any tool's capabilities.
+`E-15` in the published `async-handoff` skill is the same rule for a partition
+key, grounded the same way and for the same reason. If the fact is ever verified,
+drop the impossibility claim wherever it survives in a stack skill and keep both
+rules unchanged.
 
 ## A naming collision, and why this rule set says "derived-store premise"
 
@@ -262,9 +264,10 @@ Absent its trigger, a decision here is not re-litigated.
   integration suite three times triples integration CI time, and **that number
   is unknown** — nobody has run it. One adopting repo reporting wall-clock
   closes this.
-- **An asynchronous-handoff rule set is published.** `C-9`'s post-commit
-  interlock currently names a seam and says the verdict is owned elsewhere. When
-  that rule set exists, the interlock resolves to it.
+- ~~**An asynchronous-handoff rule set is published.**~~ **Resolved 2026-07-30**:
+  `async-handoff` was published, and `C-9`'s post-commit interlock now names `E-5`
+  on the other side. Both skills state the collision. Nothing further is owed
+  here.
 
 ## Appendix — the engine landscape, which is evidence and not a rule
 

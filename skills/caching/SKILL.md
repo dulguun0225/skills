@@ -90,10 +90,11 @@ licences, release cadence and the ground each candidate lost on, is in
   column constraint, no `CHECK` and no schema lint reaches. `C-10` is where the
   float ban re-enters at a fourth layer, after the field, the column and the
   wire.
-- **An asynchronous-handoff rule set is not published here.** `C-9` needs a
-  post-commit registration point, and that is exactly the seam a broker-publish
-  rule confines. The interlock is stated below with the seam named, because a
-  repo that satisfies `C-9` carelessly defeats that other rule set entirely.
+- **`async-handoff`** — published, and `C-9` collides with it at one point. `C-9`
+  needs a post-commit registration point, and that is exactly the seam `E-5`
+  confines when it bans a publish outside the outbox relay. **A repo that
+  satisfies `C-9` carelessly defeats `E-5` entirely.** The interlock is stated
+  below; install `async-handoff` in any repo that hands work off asynchronously.
 
 ## The defaults these rules override, by name
 
@@ -499,21 +500,23 @@ visible there rather than only in the code.
   would give `C-7` a host and destroy `C-4`.
 - **`C-9`'s post-commit callback must not become a general-purpose hook, and
   this one has teeth.** A repo that satisfies `C-9` with a general
-  `afterCommit(Runnable)` registration defeats an asynchronous-handoff rule set
-  entirely: nothing at a call site distinguishes "delete a cache key after
-  commit" from "publish after commit", so the one hook `C-9` needs becomes the
-  hole a broker-publish confinement rule falls through. Make post-commit
-  registration a **named member of this adapter's port** —
+  `afterCommit(Runnable)` registration **defeats `E-5` in the published
+  `async-handoff` skill entirely**: nothing at a call site distinguishes "delete a
+  cache key after commit" from "publish after commit", so the one hook `C-9` needs
+  becomes the hole that skill's publish-confinement rule falls through. Make
+  post-commit registration a **named member of this adapter's port** —
   `invalidateAfterCommit(key)` — with no free-callback form, and ban any other
-  post-commit registration in the repo. **That rule set is not published in this
-  skill set**; the seam to name is post-commit registration, and the verdict on
-  publishing is owned there.
+  post-commit registration in the repo. Both skills state this from their own
+  side.
 - **A delete-after-commit is correct here and is the wrong shape for a broker
   publish. Do not carry either verdict over to the other.** A lost cache delete
   leaves a stale read bounded by the staleness ceiling, and it self-heals. A
   lost publish is an unbounded permanent absence with no self-healing path and
   nothing anywhere that can compare against a message which was never produced.
-  Same shape, opposite verdict, and the reason is the bound.
+  Same shape, opposite verdict, and the reason is the bound. `E-5` in
+  `async-handoff` carries the same contrast from the other direction, and its
+  `E-20` inverts `C-11` for the same class of reason — a cache's writer and reader
+  are one deployable and a message's are not.
 - **This skill says "derived-store premise"** for a store that can be rebuilt
   from the authoritative store. It deliberately avoids the phrase
   "rebuildable-cache premise": that phrase is already taken, for **telemetry's

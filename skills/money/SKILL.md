@@ -51,12 +51,14 @@ the defaults, and why each lost:
 
 - **Binary floating-point for money** — `float`, `double`, a JSON number, a
   float column. The corpus default by a wide margin, and wrong at the first
-  sub-minor-unit result. Banned at four separate layers, because it re-enters at
-  each one: the field (`M-2`), the wire (`money-api`, `M-12`), the column
-  (`money-storage`, `M-10`), and a **cached copy** of an amount, which is owned
-  by the published `caching` skill — install it in any repo that caches an
-  amount, because no rule in the money skills reaches a serializer that turns a
-  stored amount back into a binary float.
+  sub-minor-unit result. Banned at **five** separate layers, because it re-enters
+  at each one: the field (`M-2`), the wire (`money-api`, `M-12`), the column
+  (`money-storage`, `M-10`), a **cached copy** of an amount (`C-10`, in the
+  published `caching` skill), and a **message payload** (`E-21`, in the published
+  `async-handoff` skill). Install each of those in any repo that caches or
+  publishes an amount: no rule in the money skills reaches a serializer that turns
+  a stored amount back into a binary float, and none reaches a field in a message
+  schema.
 - **A raw decimal for an amount** — an exact decimal type with no currency
   beside it. Rejected by `M-1`: no check can tell which raw decimal holds an
   amount, so a rule scoped to "amounts" is undecidable by the check meant to

@@ -148,9 +148,12 @@ repo.)*
   Second, **delete-after-commit is correct here and is the wrong shape for a
   broker publish** — a lost delete is a stale read bounded by the ceiling that
   self-heals, a lost publish is an unbounded permanent absence. Do not carry
-  either verdict over to the other. That other rule set is not published in this
-  skill set. (ArchUnit — off-the-shelf host, predicate per repo; the rollback
-  test — bespoke; the residual ordering — spec and review.)
+  either verdict over to the other. **That rule set is published**: `E-5` in
+  `async-handoff`, with the Java confinement rule in `async-handoff-java`. Install
+  it in any repo that hands work off asynchronously, and wire the named
+  post-commit member before either rule can hold. (ArchUnit — off-the-shelf host,
+  predicate per repo; the rollback test — bespoke; the residual ordering — spec and
+  review.)
 
 ## Serialization
 
@@ -311,7 +314,9 @@ Silence reads as coverage, so each is stated.
    version-ceiling check; the value is not repeated here, because a pin copied
    into two skills drifts in one. **A repo that installs the caching skills and
    not the money skills therefore has no pin**, and must decide it at its own
-   dependency review. Which skill should own it is unsettled.
+   dependency review. **`async-handoff-java` names jqwik too, for `E-7` and
+   `E-13`, and records the same gap** — so three stack skills now depend on a pin
+   only one of them states. Which skill should own it is unsettled.
 
 **Not measured, and it is a real number for a three-person team:** running the
 integration suite in three configurations **triples integration CI time**. No
@@ -352,7 +357,7 @@ evidence.
 
 **The one contradiction between sources, recorded rather than resolved.** This
 stack's pass records the `invokedynamic` claim as confirmed. A later hostile
-audit, run for the asynchronous-handoff rule set, argued the claim is too
+audit, run for the rules now published as `async-handoff`, argued the claim is too
 strong — the concatenation recipe travels as a constant-pool bootstrap argument,
 so a bytecode-reading rule may have an operand after all — and **could not reach
 the primary specification, which returned HTTP 403**. Neither reading is
