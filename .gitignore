@@ -1,0 +1,14 @@
+# Machine-local or regenerable. Nothing listed here belongs to the repo.
+node_modules/
+npm-debug.log*
+
+# Machine-local config, deliberately not shared: mise.toml and
+# .claude/settings.json are the shared ones.
+mise.local.toml
+.claude/settings.local.json
+
+.env
+.env.*
+
+.DS_Store
+Thumbs.db

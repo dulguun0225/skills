@@ -1,0 +1,15 @@
+{
+  "name": "nc-skills",
+  "private": true,
+  "description": "Agent Skills published from the engineering-decision corpus in raw/.",
+  "engines": {
+    "node": ">=26.5.1 <27"
+  },
+  "scripts": {
+    "check": "skills add . --list",
+    "try": "skills use ./ --agent claude-code --skill"
+  },
+  "devDependencies": {
+    "skills": "1.5.21"
+  }
+}

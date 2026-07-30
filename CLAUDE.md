@@ -8,10 +8,12 @@ A skills repository: it publishes the engineering-decision corpus in `raw/` as
 Agent Skills, installed with Vercel's `skills` CLI (skills.sh) and **not listed
 in the public skills.sh directory**.
 
-State as of 2026-07-30: the git repo has **no commits**, `.gitignore` is empty,
-and `raw/` is the only content. No skill has been authored yet, and there is no
-package manifest, build, lint, or test tooling. **Milestone 1 is to turn
-everything in `raw/` into skills.**
+State as of 2026-07-30: `raw/` is the only content — no skill has been authored
+yet, and there is no build, lint, or test tooling. What does exist is the project
+setup (node and the `skills` CLI pinned, LF enforced repo-wide, commands as npm
+scripts — see *Commands*) and the decided skill decomposition and layout
+(*Where skills live*). **Milestone 1 is to turn the content of `raw/` into
+skills.**
 
 **`raw/` is raw data — input material, never output.** It holds source text
 imported from elsewhere, to be read and converted; nothing in it is a published
@@ -27,19 +29,26 @@ relative links resolve here; everything pointing outside it does not (see
 
 ## Commands
 
-There is no build, lint, or test command yet. The commands that apply today are
-the distribution CLI's:
+Setting up a fresh machine is [README.md](README.md), *Setup on a new machine* —
+`mise trust`, `mise install`, `npm ci`, in that order. There is no build, lint, or
+test command. The two that exist wrap the distribution CLI, pinned in
+`package-lock.json`:
 
 ```bash
-npx skills add . --list                 # list the skills the CLI discovers in this repo — the discovery check
-npx skills init <name>                  # scaffold <name>/SKILL.md
-npx skills use ./ --skill <name> --agent claude-code   # run one skill from the working tree without installing
-npx skills add <owner>/<repo> -a claude-code -y        # how a consumer installs from this repo
+npm run check                 # list the skills the CLI discovers here — the discovery check
+npm run try -- <name>         # run one skill from the working tree without installing it
 ```
 
-`npx skills add . --list` is the only self-check that exists: it answers whether
-a skill is in a discoverable location with valid frontmatter. Anything the CLI
-does not list is invisible to every consumer.
+`npm run check` is the only self-check that exists: it answers whether a skill is
+in a discoverable location with valid frontmatter. Anything it does not list is
+invisible to every consumer. **It exits non-zero while no skill has been
+authored** — the CLI treats "no skills found" as a failure, which is the correct
+answer today.
+
+Two more CLI commands are not wrapped, because each is a one-off:
+`npx skills init <name>` scaffolds `<name>/SKILL.md` at the repo root, so anything
+it makes is moved under `skills/`; `npx skills add <owner>/<repo> -a claude-code
+-y` is how a consumer installs from here.
 
 Two checks the corpus text refers to are **not in this repo**:
 `ci/check_packs.py` (fails the build on mis-grouped evidence subheadings and on
@@ -69,6 +78,95 @@ Verified against `vercel-labs/skills` README on 2026-07-30.
   unless `INSTALL_INTERNAL_SKILLS=1` is set. Choose deliberately — the second
   one hides the skill from us too.
 - Spec: [agentskills.io](https://agentskills.io).
+
+## Where skills live
+
+Decided 2026-07-30. **One skill per topic, flat: `skills/<name>/SKILL.md`.**
+Resource files sit inside the skill's own directory. The catalog level
+(`skills/<category>/<name>/`) is available if the set ever outgrows a flat list;
+it is unused, and moving to it later changes installed paths.
+
+**A topic is what an agent is doing when it needs the rules.** It is not how
+`raw/` files its material, and the decomposition does not inherit that filing or
+its vocabulary — `raw/` is mined for content only. The consequence worth stating:
+the language-neutral rule sets are skills in their own right rather than resource
+files inside the Java skill, because the money rules have to be reachable from a
+repo that is not Java, and the caching rules should load only when something is
+about to be cached.
+
+| Skill | Content drawn from |
+| ----- | ------------------ |
+| `java-backend-rules` | `raw/seed/java-backend.md`, split by area; evidence and dates from `raw/java-backend.md` §4 |
+| `llm-default-traps` | `raw/seed/agent-traps.md`; evidence from `raw/agent-traps.md` §3 |
+| `money-values` | `raw/rule-sources/money-grade.md` |
+| `caching` | `raw/rule-sources/cache-discipline.md` |
+| `async-handoff` | `raw/rule-sources/event-broker-discipline.md` |
+| `tech-decision-research` | `raw/research-protocol.md` §1–4, §6 |
+| `enforceable-rules` | `raw/README.md`'s design principles and premise-specificity test; the portable checks in `raw/research-protocol.md` §5 |
+
+**What becomes no skill**, recorded so its absence is not read as an oversight:
+
+- Corpus bookkeeping — `raw/index.md`'s roster, audits-owed backlog, harvest map,
+  candidate list and sunset clock, and `raw/README.md`'s governance. These
+  maintain the corpus; they are not a capability anyone installs.
+- The six-step adoption procedure in `raw/README.md` and everything around
+  `.specify/memory/constitution.md`. That machinery is not in this repo, and its
+  files are dangling references here.
+
+**`raw/` stays exactly where it is**, unchanged, as the record of what was
+imported. Skills are new files under `skills/`.
+
+**A skill directory is the whole world its consumer has.** Every link in a skill
+resolves inside that directory or is an absolute URL. Where a skill carries text
+verbatim from `raw/`, the copy is byte-identical and a diff is the gate; where it
+is rewritten, it is rewritten wholesale — no half-copies, which a diff cannot
+check and a reader cannot trust.
+
+**Two questions are open per skill, not once for the set.** They are decided as
+each skill is authored, and the answer is recorded with that skill — a directive
+set of nine dependency picks and one of 149 platform rules have no reason to
+answer either the same way:
+
+- Whether a directive ships with the *kind* of check it needs and the tool left to
+  the adopting repo, or appears only where a tool can be named. This decides how
+  much of `money-values`, `caching` and `async-handoff` exists outside
+  `java-backend-rules`.
+- Whether the skill instructs the agent directly, or its job is to write a rules
+  file the consumer repo commits.
+
+### Where the first skill stands
+
+The banned-default-picks skill — nine directives from `raw/seed/agent-traps.md`,
+five dated evidence entries in `raw/agent-traps.md` §3 — is the one to author
+first: it is the smallest, and every one of its directives already names a real
+check with its enforcement marker.
+
+**Settled by the content, not open:**
+
+- **It instructs the agent directly.** These fire when an agent is about to add a
+  dependency, pin a tool, or wire CI; there is nothing to generate into a repo
+  file.
+- **The check question does not arise.** No directive here is check-kind-only, so
+  this skill decides nothing for `money-values`, `caching` or `async-handoff`.
+
+**Open. A recommendation is given for each so the next session can accept or
+overturn one, not re-derive all three:**
+
+- **The five JVM-only directives** (jqwik pin, the jollyday fork, Error Prone over
+  ArchUnit for non-loggability, JSR-385, the `char[]` myth). *Recommended:* keep
+  them in this skill as a group conditioned on JVM repos, the way the source text
+  already splits them — they are dependency and tooling picks rather than
+  service-code rules, so a Java library or CLI that is not a backend still needs
+  the jqwik pin. The alternatives are moving them into `java-backend-rules` or
+  giving them a skill of their own.
+- **Where confidence markers and dates sit.** *Recommended:* each directive
+  carries its marker and date inline, with sources, negative citations and re-open
+  triggers one hop away in the skill's own reference file. Four of the nine pin a
+  version or record an incident, so they decay, and the lapse rule only works on a
+  date the reader can see.
+- **The name.** `llm-default-traps` in the table above is provisional. It says
+  what the content is — the picks an LLM makes by training-data default, banned by
+  name — but it is not decided.
 
 ## The `raw/` corpus — the model to preserve
 
@@ -151,9 +249,9 @@ quietly.
   Java seed text alone is 1757 lines, so a single always-loaded `SKILL.md` body
   cannot hold it.
 - **Rule ids (`P-n`, `M-n`, `C-n`, `E-n`) and links back into this corpus never
-  appear in anything a consumer repo pastes.** The consumer has no copy of this
-  corpus, so a cited id or a relative link lands there as a dangling pointer.
-  Ids belong in the pack/source files only.
+  appear in anything that leaves this repo** — neither text a consumer pastes nor
+  a file a consumer installs. The consumer has no copy of this corpus, so a cited
+  id or a relative link lands there as a dangling pointer. Ids stay in `raw/`.
 - **Name the corpus favourite and why it lost** (`P-6`). "Use X" does not
   override an agent's instinct; "the default is Y, rejected because Z" does.
   That sentence is the most important line in a pack — do not compress it away.
@@ -162,11 +260,9 @@ quietly.
 - Directive shape in seed text: **bold directive**, then the reasoning, then the
   check in parentheses with its enforcement marker.
 
-**Open, and not yet decided:** how packs, sources and seed files map onto skill
-boundaries — one skill per pack, per source, or per audience (adopting a pack
-versus authoring one) — and where the `raw/` files live after the conversion.
-Do not treat any layout in the repo as a settled decision until this is
-recorded.
+Where the converted skills live, and what one skill is: *Where skills live*
+above. Two questions about the shape of a directive in a skill are still open and
+are listed at the end of that section.
 
 ## Dangling references in `raw/`
 
