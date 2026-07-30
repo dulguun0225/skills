@@ -664,8 +664,10 @@ known and belong in that record on the first run:**
   this build** (`E-5`, `E-14`, `E-27`) — durability, replica counts, minimum
   in-sync replicas, retention and delivery limits as actually deployed. **The
   catalog's declarations are the lints' operands and they can be a lie.**
-- **The jqwik version pin** — no directive here owns it. Record the pin this repo
-  runs and who owns it. See the named gaps below.
+- **The jqwik version pin** — no directive here owns it and nothing here wires it.
+  `llm-default-traps` owns it; install that skill and wire the ceiling from there.
+  A repo that does not install it gets no pin from any skill here and must record
+  the one it runs. See the named gaps below.
 
 **A record that lists only what was wired reads as complete coverage. That is the
 failure this step exists to prevent.**
@@ -694,12 +696,13 @@ Silence reads as coverage, so each is stated.
    here.** `E-7` and `E-13` both name jqwik property tests. That library's version
    pin is a **cross-cutting dependency rule rather than an asynchronous-handoff
    rule** — it binds every use of the library in the repo — so it is not stated as a
-   check here. `money-java` carries it, as `M-24`, with the version and the CI
-   version-ceiling check; the value is **deliberately not repeated here, because a
-   pin copied into two skills drifts in one.** **A repo that installs these skills
-   and not the money skills therefore has no pin**, and must decide it at its own
-   dependency review. `caching-java` records the same gap for the same reason.
-   Which skill should own it is unsettled.
+   check here. **`llm-default-traps` owns it**, with the ceiling version, the
+   incident behind it and the CI version-ceiling check; the value is
+   **deliberately not repeated here, because a pin stated in four skills drifts in
+   three.** That skill binds every agent-built repo regardless of stack, so it is
+   not an optional companion — **install it in any repo that installs these.** A
+   repo that does not has no pin from any skill here and must decide it at its own
+   dependency review.
 
 **Two costs, stated rather than absorbed, and both are real numbers for a
 three-person team.** The cache rules already **triple** integration CI time; this

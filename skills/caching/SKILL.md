@@ -373,9 +373,11 @@ column and the wire.
 **Do not write the check against the adapter's value type parameter.** In an
 erasing type system a tool that reads compiled output sees only the erased top
 type there and decides nothing. That false green has been shipped once already,
-by a rule banning unloggable domain types on an erasing stack — **a platform rule
-set not published in this skill set**, so the trap is recorded here and in the
-stack skill rather than cited. The concrete type is known at the **registration
+by a rule banning unloggable domain types on an erasing stack. **The
+`llm-default-traps` skill carries that case's tool ban and the erasure ground
+behind it; the domain-type rule the ban enforces belongs to a platform rule set
+not published in this skill set**, so the trap is recorded here and in the stack
+skill rather than left to a pointer. The concrete type is known at the **registration
 site**, and a source-level checker sees static types; that is where the check
 goes.
 *Static rule at the registration site plus a property test (serialize, then

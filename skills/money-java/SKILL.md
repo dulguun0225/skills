@@ -116,13 +116,17 @@ throwaway container, never an in-memory substitute.
   mutation score is the ceiling above the repo's general coverage floor, and the
   threshold is this repo's call, stated in the repo's own text.
   (Off-the-shelf.)
-- **`M-24` — jqwik, pinned at 1.9.3 or lower, with a version-ceiling check in
-  CI.** The pin is not incidental: this library carries a known version trap,
-  and it is re-decidable at every dependency review rather than bumped on
-  sight. The pin is a **cross-cutting dependency rule, not a money rule** — it
-  binds every use of the library in the repo, and it is stated here because the
-  money property suites are what make the library load-bearing. (Convention —
-  authored property tests, off-the-shelf runner.)
+- **`M-24` — jqwik property tests, at the version ceiling `llm-default-traps`
+  states and enforced by that skill's CI check.** The pin is not incidental:
+  this library carries a known version trap, and it is re-decidable at every
+  dependency review rather than bumped on sight. It is a **cross-cutting
+  dependency rule, not a money rule** — it binds every use of the library in the
+  repo — so `llm-default-traps` owns it, and **the version is deliberately not
+  repeated here, because a pin stated in four skills drifts in three.** Install
+  that skill alongside these; if this repo does not, the pin is its own to state
+  at its own dependency review, and no skill here supplies it. (Convention —
+  authored property tests, off-the-shelf runner; the ceiling — off-the-shelf,
+  wired per `llm-default-traps`.)
 - **`M-25` — a JUnit golden test against committed, approved output.**
   (Convention.)
 - **`M-26` — Schemathesis against the app booted with Testcontainers.** One
@@ -157,8 +161,9 @@ that is not.
    `EmptyCatch` promoted from its default `WARNING` to `ERROR` (`M-5`).
 3. **pitest ≥ 1.25.8** on the money packages with the repo's threshold
    (`M-23`).
-4. **jqwik ≤ 1.9.3** plus the CI version-ceiling check (`M-24`), and the
-   property suites for `M-1`, `M-3`, `M-8`.
+4. **The property suites** for `M-1`, `M-3`, `M-8` and `M-24`. The jqwik version
+   ceiling those suites run under is wired from `llm-default-traps`, which owns
+   it — not from here.
 5. **The catalog gates** — the event-name and error-code catalog enums, their
    committed snapshots diffed each build, and the per-money-path event test
    (`M-20`, `M-21`).
@@ -255,7 +260,7 @@ decision — is in the `money` and `money-api` skills' own `evidence.md`.
 | Error Prone `EmptyCatch` is `WARNING` by default, must be promoted to `ERROR`, matches only the empty case, and skips a commented or `ignored`/`expected` block (errorprone.info) | confirmed | 2026-07-25 |
 | ArchUnit models the caught throwable type but not the catch-block body, so it cannot see a swallowing handler (TNG/ArchUnit issue 1120) | confirmed | 2026-07-25 |
 | pitest supports bytecode through Java 26, is actively maintained, and fixed a real Java 25 defect in the `BigDecimal`/`BigInteger` mutators in 1.25.8 (2026-07-20) | confirmed | 2026-07-21 |
-| jqwik carries a version trap: pin ≤ 1.9.3 with a CI version-ceiling check, and treat it as re-decidable at every dependency review | confirmed | 2026-07-21 |
+| jqwik carries a version trap, calling for a CI version-ceiling check and treatment as re-decidable at every dependency review. The ceiling version itself is stated once, by `llm-default-traps`, which owns the pin — the same 2026-07-21 finding, recorded there with its incident detail | confirmed | 2026-07-21 |
 | `promtool test rules` runs unit tests over committed rule files; `alert_rule_test` asserts which alerts fire at a given evaluation time, and the must-not-fire case is an empty expected-alerts list (prometheus.io) | primary-source verified — one researcher, no panel | 2026-07-27 |
 | Metric label cardinality is boundable off the shelf on both sides: Micrometer's `MeterFilter` maximum-allowable-tags filter with a deny action, and the registry's high-cardinality-tags detector, which its docs support in a one-time-check form for tests | primary-source verified | 2026-07-27 |
 | Schemathesis is the conformance-fuzz oracle — MIT, on its 4.x line — and `[generation] deterministic = true` plus a top-level `seed` give reproducible runs; both keys are 4.x-specific, so they are re-checked at every version bump | confirmed | 2026-07-25 |

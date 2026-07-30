@@ -163,9 +163,10 @@ repo.)*
   cache port's value type parameter as `Object` and would report green while
   protecting nothing. That is the same erasure trap as the unloggable-domain-type
   rule on this stack, where ArchUnit sees a logger's erased `Object...` signature
-  rather than the argument's static type — **that rule belongs to a platform rule
-  set not published in this skill set**, so the trap is recorded here rather than
-  cited. The concrete type
+  rather than the argument's static type. **`llm-default-traps` carries that
+  case's tool ban and the erasure ground behind it; the domain-type rule the ban
+  enforces belongs to a platform rule set not published in this skill set**, so
+  the trap is stated here too rather than left to a pointer. The concrete type
   is known at the **catalog registration site** and a source-level checker sees
   static types, so the check goes there. A stack with reified generics will not
   have this divergence; a structurally typed one will have it worse. (Error Prone
@@ -278,9 +279,10 @@ known and belong in that record on the first run:
   many entries it needed. See the named gaps below.
 - **`C-15`'s "what invalidates it" field** — prose, and no diff can check it
   against behaviour.
-- **The jqwik version pin** — no cache directive owns it. Record the pin this
-  repo runs and who owns it, because a repo without the money skills gets no pin
-  from a skill at all. See the named gaps below.
+- **The jqwik version pin** — no cache directive owns it and nothing here wires
+  it. `llm-default-traps` owns it; install that skill and wire the ceiling from
+  there. A repo that does not install it gets no pin from any skill here and must
+  record the one it runs. See the named gaps below.
 
 A record that lists only what was wired reads as complete coverage. That is the
 failure this step exists to prevent.
@@ -310,13 +312,13 @@ Silence reads as coverage, so each is stated.
    here.** `C-6` and `C-10` both name jqwik property tests. That library's
    version pin is a **cross-cutting dependency rule rather than a cache rule** —
    it binds every use of the library in the repo — so it is not stated as a cache
-   check. `money-java` carries it, as `M-24`, with the version and the CI
-   version-ceiling check; the value is not repeated here, because a pin copied
-   into two skills drifts in one. **A repo that installs the caching skills and
-   not the money skills therefore has no pin**, and must decide it at its own
-   dependency review. **`async-handoff-java` names jqwik too, for `E-7` and
-   `E-13`, and records the same gap** — so three stack skills now depend on a pin
-   only one of them states. Which skill should own it is unsettled.
+   check. **`llm-default-traps` owns it**, with the ceiling version, the incident
+   behind it and the CI version-ceiling check; the value is **deliberately not
+   repeated here, because a pin stated in four skills drifts in three.** That
+   skill binds every agent-built repo regardless of stack, so it is not an
+   optional companion — **install it in any repo that installs these.** A repo
+   that does not has no pin from any skill here and must decide it at its own
+   dependency review.
 
 **Not measured, and it is a real number for a three-person team:** running the
 integration suite in three configurations **triples integration CI time**. No

@@ -12,8 +12,9 @@ State as of 2026-07-30: there is no build, lint, or test tooling beyond the
 discovery check. What exists is the project setup (node and the `skills` CLI
 pinned, LF enforced repo-wide, commands as npm scripts — see *Commands*), the
 decided skill decomposition and layout (*Where skills live*), and **three
-authored families — every cross-stack source in `raw/rule-sources/` is now
-converted**:
+authored families plus one standalone skill — every cross-stack source in
+`raw/rule-sources/` is now converted, and the first *pack* has been converted
+too**:
 
 - **The money family, authored 2026-07-30 in two phases** — `skills/money/`,
   `skills/money-api/`, `skills/money-storage/` and `skills/money-java/`
@@ -30,11 +31,16 @@ converted**:
   `skills/async-handoff-java/` (`SKILL.md` + `shapes.md`), all 36 directives
   `E-1` … `E-36` defined exactly once. See *The asynchronous-handoff skill
   family*.
+- **`llm-default-traps`, authored 2026-07-30 last** — `skills/llm-default-traps/`
+  (`SKILL.md` + `evidence.md`), nine directives, **no rule ids**. The first
+  pack-derived skill and the first single-skill conversion, and it is now the
+  **owner of record for the jqwik version pin** that three stack skills name. See
+  *The `llm-default-traps` skill*.
 
-All nine are discovered by `npm run check`. **Milestone 1 is to turn the content
-of `raw/` into skills**; the three cross-stack sources are done and the remaining
-unwritten rows of the table in *Where skills live* are all pack-derived
-(`java-backend-rules`, `llm-default-traps`) or corpus-derived
+All ten are discovered by `npm run check`. **Milestone 1 is to turn the content
+of `raw/` into skills**; the three cross-stack sources and one of the two packs
+are done, and the remaining unwritten rows of the table in *Where skills live*
+are one pack-derived (`java-backend-rules`) and two corpus-derived
 (`tech-decision-research`, `enforceable-rules`).
 
 **`raw/` is raw data — input material, never output.** It holds source text
@@ -93,12 +99,21 @@ npm run try -- <name>         # run one skill from the working tree without inst
 
 `npm run check` is the only self-check that exists: it answers whether a skill is
 in a discoverable location with valid frontmatter. Anything it does not list is
-invisible to every consumer. Since 2026-07-30 it lists nine — `async-handoff`,
-`async-handoff-java`, `async-handoff-shapes`, `caching`, `caching-java`, `money`,
-`money-api`, `money-storage`, `money-java`. It says
+invisible to every consumer. Since 2026-07-30 it lists ten — `async-handoff`,
+`async-handoff-java`, `async-handoff-shapes`, `caching`, `caching-java`,
+`llm-default-traps`, `money`, `money-api`, `money-storage`, `money-java`. It says
 nothing about resource files: `evidence.md`, `api.md`, `storage.md` and
 `shapes.md` are unlisted and unchecked, so a broken relative link inside a skill
 passes it.
+
+**It caught a real defect on 2026-07-30, and it is the only thing that would
+have.** `llm-default-traps` was written with a `: ` — colon then space — inside
+its unquoted `description`, which YAML parses as a nested mapping rather than a
+string, so the file was **not a skill at all** and the check listed nine. Nothing
+about the file looks wrong when read. **Run `npm run check` after writing or
+editing any frontmatter, and treat a missing name as a frontmatter syntax error
+before looking anywhere else** — the descriptions here are long prose and a colon
+is easy to write.
 **`npm ci` must have run first** — `npm run check` shells out to the pinned CLI
 in `node_modules`, and on a machine where it has not, the script fails with
 `'skills' is not recognized` rather than reporting zero skills.
@@ -206,48 +221,22 @@ family*). What settles it is the shape all three share: a portable directive set
 whose enforcement is per stack. **The rule is now closed for cross-stack sources,
 because there is no fourth one.** A skill drawn from a *pack* rather than a
 source — `java-backend-rules`, `llm-default-traps` — has no such split to make and
-is not covered by this.
+is not covered by this. **`llm-default-traps` confirmed that on authoring**
+(2026-07-30): it shipped as one skill naming both the check kind and the tool in
+one file, and *The `llm-default-traps` skill* records the two grounds beyond this
+one.
 
 ### Where `llm-default-traps` stands
 
-**No longer first.** The money family is authored first (2026-07-30, *The money
-skill family* below). Everything else in this subsection still holds — only the
-claim to being first is superseded.
-
-The banned-default-picks skill — nine directives from `raw/seed/agent-traps.md`,
-five dated evidence entries in `raw/agent-traps.md` §3 — was chosen as the one to
-author first: it is the smallest, and every one of its directives already names a
-real check with its enforcement marker.
-
-**Settled by the content, not open:**
-
-- **It instructs the agent directly.** These fire when an agent is about to add a
-  dependency, pin a tool, or wire CI; there is nothing to generate into a repo
-  file.
-- **The check question does not arise.** No directive here is check-kind-only, so
-  this skill decides nothing for the money skills, `caching` or `async-handoff`.
-  **All three cross-stack families have since answered it for themselves, and
-  identically** (*The money skill family*, *The caching skill family*, *The
-  asynchronous-handoff skill family*).
-
-**Open. A recommendation is given for each so the next session can accept or
-overturn one, not re-derive all three:**
-
-- **The five JVM-only directives** (jqwik pin, the jollyday fork, Error Prone over
-  ArchUnit for non-loggability, JSR-385, the `char[]` myth). *Recommended:* keep
-  them in this skill as a group conditioned on JVM repos, the way the source text
-  already splits them — they are dependency and tooling picks rather than
-  service-code rules, so a Java library or CLI that is not a backend still needs
-  the jqwik pin. The alternatives are moving them into `java-backend-rules` or
-  giving them a skill of their own.
-- **Where confidence markers and dates sit.** *Recommended:* each directive
-  carries its marker and date inline, with sources, negative citations and re-open
-  triggers one hop away in the skill's own reference file. Four of the nine pin a
-  version or record an incident, so they decay, and the lapse rule only works on a
-  date the reader can see.
-- **The name.** `llm-default-traps` in the table above is provisional. It says
-  what the content is — the picks an LLM makes by training-data default, banned by
-  name — but it is not decided.
+**Authored 2026-07-30, last of the four — this subsection is superseded by *The
+`llm-default-traps` skill* below**, which is the record. What it used to hold was
+a plan: that the skill instructs the agent directly, that no directive in it is
+check-kind-only, and three open questions carried with a recommendation each.
+**All three recommendations were accepted on authoring, none overturned** — the
+five JVM-only directives stayed in this skill as a group conditioned on JVM
+repos, each directive carries its marker and date inline with evidence one hop
+away, and the name `llm-default-traps` was kept. The reasons are in the new
+section; do not re-derive them from here.
 
 ## The money skill family
 
@@ -1115,6 +1104,266 @@ this family's passes are **worse than the caching family's** — checked against
 three-vote refutation the broker pass never ran, so the comparison is exact rather
 than rhetorical.
 
+## The `llm-default-traps` skill
+
+Authored 2026-07-30, last of the four, in one pass. Two files:
+
+```
+skills/llm-default-traps/  SKILL.md  evidence.md   nine directives, no ids
+```
+
+**The first pack-derived skill, the first single-skill conversion, and the first
+skill here with no rule ids.** Listed by `npm run check`. Drawn from
+`raw/seed/agent-traps.md` (53 lines, nine directives) with evidence from
+`raw/agent-traps.md` §3 (five dated notes) and §4 (three re-open triggers).
+
+### What was forced by the three precedents
+
+- **Both open questions from *Where skills live* answered as every family
+  answered them**: it instructs the agent directly, and it carries a one-time
+  `## Wiring the gates` section, because the gate is what catches the *next*
+  agent.
+- **Marker and date inline on every directive**, evidence one hop away — sources,
+  the do-not-cite list, re-open triggers, and what the skill does not carry.
+- **The lapse rule stated with its date** (`review-by` **2027-01-24**), and the
+  marker ceiling stated near the top rather than only in `evidence.md`.
+- **No `P-n`, no `B-n`, no `DECISIONS.md`, no reference into `raw/`, no link
+  leaving the skill directory.**
+- **The Decision Trace is glossed**, per the asynchronous-handoff review's
+  finding that a consuming repo may have no such document.
+
+### What this skill decided that no family did
+
+1. **One skill, no neutral/stack split, and *Where skills live* predicted this
+   correctly.** The split rule is closed for cross-stack sources and explicitly
+   does not cover a pack. Two further grounds beyond that: the five JVM
+   directives are **dependency and tooling picks rather than service-code rules**,
+   so they bind a Java library, CLI or batch job as much as a backend — a
+   `-java` sibling would carry the wrong condition — and a pack has no source with
+   per-stack instantiation to defer a tool to. The JVM group ships as a
+   conditioned section, the way the source text already splits it.
+2. **No rule ids, and this is the first skill in the set without them.** `raw/`
+   assigns ids only to *sources*; a pack has none to inherit, so ids here would
+   have to be invented, making this skill the definition of record for a numbering
+   `raw/` does not have. The decisive ground is the cross-family reference style
+   the caching family settled — **prefer the skill name over an id, because an id
+   resolves for a repo that installed the skill and dangles for one that did
+   not** — and three stack skills need to point at one rule here. They point by
+   skill name plus subject. Each directive gets a `###` heading instead, which is
+   the durable anchor an id would have been.
+3. **It names both the check kind and the tool, in one file, split by group.** The
+   any-stack gates are named by *kind* with the tool left to the ecosystem; the
+   JVM gates name maven-enforcer and Error Prone. Every other skill here puts
+   those two halves in two skills. There is no second file to put the tool in, and
+   inventing one would have been the split rejected in point 1.
+4. **The marker ceiling is inverted.** `money-storage` and `caching` open by
+   warning that their markers are weaker than they look. Here most claims are
+   *confirmed* — three refutation votes against primary sources — which makes this
+   the only skill in the set that is not predominantly convention. So the
+   top-of-file note says the markers run the *other* way and names the three
+   exceptions: the general injection-surface rule is convention with one instance
+   behind it, the scanner-compromise record is dated and must be re-verified at
+   adoption, and the slopsquatting *threat* is confirmed while the
+   lockfile-and-plan-gate *response* is this organisation's convention.
+5. **The growth tripwire converts into two obligations rather than one.** The
+   source's own tripwire is that a newly found trap is added to the pack with a
+   date — its only growth path. An installed skill is not a file the consumer
+   edits, so the skill requires the repo to **record the new trap in its own rules
+   at the moment it is found** *and* **report it back**, and says plainly that
+   nothing automates the second. This is the first tripwire in the set that is a
+   maintenance path rather than an arming mechanism, and **the `M-29` / `C-16` /
+   `E-28` shape was not needed**: the plan-gate obligation is already a directive
+   in the source text ("a new dependency appears in the plan's Decision Trace,
+   never silently in a diff"), so it is native here rather than a conversion
+   artifact.
+6. **"Silence about a trap is not evidence the trap is absent"** ships as a
+   top-level statement, not a named gap, because the incompleteness is a property
+   of the whole list rather than of any rule in it.
+
+### The jqwik pin — settled, and what the sweep changed
+
+**This skill is now the owner of record.** The corpus's own answer decided it:
+`raw/java-backend.md` §4 records that the caveat was *moved to the agent-traps
+pack* precisely because it is cross-cutting, and all three stack skills already
+said the pin was not their rule. Seven edits across four published files:
+
+- **`money-java/SKILL.md`** — the `M-24` entry, wiring step 4, and the evidence
+  table row.
+- **`caching-java/SKILL.md`** — the wiring record's skipped-item bullet and named
+  gap 6.
+- **`async-handoff-java/SKILL.md`** — the wiring record's skipped-item bullet and
+  named gap 7.
+
+**The version was removed from `money-java`, and that is the one consequence to
+know about.** Before this, a repo installing only the money skills had the pin;
+now no stack skill states it, all three name `llm-default-traps` as the owner, and
+all three carry the same fallback — if that skill is not installed, the pin is the
+repo's own to state and no skill here supplies it. Two grounds. The repo's own
+rule, already stated twice by `caching-java` and `async-handoff-java`, is that a
+pin stated in *N* skills drifts in *N*−1; and `llm-default-traps` binds **every**
+agent-built repo regardless of stack, so it is a baseline rather than an optional
+companion. The alternative — leave the value in `money-java` too — is exactly the
+two-copy drift those two skills refused to create.
+
+**The constraint this file set** ("whatever it decides must not leave a repo
+installing one family and not the others unpinned") **is met by making the install
+instruction loud in all three and stating the fallback in all three.** It is not
+met for a repo that ignores the instruction — but that outcome is now **symmetric
+across the three and stated in each**, where before it was silently true for two
+of them and silently false for the third.
+
+**Inside `llm-default-traps` the version appears twice, doing two different
+jobs**: the directive states the ceiling, and `evidence.md` states the release
+date of the clause-free version, which is *why* that ceiling. The wiring step
+deliberately points back at the directive rather than restating the number.
+
+### The interlock that only partly resolved — and the new lesson
+
+Two caching sentences — one in `caching/SKILL.md`, one in `caching-java` — said
+the unloggable-domain-type rule belongs to "a platform rule set not published in
+this skill set". This skill publishes the **tool ban** (Error Prone, never
+ArchUnit) and the erasure ground behind it; the **rule itself** lives in
+`raw/seed/java-backend.md`'s Observability section and belongs to
+`java-backend-rules`, still unwritten. So both sentences were **narrowed, not
+resolved**: they now name `llm-default-traps` as carrying the ban and the ground,
+and keep saying the domain-type rule is unpublished.
+
+**The lesson: the publish-obliges-a-sweep rule needs a second step — check what
+the new skill actually publishes against what the old sentence actually
+claimed.** The three previous publishes replaced such sentences wholesale, and
+this is the first where wholesale replacement would have been **false**. The other
+two "not published in this skill set" sentences in the caching family are about
+telemetry's disposability and the `rebuildable-cache premise` collision; both were
+read and correctly left alone.
+
+### Still open for this skill
+
+- **The trap list grows only when someone notices.** Stated as the first named
+  gap, and it is not closable.
+- **Registry verification has no host** — convention, the agent states it was
+  done. It is the first line of defence against the one *confirmed* threat in the
+  set and the least enforced rule in it. A green lockfile gate is not registry
+  verification, and the skill says so where it would be misread.
+- **The injection-surface rule generalises from a single case.** A second
+  confirmed instance promotes it from convention and is also the first evidence
+  about how often this happens.
+- **The any-stack version-ceiling mechanism is named by kind only**, which is the
+  uninstantiated-stack question in its mildest form: lockfile gates and action
+  pin-checks are off the shelf in every major ecosystem, ceilings are not. A repo
+  that finds no off-the-shelf host for one of the three any-stack gates must
+  record which — and those records are the raw material a per-ecosystem section
+  would be authored from.
+- **The jqwik successor evaluation has never been run.** It is a re-open trigger
+  carried from 2026-07-21, and **four skills here now depend on the library**, so
+  the evaluation is worth more than the version bump.
+- **`raw/agent-traps.md` gains no row and needs none, and this conversion is the
+  first that does *not* hit the `raw/`-editing conflict** the money and
+  asynchronous-handoff families left open. That conflict is about writing a
+  sentence into a *source's* instantiation table; a **pack has no such table**, so
+  there is nothing to write and nothing to decide. The conflict still stands for
+  `money-grade.md` §3 and `event-broker-discipline.md` §3.
+- ~~**No adversarial review has been run on this skill.**~~ **Run 2026-07-30 — see
+  *The adversarial review* below.** What this bullet used to say still holds as
+  background: each of the three families' reviews found content defects in files
+  the authoring pass had already called clean, and this skill's did too. **The
+  structural sweep was clean at authoring and is clean again after the review**:
+  nine directives each carrying a check, an enforcement marker and a date; no
+  `P-n`, no `B-n`, no `DECISIONS.md`, no reference into `raw/`; the only two links
+  being `SKILL.md` ↔ `evidence.md`; and ten skills listed by `npm run check`.
+  **Two counting errors were caught during authoring by re-deriving rather than
+  re-reading** — "seven of the nine claims are confirmed" (the confirmed set is
+  neither seven nor nine, and the sentence is now stated by exception with no
+  count at all) and "the four any-stack gates" against "one of these three" three
+  lines later. That was the fifth instance of this failure in this repo, **and the
+  review found the sixth: the same "four any-stack gates" phrase, uncorrected, in
+  `evidence.md`.**
+
+### The adversarial review, 2026-07-30
+
+Both files re-read against `raw/seed/agent-traps.md`, `raw/agent-traps.md` §1, §3
+and §4, `raw/README.md`'s marker and status-tier definitions, and the three stack
+skills that point here. **The structure held**: nine directives each carrying a
+check kind, an enforcement marker and a date; the nine directive statements diffed
+against the seed with no clause dropped; no `P-n`, no `B-n`, no `DECISIONS.md`, no
+reference into `raw/`, the only links being `SKILL.md` ↔ `evidence.md`; the
+frontmatter still parsing after a description edit and ten skills listed by
+`npm run check`. Content defects were fixed in both files — **deliberately not
+counted here, since a count is the failure this very review found for the sixth
+time.** **Five findings generalise:**
+
+- **Fixing a decayed count in one file does not fix its copy in the sibling, and
+  this repo's own record of catching it made that harder to see.** Authoring
+  caught "the four any-stack gates" in `SKILL.md` and *this file* recorded the
+  catch; the identical phrase sat uncorrected in `evidence.md`, pointing at the
+  named gap that says "one of these three". `evidence.md` now **names** them
+  instead — the lockfile gate, the pin-check lint, the version-ceiling mechanism —
+  and the named gap keeps "one of these three", because there the count sits one
+  sentence after the enumeration it counts. **Sixth instance of the counting
+  failure, and the first where a fix note in `CLAUDE.md` read as coverage for a
+  file the fix never reached.**
+- **A cross-family citation carries quantities, and those need the same
+  verification the ids get.** Both files said the three stack skills name jqwik
+  "as the check for **one** of their own directives". `money-java` names it for
+  `M-1`, `M-3`, `M-8` and `M-24`; `caching-java` for `C-6` and `C-10`;
+  `async-handoff-java` for `E-7` and `E-13`. Worse, `evidence.md` asserted **"their
+  side was read before this was written"** in the same sentence that got the number
+  wrong — the async-handoff review's lesson repeating exactly: **a claim to have
+  verified is itself a claim to check.**
+- **A marker or tier glossed in the author's own words can invert what it
+  names.** The status tier read "the enforcement shapes have not been run long
+  enough to be production-confirmed", which asserts production use;
+  `raw/README.md` defines *decided, not yet validated* as **no production use
+  yet**. A gloss must be diffed against the definition, not written from the
+  phrase. The same section used **recorded** as a third marker value in its table
+  and defined only *confirmed* and *convention* — now defined.
+- **A superlative about the other skills is a count in disguise, and it was
+  wrong.** The file claimed to be "the only skill in this set that is not
+  predominantly convention". `money-storage` is not predominantly convention
+  either — roughly half its directives are *primary-source verified* from the
+  2026-07-29 persistence pass. The marker inversion is real and worth stating; the
+  ranking against nine other files was not checkable and is gone. It also said the
+  exceptions are "stated by exception rather than by count" **while counting
+  them**.
+- **A conditioned group has to be conditioned where the premise is stated.** The
+  premise section said the premise "is the whole of the condition — there is no
+  second half, which is why this skill applies to every agent-built repo
+  regardless of stack", and the JVM group's dormancy condition arrived 115 lines
+  later. `raw/agent-traps.md` §1 states both together. A Python repo reading only
+  the premise section is told nothing here is stack-conditioned, which is the
+  reading the JVM group exists to prevent.
+
+The rest, which do not generalise: gap 2 called registry verification the defence
+against "**the** confirmed threat in this set" and "the least enforced rule in it"
+— two confirmed threat claims exist and two other gaps are equally unenforced, so
+it now names slopsquatting and says plainly that nothing in any build reaches the
+verification; `evidence.md` counted "four skills in this set depend on the
+library" (three run checks on it, this one pins it — now named, not counted); the
+growth-path section opened with "**The source this converts** states its own
+growth path", a consumer-facing pointer at unpublished material, which is the
+caching review's finding — the growth rule is now stated as this skill's own;
+wiring step 3 said the ceiling mechanism has "the jqwik pin **below**" when the
+pin is stated above it, and its justification ("the first one is already known")
+was false on every non-JVM stack, where the mechanism starts empty; the
+description and the JVM heading called all five JVM rules "dependency and tooling
+picks" while the skill itself says the `char[]` directive "bans a **claim** rather
+than a pick"; two of the five re-open triggers are conversion additions rather
+than triggers the pass wrote down, now marked as such; the directive's "it is in
+maintenance mode" had no ground of its own — `evidence.md` now says it rests on
+the maintainer's *probably*-hedged sentence and that the pin does not; and
+`SKILL.md` promised "**Sources** for each" where the jqwik entry names no source
+document, now "the ground behind each claim — with its source where the pass named
+one".
+
+**Left standing deliberately.** No rule ids (decision 2 holds — three stack skills
+cite by skill name plus subject and all three resolve); one skill with no
+neutral/stack split; the marker inversion itself, which is the point of the
+top-of-file note; naming Trivy, jqwik, `de.jollyday`, JSR-275, JScience,
+maven-enforcer and Error Prone; and the source's blanket claim that **every** trap
+here is a named corpus favourite, which is loose for the registry-verification and
+injection-surface rules — the loser there is a habit rather than a package — but
+is the source's own sentence and holds for all nine on the reading that the
+rejected default is named inline.
+
 ## The `raw/` corpus — the model to preserve
 
 Read `raw/README.md` first; it is the authority on the corpus's own rules. The
@@ -1215,8 +1464,12 @@ quietly.
 
 Where the converted skills live, and what one skill is: *Where skills live*
 above. Two questions about the shape of a directive in a skill are open per skill
-and are listed at the end of that section; both are answered for the money family
-in *The money skill family*, and for no other skill yet.
+and are listed at the end of that section. **All four authored skill sets have now
+answered both** — see *The money skill family*, *The caching skill family*, *The
+asynchronous-handoff skill family* and *The `llm-default-traps` skill*. The three
+cross-stack families answered identically; `llm-default-traps` answered the second
+question the same way and the first differently, because it is one skill rather
+than a neutral/stack pair.
 
 ## Dangling references in `raw/`
 
