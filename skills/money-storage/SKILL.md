@@ -33,9 +33,9 @@ stores none of it skips the group.
 repo uses a client library or an ORM."** These rules must reach a hand-written
 query, a view definition, a migration, and a support script — **none of which
 imports a client library**. Scoping the seam around the obvious library is the
-mistake two neighbouring rule sets — the caching rules and the
-asynchronous-handoff rules, neither published here — each had to correct: the
-first had scoped its seam to a cache client library, which left every
+mistake two neighbouring rule sets each had to correct — the **`caching` skill,
+which is published**, and an asynchronous-handoff rule set, which is not.
+`caching`'s seam had been scoped to a cache client library, which left every
 in-process cache outside every one of its checks. If a check here is written
 against a library's API, it reports green over every one of those four.
 
@@ -70,9 +70,14 @@ The gap was never a missing rule. It was a missing **layer**.
 - **`money-java`** — the same rules with PostgreSQL, jOOQ, Flyway and a
   containerised engine named; its `storage.md` is the half that matches this
   skill.
-- **Two shapes are owned by rule sets that are not published here** — a cached
-  amount and a money amount in a message payload or outbox row. The composite
-  shape table names the seam for each rather than pretending to a verdict.
+- **`caching`** — published, and it owns one money shape this skill does not: a
+  cached amount. A cache holds a **copy** of a money value that no column type,
+  no `CHECK` and no schema lint reaches, and its serialization rule is where the
+  float ban re-enters at a fourth layer, after the field, the column and the
+  wire. Install it in any repo that caches an amount.
+- **One shape is still owned by a rule set that is not published here** — a
+  money amount in a message payload or an outbox row. The composite shape table
+  names the seam rather than pretending to a verdict.
 
 ## The defaults these rules override, by name
 
@@ -377,7 +382,7 @@ section rather than the reader's problem**.
 | A mutable balance row kept beside the effect rows | **permitted with conditions** — `M-38`'s projection clause, then `M-39` |
 | A money amount inside a document or JSON column | **banned** — grounds below |
 | A void or reversal of a posted effect | **permitted** — it is an append (`M-38`), never a flag flipped on the original row |
-| A money amount in a cache | **out of scope here** — a repo's caching rules own it, and they are not published in this skill set. The seam to name: a cached amount is a copy that no column constraint reaches |
+| A money amount in a cache | **out of scope here, and owned by the published `caching` skill** — install it if the repo caches an amount. The seam it owns: a cached amount is a copy that no column constraint reaches, and a serializer that loses scale or turns the amount into a binary float is the float ban's fourth layer |
 | A money amount in a message payload or an outbox row | **out of scope here** — a repo's asynchronous-handoff rules own it, and they are not published in this skill set. `M-40` names the seam |
 | Money rows in a read replica or a reporting store | **permitted for reads that are not inputs to a money effect; banned as an input to one** — replica lag makes the input stale, and the reporting store's columns sit outside this repo's schema lint |
 | Money columns spread over per-tenant schemas or table partitions | **permitted — and this is where this group's checks silently under-cover.** Every constraint here is per table, so the schema lint must enumerate every schema and every partition or it reports green over the ones it never visited |
