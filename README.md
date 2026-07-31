@@ -1,12 +1,14 @@
 # nc skills
 
-Agent Skills published from the engineering-decision corpus in `raw/` — dated,
-researched technology rules for repos whose code is written by LLM agents. The
-skills are installed with Vercel's `skills` CLI and are **not listed in the public
-skills.sh directory**; installing by repo name works regardless.
+Agent Skills carrying dated, researched technology rules for repos whose code is
+written by LLM agents. The skills are installed with Vercel's `skills` CLI and are
+**not listed in the public skills.sh directory**; installing by repo name works
+regardless.
 
-`raw/` is imported source material, not a published skill. What each skill will
-be, and where it lives, is recorded in [CLAUDE.md](CLAUDE.md) — read it before
+The skills are the artifact. The imported decision corpus they were written from
+was deleted on 2026-08-01, once every rule set in it had shipped as a skill; its
+researched-but-unwritten topics live on in [BACKLOG.md](BACKLOG.md). How each
+skill is split, and why, is recorded in [CLAUDE.md](CLAUDE.md) — read it before
 authoring anything here.
 
 ## What is published

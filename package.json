@@ -1,7 +1,7 @@
 {
   "name": "nc-skills",
   "private": true,
-  "description": "Agent Skills published from the engineering-decision corpus in raw/.",
+  "description": "Agent Skills carrying dated, researched engineering-decision rules.",
   "engines": {
     "node": ">=26.5.1 <27"
   },
