@@ -24,11 +24,12 @@ planted defect was caught. All six directives are **convention, 2026-07-29**. Th
 tool and vendor facts below are **primary-source verified by one researcher, not
 confirmed.** The full statement is in `async-handoff-shapes`'s own `evidence.md`.
 
-**Three of the eight rules that pass produced are worded the way they are because
-of a Java or Spring fact**, and all three are in this file: the timer has no delay
-primitive to lean on (`E-31`), the JDK's address predicates cannot host the egress
-deny list (`E-34`), and both banned architectures have a first-class Java presence
-(`E-32`, `E-33`, in `SKILL.md`).
+**Some of the rules that pass produced are worded the way they are because of a
+Java or Spring fact, and not all of them are in this file.** Here: the timer has
+no delay primitive to lean on (`E-31`), and the JDK's address predicates cannot
+host the egress deny list (`E-34`). In `SKILL.md`: both banned architectures have
+a first-class Java presence, which is why `E-32` and `E-33` are
+banned-dependency rules rather than code-shape rules.
 
 ## A flow whose steps commit in more than one transaction
 

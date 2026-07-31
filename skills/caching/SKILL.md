@@ -150,7 +150,8 @@ in [evidence.md](evidence.md).
 2. **Name the adapter module.** Every rule below is a check on one named
    module's API surface. Until it exists there is nothing for the rules to bind.
 3. **Add the entry to the committed catalog** (`C-15`) in the same change. The
-   catalog is machinery four other rules read, not documentation.
+   catalog is machinery `C-7`, `C-8`, `C-10`, `C-13` and `C-14` read, not
+   documentation.
 4. **State the repo's staleness ceiling** as a machine-readable value in a
    committed artifact (`C-7`). A ceiling written in prose is a ceiling no check
    can read.

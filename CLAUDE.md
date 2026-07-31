@@ -2076,6 +2076,76 @@ scratch scripts plus reading.
   conflict still stands for `money-grade.md` §3 and `event-broker-discipline.md`
   §3, and it is now the only decision Milestone 1 left open.**
 
+## The whole-project review, 2026-07-31
+
+The first review whose unit is the repository rather than a family, run the day
+after Milestone 1 closed. **Every structural invariant this file claims was
+re-checked by script and all of them hold**: 95 directive ids (`M-1` … `M-43`,
+`C-1` … `C-16`, `E-1` … `E-36`) each defined exactly once as a `**id — `
+directive and each carrying a check kind, a marker and a date; every `M-n`,
+`C-n` and `E-n` reference resolving to a defined id; every id keyed in its
+matching `-java` skill with none missing; no `P-n`, no `B-n`, no `DECISIONS.md`,
+no `ci/check_packs.py`, no `.specify`, no `speckit`, no reference into `raw/`;
+every relative link resolving inside its own skill directory; and fifteen skills
+listed by `npm run check`, matching `ls skills/`.
+
+**The token-placement check was finally run as a check rather than described**,
+over all four `raw/` source regions against their converted skills. It is close
+to clean — the seed's identifier tokens are present, and the handful of absentees
+are corpus filenames, an example type name, and detail the conversion dropped
+deliberately (a concatenated jOOQ method list whose parts are each named, three
+*retired* Kafka Streams drop-metric names superseded by the `dropped-records`
+metric the evidence does carry). **That the check now passes is the finding**: the
+Java-backend reviews' twelve and twenty-three hits were real and were fixed, and
+nothing has re-hedged since.
+
+**Three defects were found and fixed, in three files.** Two generalise:
+
+- **The eleventh instance of the counting failure, and the first found by
+  diffing a count against the *same claim in a sibling skill*.**
+  `caching/SKILL.md`'s *What to do when this skill fires* called the catalog
+  "machinery **four** other rules read". `C-15` itself names five readers, and
+  `caching-java`'s `C-15` entry names the same five. So the count contradicted
+  two enumerations, one of them 300 lines below it in its own file. Now it names
+  `C-7`, `C-8`, `C-10`, `C-13` and `C-14` and states no number. **The mechanical
+  form is worth keeping and is cheap: for every sentence carrying a number word
+  and two or more backticked ids, compare the number against the ids.** It was a
+  twenty-line script over all thirty files; it surfaced this one and produced
+  only range-notation noise otherwise. Note what it does *not* catch — the
+  sibling `async-handoff` sentence ("machinery eleven other rules read") is
+  correct and passes for the same reason the caching one failed: the check needs
+  the ids beside the count, and a count with no ids beside it is still invisible.
+- **A pointer can be false against the file it sits in.**
+  `async-handoff-java/shapes.md` said three rules are worded around a Java fact
+  "and all three are in this file", then named the third as `E-32` and `E-33`
+  **in `SKILL.md`** three words later. Two failures in one sentence: the
+  self-contradicting placement claim, and a count of three over four rules
+  because one item is a pair. Previous reviews' follow-the-pointer finding was
+  always about a pointer into *another* skill; this one is refuted by its own
+  parenthesis. Now stated by name with no count and with the split said plainly.
+
+The third does not generalise but was the largest: **`README.md` still described a
+four-skill repository.** It listed only the money family, said "`npm run check`
+lists four skills as of 2026-07-30", and summarised the set as forty-three rules.
+Eleven skills shipped after it was written and nothing swept it, because every
+publish sweep this file records was a sweep of *skills* for sentences about other
+skills — the repository's own front page was never in the set. All fifteen are
+now in its table, grouped by family, and **the count sentence is gone**: it says
+to compare `npm run check` against `ls skills/`, which is what this file already
+tells an agent to do. **The general lesson: `README.md` is a consumer-facing file
+carrying claims about the skills, so it is inside the publish-obliges-a-sweep
+rule and has never been treated that way.**
+
+**What this review did not find, stated so its silence is not read as coverage.**
+No cross-family citation was verified by re-reading every cited rule in its
+defining file — the sample checked (`E-26`'s reader list, `M-17`'s scope, the
+float ban's five layers, the `C-9`/`E-5` post-commit collision, the contract-tool
+non-naming, the `@KafkaListener` meta-annotation pointer) all held. Marker prose,
+superlatives and evidence-row provenance were spot-checked, not swept. **And the
+conversion invariants are still enforced by nothing**: this review, like the
+eight before it, was scratch scripts plus reading, and not one of them lives in
+the repo.
+
 ## The `raw/` corpus — the model to preserve
 
 Read `raw/README.md` first; it is the authority on the corpus's own rules. The

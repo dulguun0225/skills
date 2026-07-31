@@ -503,6 +503,13 @@ and a dated observation, not a rate. What was learned about where it strikes:
   unchecked one.
 - **Fixing a count in one file does not fix its copy in the sibling**, and a note
   recording the fix reads as coverage for a file the fix never reached.
+- **Part of this check automates, and the cheap part is worth wiring.** Where a
+  rule set cites its rules by id, a short script can compare the number against
+  the ids in every sentence carrying both a number word and two or more cited
+  ids. Run over this skill set it found a count that contradicted two
+  enumerations of the same set, one of them in the same file. It sees nothing
+  where the count stands alone with no ids beside it — the more common shape —
+  so it narrows the reading rather than replacing it.
 
 The practice: **prefer naming to counting.** Where a count must appear, put it
 adjacent to the enumeration it counts, so the two are read together. **Never state
