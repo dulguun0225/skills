@@ -138,6 +138,13 @@ covers them. **That dating is an inference drawn while writing this skill, not a
 date a pass wrote down** — treat it as "no later than the platform decision"
 rather than as a verification date.
 
+**The same pass is the anchor for the whole platform choice, and `backend-stack`
+now states what it did and did not record.** Its scope as recorded here is
+persistence, where it named losers and grounds; **at the language and runtime
+layer no candidate list survives in this skill set at all.** That gap is stated
+in `backend-stack` as its own largest one rather than left to be inferred from
+the silence in this table.
+
 What the WebFlux ban does rest on is the one-concurrency-model argument, and
 that half is sound: the virtual-thread claims under *Concurrency* below are
 confirmed, and the cost of a second concurrency model in one repo is that every
@@ -396,4 +403,6 @@ appears to.
 - **The WebFlux ban is examined.** Not a trigger the passes wrote down — it is
   added here, because no pass examined the alternative it bans. A repo with a
   genuine requirement for a reactive stack should raise it as a platform decision
-  rather than satisfy the letter of this ban.
+  rather than satisfy the letter of this ban — and `backend-stack` is where a
+  platform decision is argued, on the criterion that a second concurrency model
+  is a class of defect no build can reject.

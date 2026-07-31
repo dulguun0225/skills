@@ -25,6 +25,7 @@ blank here is not a clean bill — **it is a check nobody has run.**
 | `async-handoff`, `async-handoff-shapes` | run 2026-07-29 | run 2026-07-29 — this is the rule set that failed it | **owed.** Its values cross into a payload contract, an outbox row, and a schema registry if one is ever added |
 | `java-backend-rules`, `java-backend-api`, `java-backend-observability` | n/a — a stack rule set has no portable predicate | n/a — it instantiates other rule sets' shapes | **owed** for its own rules, the ones that are not an instantiation of another skill |
 | `llm-default-traps` | n/a — cross-stack by construction | **owed** | **owed** |
+| `backend-stack` | n/a — its directives bind a decision, not a technology | **owed** | n/a — nothing it governs crosses a layer |
 
 Doing one of these is a bounded session, not a research project. The layer check
 is a read of the file asking one question per directive; the composite-shape
@@ -32,6 +33,22 @@ check is a list written before anything is verified. Neither needs a panel, and
 **neither may promote a marker** — a check that finds nothing changes no
 confidence marker, because finding nothing is not verification. What it may do
 is add directives, and those then arrive at the normal bar.
+
+## Evidence owed on a published skill
+
+**`backend-stack`, published 2026-08-01, ships everything at *convention* and
+its central claim at *uncertain*.** Three things would move it, and the first is
+the one the author holds:
+
+| Owed | What it unblocks |
+| ---- | ---------------- |
+| **The 2026-06-11..14 platform pass's primary sources**, not held in this repository | Promotes the Java verdict's grounds from convention to primary-source verified, per claim. The skill's *Do not cite* list names them as unavailable and must be rewritten when they arrive |
+| **The candidate list at the language and runtime layer** — which languages were compared, on what grounds, with a steelman for each loser | The skill's largest named gap. Until it lands the verdict ships as an **unexamined win**, the same honesty `java-backend-rules/evidence.md` applies to the WebFlux ban. Naming the loser is this repository's most load-bearing invariant and `backend-stack` currently fails it about itself |
+| **An enforcement-host census for one serious competitor** | The published census was taken for one stack, so it shows Java's surface is deep and **not** that it is deeper. One competing census gives *Count the independent enforcement hosts* its first discriminating case |
+
+**Nothing here is a research project.** The first two are recovery of material
+that exists outside this repository; the third is the same grep the skill
+publishes, run against another stack's rule set.
 
 ## Researched, unwritten
 
@@ -44,7 +61,7 @@ the skill. Order of magnitude: a day, not a research project.
 
 | Candidate skill | Named sources | What it would carry |
 | --------------- | ------------- | ------------------- |
-| `ai-maintainer-principles` | AI-maintenance research notes | Startup-loud versus runtime-silent behaviour; "what the build can refuse to ship is the deciding criterion"; corpus-gravity and drift-asymmetry reasoning; the one-AI-session cognitive-load boundary criterion. These overlap the eight design principles already published in `enforceable-rules`; this candidate would be their directive form — the same ideas as rules a repo commits, rather than as an authoring bar |
+| `ai-maintainer-principles` | AI-maintenance research notes | Startup-loud versus runtime-silent behaviour; the one-AI-session cognitive-load boundary criterion. These overlap the eight design principles already published in `enforceable-rules`; this candidate would be their directive form — the same ideas as rules a repo commits, rather than as an authoring bar. **Two of its four topics were published on 2026-08-01 by `backend-stack`** — "what the build can refuse to ship is the deciding criterion" is that skill's first directive, and corpus-gravity and drift-asymmetry reasoning is its fourth. Harvesting this row now means checking what is left against those two directives first, not re-deriving them |
 | `angular-frontend-ai` | CVE-2025-29927 (Next.js) | An explicit Angular profile for AI maintenance; Bun versus Node; the Next.js rejection on CVE-2025-29927; a signal-everything dialect, an eslint wall, and exemplar files |
 | `postgres-tenancy` | PostgreSQL documentation; HikariCP issue #1633; CVE-2018-1058 | Schema-per-tenant versus pooled row-level security versus database-per-tenant, with PostgreSQL-documented facts (`PREPARE` re-parse, HikariCP #1633, CVE-2018-1058), the ceiling on each, and the escape hatches |
 | `guardrails-toolchain` | a toolchain survey | The roughly forty-tool map: concern, tool, gate, licence, and the caveat that bites for each — plus the four gap classes the survey found |

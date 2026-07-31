@@ -15,7 +15,9 @@ State 2026-08-01: no build/lint/test tooling beyond discovery check. Exist: proj
 - **Java-backend family, authored 2026-07-30 after that** — `skills/java-backend-rules/`, `skills/java-backend-api/`, `skills/java-backend-observability/` (each `SKILL.md` + `evidence.md`), 67 directives, **no rule ids**. Second pack-derived conversion, **first stack-only family — no neutral sibling, cuz pack *is* stack.** See *The Java-backend skill family*.
 - **Two method skills, authored 2026-07-30 last** — `skills/tech-decision-research/`, `skills/enforceable-rules/` (each `SKILL.md` + `evidence.md`), 15 and 13 directives, **no rule ids**. Two corpus-derived conversions, **first whose subject process not code**, first drawn from material with no frontmatter, no marker, no date. See *The method skills*.
 
-All fifteen discovered by `npm run check`. **Milestone 1 — turn imported corpus into skills — done**: three cross-stack sources, both packs, both corpus-derived rows converted; no row of table in *Where skills live* unwritten. **What corpus hold no skill carry listed in *What becomes no skill*** under that table — bookkeeping + consuming-repo machinery by construction, not by omission.
+- **`backend-stack`, authored 2026-08-01** — `skills/backend-stack/` (`SKILL.md` + `evidence.md`), 8 criterion directives, **no rule ids**. **First skill not drawn from corpus**, and first that argue stack choice rest of set assume. See *The `backend-stack` skill*.
+
+All sixteen discovered by `npm run check`. **Milestone 1 — turn imported corpus into skills — done**: three cross-stack sources, both packs, both corpus-derived rows converted; no row of table in *Where skills live* unwritten. **What corpus hold no skill carry listed in *What becomes no skill*** under that table — bookkeeping + consuming-repo machinery by construction, not by omission.
 
 **Source corpus deleted 2026-08-01, and repo skills-only now.** It was imported material — never published, no consumer install from it — and every rule set in it ship as skill before it go. Its researched-but-unwritten topics salvaged into [BACKLOG.md](BACKLOG.md); whole corpus recoverable from git history at commit `428bd5411884567d68bdf5554a0492977427a815`. **No new material land anywhere but `skills/`.** Provenance in section below = history: it name which source each family drew from, no file to open.
 
@@ -603,6 +605,44 @@ First review whose unit = repository not family, run day after Milestone 1 close
 Third no generalise but largest: **`README.md` still described four-skill repository.** Listed only money family, said "`npm run check` lists four skills as of 2026-07-30", summarised set as forty-three rules. Eleven skills shipped after it written and nothing swept it, cuz every publish sweep this file record was sweep of *skills* for sentences about other skills — repository own front page never in set. All fifteen now in its table, grouped by family, and **count sentence gone**: it say compare `npm run check` against `ls skills/`, what this file already tell agent to do. **General lesson: `README.md` = consumer-facing file carrying claims about skills, so inside publish-obliges-a-sweep rule and never treated that way.**
 
 **What this review no find, stated so silence no read as coverage.** No cross-family citation verified by re-reading every cited rule in defining file — sample checked (`E-26` reader list, `M-17` scope, float ban five layers, `C-9`/`E-5` post-commit collision, contract-tool non-naming, `@KafkaListener` meta-annotation pointer) all held. Marker prose, superlatives, evidence-row provenance spot-checked not swept. **And conversion invariants still enforced by nothing**: this review, like eight before it, = scratch scripts plus reading, and not one of them live in repo.
+
+## The `backend-stack` skill
+
+Authored 2026-08-01, **first skill in repo not drawn from deleted corpus**. Two files:
+
+```
+skills/backend-stack/  SKILL.md  evidence.md   8 criterion directives + 3 worked-case sections, no ids
+```
+
+Sixteenth skill, listed by `npm run check`. **No row in *Where skills live* table, cuz that table = corpus provenance and this skill have none.** Drawn from: 2026-06-11..14 platform pass (via what `java-backend-rules` already publish about it), host census over published skills, and interview with repo owner.
+
+### Why it exist
+
+Repo shipped fifteen skills instantiated on one stack and **nothing argued the stack**. `java-backend-rules` said explicitly it no argue it, and told reader "decide it on operability first" — which owner say wrong: stack chosen for **mature compile-time guardrail surface** serving spec-driven development, where operability = floor not criterion. Skill publish that argument.
+
+### What it decided
+
+1. **Two halves: portable criterion + Java as worked case.** Criterion = payload, decide Go/.NET/TS question same way. Worked case there as evidence criterion discriminate, **explicitly not recommendation**. Rejected: Java-verdict-only (fire only when someone already asking about Java, do nothing for BACKLOG stacks) and full-four-layer (write-once violation — `java-backend-rules` already own JPA/WebFlux/annotation rejections).
+2. **Criterion = enforcement-host count, not type system.** Owner point: it ArchUnit, NullAway, Error Prone etc, no javac alone. Eight host categories, each reach different defect class. **This the load-bearing content** and it what make argument survive contact with "but Kotlin/C# have good types too".
+3. **Host census = re-runnable grep, dated, command published in skill.** 16 hosts across published skills, 2026-08-01. `enforceable-rules` enumeration check explicitly allow count as evidence **when stated with date + called re-runnable**, so its decay = point not defect. First use of that exception in repo.
+4. **Census is evidence about Java ecosystem, NOT about choice being right.** Circularity blocked by own directive *A rule set is never a reason to adopt a stack*, sentence salvaged from `java-backend-rules` paragraph rewritten. `evidence.md` carry two do-not-cite entries for exactly this.
+5. **Everything convention; central claim *uncertain*.** Second skill in set whose central claim uncertain (`tech-decision-research` first), same ground — no outcome measured. Criterion **written after decision it explain**, so it have only ever ratified, never selected. Stated in skill.
+6. **Lapse rule vacuous, stated not omitted** — method-skills precedent, nothing above convention so rule demote nothing. Conversion date 2026-08-01 stated once, labelled conversion date. Per-directive dates: 2026-06-11..14 where platform pass ground it, 2026-08-01 where directive state something pass no write in that form. **No date invented.**
+7. **No rule ids, `###` headings** — `llm-default-traps` decision 2. **No `## Wiring the gates`** — directives bind decision made before code exist, same as `tech-decision-research`.
+8. **Skill fail own directive and say so.** *Record the losers* require candidate list; **none survive for language/runtime layer**. Ships as **unexamined win not contested one**, same honesty `java-backend-rules/evidence.md` apply to WebFlux ban.
+
+### The sweep
+
+**Publish oblige sweep, and this publish contradict published sentence — first time that happened.** `java-backend-rules/SKILL.md` said platform decided "on dominant criterion, which is that team can run this stack in production" + "decide it on operability first and come back". Rewritten: operability = **veto** winner must clear, criterion = enforcement surface, pointer to `backend-stack`. **Half kept unchanged** — *a rule set is never a reason to adopt a stack* still true and now published both places, cuz it block circularity this new skill most exposed to. `llm-default-traps` lesson applied: check what new skill publish against what old sentence claim, and here old sentence half-right.
+
+Also swept: `java-backend-rules/evidence.md` (platform-pass note now say candidate list absent at language layer; WebFlux re-open trigger now name where platform decision get argued), `README.md` (row + marker-ceiling sentence — **README inside sweep rule, per whole-project review 2026-07-31**), `BACKLOG.md` (new *Evidence owed* section; `ai-maintainer-principles` row narrowed cuz **two of its four topics now published here**).
+
+### Still open
+
+- **Candidate list + primary sources owed, in `BACKLOG.md`.** Owner hold sources, no access at authoring time. Until they land nothing may promote above convention. **This the largest gap and it about skill own subject.**
+- **No competing census.** Census run for one stack, so it show Java surface deep and **not** that it deeper. One competing census = first discriminating case.
+- **Criterion never selected against real alternative.** Marked *uncertain* for that reason, no caveated.
+- **Defect this skill create for future sweeps**: it name six sibling skills + four tool-owning skills in prose. Every one = cross-skill claim nothing check.
 
 ## Authoring invariants
 

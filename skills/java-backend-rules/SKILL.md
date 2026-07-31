@@ -86,9 +86,21 @@ and carry the burden of saying it rather than silently dropping the rule.
 
 **This skill is not an argument for choosing this stack.** It assumes the
 platform decision — Java, Spring Boot Web MVC, jOOQ, PostgreSQL — has already
-been made on the dominant criterion, which is that **the team can run this
-stack in production**. A rule set is never a reason to adopt a stack. If the
-platform is still open, decide it on operability first and come back.
+been made, and states the rules that follow from it. **A rule set is never a
+reason to adopt a stack**, and this one is not evidence for its own platform:
+fifteen sibling skills instantiated on one stack are accumulated *consequence*,
+not accumulated justification.
+
+**The argument for the choice lives in `backend-stack`**, which ranks candidates
+by what their build can refuse to ship and carries this stack as its worked
+case. If the platform is still open, read that skill and come back. Two things
+it settles that this paragraph used to state differently: **the deciding
+criterion is the stack's enforcement surface, not operability** — operability is
+a veto the winner must clear, which is a different thing and produces a
+different answer, because "we already know it" is not a guardrail under a
+premise where nobody reads the code. And the candidate list behind the Java
+verdict **was never recorded in this skill set**, which `backend-stack` states
+about itself rather than leaving to be inferred from silence here.
 
 **Three tripwires mean the repo has left this skill's assumptions entirely**,
 not merely added a feature: the first LLM call in the product, a hard real-time
