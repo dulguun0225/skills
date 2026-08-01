@@ -391,7 +391,10 @@ platform and annotation bans; `caching` and `caching-java` own
 caching-annotation ban; `async-handoff` own annotation-bound-consumer ban;
 `java-backend-observability` own bytecode-weaving ban; `llm-default-traps` own
 cross-stack dependency traps. This section name the cost; those skills carry the
-rules.
+rules. **`ai-maintainer-principles` own the line those bans get drawn on** —
+startup-loud machinery kept, runtime-silent banned, runtime trust accepted only when
+priced by a standing test — so repo reading only ban list have no way to tell which
+framework machinery survive it.
 
 *Check: none — this a statement about a cost, and rules that discharge it carry
 own checks in skills named above. **Convention**, 2026-06-11..14.*
@@ -479,6 +482,10 @@ downstream of that one**. Install it alongside.
   same record, published once, here.
 - **`llm-default-traps`** — picks an agent make by training-data default on any
   stack, including ones a fresh stack choice hit first.
+- **`ai-maintainer-principles`** — decisions above the stack: how system get cut,
+  what stand in for code review, what maintainer must be able to do alone. Drawn
+  from same 2026-06-11..14 records as this skill, and carry the governing principle
+  those records reason the persistence rejections from.
 
 [evidence.md](evidence.md) carry the grounds, the claims that must not be cited,
 and the conditions that reopen each directive.

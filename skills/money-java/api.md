@@ -131,7 +131,8 @@ what the rules themselves rest on.
 - **The OpenAPI specification's GitHub releases page** for dates; it returned
   inconsistent years.
 - **Zero-test-retry** as an external precondition of the fuzz gate. It is an
-  internal governance rule.
+  internal governance rule — published as a general one in
+  `ai-maintainer-principles` since 2026-08-01, and still not a tool requirement.
 
 **Uncertain, and pinned as such.** springdoc's version-to-Boot mapping and
 every tool version above age fast: re-pin springdoc, vacuum and Schemathesis at

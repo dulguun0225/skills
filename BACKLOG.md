@@ -26,6 +26,7 @@ blank here is not a clean bill — **it is a check nobody has run.**
 | `java-backend-rules`, `java-backend-api`, `java-backend-observability` | n/a — a stack rule set has no portable predicate | n/a — it instantiates other rule sets' shapes | **owed** for its own rules, the ones that are not an instantiation of another skill |
 | `llm-default-traps` | n/a — cross-stack by construction | **owed** | **owed** |
 | `backend-stack` | n/a — its directives bind a decision, not a technology | **owed** | n/a — nothing it governs crosses a layer |
+| `ai-maintainer-principles` | **owed, and it is the check most likely to bite here.** Three of its directives quantify over an open set named only by example — *every operational surface*, *every load-bearing dependency*, *anything subtle enough to need a safety argument*. A predicate that enumerates instead of defining is the exact shape the check was written against, and the skill's own gap list does not name this one | **owed** | n/a — nothing it governs crosses a layer; its subject is where a boundary falls, not what crosses one |
 | `guardrails-toolchain` | n/a — its directives bind a tool choice, not a technology | **owed** | **owed**, and it is the check most likely to bite here: this skill's whole subject is which layer owns which defect class, so a directive that names one layer and misses another is the failure mode it was written against |
 
 Doing one of these is a bounded session, not a research project. The layer check
@@ -37,11 +38,11 @@ is add directives, and those then arrive at the normal bar.
 
 ## Evidence owed on a published skill
 
-**Two skills, `backend-stack` and `guardrails-toolchain`, both published
-2026-08-01 from external records of the same pass, both shipping everything at
-*convention* with a central claim at *uncertain*.** The `guardrails-toolchain`
-rows are at the end of this section; the `backend-stack` rows come first because
-they were opened first.
+**Three skills — `backend-stack`, `guardrails-toolchain` and
+`ai-maintainer-principles` — all published 2026-08-01 from external records of the
+same pass, all shipping everything at *convention* with a central claim at
+*uncertain*.** Rows are in the order the skills were published, `backend-stack`
+first.
 
 **`backend-stack`** — three rows stood here at publication. **The
 candidate list at the language and runtime layer was recovered the same day and
@@ -69,6 +70,17 @@ map and the four decision records folded out of it.** What it owes:
 | **A second completeness-critic run, on a different gate stack** | The skill's central claim — that asking what whole concerns a stack omits finds things no tool-by-tool comparison does — rests on **one run with no control arm**. A second run that finds a fifth class, or finds nothing, is the first evidence about the method rather than about the four concerns it produced |
 | **A ruling on japicmp — and only on japicmp** | Opened 2026-08-01 as a broad "consumer-surface scope disagreement" and **narrowed the same day by the hostile audit**, which read the contract record the first pass had not: the prior-art repo's full-document diff runs under an allow policy permitting exactly the additive changes a same-change client regeneration absorbs, which is `java-backend-api`'s own ground applied as configuration rather than as a competing position. What is actually contested is the module-package compatibility check: the record proposes japicmp, `java-backend-api` evaluated and dropped it, neither argued the other's side. It closes on a case where an in-repo consumer's compile did not catch an incompatible change to a published type |
 | **One cost figure for any gate the skill requires** | The standing sweep, the benchmark ratchet, the characterization corpus and the extra fuzz lane are all unpriced, and `caching` and `async-handoff` already carry unmeasured gate cost as an open question. The first adopting repo that measures one holds the first real number in this set |
+
+**`ai-maintainer-principles`, harvested across the same pass's architecture
+decision records.** What it owes:
+
+| Owed | What it unblocks |
+| ---- | ---------------- |
+| **A measurable proxy for "fits one session"** | The skill's weakest directive by enforcement. No record read for it states a threshold in any unit — no file count, no line count, no token budget — so a module budget is judgment and the criterion is most easily applied after the fact to justify a split somebody already wanted. Any repeatable number that predicts whether an agent can hold a module moves it from judgment to check |
+| **A second repo built to these directives, or one built deliberately against them** | The central claim — that these decisions come out different under an agent maintainer than under a human team — is *uncertain* on **no measurement at all**. One repo was built this way; none was built the other way for comparison. **A recorded failure is worth as much as a success here**: a boundary redrawn, a gate relaxed for a human reader, a retry reintroduced |
+| **A hostile re-derivation of the counterfactual** | The skill carries that pass's own re-derivation under a changed axiom as its premise-specificity worked case. It is the same pass arguing with itself, and it concludes the decision is robust to a premise it was not optimised for — a comfortable finding for its author to reach. Nobody with a stake in the other answer has run it |
+| **Primary sources — same search, same result** | The 2026-06-11..14 records cite nothing, and the panel transcripts behind them are published nowhere. **This is the third skill in that position and the row is not separate from the two above it**; it closes for all three at once or not at all |
+| **A read of the source records the skill did not open** — added 2026-08-01 by the hostile audit | The skill was assembled from nine documents in a repository that holds many more. **Two of its confirmed defects came from records adjacent to ones it had read** — a discriminator's third branch, and a rejection whose grounds sat in a record it never opened — and a third ground it does cite comes from a record outside its declared window. The audit's own top finding for `guardrails-toolchain` was that reading a source's neighbours is part of conversion and skipping them looks identical to finishing. **This is that finding recurring one publish later**, and it is a bounded read, not a research project |
 
 **The performance split has never been built.** Layers one and two are a written
 contract in the source record and in the skill; no repo in this set has a
@@ -106,8 +118,8 @@ project-shaped facts, recording the premise each rule holds under, and writing
 the skill. Order of magnitude: a day, not a research project.
 
 **Located 2026-08-01, while recovering the `backend-stack` candidate list: every
-row below has a decision record in the same external repository**, as did the
-toolchain row that has since been harvested out of this table. A frontend
+row below has a decision record in the same external repository**, as did both
+rows harvested out of this table since. A frontend
 profile ADR carries the Angular row's rejections including the Next.js one; a
 schema-per-tenant ADR carries the tenancy row with the HikariCP issue and the
 `search_path` CVE both cited by number; a primary-keys ADR carries the
@@ -117,8 +129,34 @@ primary source for anything. What it changes is the cost estimate: harvesting
 starts from a written decision with named losers rather than from a topic
 summary.
 
-**The toolchain row was harvested the same day and is gone from the table below:
-`guardrails-toolchain`, published 2026-08-01.** It confirmed the cost
+**Two rows were harvested the same day and are gone from the table below:
+`guardrails-toolchain` and `ai-maintainer-principles`, both published
+2026-08-01.**
+
+**What the second one changed about the cost estimate.** Its row named "AI-maintenance
+research notes" as its source; **no such notes exist** — not in this repository, not
+in the deleted corpus's working copy, not in the external repository. What exists is
+**that pass's architecture decision records** — boundary criteria, service
+decomposition, stack chassis, verification strategy, local verification,
+predecessor scoping, code layout, plus a non-authoritative counterfactual variant
+and a note written for management — and the topic had to be assembled across them
+rather than read out of one. That is the opposite shape from
+the toolchain harvest, which had a single consolidated map and spent its effort
+deciding what the published skills already owned. **The estimate held anyway — a day,
+not a research project — but for a different reason**: the records are long,
+argued, and each states its own grounds, so assembling across them cost about what
+reading one map and diffing it against the published skills did. **A row naming a
+source document is naming a hope, not a location, until someone opens it.**
+
+The row also predicted its own hardest problem correctly: two of its four topics had
+already been published by `backend-stack`, and checking what was left against
+those two directives first is what the harvest did. **A third overlap it did not
+predict** — the eight design principles in `enforceable-rules` — turned out to be
+the real constraint, and the resolution is that the published skill states *system
+shape* while `enforceable-rules` states *rule shape*, with the principles cited by
+name and none restated.
+
+The toolchain row confirmed the cost
 estimate above and one thing the estimate did not predict — **the harvest's
 expensive half was not the writing, it was establishing what the published
 skills already owned.** The source map splits three ways — rows a sibling skill
@@ -132,7 +170,6 @@ did not discharge.
 
 | Candidate skill | Named sources | What it would carry |
 | --------------- | ------------- | ------------------- |
-| `ai-maintainer-principles` | AI-maintenance research notes | Startup-loud versus runtime-silent behaviour; the one-AI-session cognitive-load boundary criterion. These overlap the eight design principles already published in `enforceable-rules`; this candidate would be their directive form — the same ideas as rules a repo commits, rather than as an authoring bar. **Two of its four topics were published on 2026-08-01 by `backend-stack`** — "what the build can refuse to ship is the deciding criterion" is that skill's first directive, and corpus-gravity and drift-asymmetry reasoning is its fourth. Harvesting this row now means checking what is left against those two directives first, not re-deriving them |
 | `angular-frontend-ai` | CVE-2025-29927 (Next.js) | An explicit Angular profile for AI maintenance; Bun versus Node; the Next.js rejection on CVE-2025-29927; a signal-everything dialect, an eslint wall, and exemplar files |
 | `postgres-tenancy` | PostgreSQL documentation; HikariCP issue #1633; CVE-2018-1058 | Schema-per-tenant versus pooled row-level security versus database-per-tenant, with PostgreSQL-documented facts (`PREPARE` re-parse, HikariCP #1633, CVE-2018-1058), the ceiling on each, and the escape hatches |
 | `uuidv7-primary-keys` | UUIDv7 research notes | UUIDv7-everywhere versus bigint identity versus TSID hybrids, with the `ORDER BY` carve-out |

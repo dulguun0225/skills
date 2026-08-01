@@ -100,6 +100,10 @@ the founding pass, which did not cover this area at all.
   run harness (container boot, one tenant, deterministic) is bespoke wiring.
   **Do not cite the "Rust core" claim** — blogs only, unverified. **The zero-retry
   rule is this rule set's own governance choice**, not an external precondition.
+  It is published as a general rule in `ai-maintainer-principles` since
+  2026-08-01, on the ground that the build is the only signal and a retry converts
+  it into noise; the do-not-cite entry stands, because the tool still requires
+  nothing of the kind.
 
 - **A JVM binary-compatibility differ — confirmed tool, dropped for this rule
   set.** japicmp is Apache-2.0, diffs two jars for source and binary

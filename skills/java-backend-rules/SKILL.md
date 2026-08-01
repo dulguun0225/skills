@@ -213,6 +213,8 @@ One concurrency model be virtual threads — synchronous, top-to-bottom, un-colo
 
 **Marker, date, check stated once here for whole list — one place in this skill they not inline per directive.** Deliberate, not dropped marker: entries below share single ground and single enforcement host, named in *Every ban names the check that enforces it* at end of list. Read each entry as carrying **convention, 2026-07-21** and that host.
 
+**What this list not say be why constructor injection, route registration and typed config binding survive it**, since those be framework machinery too. Discriminator be **startup-loud versus runtime-silent** — mechanism whose failure be boot failure caught by first integration test, against one that change semantics silently at runtime — and it published in `ai-maintainer-principles`, not here. Repo carrying this list into own text without it will either ban own dependency injection or relax list informally until nothing banned.
+
 ### Field and setter injection
 
 **Banned — constructor injection only.**

@@ -38,6 +38,16 @@ source. So the sentence above holds for weight and no longer holds for content,
 and the skill restating it marks everything **convention** for exactly the reason
 this table gives.
 
+**The 2026-06-11..14 platform pass's own record is restated in two skills since
+2026-08-01, and neither is this one.** `backend-stack` carries its candidate list
+and the criteria it ranked on; `ai-maintainer-principles` carries the governing
+principle the persistence rejections were reasoned from — startup-loud magic is
+acceptable, runtime-silent magic is banned — together with the context-locality
+premise under it. **This skill keeps the rejections themselves and the per-mechanism
+bans**, which is the split the write-once rule forces: the ground travels once, the
+checks stay with the stack. Weight is unchanged in both: prior art, no per-claim
+marker, no cited source.
+
 One presentation note, so provenance is not lost: the 2026-07-21 pass recorded
 several of its conventions as a single list, and they are now stated under the
 areas they govern. No claim changed and none was dropped.

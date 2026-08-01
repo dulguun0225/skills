@@ -89,7 +89,7 @@ Three things reader will look for here and not find.
 
 **This is general home of contract-conformance fuzz gate.** Money rules extend it and **add no second tool**: `M-26` in `money` is money-side obligation that gate exists, `M-19` in `money-api` is money edge-case input set it must cover. One gate, one tool, two input sets.
 
-**Why gate exists is reasoning step, not tool fact, and marked convention:** one model wrote both specification and implementation, so self-authored tests share blind spot; generator deriving cases from document does not. **Zero-retry rule is this rule set's own governance choice**, not tool precondition.
+**Why gate exists is reasoning step, not tool fact, and marked convention:** one model wrote both specification and implementation, so self-authored tests share blind spot; generator deriving cases from document does not. **Zero-retry rule is this rule set's own governance choice**, not tool precondition — and since 2026-08-01 it published as general rule in `ai-maintainer-principles`, with quarantine shape that go with it. Still no tool precondition; Schemathesis require nothing of the kind.
 
 ## Errors
 

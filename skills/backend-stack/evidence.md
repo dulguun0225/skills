@@ -47,6 +47,15 @@ restated in `guardrails-toolchain` since 2026-08-01**, minus the frontend column
 which stays here because it is this skill's evidence about host counting rather
 than that skill's evidence about tool selection.
 
+**The persistence ADR's other half is restated in `ai-maintainer-principles`
+since 2026-08-01.** That record states a governing principle — startup-loud magic
+is acceptable, runtime-silent magic is banned — and the premise sentence under it,
+that runtime behaviour absent from the program text is invisible to a text-based
+maintainer in an absolute sense. Neither is a stack-choice criterion, which is why
+they are not here; both are the ground the persistence loser was rejected on, which
+is why they were in the same record. **The weight is unchanged: still prior art,
+still no per-claim marker, still no cited source.**
+
 **The premise is confirmed by an outside record, and that is new.** The stack
 overview opens by stating that the AI is the sole developer and maintainer and
 that humans never read the code — this skill set's shared premise, written down
