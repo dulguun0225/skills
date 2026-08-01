@@ -58,7 +58,10 @@ be the first evidence about how often it happens.
 
 A web-verified guardrails sweep recorded **Trivy compromised twice during 2026**,
 and the adoption rule taken from it is SHA-pin-only. The record is carried with
-its date rather than as a current fact.
+its date rather than as a current fact. **That sweep's consolidated output is
+restated in `guardrails-toolchain` since 2026-08-01**, which carries the same
+row as its worked case — the scanner is itself attack surface — and points back
+here for the pin rule rather than restating it.
 
 **The rule outlives the record.** SHA-pinning CI actions and scanners rather than
 tag-pinning them is standing supply-chain practice independent of any single

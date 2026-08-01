@@ -10,10 +10,13 @@ first; this file is for deciding whether to trust it.
 researcher against primary sources. No panel, no refutation votes.**
 
 The pass harvested from a prior architecture decision record and its guardrails
-document — **an internal record of another repository, not published in this
-skill set**, so its weight cannot be checked from here. It is named where a note
-below leans on it, as "the prior-art repo". **That is prior art, not independent
-confirmation** — it records that another repo made the same call. Where a note below says a claim is confirmed, it
+document — **an internal record of another repository**, so its weight cannot be
+checked from here. It is named where a note below leans on it, as "the prior-art
+repo". **That is prior art, not independent confirmation** — it records that
+another repo made the same call. **Narrowed 2026-08-01: the guardrails document's
+tool map and gap classes are restated in `guardrails-toolchain`; the decision
+records themselves are still unpublished**, so a note leaning on an ADR is
+pointing at material a reader still cannot open. Where a note below says a claim is confirmed, it
 means the pass checked it against a published standard or vendor documentation,
 **not** that it survived a refutation panel; **no panel has ever been run over
 this area.** Running one is the first re-open trigger below.
@@ -73,7 +76,13 @@ the founding pass, which did not cover this area at all.
   CLI**, so a repo expecting that workflow from the CLI will not find it. The
   **scope** — gate the surface whose clients are not rebuilt in the same pull
   request — is **convention**; the prior-art repo ran the full-document diff
-  internally too.
+  internally too. **That position is now published in `guardrails-toolchain`, and
+  reading it closely narrows the disagreement rather than confirming it:** the
+  prior-art repo's full-document diff runs under an allow policy whose allowed set
+  is additive change the same-change client regeneration and compile already
+  absorb — **this rule set's own ground, applied as a configuration of a wider
+  gate rather than as a reason to drop it.** What stays genuinely contested is
+  japicmp, below.
 
 - **Schemathesis is the conformance-fuzz oracle — confirmed; the promotion
   rationale is convention.** MIT-licensed, on a Python 4.x line; it generates
@@ -98,7 +107,9 @@ the founding pass, which did not cover this area at all.
   flags fail the build. **Dropped as a default rule**: in an atomically-built
   repo a source-incompatible change to an in-repo API type already fails the
   consuming module's compile, so it adds nothing. Kept only as the re-open
-  trigger below.
+  trigger below. **The prior-art repo proposed it and this pass dropped it, on
+  the same premise** — the disagreement is stated in `guardrails-toolchain` and
+  resolved nowhere.
 
 ## Errors
 

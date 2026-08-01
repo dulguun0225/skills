@@ -473,6 +473,10 @@ downstream of that one**. Install it alongside.
   space at all.
 - **`java-backend-rules`, `java-backend-api`, `java-backend-observability`** —
   what follow from worked case, once chosen.
+- **`guardrails-toolchain`** — once stack picked, which tool may occupy a host
+  and what disqualify one, plus four defect classes a host count never reach.
+  **Frontend census in section above is that skill's map read from other side**;
+  same record, published once, here.
 - **`llm-default-traps`** — picks an agent make by training-data default on any
   stack, including ones a fresh stack choice hit first.
 

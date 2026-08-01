@@ -26,6 +26,7 @@ authoring anything here.
 | `async-handoff-java` | do either of those on the Java stack — the tool per rule, the transport pick, and the gate wiring |
 | `llm-default-traps` | add or bump a dependency, pin a tool, wire CI, pick a property-test, holiday or units library, or store a deadline — the picks an LLM makes by training-data default, banned by name. Any language, plus a JVM-only group. **Owns the jqwik version pin** the three Java stack skills defer to |
 | `backend-stack` | pick the language, runtime, framework, persistence library or database for a new backend, or argue an existing one should change — rank candidates by what their build can refuse to ship, count the independent enforcement hosts rather than type-system features, and price corpus gravity as a cost the winner carries. Carries the Java verdict as its worked case. **The one skill here that argues a stack choice**; every other stack skill assumes it |
+| `guardrails-toolchain` | adopt a static analyser, scanner, coverage or mutation tool, wire or remove a CI gate, or claim a defect class is covered — which tool may occupy a gate at all, what disqualifies one, how gates compose, and the four whole concerns a tool-by-tool comparison never surfaces. Carries one repo's whole tool map as its worked case. Any stack |
 | `java-backend-rules` | write a query, a transaction, an in-request fan-out, a migration, a scheduled task or a test on Java, Spring Boot MVC, jOOQ and PostgreSQL — the platform, concurrency, time and nullness rules, and the banned dependencies and annotations |
 | `java-backend-api` | add or change an endpoint on that stack — the committed OpenAPI document as the single conformance oracle, error contract, pagination, versioning, temporal wire format and concurrency headers |
 | `java-backend-observability` | add a log line, a metric, a trace or an alert on that stack — the typed logging facade, unloggable domain types, context propagation across a fan-out, and what an alert is allowed to be |
@@ -40,10 +41,12 @@ date. The money, caching and asynchronous-handoff skills carry rule ids (`M-n`,
 **Read each skill's marker ceiling before trusting a marker.** Several groups
 shipped without the panel that would promote them — `money-storage`'s persistence
 group and both bans, every directive in `caching`, and both asynchronous-handoff
-passes. `backend-stack` is weaker still: everything in it is convention, its
-central claim is marked *uncertain*, and the candidate list behind its worked
-case — recovered on 2026-08-01 — cites no primary source for any ground it
-records. Each `SKILL.md` states its own ceiling near the top.
+passes. `backend-stack` and `guardrails-toolchain` are weaker still: everything in
+both is convention, each marks its central claim *uncertain*, and the external
+records they were written from — recovered on 2026-08-01 — cite no primary source
+for any ground they record. `guardrails-toolchain` adds one caveat of its own:
+every tool fact in it is dated 2026-06-13 and tooling facts decay faster than
+anything else here. Each `SKILL.md` states its own ceiling near the top.
 
 ## Setup on a new machine
 

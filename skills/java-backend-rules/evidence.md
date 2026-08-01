@@ -24,10 +24,19 @@ added or re-ran, so `review-by` stands at **2027-01-21** from the 2026-07-21
 pass. Bumping it would silently re-lease claims no pass re-ran.
 
 **Where a note below says "the prior research", it means an internal deep-research
-result held by another repository, not published in this skill set** — so its
-weight cannot be checked from here. That is the whole reason the pass table
-distinguishes it from evidence: a reference implementation showing the same call
-is not a second source for the claim.
+result held by another repository** — so its weight cannot be checked from here.
+That is the whole reason the pass table distinguishes it from evidence: a
+reference implementation showing the same call is not a second source for the
+claim.
+
+**Narrowed 2026-08-01, and the narrowing is partial.** That research's
+consolidated output — the tool map, its selection criteria and the four whole
+concerns its completeness critic found — **is now restated in
+`guardrails-toolchain`**, so a reader can see what it concluded. The research
+itself is still unpublished: no transcript, no per-claim marker, no primary
+source. So the sentence above holds for weight and no longer holds for content,
+and the skill restating it marks everything **convention** for exactly the reason
+this table gives.
 
 One presentation note, so provenance is not lost: the 2026-07-21 pass recorded
 several of its conventions as a single list, and they are now stated under the

@@ -42,7 +42,10 @@ recording because it means the language-layer grounds were written twice on the
 same day and did not drift between the two. The third is the frontend profile,
 accepted the same day, which is where the competing census comes from — and a
 consolidated toolchain map dated the day after is what makes that census a
-per-category comparison rather than a list of tool names.
+per-category comparison rather than a list of tool names. **That map is itself
+restated in `guardrails-toolchain` since 2026-08-01**, minus the frontend column,
+which stays here because it is this skill's evidence about host counting rather
+than that skill's evidence about tool selection.
 
 **The premise is confirmed by an outside record, and that is new.** The stack
 overview opens by stating that the AI is the sole developer and maintainer and

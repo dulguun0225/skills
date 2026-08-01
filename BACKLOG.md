@@ -26,6 +26,7 @@ blank here is not a clean bill — **it is a check nobody has run.**
 | `java-backend-rules`, `java-backend-api`, `java-backend-observability` | n/a — a stack rule set has no portable predicate | n/a — it instantiates other rule sets' shapes | **owed** for its own rules, the ones that are not an instantiation of another skill |
 | `llm-default-traps` | n/a — cross-stack by construction | **owed** | **owed** |
 | `backend-stack` | n/a — its directives bind a decision, not a technology | **owed** | n/a — nothing it governs crosses a layer |
+| `guardrails-toolchain` | n/a — its directives bind a tool choice, not a technology | **owed** | **owed**, and it is the check most likely to bite here: this skill's whole subject is which layer owns which defect class, so a directive that names one layer and misses another is the failure mode it was written against |
 
 Doing one of these is a bounded session, not a research project. The layer check
 is a read of the file asking one question per directive; the composite-shape
@@ -36,8 +37,13 @@ is add directives, and those then arrive at the normal bar.
 
 ## Evidence owed on a published skill
 
-**`backend-stack`, published 2026-08-01, ships everything at *convention* and
-its central claim at *uncertain*.** Three rows stood here at publication. **The
+**Two skills, `backend-stack` and `guardrails-toolchain`, both published
+2026-08-01 from external records of the same pass, both shipping everything at
+*convention* with a central claim at *uncertain*.** The `guardrails-toolchain`
+rows are at the end of this section; the `backend-stack` rows come first because
+they were opened first.
+
+**`backend-stack`** — three rows stood here at publication. **The
 candidate list at the language and runtime layer was recovered the same day and
 its row is gone** — the four candidates and the ground each lost on are in the
 skill, the verdict is a contested win rather than an unexamined one, and
@@ -53,6 +59,23 @@ supply is below.
 **Nothing here is a research project.** The sources are recovery of material that
 may not exist; the triggers are a decision the owner makes; the census is the
 same grep the skill publishes, run against another stack's rule set.
+
+**`guardrails-toolchain`, harvested from the same pass's consolidated toolchain
+map and the four decision records folded out of it.** What it owes:
+
+| Owed | What it unblocks |
+| ---- | ---------------- |
+| **A primary source for any tool claim in it** — free-tier boundaries, licence terms, the intra-file taint limit, compatibility with a pinned runtime | Promotes tool facts from convention to primary-source verified. **The same search that failed for `backend-stack` covers this**: the record cites nothing, and the sweep behind it is published nowhere. The difference is that these claims are re-verifiable from vendor documentation by anyone, at the cost of an afternoon per tool — they are unsourced, not unobtainable |
+| **A second completeness-critic run, on a different gate stack** | The skill's central claim — that asking what whole concerns a stack omits finds things no tool-by-tool comparison does — rests on **one run with no control arm**. A second run that finds a fifth class, or finds nothing, is the first evidence about the method rather than about the four concerns it produced |
+| **A ruling on japicmp — and only on japicmp** | Opened 2026-08-01 as a broad "consumer-surface scope disagreement" and **narrowed the same day by the hostile audit**, which read the contract record the first pass had not: the prior-art repo's full-document diff runs under an allow policy permitting exactly the additive changes a same-change client regeneration absorbs, which is `java-backend-api`'s own ground applied as configuration rather than as a competing position. What is actually contested is the module-package compatibility check: the record proposes japicmp, `java-backend-api` evaluated and dropped it, neither argued the other's side. It closes on a case where an in-repo consumer's compile did not catch an incompatible change to a published type |
+| **One cost figure for any gate the skill requires** | The standing sweep, the benchmark ratchet, the characterization corpus and the extra fuzz lane are all unpriced, and `caching` and `async-handoff` already carry unmeasured gate cost as an open question. The first adopting repo that measures one holds the first real number in this set |
+
+**The performance split has never been built.** Layers one and two are a written
+contract in the source record and in the skill; no repo in this set has a
+ratchet, a contention harness or the alert rules. Band width, baseline churn and
+whether the gate flakes are all unobserved — which is exactly what the skill's
+own *a gate only gates where its measurement is honest* directive would demand
+evidence for.
 
 **What the recovery cost, recorded so the next one is priced.** Outside the two
 `backend-stack` files it changed both `java-backend-rules` files, `README.md`,
@@ -83,24 +106,35 @@ project-shaped facts, recording the premise each rule holds under, and writing
 the skill. Order of magnitude: a day, not a research project.
 
 **Located 2026-08-01, while recovering the `backend-stack` candidate list: every
-row below has a decision record in the same external repository.** A frontend
+row below has a decision record in the same external repository**, as did the
+toolchain row that has since been harvested out of this table. A frontend
 profile ADR carries the Angular row's rejections including the Next.js one; a
 schema-per-tenant ADR carries the tenancy row with the HikariCP issue and the
-`search_path` CVE both cited by number; a consolidated guardrails map carries the
-toolchain row's tool-per-concern table with its licence column, the caveat that
-bites each one, and its own four gap classes; a primary-keys ADR carries the
+`search_path` CVE both cited by number; a primary-keys ADR carries the
 UUIDv7 row. **This does not promote any row.** A decision record states grounds;
 it is not the research notes, and the records found for `backend-stack` cite no
 primary source for anything. What it changes is the cost estimate: harvesting
 starts from a written decision with named losers rather than from a topic
 summary.
 
+**The toolchain row was harvested the same day and is gone from the table below:
+`guardrails-toolchain`, published 2026-08-01.** It confirmed the cost
+estimate above and one thing the estimate did not predict — **the harvest's
+expensive half was not the writing, it was establishing what the published
+skills already owned.** The source map splits three ways — rows a sibling skill
+already names with its own check, the frontend column `backend-stack` already
+carries as its competing census, and the rows nothing here owned. Only the third
+group is restated, alongside the selection criteria and the four gap classes.
+**What that row still owes is now in *Evidence owed on a published skill*, not
+here** — the same promotion the `backend-stack` candidate-list row went through,
+for the same reason: a row that closes often holds the only record of what it
+did not discharge.
+
 | Candidate skill | Named sources | What it would carry |
 | --------------- | ------------- | ------------------- |
 | `ai-maintainer-principles` | AI-maintenance research notes | Startup-loud versus runtime-silent behaviour; the one-AI-session cognitive-load boundary criterion. These overlap the eight design principles already published in `enforceable-rules`; this candidate would be their directive form — the same ideas as rules a repo commits, rather than as an authoring bar. **Two of its four topics were published on 2026-08-01 by `backend-stack`** — "what the build can refuse to ship is the deciding criterion" is that skill's first directive, and corpus-gravity and drift-asymmetry reasoning is its fourth. Harvesting this row now means checking what is left against those two directives first, not re-deriving them |
 | `angular-frontend-ai` | CVE-2025-29927 (Next.js) | An explicit Angular profile for AI maintenance; Bun versus Node; the Next.js rejection on CVE-2025-29927; a signal-everything dialect, an eslint wall, and exemplar files |
 | `postgres-tenancy` | PostgreSQL documentation; HikariCP issue #1633; CVE-2018-1058 | Schema-per-tenant versus pooled row-level security versus database-per-tenant, with PostgreSQL-documented facts (`PREPARE` re-parse, HikariCP #1633, CVE-2018-1058), the ceiling on each, and the escape hatches |
-| `guardrails-toolchain` | a toolchain survey | The roughly forty-tool map: concern, tool, gate, licence, and the caveat that bites for each — plus the four gap classes the survey found |
 | `uuidv7-primary-keys` | UUIDv7 research notes | UUIDv7-everywhere versus bigint identity versus TSID hybrids, with the `ORDER BY` carve-out |
 
 ## Candidate topic

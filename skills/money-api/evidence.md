@@ -17,7 +17,10 @@ the whole payload.
 
 **An internal decision record and an internal guardrails document made several
 of the same calls.** That is prior art throughout — a repo that made the same
-choice, not independent confirmation, and not a citation.
+choice, not independent confirmation, and not a citation. **The guardrails
+document's half is restated in `guardrails-toolchain` since 2026-08-01**, so it
+can be read; the decision record is still unpublished. Neither changes the
+weight: prior art that a reader can now open is still prior art.
 
 **Every directive in `SKILL.md` is convention.** Two rest on confirmed facts,
 and the split between the fact and the rule is kept deliberately: the fact is

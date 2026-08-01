@@ -155,7 +155,9 @@ tool is recorded in `money-java`.
   call, stated against a named maximum amount.
 - **An internal decision record and an internal guardrails document made
   several of the same calls.** That is prior art, not independent
-  confirmation, and it is not a citation.
+  confirmation, and it is not a citation. **Still true after the guardrails
+  document's tool map was restated in `guardrails-toolchain` on 2026-08-01** —
+  publishing prior art makes it readable, never citable as a second source.
 
 ## Re-open triggers
 

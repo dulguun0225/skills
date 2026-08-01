@@ -237,7 +237,7 @@ One concurrency model be virtual threads — synchronous, top-to-bottom, un-colo
 
 ### Every ban names the check that enforces it
 
-**Ban with no named check not on this list.** ArchUnit host ban on bytecode, Error Prone host one on source, and **which tool host which ban decided per rule by what each can read soundly** — not by preference. Worked case in `java-backend-observability`, where unloggable-domain-type rule must be Error Prone because ArchUnit see logger erased signature not argument static type; `caching-java` have two more of same shape. **Meta-test keep list honest:** each ban either enforced by named test or **explicitly marked deferred with reason**.
+**Ban with no named check not on this list.** ArchUnit host ban on bytecode, Error Prone host one on source, and **which tool host which ban decided per rule by what each can read soundly** — not by preference. Worked case in `java-backend-observability`, where unloggable-domain-type rule must be Error Prone because ArchUnit see logger erased signature not argument static type; `caching-java` have two more of same shape. **Meta-test keep list honest:** each ban either enforced by named test or **explicitly marked deferred with reason**. **Reconcile both directions** — declared-enforced ban name test that actually exist, and test that enforce ban no stay undeclared. One direction alone let deferred ban be described as enforced *or* let wired rule drop off list, and both failure read as complete list. (Prior art, 2026-06-13, from same external record `guardrails-toolchain` convert its own material from; **that record not published in this skill set, and this clause restated in no other skill — this skill own it.** **Convention**, and both-direction clause not from 2026-07-21 pass.)
 
 *ArchUnit on bytecode and Error Prone on source — off-the-shelf hosts; some predicates authored per repo.*
 
@@ -301,6 +301,7 @@ Silence read as coverage, so each stated.
 6. **Three Platform directives rest on no evidence note.** WebFlux ban, Flyway rule, Jackson pick. Dates inferred from pass scope; reader treating them as researched to same standard as jOOQ claims read more than is there.
 7. **Plain-SQL checker wireability unverified.** ArchUnit path work and be what ship; stronger compile-error path named as stronger without being tried against this stack pinned versions.
 8. **Pinning alert be threshold tripwire.** Accumulated short pins below threshold cost real scheduler time and fire nothing.
+9. **Codegen-diff gate assume generation reproducible, and nothing assert it.** Job regenerate once and diff. Non-determinism in generator — iteration order, locale-dependent sorting, embedded timestamp — make gate flap, and flapping gate get relaxed, at which point it mask drift it exist to catch. `java-backend-api` carry stronger form for its document: regenerate **twice** under varied timezone and locale in one pinned container, byte-identical to both. Not carried here — stated 2026-08-01 when `guardrails-toolchain` published general form, cuz asserting it never verified against jOOQ generator on this stack.
 
 ## Markers, dates, and what they mean
 
