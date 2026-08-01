@@ -2,388 +2,134 @@
 name: money-storage
 description: Money-grade rules for an amount that crosses a store boundary — exact-decimal money columns with explicit precision and scale, over-scale writes rejected rather than rounded, non-finite and free-text-currency constraints, arithmetic in the query language banned, one named read boundary, appended effect rows, version-guarded updates, migrations that compute money, and the verdict on every shape a repo assembles out of stored money. Load before adding or changing a money column, a migration, a view, a query that reads or totals an amount, a row mapper, or a stored balance. States the kind of check each rule needs; the tool is named in the matching stack skill (money-java).
 ---
-
 # Money-grade rules: the store boundary
 
-Sixteen directives — `M-10`, `M-11`, and `M-30` … `M-43` — plus a verdict on
-every composite shape a repo assembles out of stored money. Each states the
-**kind** of check it needs. No tool is named here, because no tool is portable
-across engines — the tool is named in the stack skill.
+Sixteen directives — `M-10`, `M-11`, `M-30` … `M-43` — plus verdict on every composite shape repo build from stored money. Each state **kind** of check need. No tool named here: no tool portable across engines. Stack skill name tool.
 
-**Read the marker ceiling before you read the rules.** This group came out of a
-single pass with **no panel**: one researcher against vendor documentation, no
-steelman duel, no hostile audit, and no refutation votes. So **nothing here is
-confirmed**; the ceiling is *primary-source verified*, and the design arguments
-resting on those facts are *convention*. Two of the outputs are **bans**, and
-the case against each banned shape was written by whoever rejected it — which is
-the exact failure an independent panel exists to prevent. Running that panel is
-this group's first re-open trigger, and until it runs **no marker here may be
-promoted to confirmed**, least of all the two bans.
+**Read marker ceiling before rules.** This group from single pass, **no panel**: one researcher vs vendor docs. No steelman duel, no hostile audit, no refutation votes. So **nothing here confirmed**; ceiling is *primary-source verified*, design arguments on those facts are *convention*. Two outputs are **bans**, and case against each banned shape written by whoever rejected it — exact failure independent panel prevent. Running that panel = this group's first re-open trigger. Until it run, **no marker here promote to confirmed**, least of all two bans.
 
 ## The premise these rules are conditioned on
 
-**Code is written by LLM agents and no human reads it line by line, and a
-feature carries an amount of money the system computes with.**
+**Code written by LLM agents, no human read line by line, and feature carry amount of money system compute with.**
 
-**These rules bind additionally when an amount is durably stored and read back
-through a store the repo queries.** A service that only passes money through and
-stores none of it skips the group.
+**Rules bind extra when amount durably stored and read back through store repo query.** Service that only pass money through, store none: skip group.
 
-**The condition is not "the store is a relational database", and it is not "the
-repo uses a client library or an ORM."** These rules must reach a hand-written
-query, a view definition, a migration, and a support script — **none of which
-imports a client library**. Scoping the seam around the obvious library is the
-mistake two neighbouring rule sets each had to correct, and **both are now
-published** — `caching` and `async-handoff`. `caching`'s seam had been scoped to a
-cache client library, which left every in-process cache outside every one of its
-checks; `async-handoff`'s seam had been scoped to a broker client, which left a
-polled table, an in-process event bus and a bare executor submit outside all of
-its, and `E-1` is an allow-list rather than a ban list because of it. If a check
-here is written against a library's API, it reports green over every one of those
-four.
+**Condition NOT "store is relational database", NOT "repo use client library or ORM."** Rules must reach hand-written query, view definition, migration, support script — **none import client library**. Scoping seam around obvious library = mistake two neighbour rule sets each had to fix, and **both now published** — `caching` and `async-handoff`. `caching` seam was scoped to cache client library → every in-process cache outside every check; `async-handoff` seam was scoped to broker client → polled table, in-process event bus, bare executor submit all outside, and `E-1` is allow-list not ban list because of it. Check written against library API report green over all four.
 
 ## Why this group exists at all
 
-Every other money rule is enforced by a check that reads **application
-source**: an architecture rule, a compiler or linter check, a parse test, a
-property test. A stored amount passes through a **second language** — the
-store's own query language — and **no directive outside this group reaches it**:
+Every other money rule enforced by check reading **application source**: architecture rule, compiler/linter check, parse test, property test. Stored amount pass through **second language** — store query language — and **no directive outside this group reach it**:
 
-- `M-2` bans exact-decimal arithmetic outside the money module, and reports
-  green over a `SUM`, over a view that multiplies by a rate, and over a
-  query-builder expression whose static type is the builder's own.
-- `M-1` rejects excess precision at construction, and is bypassed by a write
-  that lets the column round instead, and by a read that assigns a raw decimal
-  onto a field.
-- `M-10` and `M-11` govern how a column is *declared* and stop there.
+- `M-2` ban exact-decimal arithmetic outside money module, report green over `SUM`, over view multiplying by rate, over query-builder expression whose static type is builder's own.
+- `M-1` reject excess precision at construction, bypassed by write that let column round instead, and by read that assign raw decimal onto field.
+- `M-10` and `M-11` govern how column *declared*, stop there.
 
-The gap was never a missing rule. It was a missing **layer**.
+Gap never missing rule. Gap = missing **layer**.
 
 ## What is here and what is elsewhere
 
-- **This skill** — the column declaration, what the store must refuse on write,
-  what it may not compute, how a row becomes a money value on read, and how a
-  money row may change.
-- **`money`** — the money type, arithmetic, rounding, fail-loud, observability,
-  the evidence gates (`M-1` … `M-9`, `M-20` … `M-29`).
-- **`money-api`** — the wire and the HTTP contract (`M-12` … `M-19`). Three
-  rules here are its mirror image at the store: `M-37` is `M-16` in the read
-  direction, `M-39` is `M-18` at the store on the same version column, and
-  `M-40` needs the idempotency record `M-17` requires.
-- **`money-java`** — the same rules with PostgreSQL, jOOQ, Flyway and a
-  containerised engine named; its `storage.md` is the half that matches this
-  skill.
-- **`caching`** — published, and it owns one money shape this skill does not: a
-  cached amount. A cache holds a **copy** of a money value that no column type,
-  no `CHECK` and no schema lint reaches, and its serialization rule is where the
-  float ban re-enters at a fourth layer, after the field, the column and the
-  wire. Install it in any repo that caches an amount.
-- **`async-handoff`** — published, and it owns the other money shape this skill
-  does not: a money amount in a message payload or an outbox row. `E-21` is where
-  the float ban re-enters at a **fifth** layer, over a committed message schema,
-  and `E-5` is the outbox rule `M-40` depends on. Install it in any repo that
-  publishes an amount.
+- **This skill** — column declaration, what store must refuse on write, what it may not compute, how row become money value on read, how money row may change.
+- **`money`** — money type, arithmetic, rounding, fail-loud, observability, evidence gates (`M-1` … `M-9`, `M-20` … `M-29`).
+- **`money-api`** — wire and HTTP contract (`M-12` … `M-19`). Three rules here mirror it at store: `M-37` = `M-16` in read direction, `M-39` = `M-18` at store on same version column, `M-40` need idempotency record `M-17` require.
+- **`money-java`** — same rules with PostgreSQL, jOOQ, Flyway, containerised engine named; its `storage.md` = half matching this skill.
+- **`caching`** — published, own one money shape this skill not: cached amount. Cache hold **copy** of money value that no column type, no `CHECK`, no schema lint reach; its serialization rule = where float ban re-enter at fourth layer, after field, column, wire. Install in any repo caching amount.
+- **`async-handoff`** — published, own other shape: money amount in message payload or outbox row. `E-21` = float ban re-enter at **fifth** layer, over committed message schema; `E-5` = outbox rule `M-40` depend on. Install in any repo publishing amount.
 
 ## The defaults these rules override, by name
 
-Each is a corpus favourite because it is the shortest correct-looking code.
+Each is corpus favourite because shortest correct-looking code.
 
-- **Letting the column do the rounding** — write whatever the computation
-  produced into the money column and let the engine round it. **The most
-  economical of the lot, and the one an agent reaches for without ever deciding
-  to.** Rejected by `M-30`: both engines checked round silently, and one
-  documents that the loss is not an error even in its strict mode, so the build,
-  the test suite and the write all report success.
-- **Incrementing in the query** — `UPDATE … SET amount = amount + ?`. The idiom
-  every corpus recommends for concurrency, and **correct about concurrency**: it
-  is exactly the read-modify-write that read-committed isolation loses, done in
-  one statement. Rejected by `M-35` anyway, because it puts the arithmetic in
-  the one language no check reads. **This is the sharpest trade-off in the
-  group, not a clean win** — the rejected form was safer on the axis it was
-  chosen for, which is why the replacement is `M-38`'s append and not a worse
-  version of the same shape.
-- **A binary floating-point column** — the corpus default one layer down from
-  the field. Banned by `M-10`.
-- **A vendor "money" column type** — banned by `M-10`, and both vendors checked
-  document the ban themselves: PostgreSQL's `money` takes its fractional
-  precision from the **`lc_monetary` server setting** rather than from the
-  column, and SQL Server's carries a documentation warning against using it in
-  calculations plus an inability to store a currency at all.
-- **A bare, unconstrained decimal column** — reads as "the flexible choice".
-  Rejected by `M-31`: it accepts any scale, so excess precision survives the
-  round trip, and it is the one place a non-finite value can be stored at all.
-- **Free text for the currency code** — rejected by `M-34`: it admits `usd`,
-  `USD ` and `$` as three distinct currencies.
-- **A trigger, a rule, or a generated column that computes money** — banned.
-  Grounds, and what reopens it, are in *Composite shapes* below.
-- **An amount inside a document or JSON column** — banned, same place. The
-  attraction is schema-free iteration; the cost is every constraint in this
-  group at once.
-- **An integer number of minor units as the storage type** — a `bigint` of
-  cents. **Excluded by `M-10`'s wording, and never justified on evidence.** Said
-  plainly rather than left to read as decided: no evidence survived on which
-  decimal precision to pick, let alone against this alternative, and the
-  argument on its side is real — an integer column cannot be over-scale, which
-  removes `M-30`'s entire failure mode by construction. Its price is moving
-  exponent knowledge into every reader, which is the same cost that got minor
-  units rejected on the wire at `M-12`. Marked **convention**, and it **reopens**
-  where a language's decimal support is weak enough that `M-1` is easier to
-  enforce over an integer type.
+- **Let column do rounding** — write whatever computation produced into money column, let engine round. **Most economical of lot, one agent reach for without ever deciding to.** Rejected by `M-30`: both engines checked round silently, one document that loss is not error even in strict mode — so build, test suite, write all report success.
+- **Increment in query** — `UPDATE … SET amount = amount + ?`. Idiom every corpus recommend, and **correct about concurrency**: exactly the read-modify-write that read-committed isolation lose, done in one statement. Rejected by `M-35` anyway: put arithmetic in one language no check read. **Sharpest trade-off in group, not clean win** — rejected form safer on axis it chosen for, which is why replacement is `M-38` append, not worse version of same shape.
+- **Binary floating-point column** — corpus default one layer down from field. Banned by `M-10`.
+- **Vendor "money" column type** — banned by `M-10`, and both vendors checked document ban themselves: PostgreSQL `money` take fractional precision from **`lc_monetary` server setting** not from column; SQL Server carry doc warning against use in calculations plus inability to store currency at all.
+- **Bare unconstrained decimal column** — read as "flexible choice". Rejected by `M-31`: accept any scale, so excess precision survive round trip, and it is one place non-finite value can be stored at all.
+- **Free text for currency code** — rejected by `M-34`: admit `usd`, `USD ` and `$` as three distinct currencies.
+- **Trigger, rule, or generated column that compute money** — banned. Grounds and reopen condition in *Composite shapes* below.
+- **Amount inside document or JSON column** — banned, same place. Attraction = schema-free iteration; cost = every constraint in this group at once.
+- **Integer number of minor units as storage type** — `bigint` of cents. **Excluded by `M-10` wording, never justified on evidence.** Said plain, not left to read as decided: no evidence survived on which decimal precision to pick, let alone against this alternative, and argument on its side real — integer column cannot be over-scale, remove `M-30` whole failure mode by construction. Price: move exponent knowledge into every reader = same cost that got minor units rejected on wire at `M-12`. Marked **convention**, **reopens** where language decimal support weak enough that `M-1` easier to enforce over integer type.
 
 ## What to do when this skill fires
 
-1. Declare the column with both numbers — precision and scale — and the
-   currency column beside it (`M-10`, `M-31`, `M-33`, `M-34`).
-2. Write the constraints in the same migration: non-finite excluded,
-   `NOT NULL` on both halves, currency constrained to a committed list
-   (`M-32` … `M-34`).
-3. Assert the amount's scale in the application **before** the statement runs.
-   Never rely on the store to reject it, and never let it round (`M-30`).
-4. Keep arithmetic out of the query. If a total genuinely cannot be computed in
-   the money module, take the one permitted exception and give it a golden test
-   (`M-35`, `M-36`).
-5. Read through the one named mapper, constructing the money value from the
-   amount and its currency together (`M-37`).
-6. Append the effect. If a mutable balance row exists anyway, guard every write
-   with its version and treat zero affected rows as a failure (`M-38`, `M-39`).
-7. A migration that computes an amount is money math: worked example, golden
-   corpus, real engine (`M-41`).
-8. State the maximum amount the precision is chosen against (`M-43`).
+1. Declare column with both numbers — precision and scale — and currency column beside it (`M-10`, `M-31`, `M-33`, `M-34`).
+2. Write constraints in same migration: non-finite excluded, `NOT NULL` on both halves, currency constrained to committed list (`M-32` … `M-34`).
+3. Assert amount scale in application **before** statement run. Never rely on store to reject it, never let it round (`M-30`).
+4. Keep arithmetic out of query. If total genuinely cannot be computed in money module, take one permitted exception and give it golden test (`M-35`, `M-36`).
+5. Read through one named mapper, construct money value from amount and currency together (`M-37`).
+6. Append the effect. If mutable balance row exist anyway, guard every write with its version and treat zero affected rows as failure (`M-38`, `M-39`).
+7. Migration that compute amount = money math: worked example, golden corpus, real engine (`M-41`).
+8. State maximum amount precision chosen against (`M-43`).
 
 ## Storage — how a money column is declared
 
-**M-10 — Money columns are an exact decimal type with explicit precision and
-scale; scale 4 covers every ISO 4217 currency.** Never a binary floating-point
-column type, and never a vendor "money" column type. The currency is stored in
-a column beside the amount.
-*Schema lint over the committed migrations. Scale 4 confirmed 2026-07-21, and a
-second vendor arrived at the same number independently on 2026-07-29; the
-precision digits are the repo's call (`M-43`). Convention for the column-type
-bans, 2026-07-21 — and each ban gained a documented vendor ground on
-2026-07-29; see [evidence.md](evidence.md).*
+**M-10 — Money columns are an exact decimal type with explicit precision and scale; scale 4 covers every ISO 4217 currency.** Never binary floating-point column type, never vendor "money" column type. Currency stored in column beside amount.
+*Schema lint over committed migrations. Scale 4 confirmed 2026-07-21; second vendor reach same number independently 2026-07-29; precision digits = repo's call (`M-43`). Convention for column-type bans, 2026-07-21 — each ban gained documented vendor ground 2026-07-29; see [evidence.md](evidence.md).*
 
-**M-11 — Rate and factor columns carry their own, higher precision.** They are
-not money columns and do not take the minor-unit scale. This is `M-6` at the
-schema.
+**M-11 — Rate and factor columns carry their own, higher precision.** Not money columns, do not take minor-unit scale. This is `M-6` at schema.
 *Same schema lint. Convention, 2026-07-21.*
 
 ## Persistence — the write boundary
 
-**M-30 — An amount whose scale exceeds the column's is rejected before it
-reaches the store, never rounded by it.** Stores round, and they do it quietly.
-PostgreSQL documents that a value whose scale exceeds the column's declared
-scale is rounded to that number of fractional digits. MySQL is worse in one
-respect: it names the mode it imposes — round half away from zero — and
-documents that the truncation is **not an error, even in strict SQL mode**.
-Between them: **the store is a repo-wide default rounding
-mode applied at every write** — the thing `M-7` bans outright and `M-1` rejects
-at construction, reintroduced one layer down and reported as success.
-*Integration test against the real engine: write an amount one digit past the
-column's scale and assert an error, not a stored rounded row. An in-memory
-substitute cannot check this — the rounding is the engine's. Primary-source
-verified 2026-07-29, both engines.*
+**M-30 — An amount whose scale exceeds the column's is rejected before it reaches the store, never rounded by it.** Stores round, quietly. PostgreSQL document that value whose scale exceed column declared scale is rounded to that number of fractional digits. MySQL worse in one respect: name mode it impose — round half away from zero — and document truncation is **not error, even in strict SQL mode**. Between them: **store = repo-wide default rounding mode applied at every write** — thing `M-7` ban outright and `M-1` reject at construction, reintroduced one layer down and reported as success.
+*Integration test vs real engine: write amount one digit past column scale, assert error, not stored rounded row. In-memory substitute cannot check this — rounding is engine's. Primary-source verified 2026-07-29, both engines.*
 
-**M-31 — A money column is a constrained decimal; the store's unconstrained
-decimal type is banned.** This sharpens `M-10`'s "explicit precision and scale"
-and carries the reason `M-10` shipped without. An unconstrained decimal accepts
-any scale, so excess precision survives the round trip and `M-1`'s rejection is
-bypassed by writing through the store instead of through the constructor.
-PostgreSQL also documents that **an infinity can only be stored in an
-unconstrained `numeric` column** — so the unconstrained type is the one place a
-non-finite amount can land at all.
-*The `M-10` schema lint, extended to fail on a money column declared with no
-precision and scale. Primary-source verified 2026-07-29 (PostgreSQL).*
+**M-31 — A money column is a constrained decimal; the store's unconstrained decimal type is banned.** Sharpen `M-10` "explicit precision and scale", carry reason `M-10` shipped without. Unconstrained decimal accept any scale → excess precision survive round trip and `M-1` rejection bypassed by writing through store instead of constructor. PostgreSQL also document **infinity can only be stored in unconstrained `numeric` column** — so unconstrained type is one place non-finite amount can land at all.
+*`M-10` schema lint, extended to fail on money column declared with no precision and scale. Primary-source verified 2026-07-29 (PostgreSQL).*
 
-**M-32 — Where the decimal type admits non-finite values, a committed
-constraint on the column excludes them.** PostgreSQL's `numeric` accepts `NaN`,
-and documents that it treats `NaN` values as equal, and **greater than all
-non-`NaN` values**, in order to keep them sortable and usable in tree-based
-indexes. So a
-`NaN` amount passes an ordering guard, wins a maximum, sorts as the largest
-row, and propagates through a sum: a wrong number that **no comparison-based
-check can see**, which is the class `M-5` exists for.
-*A check constraint per money column, asserted by the schema lint, plus an
-integration test writing a non-finite value and asserting rejection.
-Primary-source verified 2026-07-29 (PostgreSQL).*
+**M-32 — Where the decimal type admits non-finite values, a committed constraint on the column excludes them.** PostgreSQL `numeric` accept `NaN`, and document it treat `NaN` values as equal and **greater than all non-`NaN` values**, to keep them sortable and usable in tree-based indexes. So `NaN` amount pass ordering guard, win maximum, sort as largest row, propagate through sum: wrong number **no comparison-based check can see** — class `M-5` exist for.
+*Check constraint per money column, asserted by schema lint, plus integration test writing non-finite value and asserting rejection. Primary-source verified 2026-07-29 (PostgreSQL).*
 
-**M-33 — An amount column and its currency column are both `NOT NULL`, and
-neither is nullable alone.** An amount and its currency are one value (`M-1`);
-a schema that lets one half be null admits a row no money value can be
-constructed from, and the read path must then invent a currency or a zero.
-Where a money value is genuinely optional the **row** is absent, or the pair
-sits in its own table — never one half of a pair.
-*Schema lint over the committed migrations. Convention, 2026-07-29, and **not
-premise-derived**: the absent reader changes the stakes only through the
-invention on the read path, so this is close to ordinary schema hygiene. Kept
-because it is cheap and fails toward safety.*
+**M-33 — An amount column and its currency column are both `NOT NULL`, and neither is nullable alone.** Amount and currency = one value (`M-1`); schema letting one half be null admit row no money value can be constructed from, and read path must then invent currency or zero. Where money value genuinely optional, **row** absent, or pair sit in own table — never one half of pair.
+*Schema lint over committed migrations. Convention, 2026-07-29, and **not premise-derived**: absent reader change stakes only through invention on read path, so this close to ordinary schema hygiene. Kept: cheap, fail toward safety.*
 
-**M-34 — The currency column is constrained to a committed list of the codes
-the repo supports.** Free text admits `usd`, `USD ` and `$` as three distinct
-currencies. The constraint also carries a pairing the store will not: SQL Server
-documents that its own money type "doesn't store any currency information
-associated with the symbol, it only stores the numeric value", so **nothing
-below the application knows an amount's currency unless the schema says so**.
-*A check constraint, or a foreign key to a committed reference table, asserted
-by the schema lint, plus an integration test on a rejected code. Convention,
-2026-07-29; the SQL Server behaviour is primary-source verified 2026-07-29.*
+**M-34 — The currency column is constrained to a committed list of the codes the repo supports.** Free text admit `usd`, `USD ` and `$` as three distinct currencies. Constraint also carry pairing store will not: SQL Server document its own money type "doesn't store any currency information associated with the symbol, it only stores the numeric value", so **nothing below application know amount currency unless schema say so**.
+*Check constraint, or foreign key to committed reference table, asserted by schema lint, plus integration test on rejected code. Convention, 2026-07-29; SQL Server behaviour primary-source verified 2026-07-29.*
 
 ## Persistence — the query language
 
-**M-35 — Arithmetic on money in the store's query language is banned. Queries
-read and write amounts; they do not compute them.** `M-2`'s ban is enforced
-over application source, and query text is not application source to that
-check: a `SUM` in a report query, an `amount * rate` in a view, a hand-written
-statement that increments a balance, and a query-builder expression typed as
-the builder's own DSL rather than as the language's decimal type **all pass
-while the check reports green**. Division in the query language is the worst
-case — it rounds, at a scale the engine picks, with no mode named at any call
-site, which is `M-7` defeated without a trace.
-*A lint over committed query text — query files, view and function definitions,
-migrations — plus an architecture rule confining the query builder's arithmetic
-constructs to the money module. Convention, 2026-07-29.*
+**M-35 — Arithmetic on money in the store's query language is banned. Queries read and write amounts; they do not compute them.** `M-2` ban enforced over application source, and query text not application source to that check: `SUM` in report query, `amount * rate` in view, hand-written statement incrementing balance, query-builder expression typed as builder's own DSL not language decimal type — **all pass while check report green**. Division in query language worst case: it round, at scale engine pick, no mode named at any call site = `M-7` defeated without trace.
+*Lint over committed query text — query files, view and function definitions, migrations — plus architecture rule confining query builder arithmetic constructs to money module. Convention, 2026-07-29.*
 
-**Named blind spot, stated because a green lint would otherwise read as
-coverage:** query text **assembled at runtime from fragments** is reachable by
-neither check. On that path the rule's real gates are `M-37`'s read-boundary
-construction and `M-27`'s characterization replay, not this lint. Do not
-describe the pair as complete coverage.
+**Named blind spot, stated because green lint would otherwise read as coverage:** query text **assembled at runtime from fragments** reachable by neither check. On that path real gates are `M-37` read-boundary construction and `M-27` characterization replay, not this lint. Do not describe pair as complete coverage.
 
-**M-36 — The one permitted exception is an exact-decimal aggregate over rows,
-and it carries a golden test.** Where the row count makes reading the rows into
-the money module untenable, the store may total them — over an exact decimal
-column, **never a binary float**, and never with an averaging or otherwise
-dividing aggregate. The float case is not a matter of taste: PostgreSQL's own
-documentation shows a `float8` sum over a window returning `0` where the answer
-is `1`, because "adding `1` to `1e20` results in `1e20` again", and states that
-this "is a limitation of floating-point arithmetic in general, not a limitation
-of PostgreSQL".
-**A float total therefore depends on the order the engine happened to add the
-rows in.**
-*Golden test comparing the store-computed total against the same total computed
-in the money module, over a committed corpus. Primary-source verified
-2026-07-29 for the float claim; convention for the exception's shape.*
+**M-36 — The one permitted exception is an exact-decimal aggregate over rows, and it carries a golden test.** Where row count make reading rows into money module untenable, store may total them — over exact decimal column, **never binary float**, never with averaging or otherwise dividing aggregate. Float case not taste: PostgreSQL own docs show `float8` sum over window returning `0` where answer is `1`, because "adding `1` to `1e20` results in `1e20` again", and state this "is a limitation of floating-point arithmetic in general, not a limitation of PostgreSQL".
+**Float total therefore depend on order engine happened to add rows in.**
+*Golden test comparing store-computed total vs same total computed in money module, over committed corpus. Primary-source verified 2026-07-29 for float claim; convention for exception shape.*
 
 ## Persistence — the read boundary and mutation
 
-**M-37 — A stored row becomes a money value only by construction, at one named
-read boundary.** The mapper reads an amount and its currency together and calls
-the constructor; nothing assigns an amount onto an already-constructed object,
-and no code outside that boundary holds a bare decimal that came from the
-store. This is `M-16` for the read direction, for the same reason — where
-construction is bypassed, the type's checks are bypassed with it.
+**M-37 — A stored row becomes a money value only by construction, at one named read boundary.** Mapper read amount and currency together, call constructor; nothing assign amount onto already-constructed object, no code outside that boundary hold bare decimal from store. This is `M-16` for read direction, same reason — where construction bypassed, type checks bypassed with it.
 
-**The read direction is the weaker of the two**, and the reason is worth
-keeping: the value it admits was not necessarily written by this code path at
-all. A row may predate `M-32`'s constraint, or have been written by a
-migration, a support script, or another service.
-*Static rule confining store-to-money conversion to one named mapper in the
-persistence module, plus an integration test that writes rows out of band —
-wrong scale, non-finite, null currency — and asserts each fails loud on read.
-Convention, 2026-07-29.*
+**Read direction is weaker of two**, reason worth keeping: value it admit was not necessarily written by this code path at all. Row may predate `M-32` constraint, or been written by migration, support script, or another service.
+*Static rule confining store-to-money conversion to one named mapper in persistence module, plus integration test writing rows out of band — wrong scale, non-finite, null currency — asserting each fail loud on read. Convention, 2026-07-29.*
 
-**M-38 — The record of a money effect is appended, never updated in place; a
-correction is a new row.** This removes the lost-update class instead of
-mitigating it. PostgreSQL documents that under read-committed isolation a
-`SELECT` "sees only data committed before the query began" and that "two
-successive `SELECT` commands can see different data, even though they are within
-a single transaction" — so a read-compute-write against a
-stored balance drops a concurrent effect unless it locks or carries a version
-predicate, and the idiom that would make it safe, incrementing inside the
-query, is banned by `M-35`. **An append has no read-modify-write to lose.**
+**M-38 — The record of a money effect is appended, never updated in place; a correction is a new row.** Remove lost-update class instead of mitigating it. PostgreSQL document that under read-committed isolation a `SELECT` "sees only data committed before the query began" and that "two successive `SELECT` commands can see different data, even though they are within a single transaction" — so read-compute-write against stored balance drop concurrent effect unless it lock or carry version predicate, and idiom that would make it safe, incrementing inside query, banned by `M-35`. **Append have no read-modify-write to lose.**
 
-A current balance may still exist as a projection; it is then recomputable from
-the appended rows, and it is what `M-28`'s standing invariant checks.
-*A committed guarantee that the effect table takes no update or delete — a
-rule, a trigger, or a withheld grant, whichever the engine supports — asserted
-by an integration test that attempts one; plus a concurrency test running two
-effects at once and asserting both are recorded. Convention for the rule,
-2026-07-29; the isolation semantics are primary-source verified 2026-07-29.*
+Current balance may still exist as projection; then recomputable from appended rows, and it is what `M-28` standing invariant check.
+*Committed guarantee that effect table take no update or delete — rule, trigger, or withheld grant, whichever engine support — asserted by integration test attempting one; plus concurrency test running two effects at once, asserting both recorded. Convention for rule, 2026-07-29; isolation semantics primary-source verified 2026-07-29.*
 
-**M-39 — A mutable money row, where one exists at all, is written only with its
-version as a predicate, and zero affected rows is a failure rather than a
-no-op.** This is `M-18`'s precondition at the store instead of at the API, on
-the same version column. PostgreSQL documents that under read-committed a second
-updater re-evaluates its `WHERE` clause "to see if the updated version of the row
-still matches the search condition" and, if it does, "proceeds with its
-operation using the updated version of the row" — so an unguarded
-`UPDATE … WHERE id = ?` **overwrites a committed concurrent effect and reports
-success**. Under repeatable-read the same case instead raises "could not
-serialize access due to concurrent update", and the application "should abort
-the current transaction and retry the whole transaction from the beginning".
-**A repo states which of the two it relies on; relying on neither is the
-defect.**
-*Integration test with two concurrent transactions asserting exactly one
-succeeds and the other fails loud. Primary-source verified 2026-07-29
-(PostgreSQL).*
+**M-39 — A mutable money row, where one exists at all, is written only with its version as a predicate, and zero affected rows is a failure rather than a no-op.** This is `M-18` precondition at store instead of at API, on same version column. PostgreSQL document that under read-committed a second updater re-evaluate its `WHERE` clause "to see if the updated version of the row still matches the search condition" and, if it does, "proceeds with its operation using the updated version of the row" — so unguarded `UPDATE … WHERE id = ?` **overwrite committed concurrent effect and report success**. Under repeatable-read same case instead raise "could not serialize access due to concurrent update", and application "should abort the current transaction and retry the whole transaction from the beginning". **Repo state which of two it rely on; relying on neither is the defect.**
+*Integration test with two concurrent transactions asserting exactly one succeed, other fail loud. Primary-source verified 2026-07-29 (PostgreSQL).*
 
-**M-40 — Everything that makes a money effect reconstructable is written in the
-effect's own transaction:** the effect row, the idempotency record `M-17`
-requires, and — where the effect's `M-20` event leaves the process — the
-durable row that event will be published from. **A publish after commit does
-not satisfy it.**
+**M-40 — Everything that makes a money effect reconstructable is written in the effect's own transaction:** effect row, idempotency record `M-17` require, and — where effect `M-20` event leave process — durable row that event will be published from. **Publish after commit do not satisfy it.**
 
-This adds no mechanism. It is stated because it is the one place these rules
-and a repo's asynchronous-handoff rules must agree, and the money path is where
-a lost event costs a cent nobody can reconstruct.
-*The same-transaction integration test `M-17` already requires, extended to
-assert the event's durable row. Convention, 2026-07-29.* **The residue is
-discharged:** `E-5` in the published `async-handoff` skill requires exactly this —
-application code's only enqueue path is a row in the outbox table, written in the
-state change's transaction, and a publish after commit does not satisfy it. The
-two agree. Install that skill in any repo that publishes a money event; without
-it, `M-40` names an obligation with nothing on the other side of it.
+Add no mechanism. Stated because it is one place these rules and repo asynchronous-handoff rules must agree, and money path is where lost event cost cent nobody can reconstruct.
+*Same-transaction integration test `M-17` already require, extended to assert event durable row. Convention, 2026-07-29.* **Residue discharged:** `E-5` in published `async-handoff` skill require exactly this — application code only enqueue path is row in outbox table, written in state change transaction, and publish after commit do not satisfy it. Two agree. Install that skill in any repo publishing money event; without it, `M-40` name obligation with nothing on other side.
 
 ## Persistence — migrations and precision
 
-**M-41 — A migration that computes a money value is money math, and carries
-money math's evidence:** the worked numeric example `M-25` requires, and a
-golden test running the migration against the real engine over a committed
-before-and-after corpus. A backfill applying a rate, a re-denomination, a split
-of one column into two — each is a computation that `M-23`'s mutation gate,
-`M-24`'s property tests and `M-27`'s replay **do not reach**, because all three
-gate application code.
-*Golden test against the real engine over a committed corpus. Convention,
-2026-07-29.*
+**M-41 — A migration that computes a money value is money math, and carries money math's evidence:** worked numeric example `M-25` require, and golden test running migration vs real engine over committed before-and-after corpus. Backfill applying rate, re-denomination, split of one column into two — each a computation that `M-23` mutation gate, `M-24` property tests and `M-27` replay **do not reach**, because all three gate application code.
+*Golden test vs real engine over committed corpus. Convention, 2026-07-29.*
 
-**M-42 — A change to an existing money column's type, precision or scale is
-never silent, and never narrows scale.** Narrowing rounds every stored row on
-the spot, by `M-30`'s evidence, and the one-line migration is the whole diff a
-reviewer sees.
-*A migration-hazard lint that flags any alteration of a money column and
-requires an explicit per-migration acknowledgement. Where the stack's lint
-already flags every column-type change for the lock it takes, no extension is
-needed and the record says so; the half no such lint covers is what happens to
-the values already stored, which stays spec-and-review. Primary-source verified
-2026-07-29 for the rounding.*
+**M-42 — A change to an existing money column's type, precision or scale is never silent, and never narrows scale.** Narrowing round every stored row on the spot, by `M-30` evidence, and one-line migration is whole diff reviewer see.
+*Migration-hazard lint flagging any alteration of money column, requiring explicit per-migration acknowledgement. Where stack lint already flag every column-type change for lock it take, no extension needed and record say so; half no such lint cover = what happen to values already stored, which stay spec-and-review. Primary-source verified 2026-07-29 for rounding.*
 
-**M-43 — The precision digits are stated against a named maximum amount, and
-exceeding it fails loud.** `M-10` leaves the digits to the repo, and no evidence
-survived on which to pick. What this adds is that the choice is **written down
-beside the largest amount and the largest aggregate the repo intends to hold**.
-PostgreSQL raises an error when the digits left of the decimal point exceed the
-declared precision minus the declared scale, which is the failure wanted — loud
-on the integer side, silent on the fractional side, which is why `M-30` asks for
-a rejection and this rule asks for a stated ceiling. A fixed-width vendor money
-type instead has a ceiling that cannot be widened at all — PostgreSQL's `money`
-runs to ±92233720368547758.07 and SQL Server's to ±922,337,203,685,477.5807 —
-which is a second, independent ground for `M-10`'s ban on those types.
-*Spec-and-review for the stated maximum, plus an integration test at it and one
-digit past it. Primary-source verified 2026-07-29 for both the error behaviour
-and the vendor ceilings.*
+**M-43 — The precision digits are stated against a named maximum amount, and exceeding it fails loud.** `M-10` leave digits to repo, no evidence survived on which to pick. What this add: choice **written down beside largest amount and largest aggregate repo intend to hold**. PostgreSQL raise error when digits left of decimal point exceed declared precision minus declared scale — failure wanted: loud on integer side, silent on fractional side, which is why `M-30` ask for rejection and this rule ask for stated ceiling. Fixed-width vendor money type instead have ceiling that cannot be widened at all — PostgreSQL `money` run to ±92233720368547758.07, SQL Server to ±922,337,203,685,477.5807 — second independent ground for `M-10` ban on those types.
+*Spec-and-review for stated maximum, plus integration test at it and one digit past it. Primary-source verified 2026-07-29 for both error behaviour and vendor ceilings.*
 
 ## Composite shapes a repo assembles out of stored money
 
-**This section is required, and the reason is a defect in a neighbouring rule
-set.** The asynchronous-handoff rules named the undecidable properties inside
-each of their directives, read as thorough because of it, and still passed over
-five whole shapes a repo assembles *out of* their primitives in complete
-silence. Naming gaps rule by rule does nothing to surface a shape nobody wrote
-a rule about. **Those five were closed on 2026-07-30 and are published as
-`async-handoff-shapes` and the two bans in `async-handoff`** — which does not
-weaken the lesson, because the defect was that nothing in the rule set made the
-absences visible. So
-every shape below is marked, and **silence about a shape is a defect in this
-section rather than the reader's problem**.
+**This section required, and reason is defect in neighbouring rule set.** Asynchronous-handoff rules named undecidable properties inside each directive, read as thorough because of it, and still passed over five whole shapes repo assemble *out of* their primitives in complete silence. Naming gaps rule by rule do nothing to surface shape nobody wrote rule about. **Those five closed 2026-07-30, published as `async-handoff-shapes` and two bans in `async-handoff`** — which do not weaken lesson: defect was that nothing in rule set made absences visible. So every shape below marked, and **silence about shape is defect in this section, not reader's problem**.
 
 | Shape | Verdict |
 | ----- | ------- |
@@ -393,79 +139,41 @@ section rather than the reader's problem**.
 | A mutable balance row kept beside the effect rows | **permitted with conditions** — `M-38`'s projection clause, then `M-39` |
 | A money amount inside a document or JSON column | **banned** — grounds below |
 | A void or reversal of a posted effect | **permitted** — it is an append (`M-38`), never a flag flipped on the original row |
-| A money amount in a cache | **out of scope here, and owned by the published `caching` skill** — install it if the repo caches an amount. The seam it owns: a cached amount is a copy that no column constraint reaches, and a serializer that loses scale or turns the amount into a binary float is the float ban's fourth layer |
-| A money amount in a message payload or an outbox row | **out of scope here, and owned by the published `async-handoff` skill** — install it if the repo publishes an amount. The seams it owns: `E-21` bans a binary floating-point field anywhere in a committed message schema and requires a decimal amount to carry its currency, which is the float ban's fifth layer; `E-5` is the outbox rule `M-40` depends on |
-| Money rows in a read replica or a reporting store | **permitted for reads that are not inputs to a money effect; banned as an input to one** — replica lag makes the input stale, and the reporting store's columns sit outside this repo's schema lint |
-| Money columns spread over per-tenant schemas or table partitions | **permitted — and this is where this group's checks silently under-cover.** Every constraint here is per table, so the schema lint must enumerate every schema and every partition or it reports green over the ones it never visited |
+| A money amount in a cache | **out of scope here, owned by published `caching` skill** — install if repo cache amount. Seam it own: cached amount is copy no column constraint reach, and serializer that lose scale or turn amount into binary float = float ban fourth layer |
+| A money amount in a message payload or an outbox row | **out of scope here, owned by published `async-handoff` skill** — install if repo publish amount. Seams it own: `E-21` ban binary floating-point field anywhere in committed message schema and require decimal amount carry its currency = float ban fifth layer; `E-5` = outbox rule `M-40` depend on |
+| Money rows in a read replica or a reporting store | **permitted for reads that are not inputs to a money effect; banned as input to one** — replica lag make input stale, and reporting store columns sit outside this repo schema lint |
+| Money columns spread over per-tenant schemas or table partitions | **permitted — and here this group's checks silently under-cover.** Every constraint here per table, so schema lint must enumerate every schema and every partition or it report green over ones it never visited |
 
-**A fold over stored rows is permitted; a fold over a message history is
-banned.** Those two read as a contradiction, so state it once: `M-38` recommends
-deriving a balance from durable, ordered rows inside one transaction domain,
-which is a query. `E-32`, in the published `async-handoff` skill, bans state
-rebuilt from a **message** stream, where ordering, retention and redelivery are
-the transport's to define. Same word, different mechanism, opposite verdict — and
-that skill states the same contrast from its side.
+**Fold over stored rows permitted; fold over message history banned.** Those two read as contradiction, so state once: `M-38` recommend deriving balance from durable, ordered rows inside one transaction domain = query. `E-32`, in published `async-handoff` skill, ban state rebuilt from **message** stream, where ordering, retention and redelivery are transport's to define. Same word, different mechanism, opposite verdict — and that skill state same contrast from its side.
 
 ### The two bans
 
-Neither shape is bad engineering. **Both are ungateable *here*, which is a fact
-about this organisation and not about the technique.** Each carries its ground,
-the org fact it rests on, the fact that no independent panel argued the other
-side, and the condition that reopens it.
+Neither shape bad engineering. **Both ungateable *here*, fact about this organisation not about technique.** Each carry its ground, org fact it rest on, fact that no independent panel argued other side, and condition that reopen it.
 
-**A money value computed by a trigger, a rule, or a generated column —
-banned.**
+**A money value computed by a trigger, a rule, or a generated column — banned.**
 
-- *Ground.* The effect fires from no written call, and its arithmetic is
-  invisible to every check in this group and in `M-1` … `M-9`: the stored value
-  simply differs from what the money module would have produced.
-- *The org fact it rests on.* No human reads the code line by line — so nobody
-  notices that the two disagree, in a repo where nobody read either one.
-- *No panel.* The case against this shape was written by whoever rejected it. No
-  independent reviewer argued the other side.
-- *Reopens when* a store's generated-column expression can be driven by the same
-  golden corpus as application money math — then it is gated rather than
-  invisible.
+- *Ground.* Effect fire from no written call, its arithmetic invisible to every check in this group and in `M-1` … `M-9`: stored value simply differ from what money module would have produced.
+- *Org fact it rest on.* No human read code line by line — so nobody notice two disagree, in repo where nobody read either one.
+- *No panel.* Case against this shape written by whoever rejected it. No independent reviewer argued other side.
+- *Reopens when* store generated-column expression can be driven by same golden corpus as application money math — then gated, not invisible.
 
 **A money amount inside a document or JSON column — banned.**
 
-- *Ground.* A JSON document has one number type; the corpus default serializes
-  an amount into it as a floating-point number, which is `M-12`'s rejected
-  alternative one layer down. A document column defeats every constraint in this
-  group at once: no scale, no per-field `NOT NULL`, no check constraint, no
-  currency pairing.
-- *The org fact it rests on.* Those constraints are the only gate on a stored
-  amount, and no reader compensates when they are absent.
-- *No panel.* Same as above — rejected and argued by the same person.
-- *Reopens when* the store enforces a committed schema over the document, with
-  an exact-decimal type per field that a schema lint can read.
+- *Ground.* JSON document have one number type; corpus default serialize amount into it as floating-point number = `M-12` rejected alternative one layer down. Document column defeat every constraint in this group at once: no scale, no per-field `NOT NULL`, no check constraint, no currency pairing.
+- *Org fact it rest on.* Those constraints are only gate on stored amount, and no reader compensate when absent.
+- *No panel.* Same as above — rejected and argued by same person.
+- *Reopens when* store enforce committed schema over document, with exact-decimal type per field schema lint can read.
 
 ## Markers, dates, and what they mean
 
-`M-10` and `M-11` are from the 2026-07-21 founding pass. **`M-30` … `M-43` and
-the composite-shape table are the 2026-07-29 pass, which had no panel** — see
-the ceiling stated at the top of this file.
+`M-10` and `M-11` from 2026-07-21 founding pass. **`M-30` … `M-43` and composite-shape table are 2026-07-29 pass, which had no panel** — see ceiling at top of file.
 
-- **primary-source verified** — one researcher checked the claim against the
-  vendor's own documentation, with no panel. Whatever its evidentiary strength,
-  this is **not** *confirmed*; running the panel is what would promote it.
-- **convention** — defensible practice no independent source confirms. Kept
-  because it is cheap, enforceable, and fails toward safety.
-- **confirmed** — appears exactly once in this file, on `M-10`'s scale-4 clause,
-  and it comes from the earlier pass.
+- **primary-source verified** — one researcher checked claim vs vendor own documentation, no panel. Whatever its evidentiary strength, **not** *confirmed*; running panel promote it.
+- **convention** — defensible practice no independent source confirm. Kept: cheap, enforceable, fail toward safety.
+- **confirmed** — appear exactly once in this file, on `M-10` scale-4 clause, from earlier pass.
 
-**The lapse rule.** These rules were last re-dated for a review by
-**2027-01-21** — governed by the oldest unrefreshed pass, deliberately not moved
-to 2027-01-29 by the persistence pass, because that would have re-leased
-twenty-nine rules nobody re-checked. Past that date the one **confirmed**
-marker reads as **convention** until a new pass re-dates it.
+**Lapse rule.** These rules last re-dated for review by **2027-01-21** — governed by oldest unrefreshed pass, deliberately not moved to 2027-01-29 by persistence pass, because that would re-lease twenty-nine rules nobody re-checked. Past that date the one **confirmed** marker read as **convention** until new pass re-date it.
 
-**Read this group as a layer that was missing and is now covered thinly, not as
-one that is finished.** It closed no gap in `M-1` … `M-29`, and it added
-residues of its own: `M-35`'s blind spot on runtime-assembled query text,
-`M-37`'s inability to see a value written by a system outside the repo, and
-`M-40`'s dependence on a second rule set agreeing — **the last of which was
-discharged on 2026-07-30, when `async-handoff` published `E-5`.**
+**Read this group as layer that was missing and now covered thinly, not as one that is finished.** It closed no gap in `M-1` … `M-29`, and added residues of its own: `M-35` blind spot on runtime-assembled query text, `M-37` inability to see value written by system outside repo, and `M-40` dependence on second rule set agreeing — **last of which discharged 2026-07-30, when `async-handoff` published `E-5`.**
 
-The vendor quotations, the dated claims, the citations that did not survive, and
-the conditions that reopen a decision are in [evidence.md](evidence.md).
+Vendor quotations, dated claims, citations that did not survive, and conditions that reopen a decision are in [evidence.md](evidence.md).

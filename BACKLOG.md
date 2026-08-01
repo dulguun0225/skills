@@ -50,6 +50,31 @@ the one the author holds:
 that exists outside this repository; the third is the same grep the skill
 publishes, run against another stack's rule set.
 
+## Owed on the 2026-08-01 compression pass
+
+All sixteen `SKILL.md` files were rewritten into the compressed house dialect on
+2026-08-01 (working tree, uncommitted at the time of this entry). No resource
+file — `evidence.md`, `api.md`, `storage.md`, `shapes.md` — was touched, so
+**every skill now carries a compressed directive body and an uncompressed
+evidence trail.** Whether that split is deliberate is itself undecided.
+
+| Owed | Why it is here |
+| ---- | -------------- |
+| **Restore the licence-name expansion in `caching-java`** | `Redis Source Available License v2` and `Server Side Public License v1` were reduced to `RSALv2` and `SSPLv1`, and the expansion now appears nowhere in the file. This is the de-naming defect the Java-backend reviews were built to catch — the only content loss the compression review found |
+| **Remove the thirteen introduced `→` arrows**, in `tech-decision-research` (5), `java-backend-api` (3), `money-storage` (2), and one each in `caching`, `caching-java`, `enforceable-rules`, `async-handoff` | The dialect bans them. Two arrows predate the pass and are legitimate — `absent → **428**` in `money-api` and `java-backend-api` — so a blanket strip is wrong; each of the thirteen needs a connective back |
+| **Remove `til` for `until`** (`async-handoff`, `async-handoff-java`) and the contractions `can't`/`don't`/`won't` | Invented abbreviations save no tokens and cost decode clarity, which is the dialect's own stated ground |
+| **Decide whether directive *statements* are compressible at all** | `async-handoff`'s thirty statements were rewritten; the statements in `money`, `money-api`, `money-storage`, `caching` and `async-handoff-shapes` were left byte-identical. Meaning survived in all thirty — each was compared — but the set is now uneven, and nothing records which side is the rule |
+
+**What the review verified, stated so a blank is not read as coverage.** Skill
+count, the 95 directive ids and their uniqueness, every `###` and `##` heading,
+backticked identifier tokens per file, every date, every confidence and
+enforcement marker, bullet and numbered-item counts, table rows, bold spans,
+directive statements, and dropped negations — all by script against `HEAD`, all
+clean but the row above. **Not verified**: whether a compressed sentence still
+supports the cross-skill claim another skill makes about it, and whether any
+`*Check:*` line still names an enforceable check rather than a shorter phrase
+that reads like one. Both are readings, not greps.
+
 ## Researched, unwritten
 
 Each row is a topic whose sources were identified during the corpus era. **The

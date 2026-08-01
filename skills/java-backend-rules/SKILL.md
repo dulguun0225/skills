@@ -2,511 +2,216 @@
 name: java-backend-rules
 description: The platform constitution for a Java backend on Spring Boot Web MVC, jOOQ and PostgreSQL — the rules that bind every line of code in the repo, each with a named build gate. Reactive WebFlux, JPA and Hibernate, jOOQ's attached-record CRUD, plain-SQL strings, an injectable DSLContext, fixed thread pools for request work, StructuredTaskScope, an extra semaphore over the connection pool, wall-clock reads in domain code, and the runtime-silent Spring annotations — field injection, @Transactional, @Scheduled, @Async, @Cacheable — are banned by name, each with the check that fails the build. Load before writing a query, a transaction, an in-request fan-out, a Flyway migration, a scheduled task, or a test on this stack, and before picking a persistence, concurrency, JSON or nullness library for it.
 ---
-
 # Java backend — the platform rules
 
-The rules that bind **every line of code** in a Java backend on this stack, with
-the named check that enforces each one. Six areas — the platform picks,
-concurrency, time, nullness, the runtime-silent ban list, and the test
-toolchain.
+Rules bind **every line of code** in Java backend on this stack, plus named check enforce each. Six area — platform picks, concurrency, time, nullness, runtime-silent ban list, test toolchain.
 
-Two sibling skills carry the areas that state their own condition, and a repo on
-this stack installs all three:
+Two sibling skill carry area with own condition. Repo on this stack install all three:
 
-- **`java-backend-api`** — the HTTP contract rules. They bind when the backend
-  exposes an HTTP API described by an OpenAPI document.
-- **`java-backend-observability`** — logging, metrics and alerting. They bind
-  when the deployed system has no human watching it continuously.
+- **`java-backend-api`** — HTTP contract rules. Bind when backend expose HTTP API described by OpenAPI doc.
+- **`java-backend-observability`** — logging, metrics, alerting. Bind when deployed system have no human watching continuously.
 
-**There are no rule ids here, and that is deliberate.** Each directive is a
-`###` heading, and that heading is how it is referred to — *the transaction
-seam*, *the preview-API ban*, *the fan-out helper*. Nothing else in this skill
-set numbers these rules, so a number invented here would be a pointer that
-resolves only for a repo that installed this skill; a skill name plus a subject
-reads as an instruction and resolves either way. Cite these rules from anywhere
-else the same way.
+**No rule ids here, deliberate.** Each directive be `###` heading; heading be how you refer to it — *the transaction seam*, *the preview-API ban*, *the fan-out helper*. Nothing else in skill set number these, so invented number point nowhere except repo that install this skill; skill name plus subject read as instruction, resolve either way. Cite these rules same way from anywhere.
 
 ## The marker ceiling, before the rules
 
-**The evidence behind these six areas is uneven, and the unevenness runs by
-area rather than by rule.** Read this first, because a rule stating a check
-looks equally settled whichever group it is in.
+**Evidence behind six area uneven, and unevenness run by area not by rule.** Read first — rule stating check look equally settled whichever group it in.
 
-- **Every claim under Concurrency was re-verified on 2026-07-24 under a three-vote
-  adversarial panel**, and the ones that survived carry **confirmed**. One starting
-  claim was **refuted** there and the rule was rewritten around the refutation —
-  see *The keep-alive safeguard*. No ranking against the other groups here is
-  intended, and none against the other skills in this set: several had panelled
-  passes of their own.
-- **The persistence claims marked confirmed were checked against primary vendor
-  documentation, not put to a panel** (2026-07-25) — jOOQ's attached-record CRUD
-  and its fetch cardinality, the plain-SQL injection hazard, the lambda-scoped
-  transaction API and autocommit, and the four migration hazards. The **mandates**
-  built on them are this rule set's own synthesis and say so.
-- **So *confirmed* means two different things in this skill, and the date is the
-  only thing that tells you which.** Against a claim dated **2026-07-21** or
-  **2026-07-24** it means the claim survived three independent refutation votes —
-  both of those passes ran the panel. Against one dated **2026-07-25** it means a
-  single researcher checked it against a primary source — **the pass wrote
-  "confirmed" while running no panel**, and that usage is carried here rather than
-  silently corrected, because re-marking someone else's verdict is not what
-  converting it does. Read a 2026-07-25 *confirmed* as a documentation check.
-  **2026-07-27** carries one panelled claim, and it belongs to
-  `java-backend-observability` rather than to this skill; the correction it made to
-  a rule here is dated to it. Nothing here is dated **2026-06-11..14** and marked
-  confirmed — that pass recorded no per-claim markers at all.
-- **Nullness is confirmed** as mainstream (2026-07-21) — a panelled date, so this
-  one is confirmed in the strong sense.
-- **Time, the ban list, and the real-database test rule are convention with no
-  citation at all.** No external evidence survived for any of them. They are
-  kept because they are enforceable, cheap, and fail toward safety —
-  **enforcement is never confirmation**, and a green ArchUnit run says nothing
-  about whether the ban was a good idea.
-- **Three Platform directives carry no evidence note of their own** — the
-  WebFlux paradigm ban, the Flyway-migrations rule, and the Jackson pick. Their
-  dating is an inference drawn while writing this skill, not a date any research
-  pass wrote down. [evidence.md](evidence.md) says so where it states them.
+- **Every Concurrency claim re-verified 2026-07-24 under three-vote adversarial panel**; survivor carry **confirmed**. One starting claim **refuted** there, rule rewritten around refutation — see *The keep-alive safeguard*. No ranking against other group here intended, none against other skill in set: several had own panelled pass.
+- **Persistence claims marked confirmed checked against primary vendor doc, no panel** (2026-07-25) — jOOQ attached-record CRUD and fetch cardinality, plain-SQL injection hazard, lambda-scoped transaction API and autocommit, four migration hazard. **Mandates** built on them be this rule set own synthesis, and say so.
+- **So *confirmed* mean two thing in this skill; date be only teller.** Against claim dated **2026-07-21** or **2026-07-24** it mean claim survive three independent refutation vote — both pass run panel. Against **2026-07-25** it mean one researcher check against primary source — **pass wrote "confirmed" while running no panel**. That usage carried here not silently corrected, because re-marking someone else verdict not what converting do. Read 2026-07-25 *confirmed* as documentation check. **2026-07-27** carry one panelled claim, belong to `java-backend-observability` not this skill; correction it made to rule here dated to it. Nothing here dated **2026-06-11..14** and marked confirmed — that pass record no per-claim marker at all.
+- **Nullness confirmed** mainstream (2026-07-21) — panelled date, so strong sense.
+- **Time, ban list, real-database test rule be convention, no citation at all.** No external evidence survive for any. Kept because enforceable, cheap, fail toward safety — **enforcement never confirmation**, and green ArchUnit run say nothing about ban being good idea.
+- **Three Platform directive carry no own evidence note** — WebFlux paradigm ban, Flyway-migrations rule, Jackson pick. Their dating be inference drawn while writing this skill, not date any research pass wrote. [evidence.md](evidence.md) say so where it state them.
 
-The whole set is `review-by` **2027-01-21**. **Past that date every *confirmed*
-marker here reads as *convention*** until a new pass re-dates it, with no
-maintainer action needed. That rule only works if the date is visible beside the
-claim, which is why every directive carries one.
+Whole set `review-by` **2027-01-21**. **Past that date every *confirmed* marker read as *convention*** until new pass re-date it, no maintainer action needed. Rule only work if date visible beside claim — why every directive carry one.
 
-Status tier: **decided, not yet validated** — researched and decided, with **no
-production use yet** behind the enforcement shapes.
+Status tier: **decided, not yet validated** — researched and decided, **no production use yet** behind enforcement shapes.
 
 ## The premise, and the thing it is not
 
-**Code is written by LLM agents and no human reads it line by line.**
+**Code written by LLM agents, no human read it line by line.**
 
-Every rule here is conditioned on that. A verdict is portable exactly as far as
-its premise: in a repo where a human reads every diff, several of these drop
-from mandatory to merely advisable, and a repo in that position should say so
-and carry the burden of saying it rather than silently dropping the rule.
+Every rule conditioned on that. Verdict portable exactly as far as premise: in repo where human read every diff, several drop from mandatory to merely advisable, and repo in that position should say so and carry burden of saying it, not silently drop rule.
 
-**This skill is not an argument for choosing this stack.** It assumes the
-platform decision — Java, Spring Boot Web MVC, jOOQ, PostgreSQL — has already
-been made, and states the rules that follow from it. **A rule set is never a
-reason to adopt a stack**, and this one is not evidence for its own platform:
-fifteen sibling skills instantiated on one stack are accumulated *consequence*,
-not accumulated justification.
+**This skill not argument for choosing this stack.** It assume platform decision — Java, Spring Boot Web MVC, jOOQ, PostgreSQL — already made, and state rules that follow. **Rule set never reason to adopt stack**, and this one not evidence for own platform: fifteen sibling skill on one stack be accumulated *consequence*, not accumulated justification.
 
-**The argument for the choice lives in `backend-stack`**, which ranks candidates
-by what their build can refuse to ship and carries this stack as its worked
-case. If the platform is still open, read that skill and come back. Two things
-it settles that this paragraph used to state differently: **the deciding
-criterion is the stack's enforcement surface, not operability** — operability is
-a veto the winner must clear, which is a different thing and produces a
-different answer, because "we already know it" is not a guardrail under a
-premise where nobody reads the code. And the candidate list behind the Java
-verdict **was never recorded in this skill set**, which `backend-stack` states
-about itself rather than leaving to be inferred from silence here.
+**Argument for choice live in `backend-stack`**, which rank candidate by what their build can refuse to ship, carry this stack as worked case. If platform still open, read that skill and come back. Two thing it settle that this paragraph used to state differently: **deciding criterion be stack enforcement surface, not operability** — operability be veto winner must clear, different thing, different answer, because "we already know it" not guardrail when nobody read code. And candidate list behind Java verdict **never recorded in this skill set**, which `backend-stack` state about itself rather than leave to be inferred from silence here.
 
-**Three tripwires mean the repo has left this skill's assumptions entirely**,
-not merely added a feature: the first LLM call in the product, a hard real-time
-deadline, or a shipped SDK. None of the three is covered here, and the rules
-below were not written with any of them in view.
+**Three tripwire mean repo left this skill assumptions entirely**, not merely added feature: first LLM call in product, hard real-time deadline, shipped SDK. None covered here; rules below written with none in view.
 
 ## The defaults these rules override
 
-The picks an unbriefed agent statistically makes. **Naming the loser is the
-load-bearing half** — "use jOOQ" does not override an instinct, "the corpus
-default is JPA with dirty checking, rejected because an accidentally mutated
-entity becomes a silent UPDATE" does. Do not compress these when carrying a
-rule into a repo's own text.
+Picks unbriefed agent statistically make. **Naming loser be load-bearing half** — "use jOOQ" not override instinct, "corpus default be JPA with dirty checking, rejected because accidentally mutated entity become silent UPDATE" do. Do not compress these when carrying rule into repo own text.
 
-- **JPA, Hibernate and Spring Data JPA** — the corpus-dominant Java
-  persistence. Rejected as runtime-silent: dirty checking turns an
-  accidentally mutated entity into a silent `UPDATE`, and silence is most
-  expensive where money moves. **The corpus advantage self-cancels** — every
-  future agent session generates against corpus gravity toward the banned
-  patterns, which is the cost this ban pays for.
-- **Annotation-driven transactions, caching and scheduling** — the corpus
-  default Spring style, banned as runtime-silent. See *The runtime-silent ban
-  list*.
-- **A fixed-size platform-thread request pool** — the classic Tomcat and
-  executor tuning, and the do-nothing default. Under blocking Web MVC plus jOOQ
-  it reintroduces thread-pool exhaustion, because slow database calls starve
-  request threads under load. Virtual threads remove exactly that failure mode
-  while keeping the identical blocking, top-to-bottom code shape.
-- **Manually pooling virtual threads** — a fixed or cached pool of them.
-  Defeats the point: pooling reintroduces the scarce-resource bottleneck they
-  were designed to remove, and a pooled virtual thread caching per-thread state
-  just reallocates per task.
-- **A raw `newVirtualThreadPerTaskExecutor` plus a `Future.get` loop for
-  in-request fan-out** — compiles, passes happy-path tests, and is silently
-  wrong. See *The fan-out helper*.
-- **Adopting `StructuredTaskScope` now** — the ergonomically attractive fan-out
-  API, and preview on JDK 25. The dominant corpus shape for it (the JDK 21–24
-  `ShutdownOnFailure` and `ShutdownOnSuccess` constructors) **does not even
-  compile on JDK 25**, which is the corpus-poisoning these rules exist to
-  prevent.
-- **An extra `Semaphore` on top of the connection pool to limit database
-  load** — redundant. The pool already blocks the caller past its size.
-- **Regenerating jOOQ classes against a live or shared database** — the
-  path of least resistance, and it makes the generated tree a function of
-  whatever that database happens to hold.
+- **JPA, Hibernate, Spring Data JPA** — corpus-dominant Java persistence. Rejected as runtime-silent: dirty checking turn accidentally mutated entity into silent `UPDATE`, and silence most expensive where money move. **Corpus advantage self-cancel** — every future agent session generate against corpus gravity toward banned patterns, which be cost this ban pay for.
+- **Annotation-driven transactions, caching, scheduling** — corpus default Spring style, banned as runtime-silent. See *The runtime-silent ban list*.
+- **Fixed-size platform-thread request pool** — classic Tomcat and executor tuning, and do-nothing default. Under blocking Web MVC plus jOOQ it reintroduce thread-pool exhaustion, because slow database call starve request thread under load. Virtual threads remove exactly that failure mode, keep identical blocking top-to-bottom code shape.
+- **Manually pooling virtual threads** — fixed or cached pool of them. Defeat point: pooling reintroduce scarce-resource bottleneck they designed to remove, and pooled virtual thread caching per-thread state just reallocate per task.
+- **Raw `newVirtualThreadPerTaskExecutor` plus `Future.get` loop for in-request fan-out** — compile, pass happy-path test, silently wrong. See *The fan-out helper*.
+- **Adopting `StructuredTaskScope` now** — ergonomically attractive fan-out API, preview on JDK 25. Dominant corpus shape for it (JDK 21–24 `ShutdownOnFailure` and `ShutdownOnSuccess` constructors) **not even compile on JDK 25** — the corpus-poisoning these rules exist to prevent.
+- **Extra `Semaphore` on top of connection pool to limit database load** — redundant. Pool already block caller past its size.
+- **Regenerating jOOQ classes against live or shared database** — path of least resistance, make generated tree function of whatever that database happen to hold.
 
-**More corpus defaults are rejected by rules that live elsewhere in this
-skill set**, because their rules do, and they are named here only so a reader
-does not conclude this stack has no verdict on them. Binary floating-point for
-amounts and reaching for a money library — the `money`, `money-api`,
-`money-storage` and `money-java` skills. Spring's `@Cacheable` and cache
-abstraction, and reaching for Caffeine or Guava outside a cache adapter — the
-`caching` and `caching-java` skills. `@KafkaListener` on a handler and a broker
-publish beside a repository save — the `async-handoff` family. And the
-cross-cutting dependency traps that bind any agent-built repo on any stack —
-`llm-default-traps`, which is also this stack's owner of record for the jqwik
-version pin.
+**More corpus default rejected by rules living elsewhere in this skill set**, because their rules do; named here only so reader not conclude stack have no verdict. Binary floating-point for amounts, reaching for money library — `money`, `money-api`, `money-storage`, `money-java` skills. Spring `@Cacheable` and cache abstraction, reaching for Caffeine or Guava outside cache adapter — `caching` and `caching-java` skills. `@KafkaListener` on handler, broker publish beside repository save — `async-handoff` family. Cross-cutting dependency traps binding any agent-built repo on any stack — `llm-default-traps`, also this stack owner of record for jqwik version pin.
 
 ## Platform
 
 ### Java and Spring Boot Web MVC, with WebFlux banned as a paradigm
 
-**Java at the version pinned in the build, Spring Boot with the servlet Web MVC
-stack. Reactive WebFlux is banned as a paradigm** — the one concurrency model
-is blocking thread-per-request on virtual threads, and a second model in the
-same repo means every subsequent piece of code has to answer which one it is
-in.
+**Java at version pinned in build, Spring Boot with servlet Web MVC stack. Reactive WebFlux banned as paradigm** — one concurrency model be blocking thread-per-request on virtual threads, and second model in same repo mean every later piece of code must answer which one it in.
 
-*ArchUnit — off-the-shelf. **Convention**, 2026-06-11..14 — this is the
-platform pass's decision, and no note in the evidence trail addresses the
-WebFlux ban directly. **Nothing about this ban is confirmed**: the virtual-thread
-claims the alternative model is measured against are, but the
-one-concurrency-model argument itself is reasoning no pass put to a source. See
-[evidence.md](evidence.md).*
+*ArchUnit — off-the-shelf. **Convention**, 2026-06-11..14 — platform pass decision; no note in evidence trail address WebFlux ban directly. **Nothing about this ban confirmed**: virtual-thread claims the alternative measured against be, but one-concurrency-model argument itself be reasoning no pass put to source. See [evidence.md](evidence.md).*
 
 ### jOOQ against PostgreSQL, with JPA banned
 
-**Persistence is jOOQ against PostgreSQL; JPA, Hibernate and Spring Data JPA
-are banned** — no entity lifecycle, no lazy loading, no query derivation.
+**Persistence be jOOQ against PostgreSQL; JPA, Hibernate, Spring Data JPA banned** — no entity lifecycle, no lazy loading, no query derivation.
 
-*Banned-dependency plus ArchUnit rules — off-the-shelf. **Convention**,
-2026-06-11..14. The dirty-checking hazard class is confirmed against jOOQ's own
-documentation for the equivalent jOOQ construct — see *jOOQ's own
-runtime-silent CRUD* — but the platform pass recorded rejections and grounds
-without a per-claim confidence marker, so convention is the floor rather than a
-verdict it wrote down.*
+*Banned-dependency plus ArchUnit rules — off-the-shelf. **Convention**, 2026-06-11..14. Dirty-checking hazard class confirmed against jOOQ own doc for equivalent jOOQ construct — see *jOOQ's own runtime-silent CRUD* — but platform pass recorded rejections and grounds without per-claim confidence marker, so convention be floor rather than verdict it wrote down.*
 
 ### jOOQ classes are generated from the committed migrations
 
-**Regenerate the committed jOOQ classes from the committed Flyway migrations,
-never from a live or shared database.** The migrations are applied to a
-throwaway real PostgreSQL in a container, so the generated tree is a pure
-function of the committed migrations.
+**Regenerate committed jOOQ classes from committed Flyway migrations, never from live or shared database.** Migrations applied to throwaway real PostgreSQL in container, so generated tree be pure function of committed migrations.
 
-*Bespoke — a CI job regenerates and fails on any git diff. **Convention**,
-verified 2026-07-25 — the mechanism is jOOQ's own documented recommendation;
-that it is mandatory here is this rule set's synthesis, because jOOQ presents it
-as one recommended approach rather than the only one.*
+*Bespoke — CI job regenerate and fail on any git diff. **Convention**, verified 2026-07-25 — mechanism be jOOQ own documented recommendation; that it mandatory here be this rule set synthesis, because jOOQ present it as one recommended approach not only one.*
 
 ### jOOQ's own runtime-silent CRUD is banned
 
-**Attached-record writes are banned; writes are explicit DSL statements.**
-`UpdatableRecord.store()`, `insert()`, `update()`, `delete()` and `refresh()`,
-together with the `changed()` / `touched()` / `modified()` dirty flags, pick
-INSERT-versus-UPDATE **and** which columns to write from in-memory record state
-that never appears in the query text. That is dirty checking under another
-name — the exact hazard this stack rejected JPA for, shipped inside the library
-that replaced it. Records are detached repo-wide with
-`Settings.withAttachRecords(false)`, so these methods **throw rather than
-guess**.
+**Attached-record writes banned; writes be explicit DSL statements.** `UpdatableRecord.store()`, `insert()`, `update()`, `delete()`, `refresh()`, plus `changed()` / `touched()` / `modified()` dirty flags, pick INSERT-versus-UPDATE **and** which column to write from in-memory record state that never appear in query text. That be dirty checking under another name — exact hazard this stack rejected JPA for, shipped inside library that replaced it. Records detached repo-wide with `Settings.withAttachRecords(false)`, so these methods **throw rather than guess**.
 
-*ArchUnit — off-the-shelf host; the owner-typed `UpdatableRecord` predicate is
-authored per repo, plus a config-default assertion, wired by the repo, that
-`withAttachRecords` stays false. Generated jOOQ packages are excluded.
-**Confirmed** against primary jOOQ documentation, verified 2026-07-25.*
+*ArchUnit — off-the-shelf host; owner-typed `UpdatableRecord` predicate authored per repo, plus config-default assertion, wired by repo, that `withAttachRecords` stay false. Generated jOOQ packages excluded. **Confirmed** against primary jOOQ documentation, verified 2026-07-25.*
 
 ### Fetch with `fetchSingle` or `fetchOptional`
 
-**`fetchOne()` and `fetchAny()` are banned.** They hide result cardinality:
-`fetchOne()` returns null on zero rows and throws only on more than one, so a
-query that must match exactly one **silently tolerates zero**; `fetchAny()`
-silently returns an arbitrary row when several match. `fetchSingle()` throws on
-zero and on more than one; `fetchOptional()` covers the legitimately-optional
-case.
+**`fetchOne()` and `fetchAny()` banned.** They hide result cardinality: `fetchOne()` return null on zero rows, throw only on more than one, so query that must match exactly one **silently tolerate zero**; `fetchAny()` silently return arbitrary row when several match. `fetchSingle()` throw on zero and on more than one; `fetchOptional()` cover legitimately-optional case.
 
-*ArchUnit — off-the-shelf host; a ban on the `fetchOne` / `fetchAny` call
-targets, or an Error Prone check on source. **Confirmed** against primary jOOQ
-documentation, verified 2026-07-25.*
+*ArchUnit — off-the-shelf host; ban on `fetchOne` / `fetchAny` call targets, or Error Prone check on source. **Confirmed** against primary jOOQ documentation, verified 2026-07-25.*
 
 ### Plain-SQL `String` constructs are banned
 
-**`DSL.sql`, `field(String)`, `condition(String)`, `table(String)`,
-`query(String)`, `resultQuery(String)` and `fetch(String)` are banned.** Each
-splices a raw string into the query tree, defeating jOOQ's compile-time type
-checking and reopening the SQL-injection surface the type-safe DSL closes. If a
-repo needs one, **confine it to as few named seams as possible** — the reference
-shape uses one — each a test-pinned named constant, and annotate only that scope
-`@Allow.PlainSQL`.
+**`DSL.sql`, `field(String)`, `condition(String)`, `table(String)`, `query(String)`, `resultQuery(String)`, `fetch(String)` banned.** Each splice raw string into query tree, defeat jOOQ compile-time type checking, reopen SQL-injection surface type-safe DSL close. If repo need one, **confine to as few named seams as possible** — reference shape use one — each test-pinned named constant, and annotate only that scope `@Allow.PlainSQL`.
 
-*ArchUnit ban on the plain-SQL API by signature, generated packages excluded —
-off-the-shelf host, per-repo predicate. **jOOQ's own `PlainSQLChecker` is the
-stronger path**: it turns any plain-SQL use into a compile error unless the
-scope is annotated. Verify it wires against the pinned JDK and Error Prone at
-adoption — that wiring is unverified here. The hazard is **confirmed** (verified
-2026-07-25); the single-seam discipline is **convention**.*
+*ArchUnit ban on plain-SQL API by signature, generated packages excluded — off-the-shelf host, per-repo predicate. **jOOQ own `PlainSQLChecker` be stronger path**: turn any plain-SQL use into compile error unless scope annotated. Verify it wire against pinned JDK and Error Prone at adoption — that wiring unverified here. Hazard **confirmed** (verified 2026-07-25); single-seam discipline **convention**.*
 
 ### SQL is reached only through the one transaction seam
 
-**Code touches SQL only inside a lambda-scoped transaction block that receives
-the context as its parameter** — `tx.read(dsl -> ...)` and
-`tx.write(dsl -> ...)` in the reference shape, the method names the repo's
-call — **and read-only intent is the method name, not an annotation.
-`DSLContext` is not an injectable bean.** An injected `DSLContext` used outside
-a block runs in autocommit and commits each statement on its own, invisibly.
-Banning injection makes an unscoped query **unwritable** rather than only
-reviewed against.
+**Code touch SQL only inside lambda-scoped transaction block that receive context as parameter** — `tx.read(dsl -> ...)` and `tx.write(dsl -> ...)` in reference shape, method names be repo call — **and read-only intent be method name, not annotation. `DSLContext` not injectable bean.** Injected `DSLContext` used outside block run in autocommit, commit each statement on own, invisibly. Banning injection make unscoped query **unwritable**, not only reviewed against.
 
-*ArchUnit — off-the-shelf host; the no-injectable-`DSLContext` predicate is
-authored per repo. That the seam also owns connection acquisition, so no
-`Connection` or `DSLContext` is reachable outside a transaction block, is
-**convention**. The two facts underneath — that jOOQ's own transaction API is
-lambda-scoped, and that a JDBC connection is created in autocommit mode — are
-**confirmed**, verified 2026-07-25; the mandate is this rule set's governance
-choice.*
+*ArchUnit — off-the-shelf host; no-injectable-`DSLContext` predicate authored per repo. That seam also own connection acquisition, so no `Connection` or `DSLContext` reachable outside transaction block, be **convention**. Two facts underneath — jOOQ own transaction API be lambda-scoped, and JDBC connection created in autocommit mode — be **confirmed**, verified 2026-07-25; mandate be this rule set governance choice.*
 
-**This seam is a shared resource, and two other published skills add
-requirements to it that this directive does not state.** `caching` requires
-cache invalidation to be reachable only from the seam's **post-commit
-registration**, and `async-handoff` requires that a general-purpose
-post-commit callback registration **not** exist, because nothing at a call site
-would then distinguish a cache delete from a message publish. A repo wiring this
-seam alongside either of those skills reads their rules before fixing the seam's
-shape — this rule fixes the transaction boundary, not the post-commit surface.
+**This seam be shared resource, and two other published skill add requirement to it this directive not state.** `caching` require cache invalidation reachable only from seam **post-commit registration**; `async-handoff` require general-purpose post-commit callback registration **not** exist, because nothing at call site would then distinguish cache delete from message publish. Repo wiring this seam alongside either read their rules before fixing seam shape — this rule fix transaction boundary, not post-commit surface.
 
 ### Schema changes are committed Flyway migrations
 
-**Schema changes are committed Flyway SQL migrations,** applied in integration
-tests against real PostgreSQL.
+**Schema changes be committed Flyway SQL migrations,** applied in integration tests against real PostgreSQL.
 
-*Convention — the integration-test setup is the check. Dated 2026-06-11..14,
-the only pass whose scope covers it; no evidence note in the trail carries this
-rule, and that dating is an inference drawn while writing this skill.*
+*Convention — integration-test setup be check. Dated 2026-06-11..14, only pass whose scope cover it; no evidence note carry this rule, and dating be inference drawn while writing this skill.*
 
 ### Every migration is linted for lock and rewrite hazards
 
-**Lint every committed migration for lock and rewrite hazards, not only that it
-applies.** A migration that runs clean against an empty test database can still
-take an `ACCESS EXCLUSIVE` lock or rewrite a table at production volume — which
-is exactly the gap the test-time rule above leaves open. Four operations are
-flagged, and unwritable without a reviewed per-migration opt-out: a
-non-`CONCURRENT` index build, a table-rewriting column-type change,
-`ADD ... NOT NULL` without a default, and a constraint added without `NOT VALID`
-followed by a later `VALIDATE`.
+**Lint every committed migration for lock and rewrite hazard, not only that it apply.** Migration running clean against empty test database can still take `ACCESS EXCLUSIVE` lock or rewrite table at production volume — exactly gap test-time rule above leave open. Four operation flagged, unwritable without reviewed per-migration opt-out: non-`CONCURRENT` index build, table-rewriting column-type change, `ADD ... NOT NULL` without default, constraint added without `NOT VALID` followed by later `VALIDATE`.
 
-*squawk — off-the-shelf. The plain CLI gates on its exit code over the
-migrations in the diff, **not the pull-request comment bot**; the enabled rule
-set and the per-migration opt-outs are configured per repo. The four hazards are
-**confirmed** against PostgreSQL's own documentation (verified 2026-07-25); the
-choice of squawk over the alternatives is **convention** — the rule is the
-hazard class, not the vendor.*
+*squawk — off-the-shelf. Plain CLI gate on exit code over migrations in diff, **not pull-request comment bot**; enabled rule set and per-migration opt-outs configured per repo. Four hazards **confirmed** against PostgreSQL own documentation (verified 2026-07-25); choice of squawk over alternatives be **convention** — rule be hazard class, not vendor.*
 
-**`DROP COLUMN` is deliberately not on that list.** It is an expand-and-contract
-compatibility concern rather than a documented lock-or-rewrite hazard, and
-adding it here would put a rule with a different ground behind a gate that is
-not evidence for it.
+**`DROP COLUMN` deliberately not on that list.** It be expand-and-contract compatibility concern, not documented lock-or-rewrite hazard; adding it would put rule with different ground behind gate that not evidence for it.
 
 ### JSON is Jackson
 
-**JSON is Jackson.**
+**JSON be Jackson.**
 
-*Convention. Dated 2026-06-11..14 by the same inference as the Flyway rule; no
-evidence note carries it.*
+*Convention. Dated 2026-06-11..14 by same inference as Flyway rule; no evidence note carry it.*
 
 ## Concurrency
 
-The one concurrency model is virtual threads — synchronous, top-to-bottom,
-un-colored code. **The win is bounded, not free throughput.** PostgreSQL is the
-ceiling, so this removes thread-pool exhaustion and keeps the blocking shape at
-scale; it is not a throughput multiplier, and adopting it as one produces a
-disappointed team and a rule set nobody trusts.
+One concurrency model be virtual threads — synchronous, top-to-bottom, un-colored code. **Win be bounded, not free throughput.** PostgreSQL be ceiling, so this remove thread-pool exhaustion and keep blocking shape at scale; not throughput multiplier, and adopting it as one produce disappointed team and rule set nobody trust.
 
 ### Virtual threads are enabled by one property
 
 **`spring.threads.virtual.enabled=true` in committed config.**
 
-*Config-default assertion — off-the-shelf. **Confirmed** 2026-07-24. **The
-check reads the checked-in default, not the effective runtime value**, which
-environment variables or external config can override — see *Named gaps*. The
-introducing framework version is **convention** and should be re-verified
-against the pinned Spring Boot line at adoption.*
+*Config-default assertion — off-the-shelf. **Confirmed** 2026-07-24. **Check read checked-in default, not effective runtime value**, which env vars or external config can override — see *Named gaps*. Introducing framework version be **convention**, re-verify against pinned Spring Boot line at adoption.*
 
 ### The keep-alive safeguard is recommended, not required
 
-**`spring.main.keep-alive=true` is a recommended safeguard, not a requirement
-for this stack.** Enabling virtual threads makes Spring's threads daemon
-threads, but the embedded servlet server keeps its own non-daemon thread, so an
-actively-serving Web MVC app **does not exit without it**. It matters in a
-no-web-server or scheduled-task-only mode.
+**`spring.main.keep-alive=true` be recommended safeguard, not requirement for this stack.** Enabling virtual threads make Spring threads daemon threads, but embedded servlet server keep own non-daemon thread, so actively-serving Web MVC app **not exit without it**. Matter in no-web-server or scheduled-task-only mode.
 
-*Convention, 2026-07-24. **The "required" framing was refuted by the panel — do
-not restore it**, and do not cite keep-alive as required for request handling.
-This is the one directive in this skill written around a refutation rather than
-a confirmation.*
+*Convention, 2026-07-24. **"Required" framing refuted by panel — do not restore it**, and do not cite keep-alive as required for request handling. This be one directive in this skill written around refutation not confirmation.*
 
 ### One virtual thread per task, never pooled
 
-**Fork with `Thread.startVirtualThread` or
-`Executors.newVirtualThreadPerTaskExecutor()`. A fixed-size `ExecutorService`
-for request or in-request work is banned;** one platform-thread executor
-factory is whitelisted for the pinning fallback.
+**Fork with `Thread.startVirtualThread` or `Executors.newVirtualThreadPerTaskExecutor()`. Fixed-size `ExecutorService` for request or in-request work banned;** one platform-thread executor factory whitelisted for pinning fallback.
 
-*ArchUnit — off-the-shelf host; the whitelist predicate is authored per repo.
-**Confirmed** 2026-07-24 — the platform's own guidance states virtual threads
-should never be pooled.*
+*ArchUnit — off-the-shelf host; whitelist predicate authored per repo. **Confirmed** 2026-07-24 — platform own guidance state virtual threads should never be pooled.*
 
 ### Bound concurrency at the limited resource, not at the thread count
 
-**Do not throttle load by capping threads.** The HikariCP pool is the
-database semaphore — a small fixed size matched to what PostgreSQL can serve,
-**never scaled to thread count**; thousands of virtual threads queue on it.
-Gate any non-database limited resource with an explicit
-`java.util.concurrent.Semaphore`. **Do not add a second semaphore on top of the
-pool.**
+**Do not throttle load by capping threads.** HikariCP pool be database semaphore — small fixed size matched to what PostgreSQL can serve, **never scaled to thread count**; thousands of virtual threads queue on it. Gate any non-database limited resource with explicit `java.util.concurrent.Semaphore`. **Do not add second semaphore on top of pool.**
 
-*Convention — pool sizing is the repo's call; the pool-as-limiter principle is
-the rule. The underlying claim is **confirmed** 2026-07-24 and is the platform's
-own words — a connection pool already serves as a semaphore and needs no
-additional one on top.*
+*Convention — pool sizing be repo call; pool-as-limiter principle be rule. Underlying claim **confirmed** 2026-07-24, platform own words — connection pool already serve as semaphore, need no additional one.*
 
 ### Never fan out to database work while holding a connection
 
-**Never fan out to database-touching subtasks while holding a connection or an
-open transaction.** A held connection plus subtasks that each check out a
-connection can **deadlock a small pool**. Acquire after the fan-out joins, or
-size the pool by the deadlock-avoidance formula.
+**Never fan out to database-touching subtasks while holding connection or open transaction.** Held connection plus subtasks each checking out connection can **deadlock small pool**. Acquire after fan-out join, or size pool by deadlock-avoidance formula.
 
-*Convention — spec and review; **not statically detectable**, and this is the
-one rule here with no possible build gate. Verified 2026-07-24 — the deadlock
-mechanics and the sizing formula are primary-sourced, and the mapping onto
-virtual-thread fan-out is this rule set's synthesis.*
+*Convention — spec and review; **not statically detectable**, and this be one rule here with no possible build gate. Verified 2026-07-24 — deadlock mechanics and sizing formula primary-sourced; mapping onto virtual-thread fan-out be this rule set synthesis.*
 
 ### The fan-out helper
 
-**In-request fan-out goes through the repo's one canonical virtual-thread
-fan-out helper.** It forks one virtual thread per subtask in try-with-resources,
-cancels siblings on first failure, joins all, and aggregates exceptions.
-**Hand-rolled `Future.get` loops and raw executor fan-out in request code are
-banned** — `ExecutorService.close()` neither cancels siblings nor
-short-circuits, so the corpus-generated shape either runs every sibling after
-one has already failed, or serializes the fan-out through sequential `get()`
-calls. It trades a safe compile error for a silent latency-and-correctness
-defect.
+**In-request fan-out go through repo one canonical virtual-thread fan-out helper.** It fork one virtual thread per subtask in try-with-resources, cancel siblings on first failure, join all, aggregate exceptions. **Hand-rolled `Future.get` loops and raw executor fan-out in request code banned** — `ExecutorService.close()` neither cancel siblings nor short-circuit, so corpus-generated shape either run every sibling after one already failed, or serialize fan-out through sequential `get()` calls. Trade safe compile error for silent latency-and-correctness defect.
 
-*Bespoke — one owned helper plus an ArchUnit ban on raw executor fan-out in
-request paths. **Convention**, 2026-07-24. The `close()` semantics this rests on
-are stated in the rejected-alternatives record rather than in a dated evidence
-note with a primary source — see [evidence.md](evidence.md).*
+*Bespoke — one owned helper plus ArchUnit ban on raw executor fan-out in request paths. **Convention**, 2026-07-24. `close()` semantics this rest on be stated in rejected-alternatives record, not in dated evidence note with primary source — see [evidence.md](evidence.md).*
 
-**This helper carries a second obligation stated in `java-backend-observability`
-— establishing each subtask's logging context at fork time.** That rests on the
-one claim in that skill's area put to an adversarial panel; the panel produced
-**two** rules there, the context capture and the logging-backend pin, and that
-skill marks both **confirmed**. A repo that
-builds the helper from this directive alone builds it without the context
-capture, and every subtask log line then loses its correlation fields silently.
+**This helper carry second obligation stated in `java-backend-observability` — establishing each subtask logging context at fork time.** That rest on one claim in that skill area put to adversarial panel; panel produced **two** rules there, context capture and logging-backend pin, and that skill mark both **confirmed**. Repo building helper from this directive alone build it without context capture, and every subtask log line then lose correlation fields silently.
 
 ### No preview APIs
 
-**Do not use preview APIs; never pass `--enable-preview` to `javac` or to the
-`java` launcher,** in Maven or in Gradle. This **categorically** forbids
-`StructuredTaskScope` — preview on JDK 25 — and every other preview API. A
-preview-compiled class file is stamped so that it loads only on the exact JDK
-feature release it was built on, which makes the artifact version-locked.
+**Do not use preview APIs; never pass `--enable-preview` to `javac` or to `java` launcher,** in Maven or Gradle. This **categorically** forbid `StructuredTaskScope` — preview on JDK 25 — and every other preview API. Preview-compiled class file stamped so it load only on exact JDK feature release it built on, making artifact version-locked.
 
-*Off-the-shelf plus bespoke — preview code fails to compile without the flag,
-so the build fails closed; a bespoke CI grep also scans compiler and launcher
-arguments across Maven and Gradle. **Not ArchUnit**, which reads bytecode and
-cannot see compiler or launcher flags. The preview status and the version-locked
-class file are **confirmed** 2026-07-24; the per-release API history behind it
-is **uncertain** and nothing here rests on it.*
+*Off-the-shelf plus bespoke — preview code fail to compile without flag, so build fail closed; bespoke CI grep also scan compiler and launcher arguments across Maven and Gradle. **Not ArchUnit**, which read bytecode and cannot see compiler or launcher flags. Preview status and version-locked class file **confirmed** 2026-07-24; per-release API history behind it **uncertain**, nothing here rest on it.*
 
 ### Per-request context, and never a cached object in a `ThreadLocal`
 
-**Put per-request context in a `ThreadLocal` or, preferably, a Scoped Value**
-(final in JDK 25) — **preferably for its bounded lifetime and write-once
-binding, not for child-thread sharing.** A Scoped Value binding is inherited
-only by threads forked inside a `StructuredTaskScope`, which the preview ban
-above forbids, so **it never reaches a subtask here.** An
-`InheritableThreadLocal` does reach one, but do not rely on that: the platform
-does not specify which thread constructs the child in a per-task executor.
-Context that must reach a subtask is established there by the fan-out helper.
-**Never cache a reusable object in a `ThreadLocal`** — virtual threads are never
-pooled, so a per-thread cache just reallocates per task.
+**Put per-request context in `ThreadLocal` or, preferably, Scoped Value** (final in JDK 25) — **preferably for bounded lifetime and write-once binding, not for child-thread sharing.** Scoped Value binding inherited only by threads forked inside `StructuredTaskScope`, which preview ban above forbid, so **it never reach subtask here.** `InheritableThreadLocal` do reach one, but do not rely: platform not specify which thread construct child in per-task executor. Context that must reach subtask be established there by fan-out helper. **Never cache reusable object in `ThreadLocal`** — virtual threads never pooled, so per-thread cache just reallocate per task.
 
-*Convention. The child-thread-sharing correction is dated 2026-07-27 and the
-inheritance facts behind it are **confirmed** 2026-07-27 by the fan-out context
-panel; the preference for a Scoped Value on its other two properties is
-convention.*
+*Convention. Child-thread-sharing correction dated 2026-07-27, inheritance facts behind it **confirmed** 2026-07-27 by fan-out context panel; preference for Scoped Value on its other two properties be convention.*
 
 ### Keep the pinning event on, and alert on it
 
-**Keep the `jdk.VirtualThreadPinned` JFR event on** (default 20 ms threshold)
-**and alert on it in deployment.** Residual pinning on JDK 25 is native-only —
-native methods, foreign functions, and blocking class initializers. Pinning does
-not make an application incorrect, but pinning that exhausts all carriers can
-stall the scheduler, so treat sustained pinning as an operability hazard rather
-than a mere slowdown.
+**Keep `jdk.VirtualThreadPinned` JFR event on** (default 20 ms threshold) **and alert on it in deployment.** Residual pinning on JDK 25 be native-only — native methods, foreign functions, blocking class initializers. Pinning not make application incorrect, but pinning that exhaust all carriers can stall scheduler, so treat sustained pinning as operability hazard not mere slowdown.
 
-*Convention — monitoring wiring, 2026-07-24. **A tripwire, not a guarantee**:
-many short sub-threshold pins can accumulate cost without ever firing. The
-residual pinning causes are **confirmed** 2026-07-24.*
+*Convention — monitoring wiring, 2026-07-24. **Tripwire, not guarantee**: many short sub-threshold pins can accumulate cost without ever firing. Residual pinning causes **confirmed** 2026-07-24.*
 
 ## Time
 
 ### `Clock` is injected
 
-**Wall-clock reads in domain code are banned** — `Instant.now()`,
-`LocalDate.now()`, `new Date()`, `System.currentTimeMillis()`.
+**Wall-clock reads in domain code banned** — `Instant.now()`, `LocalDate.now()`, `new Date()`, `System.currentTimeMillis()`.
 
-*ArchUnit — off-the-shelf. **Convention**, 2026-07-21 — no external evidence
-survived and the rule carries no citation. Kept because it is enforceable and
-cheap.*
+*ArchUnit — off-the-shelf. **Convention**, 2026-07-21 — no external evidence survived, rule carry no citation. Kept because enforceable and cheap.*
 
 ### Business dates are their own concept
 
-**A business date is a `LocalDate` from an explicit business-date source, never
-derived from the wall clock. Timestamps are UTC `Instant`, stored as
-`timestamptz`.**
+**Business date be `LocalDate` from explicit business-date source, never derived from wall clock. Timestamps be UTC `Instant`, stored as `timestamptz`.**
 
-*Convention, 2026-07-21 — same standing as the injected clock, and no
-citation.*
+*Convention, 2026-07-21 — same standing as injected clock, no citation.*
 
-**A future legal deadline is neither of these**, and `llm-default-traps`
-carries that rule — it is stored as local wall time plus its governing zone and
-resolved at evaluation time, because zone rules change between now and the
-deadline. Reading "timestamps are UTC" as covering a deadline is the specific
-mistake that rule exists to prevent.
+**Future legal deadline be neither of these**, and `llm-default-traps` carry that rule — stored as local wall time plus governing zone, resolved at evaluation time, because zone rules change between now and deadline. Reading "timestamps are UTC" as covering deadline be specific mistake that rule exist to prevent.
 
 ## Null
 
 ### JSpecify, checked by NullAway, as compile errors
 
-**JSpecify annotations, checked by NullAway running on Error Prone, as compile
-errors.** A nullness violation never reaches review.
+**JSpecify annotations, checked by NullAway running on Error Prone, as compile errors.** Nullness violation never reach review.
 
-*Off-the-shelf. **Confirmed** mainstream, 2026-07-21 — Spring Boot 4 and Spring
-Framework 7 ship JSpecify-annotated null-safe APIs across the portfolio,
-deprecate Spring's own nullability annotations, and check Spring's own build with
-NullAway.*
+*Off-the-shelf. **Confirmed** mainstream, 2026-07-21 — Spring Boot 4 and Spring Framework 7 ship JSpecify-annotated null-safe APIs across portfolio, deprecate Spring own nullability annotations, check Spring own build with NullAway.*
 
 ## The runtime-silent ban list
 
-**Behavior that never appears in program text is behavior an implementer
-guesses at.** Each entry below is banned with a named enforcing check.
+**Behavior that never appear in program text be behavior implementer guess at.** Each entry below banned with named enforcing check.
 
-*The list as a whole is **convention**, 2026-07-21 — the defect-source claim
-carries no citation and no external evidence survived for it. It is kept because
-it is enforceable and cheap, and because every entry has a named check.
-**Enforcement is not confirmation**, and the ArchUnit class below is enforcement.*
+*List as whole be **convention**, 2026-07-21 — defect-source claim carry no citation, no external evidence survived. Kept because enforceable, cheap, and every entry have named check. **Enforcement not confirmation**, and ArchUnit class below be enforcement.*
 
-**The marker, the date and the check are stated once here for the whole list,
-which is the one place in this skill they are not inline per directive.** That is
-deliberate rather than a dropped marker: the entries below share a single ground
-and a single enforcement host, named in *Every ban names the check that enforces
-it* at the end of the list. Read each entry as carrying **convention, 2026-07-21**
-and that host.
+**Marker, date, check stated once here for whole list — one place in this skill they not inline per directive.** Deliberate, not dropped marker: entries below share single ground and single enforcement host, named in *Every ban names the check that enforces it* at end of list. Read each entry as carrying **convention, 2026-07-21** and that host.
 
 ### Field and setter injection
 
@@ -514,34 +219,17 @@ and that host.
 
 ### `@Transactional`
 
-**Banned.** Transactions are explicit visible blocks reached only through the
-one transaction seam above; annotation-driven ambient transactions are the
-thing being removed.
+**Banned.** Transactions be explicit visible blocks reached only through one transaction seam above; annotation-driven ambient transactions be thing being removed.
 
 ### `@Scheduled` and `@Async`
 
-**Banned.** Scheduling and asynchronous work go through one explicit, named
-mechanism. **On this stack that mechanism is specified by the `async-handoff`
-family**, which treats a bare executor submit as an asynchronous handoff with
-the full rule set attached — including the outbox requirement. This ban is the
-half that says the annotation is not the mechanism; it does not say what the
-mechanism is.
+**Banned.** Scheduling and asynchronous work go through one explicit named mechanism. **On this stack that mechanism specified by `async-handoff` family**, which treat bare executor submit as asynchronous handoff with full rule set attached — including outbox requirement. This ban be half saying annotation not the mechanism; it not say what mechanism is.
 
 ### `@Cacheable`, `@CachePut`, `@CacheEvict`, `@Caching`, and AOP aspects on domain code
 
-**Banned, together with any caching decorator wired behind a domain
-interface.** This entry puts them on the list; **the `caching` and `caching-java`
-skills are where the ban gets its checks, its four grounds, and its
-replacement**, and they are not restated here because a rule stated in two
-skills drifts in one.
+**Banned, together with any caching decorator wired behind domain interface.** This entry put them on list; **`caching` and `caching-java` skills be where ban get its checks, four grounds, and replacement**, not restated here because rule stated in two skills drift in one.
 
-**What this stack adds to those grounds is the size of the pull:** Spring's cache
-abstraction is the corpus default for "add caching" on this stack **by a wide
-margin**, which is why it needs a ban with a check rather than a note. **A repo
-that installs this skill and not `caching` has the ban and no replacement** — no
-adapter seam, no staleness ceiling, no invalidation rule — so an agent told only
-"the annotation is banned" will hand-roll something worse. Install `caching`
-even if the repo caches nothing today; the first cached value is the tripwire.
+**What this stack add to those grounds be size of pull:** Spring cache abstraction be corpus default for "add caching" on this stack **by wide margin**, why it need ban with check not note. **Repo installing this skill and not `caching` have ban and no replacement** — no adapter seam, no staleness ceiling, no invalidation rule — so agent told only "annotation banned" hand-roll something worse. Install `caching` even if repo cache nothing today; first cached value be tripwire.
 
 ### Reflection-based dispatch and stringly-typed behavior lookups
 
@@ -549,204 +237,106 @@ even if the repo caches nothing today; the first cached value is the tripwire.
 
 ### Every ban names the check that enforces it
 
-**A ban with no named check is not on this list.** ArchUnit hosts a ban on
-bytecode, Error Prone hosts one on source, and **which tool hosts which ban is
-decided per rule by what each can read soundly** — not by preference. The worked
-case is in `java-backend-observability`, where the unloggable-domain-type rule
-must be Error Prone because ArchUnit sees the logger's erased signature rather
-than the argument's static type; `caching-java` has two more of the same shape.
-**A meta-test keeps the list honest:** each ban is either enforced by a named
-test or **explicitly marked deferred with a reason**.
+**Ban with no named check not on this list.** ArchUnit host ban on bytecode, Error Prone host one on source, and **which tool host which ban decided per rule by what each can read soundly** — not by preference. Worked case in `java-backend-observability`, where unloggable-domain-type rule must be Error Prone because ArchUnit see logger erased signature not argument static type; `caching-java` have two more of same shape. **Meta-test keep list honest:** each ban either enforced by named test or **explicitly marked deferred with reason**.
 
-*ArchUnit on bytecode and Error Prone on source — off-the-shelf hosts; some
-predicates are authored per repo.*
+*ArchUnit on bytecode and Error Prone on source — off-the-shelf hosts; some predicates authored per repo.*
 
 ## Evidence toolchain
 
-**Tests are the code review.** No rule in this skill assumes a human reads the
-generated code line by line.
+**Tests be the code review.** No rule in this skill assume human read generated code line by line.
 
 ### Integration tests run against real PostgreSQL
 
-**Integration tests run against real PostgreSQL in a throwaway container,
-applying the real migrations. No in-memory substitute database.**
+**Integration tests run against real PostgreSQL in throwaway container, applying real migrations. No in-memory substitute database.**
 
-*Convention, 2026-07-21 — no external evidence survived and the rule carries no
-citation. Kept because it is enforceable and cheap.*
+*Convention, 2026-07-21 — no external evidence survived, rule carry no citation. Kept because enforceable and cheap.*
 
 ### The ban list is an executable test class
 
-**The ban list is an ArchUnit test class — executable, not prose.**
+**Ban list be ArchUnit test class — executable, not prose.**
 
-*Off-the-shelf host; some predicates are authored per repo. **Convention**,
-2026-07-21 — the trail makes no confidence claim about this rule beyond noting
-that a ban-list test class plus its meta-test **is not independent
-confirmation** of the bans it hosts.*
+*Off-the-shelf host; some predicates authored per repo. **Convention**, 2026-07-21 — trail make no confidence claim beyond noting ban-list test class plus meta-test **not independent confirmation** of bans it host.*
 
 ### Coverage is gated by JaCoCo
 
-**Coverage is gated by JaCoCo — the `jacoco-maven-plugin` `check` goal — failing
-the build below a per-package `COVEREDRATIO` floor.** Coverage is the floor under
-every package:
-**it proves a line ran, not that a test asserted on it**, so a green floor is
-necessary and never sufficient. The ratio and its per-package split are the
-adopting repo's call, stated in the repo. Pin JaCoCo to a release that supports
-the build's Java version — it trails each Java release.
+**Coverage gated by JaCoCo — `jacoco-maven-plugin` `check` goal — failing build below per-package `COVEREDRATIO` floor.** Coverage be floor under every package: **it prove line ran, not that test asserted on it**, so green floor necessary and never sufficient. Ratio and per-package split be adopting repo call, stated in repo. Pin JaCoCo to release supporting build Java version — it trail each Java release.
 
-*Off-the-shelf host — the ratio thresholds and the per-package split are
-authored per repo. The mechanics are **confirmed**, verified 2026-07-25; no
-threshold numbers are supplied here, deliberately, because a floor tuned to one
-product's risk profile is not a platform default.*
+*Off-the-shelf host — ratio thresholds and per-package split authored per repo. Mechanics **confirmed**, verified 2026-07-25; no threshold numbers supplied here, deliberately, because floor tuned to one product risk profile not platform default.*
 
 ## Wiring the gates
 
-**Run this once per repo, in the first pull request that touches the build.**
-These directives are two kinds welded together: instinct-overrides that fire
-while an agent is writing code, and build gates that have to exist in the repo.
-Instructing an agent does nothing for the second kind — **the gate is what
-catches the next agent**, and an unwired gate is a rule described as enforced
-that is not.
+**Run once per repo, in first pull request touching build.** These directives be two kinds welded together: instinct-overrides firing while agent write code, and build gates that must exist in repo. Instructing agent do nothing for second kind — **gate be what catch next agent**, and unwired gate be rule described as enforced that not.
 
-1. **The ban-list ArchUnit test class**, with the meta-test asserting every
-   entry is either enforced by a named test or marked deferred with a reason.
-   This is the host for the runtime-silent bans, the WebFlux ban, the
-   attached-record and plain-SQL bans, the `fetchOne` / `fetchAny` ban, the
-   no-injectable-`DSLContext` rule, the wall-clock ban, and the raw-executor
-   fan-out ban. **Generated jOOQ packages are excluded** from all of them.
-2. **Banned-dependency rules** for JPA, Hibernate and Spring Data JPA. The
-   sibling skills add their own entries to the same configuration — the logging
-   backend pin in `java-backend-observability`, the cache and broker client bans
-   in `caching-java` and `async-handoff-java`, and the JVM dependency bans in
-   `llm-default-traps`.
-3. **The jOOQ codegen-diff job** — regenerate from the committed migrations
-   against a throwaway PostgreSQL container, fail on any git diff.
-4. **Config-default assertions** for `spring.threads.virtual.enabled=true` and
-   for `Settings.withAttachRecords(false)`. Both read the checked-in default and
-   neither sees a runtime override.
-5. **Error Prone on the compile path**, with NullAway and JSpecify configured to
-   fail compilation. This is also the host for any non-loggability check and for
-   the `fetchOne` / `fetchAny` ban if the repo prefers source over bytecode —
-   and **not** ArchUnit for the first of those.
-6. **squawk** over the migrations in the diff, gating on the CLI's exit code,
-   with the enabled rule set and per-migration opt-outs committed.
-7. **The Testcontainers integration-test setup** applying the real migrations
-   against real PostgreSQL.
-8. **The `jacoco-maven-plugin` `check` goal** with the per-package
-   `COVEREDRATIO` limits this repo states, and
-   the version pinned to a release supporting the build's JDK.
-9. **A CI grep for `--enable-preview`** across Maven and Gradle compiler and
-   launcher arguments. Not ArchUnit, which cannot see them.
-10. **The `jdk.VirtualThreadPinned` JFR event and its alert**, in deployment
-    rather than in the build.
+1. **Ban-list ArchUnit test class**, with meta-test asserting every entry either enforced by named test or marked deferred with reason. Host for runtime-silent bans, WebFlux ban, attached-record and plain-SQL bans, `fetchOne` / `fetchAny` ban, no-injectable-`DSLContext` rule, wall-clock ban, raw-executor fan-out ban. **Generated jOOQ packages excluded** from all.
+2. **Banned-dependency rules** for JPA, Hibernate, Spring Data JPA. Sibling skills add own entries to same config — logging backend pin in `java-backend-observability`, cache and broker client bans in `caching-java` and `async-handoff-java`, JVM dependency bans in `llm-default-traps`.
+3. **jOOQ codegen-diff job** — regenerate from committed migrations against throwaway PostgreSQL container, fail on any git diff.
+4. **Config-default assertions** for `spring.threads.virtual.enabled=true` and `Settings.withAttachRecords(false)`. Both read checked-in default, neither see runtime override.
+5. **Error Prone on compile path**, with NullAway and JSpecify configured to fail compilation. Also host for any non-loggability check and for `fetchOne` / `fetchAny` ban if repo prefer source over bytecode — and **not** ArchUnit for first of those.
+6. **squawk** over migrations in diff, gating on CLI exit code, with enabled rule set and per-migration opt-outs committed.
+7. **Testcontainers integration-test setup** applying real migrations against real PostgreSQL.
+8. **`jacoco-maven-plugin` `check` goal** with per-package `COVEREDRATIO` limits this repo state, version pinned to release supporting build JDK.
+9. **CI grep for `--enable-preview`** across Maven and Gradle compiler and launcher arguments. Not ArchUnit, which cannot see them.
+10. **`jdk.VirtualThreadPinned` JFR event and its alert**, in deployment not in build.
 
-**Then record what was wired and what was skipped, with the reason.** These are
-the entries **nothing above gates**, and each must be listed as ungated:
+**Then record what was wired and what was skipped, with reason.** These be entries **nothing above gate**; each must be listed as ungated:
 
-- **Never fanning out while holding a connection** — spec and review. Not
-  statically detectable by anything.
-- **Pool sizing**, and the ban on a second semaphore over the pool — the
-  pool-as-limiter principle is the rule and no check reads a pool size against
-  what PostgreSQL can serve.
-- **The single-seam discipline for plain SQL** — the ban is gated; that the
-  exempted seams are few, named and test-pinned is not.
-- **That the transaction seam owns connection acquisition** — ArchUnit bans
-  injecting the `DSLContext`, not every path to a `Connection`.
-- **The business-date and `ThreadLocal`-caching rules**, and the Jackson and
-  Flyway picks — convention, no check.
-- **Whether `PlainSQLChecker` was wired**, if the repo chose it over the
-  ArchUnit path. Its compatibility with the pinned JDK and Error Prone is
-  unverified here and must be established by the adopting repo.
+- **Never fanning out while holding connection** — spec and review. Not statically detectable by anything.
+- **Pool sizing**, and ban on second semaphore over pool — pool-as-limiter principle be rule, no check read pool size against what PostgreSQL can serve.
+- **Single-seam discipline for plain SQL** — ban gated; that exempted seams be few, named, test-pinned not.
+- **That transaction seam own connection acquisition** — ArchUnit ban injecting `DSLContext`, not every path to `Connection`.
+- **Business-date and `ThreadLocal`-caching rules**, and Jackson and Flyway picks — convention, no check.
+- **Whether `PlainSQLChecker` wired**, if repo chose it over ArchUnit path. Compatibility with pinned JDK and Error Prone unverified here, must be established by adopting repo.
 
-**A record that lists only what was wired reads as complete coverage.** That is
-the failure this step exists to prevent.
+**Record listing only what was wired read as complete coverage.** That be failure this step exist to prevent.
 
 ## Named gaps — where no check reaches
 
-Silence reads as coverage, so each is stated.
+Silence read as coverage, so each stated.
 
-1. **A config-default assertion is not a runtime assertion.** Both of them —
-   the virtual-threads property and the attached-records setting — read the
-   checked-in default. An environment variable or an external config source can
-   override either in a deployed process, and **no gate here notices.** The same
-   limitation applies to the structured-logging property in
-   `java-backend-observability`.
-2. **The fan-out-while-holding-a-connection rule has no possible gate.** It is
-   the one rule here that is stated as undetectable rather than merely ungated.
-3. **Generated jOOQ packages are excluded from every ArchUnit ban.** A rule
-   written into a generated package is unreached by design. This is correct — the
-   generator's output is not hand-written code — but it means the exclusion
-   boundary is load-bearing, and a hand-written class placed in a generated
-   package escapes the whole ban list.
-4. **The `--enable-preview` grep covers what the grep covers.** The compile
-   failure is the real gate and it fails closed; the grep exists for the case
-   where a flag is added deliberately, and it is bespoke text-matching over build
-   files, not analysis.
-5. **The coverage floor cannot see whether a test asserted anything.** Mutation
-   testing, which can, is **deliberately scoped to money packages only** by the
-   `money-java` skill. So a package in the general tier can sit green at the
-   floor over vacuous machine-written tests, and **nothing in this skill
-   detects that.** Extending mutation testing beyond money is a decision with a
-   named trigger, not an oversight — a general-tier defect traced to vacuous
-   tests, or diff-scoped mutation testing becoming affordable.
-6. **Three Platform directives rest on no evidence note.** The WebFlux ban, the
-   Flyway rule and the Jackson pick. Their dates are inferred from pass scope,
-   and a reader treating them as researched to the same standard as the jOOQ
-   claims is reading more than is there.
-7. **The plain-SQL checker's wireability is unverified.** The ArchUnit path
-   works and is what ships; the stronger compile-error path is named as stronger
-   without having been tried against this stack's pinned versions.
-8. **The pinning alert is a threshold tripwire.** Accumulated short pins below
-   the threshold cost real scheduler time and fire nothing.
+1. **Config-default assertion not runtime assertion.** Both — virtual-threads property and attached-records setting — read checked-in default. Env variable or external config source can override either in deployed process, and **no gate here notice.** Same limitation apply to structured-logging property in `java-backend-observability`.
+2. **Fan-out-while-holding-a-connection rule have no possible gate.** One rule here stated as undetectable, not merely ungated.
+3. **Generated jOOQ packages excluded from every ArchUnit ban.** Rule written into generated package unreached by design. Correct — generator output not hand-written code — but exclusion boundary be load-bearing, and hand-written class placed in generated package escape whole ban list.
+4. **`--enable-preview` grep cover what grep cover.** Compile failure be real gate and fail closed; grep exist for case where flag added deliberately, and be bespoke text-matching over build files, not analysis.
+5. **Coverage floor cannot see whether test asserted anything.** Mutation testing, which can, **deliberately scoped to money packages only** by `money-java` skill. So package in general tier can sit green at floor over vacuous machine-written tests, and **nothing in this skill detect that.** Extending mutation testing beyond money be decision with named trigger, not oversight — general-tier defect traced to vacuous tests, or diff-scoped mutation testing becoming affordable.
+6. **Three Platform directives rest on no evidence note.** WebFlux ban, Flyway rule, Jackson pick. Dates inferred from pass scope; reader treating them as researched to same standard as jOOQ claims read more than is there.
+7. **Plain-SQL checker wireability unverified.** ArchUnit path work and be what ship; stronger compile-error path named as stronger without being tried against this stack pinned versions.
+8. **Pinning alert be threshold tripwire.** Accumulated short pins below threshold cost real scheduler time and fire nothing.
 
 ## Markers, dates, and what they mean
 
-Confidence, per claim: **confirmed** means the claim survived three independent
-refutation votes against primary sources on the date it states.
-**Primary-source verified** means one researcher checked it against a primary
-source with **no panel** — it is not confirmed whatever its evidentiary
-strength, and running the panel is what promotes it. **Convention** means the
-research did not, or could not, confirm the claim from independent sources; the
-rule is kept because it is enforceable, cheap, and fails toward safety.
-**Uncertain** means a claim was examined and left unsettled, and nothing here is
-allowed to rest on one.
+Confidence, per claim: **confirmed** mean claim survived three independent refutation votes against primary sources on date it state. **Primary-source verified** mean one researcher checked against primary source with **no panel** — not confirmed whatever its evidentiary strength, and running panel be what promote it. **Convention** mean research did not, or could not, confirm claim from independent sources; rule kept because enforceable, cheap, fail toward safety. **Uncertain** mean claim examined and left unsettled; nothing here allowed to rest on one.
 
-Enforcement, per rule: **off-the-shelf** means a tool does it with
-configuration; **bespoke** means the check must be written; **convention** means
-a human or an agent asserting it is all there is.
+Enforcement, per rule: **off-the-shelf** mean tool do it with configuration; **bespoke** mean check must be written; **convention** mean human or agent asserting it be all there is.
 
-**The lapse rule:** past `review-by` **2027-01-21**, every *confirmed* marker in
-this skill reads as *convention* until a new pass re-dates it, with no
-maintainer action needed. That is why a date sits beside every claim.
+**Lapse rule:** past `review-by` **2027-01-21**, every *confirmed* marker in this skill read as *convention* until new pass re-date it, no maintainer action needed. That be why date sit beside every claim.
 
 | Claim | Marker | Date |
 | ----- | ------ | ---- |
-| jOOQ's attached-record writes choose INSERT-versus-UPDATE and the column set from in-memory state | confirmed | 2026-07-25 |
-| `fetchOne` tolerates zero rows and `fetchAny` picks arbitrarily; `fetchSingle` throws on both | confirmed | 2026-07-25 |
-| Plain SQL defeats jOOQ's type checking and reopens the injection surface | confirmed | 2026-07-25 |
-| jOOQ's transaction API is lambda-scoped, and a JDBC connection starts in autocommit | confirmed | 2026-07-25 |
-| The four flagged migration operations lock or rewrite | confirmed | 2026-07-25 |
-| Generating jOOQ code from migrations in a throwaway container | convention (mechanism primary-sourced) | 2026-07-25 |
-| The single-seam plain-SQL discipline, and the checker's wireability | convention | 2026-07-25 |
+| jOOQ attached-record writes choose INSERT-versus-UPDATE and column set from in-memory state | confirmed | 2026-07-25 |
+| `fetchOne` tolerate zero rows, `fetchAny` pick arbitrarily; `fetchSingle` throw on both | confirmed | 2026-07-25 |
+| Plain SQL defeat jOOQ type checking, reopen injection surface | confirmed | 2026-07-25 |
+| jOOQ transaction API lambda-scoped, JDBC connection start in autocommit | confirmed | 2026-07-25 |
+| Four flagged migration operations lock or rewrite | confirmed | 2026-07-25 |
+| Generating jOOQ code from migrations in throwaway container | convention (mechanism primary-sourced) | 2026-07-25 |
+| Single-seam plain-SQL discipline, and checker wireability | convention | 2026-07-25 |
 | Making `DSLContext` non-injectable | convention | 2026-07-25 |
-| Choosing squawk over the alternative migration linters | convention | 2026-07-25 |
-| Virtual threads are final and their request-handling API stable | confirmed | 2026-07-24 |
+| Choosing squawk over alternative migration linters | convention | 2026-07-25 |
+| Virtual threads final, request-handling API stable | confirmed | 2026-07-24 |
 | Virtual threads should never be pooled | confirmed | 2026-07-24 |
-| The connection pool is already a semaphore and needs no second one | confirmed | 2026-07-24 |
-| The virtual-threads enablement property | confirmed | 2026-07-24 |
-| `keep-alive` is *required* | **refuted** — do not restore | 2026-07-24 |
-| `StructuredTaskScope` is preview and its artifacts are version-locked | confirmed | 2026-07-24 |
-| Residual pinning on JDK 25 is native-only | confirmed | 2026-07-24 |
-| Fan-out while holding a connection can deadlock a small pool | convention (mechanics primary-sourced) | 2026-07-24 |
-| The fan-out helper's necessity, from the executor's close semantics | convention | 2026-07-24 |
-| A Scoped Value binding never reaches a subtask on this stack | confirmed | 2026-07-27 |
-| JSpecify with NullAway is mainstream on this stack | confirmed | 2026-07-21 |
-| JaCoCo's `check` goal halts the build on a ratio floor | confirmed | 2026-07-25 |
-| The injected clock and the business-date split | convention, no citation | 2026-07-21 |
-| The ban list's defect-source claim | convention, no citation | 2026-07-21 |
-| Real PostgreSQL over an in-memory substitute | convention, no citation | 2026-07-21 |
-| The choice of jOOQ over JPA | convention (no per-claim marker recorded) | 2026-06-11..14 |
-| The WebFlux paradigm ban, the Flyway rule, the Jackson pick | convention, no evidence note | 2026-06-11..14 (inferred) |
+| Connection pool already semaphore, need no second one | confirmed | 2026-07-24 |
+| Virtual-threads enablement property | confirmed | 2026-07-24 |
+| `keep-alive` be *required* | **refuted** — do not restore | 2026-07-24 |
+| `StructuredTaskScope` preview, artifacts version-locked | confirmed | 2026-07-24 |
+| Residual pinning on JDK 25 native-only | confirmed | 2026-07-24 |
+| Fan-out while holding connection can deadlock small pool | convention (mechanics primary-sourced) | 2026-07-24 |
+| Fan-out helper necessity, from executor close semantics | convention | 2026-07-24 |
+| Scoped Value binding never reach subtask on this stack | confirmed | 2026-07-27 |
+| JSpecify with NullAway mainstream on this stack | confirmed | 2026-07-21 |
+| JaCoCo `check` goal halt build on ratio floor | confirmed | 2026-07-25 |
+| Injected clock and business-date split | convention, no citation | 2026-07-21 |
+| Ban list defect-source claim | convention, no citation | 2026-07-21 |
+| Real PostgreSQL over in-memory substitute | convention, no citation | 2026-07-21 |
+| Choice of jOOQ over JPA | convention (no per-claim marker recorded) | 2026-06-11..14 |
+| WebFlux paradigm ban, Flyway rule, Jackson pick | convention, no evidence note | 2026-06-11..14 (inferred) |
 
-The ground behind each claim — with its source where a pass named one — the
-claims that must **not** be cited, and the conditions that reopen a rule are one
-hop away in **[evidence.md](evidence.md)**.
+Ground behind each claim — with source where pass named one — claims that must **not** be cited, and conditions reopening rule be one hop away in **[evidence.md](evidence.md)**.
