@@ -37,25 +37,38 @@ is add directives, and those then arrive at the normal bar.
 ## Evidence owed on a published skill
 
 **`backend-stack`, published 2026-08-01, ships everything at *convention* and
-its central claim at *uncertain*.** Three things would move it, and the first is
-the one the author holds:
+its central claim at *uncertain*.** Three rows stood here at publication. **The
+candidate list at the language and runtime layer was recovered the same day and
+its row is gone** — the four candidates and the ground each lost on are in the
+skill, the verdict is a contested win rather than an unexamined one, and
+`CLAUDE.md` holds the account of what the recovery changed. What it did **not**
+supply is below.
 
 | Owed | What it unblocks |
 | ---- | ---------------- |
-| **The 2026-06-11..14 platform pass's primary sources**, not held in this repository | Promotes the Java verdict's grounds from convention to primary-source verified, per claim. The skill's *Do not cite* list names them as unavailable and must be rewritten when they arrive |
-| **The candidate list at the language and runtime layer** — which languages were compared, on what grounds, with a steelman for each loser | The skill's largest named gap. Until it lands the verdict ships as an **unexamined win**, the same honesty `java-backend-rules/evidence.md` applies to the WebFlux ban. Naming the loser is this repository's most load-bearing invariant and `backend-stack` currently fails it about itself |
-| **An enforcement-host census for one serious competitor** | The published census was taken for one stack, so it shows Java's surface is deep and **not** that it is deeper. One competing census gives *Count the independent enforcement hosts* its first discriminating case |
+| **The 2026-06-11..14 platform pass's primary sources**, not held in this repository — **and searched for on 2026-08-01 without success** | Promotes the Java verdict's grounds from convention to primary-source verified, per claim. The skill's *Do not cite* list names them as unavailable and must be rewritten when they arrive. **Two external records were searched and neither cites a source**: the pass's own decision records state grounds without citation, and the material this skill set was converted from says the steelmen and grounds "are recorded in the research pass" — transcripts published nowhere. **Re-read this row as: the sources may not exist**, which is a different and worse position than not having found them yet |
+| **A re-open trigger per language-layer loser**, which the pass never set | *Record the losers and their grounds* requires each loser to carry the condition that would reopen it, and the recovered record carries none — so `backend-stack` still half-fails that directive about itself, and says so. Nothing states what would make Go or C#/.NET worth re-examining. **Writing one during the recovery was rejected**: inventing a trigger nobody set authors the pass's verdict rather than records it. This row closes when the decision owner sets them, or when a re-examination happens and its own grounds are recorded |
+| **An enforcement-host census for one serious competitor, in a backend role** — narrowed 2026-08-01, not closed | The published census was taken for one stack, so it shows Java's surface is deep and **not** that it is deeper. **One competing census was recovered**: TypeScript, from the same pass's frontend profile plus its consolidated toolchain map, dated 2026-06-12..13 and now in `backend-stack`. It gave *Count the independent enforcement hosts* its first case, and the case cuts against a naive reading of it — both columns fill seven of eight categories, and what separates them is one absent category (no host for custom checks on the compile path) and one where the tool exists but the gate is advisory with an unresolved upstream issue. **What is still owed** is a census for a competitor doing this stack's job, run by someone other than the pass that wrote the Java column. Also recovered and now carried: the *coverage and mutation* host compared across three candidates from the candidate list itself |
 
-**Nothing here is a research project.** The first two are recovery of material
-that exists outside this repository; the third is the same grep the skill
-publishes, run against another stack's rule set.
+**Nothing here is a research project.** The sources are recovery of material that
+may not exist; the triggers are a decision the owner makes; the census is the
+same grep the skill publishes, run against another stack's rule set.
+
+**What the recovery cost, recorded so the next one is priced.** Outside the two
+`backend-stack` files it changed both `java-backend-rules` files, `README.md`,
+`CLAUDE.md` and this page — and every one of those edits was a sentence
+asserting the absence of the thing recovered. **A recovery obliges the same sweep a publish
+does**, and for the same reason: the claim that something is missing is a
+cross-file claim nothing checks. **Deleting a closed row is part of that sweep**:
+this page had the residues recorded only inside the row that closed, so removing
+it without promoting them to rows of their own would have dropped them.
 
 **What the review verified, stated so a blank is not read as coverage.** Skill
 count, the 95 directive ids and their uniqueness, every `###` and `##` heading,
 backticked identifier tokens per file, every date, every confidence and
 enforcement marker, bullet and numbered-item counts, table rows, bold spans,
 directive statements, and dropped negations — all by script against `HEAD`, all
-clean but the row above. **Not verified**: whether a compressed sentence still
+clean but the rows in this section. **Not verified**: whether a compressed sentence still
 supports the cross-skill claim another skill makes about it, and whether any
 `*Check:*` line still names an enforceable check rather than a shorter phrase
 that reads like one. Both are readings, not greps.
@@ -68,6 +81,19 @@ history either, so these rows are topic summaries, not evidence. Harvesting one
 means re-verifying its claims from primary sources, splitting portable rules from
 project-shaped facts, recording the premise each rule holds under, and writing
 the skill. Order of magnitude: a day, not a research project.
+
+**Located 2026-08-01, while recovering the `backend-stack` candidate list: every
+row below has a decision record in the same external repository.** A frontend
+profile ADR carries the Angular row's rejections including the Next.js one; a
+schema-per-tenant ADR carries the tenancy row with the HikariCP issue and the
+`search_path` CVE both cited by number; a consolidated guardrails map carries the
+toolchain row's tool-per-concern table with its licence column, the caveat that
+bites each one, and its own four gap classes; a primary-keys ADR carries the
+UUIDv7 row. **This does not promote any row.** A decision record states grounds;
+it is not the research notes, and the records found for `backend-stack` cite no
+primary source for anything. What it changes is the cost estimate: harvesting
+starts from a written decision with named losers rather than from a topic
+summary.
 
 | Candidate skill | Named sources | What it would carry |
 | --------------- | ------------- | ------------------- |

@@ -1,6 +1,6 @@
 ---
 name: backend-stack
-description: How to choose a backend stack for a repo whose code is written by LLM agents and read line by line by nobody — rank candidates by what their build can refuse to ship rather than by what they let you express, count the independent enforcement hosts a stack offers rather than its type-system features, prefer a stack where the wrong call cannot be written over one where it is written and then flagged, price corpus gravity as a cost the winner carries rather than a reason it won, and treat operability as a veto rather than as the deciding criterion. Carries this skill set's own worked case, Java with Spring Boot Web MVC, jOOQ and PostgreSQL, with the enforcement-host census that grounds it and the candidate list the pass never recorded. Load before picking a language, runtime, web framework, persistence library or database for a new backend, before arguing that an existing stack should change, and before writing a rule set for a stack nobody has justified in writing.
+description: How to choose a backend stack for a repo whose code is written by LLM agents and read line by line by nobody — rank candidates by what their build can refuse to ship rather than by what they let you express, count the independent enforcement hosts a stack offers rather than its type-system features, prefer a stack where the wrong call cannot be written over one where it is written and then flagged, price corpus gravity as a cost the winner carries rather than a reason it won, and treat operability as a veto rather than as the deciding criterion. Carries this skill set's own worked case, Java with Spring Boot Web MVC, jOOQ and PostgreSQL, with the enforcement-host census that grounds it and the language-layer candidate list — C#/.NET, Kotlin, Go and TypeScript, each with the ground it lost on. Load before picking a language, runtime, web framework, persistence library or database for a new backend, before arguing that an existing stack should change, and before writing a rule set for a stack nobody has justified in writing.
 ---
 # Choosing a backend stack for code nobody reviews
 
@@ -21,17 +21,22 @@ answer.
 **Everything here is *convention*.** Read literal — argument below strong, and
 strong argument read like verified one.
 
-- **Criterion is this skill set's own synthesis.** No pass check it against
-  source, no panel argue other side, no outcome measured — no backend built on
-  stack picked by rival criterion and compared. Central claim: ranking stacks by
-  build-refusable defects beat ranking by expressiveness, velocity or hiring
-  pool for machine-written code. **That claim uncertain, not convention** —
-  marked *uncertain* where it appear.
+- **Criterion is this skill set's synthesis of criteria the pass did write
+  down.** Platform pass listed five things stack must maximise — compile-time
+  error surface, test-ecosystem quality, exact decimal money math, minimal
+  operational surface, idiom stability across sessions — and this skill
+  generalise first, second and fifth into one criterion. **Generalisation is
+  the part nobody checked**: no panel argue other side, no outcome measured, no
+  backend built on stack picked by rival criterion and compared. Central claim:
+  ranking stacks by build-refusable defects beat ranking by expressiveness,
+  velocity or hiring pool for machine-written code. **That claim uncertain, not
+  convention** — marked *uncertain* where it appear.
 - **Java verdict inherit one date, no markers.** Platform pass ran
-  **2026-06-11..14**, recorded rejections + grounds **with no per-claim
-  confidence marker**. So *convention* is floor here, not verdict anyone wrote
-  down. Primary sources not published here — owed, see *What was never
-  recorded*.
+  **2026-06-11..14** and its record is dated **2026-06-12**; it recorded
+  rejections + grounds at both layers **with no per-claim confidence marker**.
+  So *convention* is floor here, not verdict anyone wrote down. Primary sources
+  behind those grounds not published here — owed, see *What is recorded and
+  what still is not*.
 - **Only non-opinion thing here is host census**, and it not research: it grep
   over published skills, dated, stated with its command so anyone re-run it and
   watch it move.
@@ -211,8 +216,10 @@ decision every later rule hang on, and the one nobody re-derive. Agent asked to
 add a service two years out will read rule sets, infer stack from them, never
 see an argument.
 
-**This skill fail its own directive**, and say so instead of hiding it — see
-*What was never recorded*.
+**This skill fail half its own directive**, and say so instead of hiding it.
+Losers and their grounds recovered 2026-08-01 and stated below; **re-open
+trigger per loser never recorded by the pass and not invented here** — see *What
+is recorded and what still is not*.
 
 *Check: decision record name each candidate, its ground for losing, and re-open
 trigger. Convention as enforcement — check is written artifact, catch omission,
@@ -242,6 +249,55 @@ and unbuilt. **Convention**, 2026-08-01.*
 applied once. Not recommendation to adopt this stack, and by *A rule set is
 never a reason to adopt a stack* it cannot be read as one.
 
+### The candidate list at the language and runtime layer
+
+**Recovered 2026-08-01 from the platform decision's own record, dated
+2026-06-12.** That record is the ADR set of the product repository the pass was
+run for; **it is not published in this skill set**, so what follow is the
+candidate list restated, not a pointer reader can open. Grounds are the pass's,
+verbatim in substance; markers are not — pass wrote none, so every line here is
+**convention**.
+
+**What the pass was choosing under.** Same premise as this skill — one AI
+maintainer, humans never read code — plus its own scoping call that existing
+system is capability inventory only, so evaluation ran on **greenfield merit**
+and hiring pool counted for nothing.
+
+**Winner — JVM, Java 25 LTS.** Won on verification-platform merit, and every
+ground is a host or a fail-loud default, not an expressiveness claim:
+
+- **PIT** = the mutation-testing ratchet against vacuous machine-written tests.
+- **Error Prone** = the one platform where *custom* compile-time checks are
+  cheap. Pass's own words: when lint is the reviewer, linter extensibility is
+  first-order.
+- **Sealed interfaces + exhaustive switch** = compiler-checked state machines.
+- **`BigDecimal.divide` with no rounding mode throws** — money math fail loud.
+- **Spring Modulith** = boundary verification plus a PostgreSQL outbox.
+- **Deepest banking-domain corpus** — and see *Price corpus gravity*, which is
+  the bill this same fact generate.
+
+**Losers, each with the ground it lost on:**
+
+| Candidate | What it had | Why it lost |
+| --------- | ----------- | ----------- |
+| **C#/.NET** — close second | Native `decimal`; compile-time project boundaries | Silent zero-defaults on deserialization; **open, non-exhaustive enums**, so state machines are not compiler-checked; commercially drifting outbox landscape |
+| **Kotlin** | Better language ergonomics | Mutation testing commercial-or-noisy on Kotlin bytecode; stdlib ship a **silently-rounding `BigDecimal /` operator**; idiom variance hurt fresh-session consistency |
+| **Go** | Best explicitness and best ops story of the four | **No maintained mutation testing**; statement-only coverage; pervasive silent zero-values land exactly in money code |
+| **TypeScript backend** | — | No enforced decimal type. Disqualified outright for a ledger |
+
+**Two things this list settle about the criterion above, and one it contradict.**
+Losers were rejected on **host absence and silent defaults**, not on
+expressiveness — which is *Rank a stack by what its build can refuse to ship*
+being applied before it was written down. Go lost **despite** best ops story,
+which is *Operability is a veto, not the criterion* in practice. The
+contradiction: pass **listed** minimal operational surface among things to
+maximise, i.e. as a ranked criterion, and this skill demote it to veto. **Pass's
+practice support the veto reading, its wording does not.** Stated, not resolved.
+
+*Check: none — this a record of a decision, not a directive. Grounds
+**convention**, 2026-06-12. Re-open trigger per loser **not recorded by the
+pass**.*
+
 ### What the census actually shows
 
 **Java's enforcement-host surface unusually deep — that the ground verdict rest
@@ -269,8 +325,52 @@ Taken **2026-08-01**. Counts move whenever skill added — that the point, not a
 defect. Census is evidence only with the date it was taken. What it establish is
 narrow: **compiler-plugin surface, architecture-test library, container-test
 story and artifact-lint story all exist and all in use here at once.** It does
-not establish no other stack have them, because **no census was run for any
-other candidate** — biggest gap in this section.
+not establish no other stack have them. **One competing census exist, next
+section, and it a frontend one** — nothing here compare a stack doing this
+stack's job.
+
+**Candidate list give this its first discriminating data, and only for two host
+categories.** Pass recorded, per loser, that mutation testing is absent and
+unmaintained on Go, commercial-or-noisy on Kotlin bytecode, and that Go coverage
+is statement-only. That is the *coverage and mutation* host compared across
+three candidates — **not a census**, which would need all eight categories
+counted per candidate with a tool named for each.
+
+### The one competing census that exist, and what it actually discriminate
+
+**Recovered 2026-08-01, dated 2026-06-12..13, and it is a TypeScript census in a
+frontend role.** Same pass, same org, same premise, one repo — so it is not an
+independent evaluation, and its role confound is stated before its result, not
+after. Restated here, cuz that record not published in this skill set.
+
+| Host category | TypeScript, as that pass equipped it | Against the Java column |
+| ------------- | ------------------------------------ | ----------------------- |
+| Compiler | TypeScript strict, plus template type checking on by default | Parity |
+| Compiler plugin / processor | **None.** Lint run beside type checker, not inside it — no host for custom check on compile path | **Java-only category** |
+| Architecture test | dependency-cruiser, blocking. Pass's own words: the frontend's ArchUnit-equivalent | Parity |
+| Source-level rule | eslint wall plus framework template rules; dead-code gate blocking | Parity |
+| Property / fuzz | fast-check | Parity |
+| Real-dependency test | Browser-driver E2E per surface, accessibility assertions in same session | Analogue, not container |
+| Contract diff | Types generated from committed contract, so contract drift is a compile error | Parity, and shared contract lint sit above both |
+| Coverage and mutation | Coverage thresholds blocking. **Mutation host advisory, never blocking, narrow scope, adoption conditioned on unresolved upstream issue** | **Java blocking at 75% on money modules** |
+
+**Result cut against naive reading of this skill's own criterion.** Counting
+hosts, the two stacks near parity — seven of eight categories filled either
+side. Difference is **not count, it is gate strength and tool maturity**: one
+category absent entirely, and mutation host present-but-advisory with an open
+upstream issue gating its adoption. **That is *Enforcement-tool maturity is a
+separate question from runtime maturity* landing on real data**, and it the
+first case where a host category counted and then didn't decide anything.
+
+**What this census cannot settle.** It is a frontend, so schema-lint and
+container-test categories are role-shaped not language-shaped; browser E2E is
+not real-dependency container test; and TypeScript **backend** lost the language
+decision on absent decimal type, which no host count touch. **A backend-role
+census on a serious competitor is still owed** — this one narrow it, no close
+it.
+
+*Check: same grep discipline as census above — enumerate categories, name tool
+per cell, mark empty cell as gap not omission. **Convention**, 2026-06-12..13.*
 
 *Check: grep above, re-run with fresh date. Off-the-shelf — it a grep.
 **Convention**, 2026-08-01 — census is fact, inference from it is not.*
@@ -296,32 +396,57 @@ rules.
 *Check: none — this a statement about a cost, and rules that discharge it carry
 own checks in skills named above. **Convention**, 2026-06-11..14.*
 
-### What was never recorded
+### What is recorded and what still is not
 
 *This heading state a gap, not a directive — why it carry no check line. Every
 other `###` here carry one.*
 
-**Candidate list not held in this skill set, and neither are platform pass's
-primary sources.** Pass ran 2026-06-11..14 and recorded rejections and grounds
-at persistence layer — JPA, Hibernate, Spring Data JPA, rejected as
-runtime-silent — which is why those losers named and grounded in
-`java-backend-rules`. **At language and runtime layer no candidate list survive
-here at all.**
+**Verdict is a contested win now, not an unexamined one.** Pass recorded
+rejections and grounds at **both** layers — persistence (JPA, Hibernate, Spring
+Data JPA, rejected as runtime-silent, named and grounded in
+`java-backend-rules`) and language/runtime (four candidates, table above,
+recovered 2026-08-01). Until that recovery this skill said no candidate list
+survived and stated its verdict as unexamined, same honesty
+`java-backend-rules/evidence.md` apply to the WebFlux ban. **That sentence
+retired, cuz the list exist.**
 
-So this skill state its own verdict as **unexamined win, not contested one**:
-nothing published here show which languages were compared, on what grounds, or
-whether any was steelmanned. Same honesty `java-backend-rules/evidence.md`
-already apply to WebFlux ban, same consequence — **nothing here may promote
-above convention until candidate list and its sources recovered and recorded.**
+**Nothing promote above convention anyway, and reason changed.** Before: no list.
+Now: list is a decision record with **no per-claim marker and no primary source
+cited anywhere in it**. Grounds are checkable claims — mutation-tool coverage per
+language, `BigDecimal` division semantics, enum exhaustiveness in .NET — and
+**none of them verified here against a primary source.** Anyone treating this
+verdict as verified is reading a dated decision as research.
 
-Two named gaps follow, neither closable from inside this repo:
+Four named gaps follow, none closable from inside this repo:
 
-- **No competing census.** Host count above taken for one stack. Until same
-  grep-equivalent run for at least one serious competitor, census show Java's
-  surface deep and **not** that it deeper.
+- **Primary sources still owed, and now searched-for.** Record cite none, and
+  the material this skill set was converted from cite none either — it point at
+  the pass's own transcripts for steelmen and grounds, and those transcripts are
+  published nowhere. **Two records searched, both silent**, so treat sources as
+  possibly non-existent rather than merely unlocated. Every ground above is
+  therefore a claim someone made in June 2026 about another ecosystem's tooling,
+  and tooling claims decay fastest of any kind here.
+- **No competing census in a backend role.** One competing census exist and it
+  above — TypeScript, frontend, same pass and same org, so role-confounded and
+  not independent. Until an equivalent run for a competitor doing this stack's
+  job, census show Java's surface deep and **not** that it deeper.
+- **One recorded expectation point the other way, and no skill carry it.** The
+  material behind `caching` and `async-handoff` predicted a second stack would
+  host their type-design directives worse — that prediction is published in
+  those skills. **What is not published anywhere is its per-candidate half**,
+  which expected **Go** to host them *more* strongly than Java, on compiler-
+  enforced package boundaries and an unexported method making outside
+  implementation impossible. Restated here because it the only recorded claim in
+  this material pointing away from the winner; it is a prediction, nobody ran
+  it, and Go lost the actual decision on a different host category entirely.
+- **No re-open trigger per loser.** *Record the losers* require one and pass
+  wrote none, so nothing say what would make Go or C# worth re-examining. Not
+  invented here — inventing a trigger nobody set would be authoring the pass's
+  verdict, not recording it.
 - **Criterion never selected against a real alternative.** Written after the
-  choice it explain. Criterion that only ever ratified one decision has not been
-  tested — why central claim marked *uncertain*, not *convention*.
+  choice it explain, generalising criteria that choice stated. Criterion that
+  only ever ratified one decision has not been tested — why central claim marked
+  *uncertain*, not *convention*.
 
 ## What this skill does not carry
 

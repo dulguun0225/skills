@@ -139,11 +139,13 @@ date a pass wrote down** — treat it as "no later than the platform decision"
 rather than as a verification date.
 
 **The same pass is the anchor for the whole platform choice, and `backend-stack`
-now states what it did and did not record.** Its scope as recorded here is
-persistence, where it named losers and grounds; **at the language and runtime
-layer no candidate list survives in this skill set at all.** That gap is stated
-in `backend-stack` as its own largest one rather than left to be inferred from
-the silence in this table.
+now states what it did and did not record.** Its scope as recorded in this table
+is persistence, where it named losers and grounds. **At the language and runtime
+layer it named four candidates too — C#/.NET, Kotlin, Go and a TypeScript
+backend — and that list was recovered on 2026-08-01 and published in
+`backend-stack`**, which also states what the recovery did not supply: a primary
+source for any ground, and a re-open trigger per loser. None of it changes the
+three directives above, which no pass claimed at all.
 
 What the WebFlux ban does rest on is the one-concurrency-model argument, and
 that half is sound: the virtual-thread claims under *Concurrency* below are

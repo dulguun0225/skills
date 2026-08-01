@@ -42,7 +42,8 @@ shipped without the panel that would promote them — `money-storage`'s persiste
 group and both bans, every directive in `caching`, and both asynchronous-handoff
 passes. `backend-stack` is weaker still: everything in it is convention, its
 central claim is marked *uncertain*, and the candidate list behind its worked
-case was never recorded. Each `SKILL.md` states its own ceiling near the top.
+case — recovered on 2026-08-01 — cites no primary source for any ground it
+records. Each `SKILL.md` states its own ceiling near the top.
 
 ## Setup on a new machine
 
