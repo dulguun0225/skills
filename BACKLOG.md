@@ -27,6 +27,7 @@ blank here is not a clean bill — **it is a check nobody has run.**
 | `llm-default-traps` | n/a — cross-stack by construction | **owed** | **owed** |
 | `backend-stack` | n/a — its directives bind a decision, not a technology | **owed** | n/a — nothing it governs crosses a layer |
 | `ai-maintainer-principles` | **owed, and it is the check most likely to bite here.** Three of its directives quantify over an open set named only by example — *every operational surface*, *every load-bearing dependency*, *anything subtle enough to need a safety argument*. A predicate that enumerates instead of defining is the exact shape the check was written against, and the skill's own gap list does not name this one | **owed** | n/a — nothing it governs crosses a layer; its subject is where a boundary falls, not what crosses one |
+| `primary-keys` | **owed, and it is the check most likely to bite here.** Its central criterion is an enumeration — rank candidates by the surfaces the id lands on — and the surfaces are given by example: URL, log line, payload, export, replication stream, escape-hatch store. **A repo with a surface outside that list gets a green selection record and the wrong key**, and the skill's own gap list names this one, which the earlier failures of this check did not | **owed.** Its subject *is* an identifier that crosses into a URL, a log line, a payload, an export and a replication stream, so the shapes assembled out of a key are the whole surface — and the skill enumerates them as a criterion without ever asking what composite a repo builds out of two of them | **owed.** The key crosses the schema, the generated database classes, the wire contract, the export toolchain and the object-storage path, and the directives name checks at the first three and a caveat at the fourth |
 | `guardrails-toolchain` | n/a — its directives bind a tool choice, not a technology | **owed** | **owed**, and it is the check most likely to bite here: this skill's whole subject is which layer owns which defect class, so a directive that names one layer and misses another is the failure mode it was written against |
 
 Doing one of these is a bounded session, not a research project. The layer check
@@ -82,6 +83,17 @@ decision records.** What it owes:
 | **Primary sources — same search, same result** | The 2026-06-11..14 records cite nothing, and the panel transcripts behind them are published nowhere. **This is the third skill in that position and the row is not separate from the two above it**; it closes for all three at once or not at all |
 | **A read of the source records the skill did not open** — added 2026-08-01 by the hostile audit | The skill was assembled from nine documents in a repository that holds many more. **Two of its confirmed defects came from records adjacent to ones it had read** — a discriminator's third branch, and a rejection whose grounds sat in a record it never opened — and a third ground it does cite comes from a record outside its declared window. The audit's own top finding for `guardrails-toolchain` was that reading a source's neighbours is part of conversion and skipping them looks identical to finishing. **This is that finding recurring one publish later**, and it is a bounded read, not a research project |
 
+**`primary-keys`, harvested from the same pass's primary-keys record and the five
+neighbours it names.** What it owes:
+
+| Owed | What it unblocks |
+| ---- | ---------------- |
+| **A reproduced benchmark** — a time-ordered wide key against a narrow sequential one, on insert throughput and write-ahead-log volume, on any hardware | **The cheapest thing anyone could do to change the confidence in this skill.** The record states 3,420 against 3,480 transactions per second as a controlled benchmark and records no harness, hardware, dataset or methodology; the skill carries the numbers because a range would misrepresent what the pass claimed, and names them unreproduced in three places. A reproduction on any machine promotes the central cost claim out of hearsay; a contradiction is worth more |
+| **A primary source for any engine claim in it** — write-ahead-log behaviour under random keys, PostgreSQL secondary indexes pointing at heap tuple identifiers, the native generator's per-backend monotonicity, the index and heap size figures, and the RFC 9562 clause the record names without quoting | Each promotes one claim independently. **These are unsourced, not unobtainable** — every one is checkable against vendor documentation or the RFC by anyone, at the cost of an afternoon, which is the same position `guardrails-toolchain`'s tool facts are in and a better one than the other two skills' grounds |
+| **A re-open trigger per loser** | The pass set two triggers, both on the winner, and nothing states what would make the bigint-plus-external-id hybrid or TSID worth re-examining. **`backend-stack` owes this identically and for the same reason**, so it is one habit failing twice rather than two omissions. Closes when a decision owner sets them, or when a re-examination happens and records its own grounds. **Writing one during the harvest was rejected**, same call as the `backend-stack` recovery: inventing a trigger nobody set authors the verdict rather than records it |
+| **Cost measured at the volume where the recorded trigger would fire** | Nothing in this set has run any key strategy at the scale where the read-latency trigger fires, which is the only condition under which the cost side of this decision is tested rather than argued. **The winner's trigger is measured against a committed baseline for the losing candidate**, which is what makes it executable — so the measurement is defined and just has not been taken |
+| **Primary sources for the pass itself — same search, same result** | The panel transcripts behind the three-way evaluation are published nowhere. **This is the fourth skill in that position and the row is not separate from the three above it**; it closes for all four at once or not at all |
+
 **The performance split has never been built.** Layers one and two are a written
 contract in the source record and in the skill; no repo in this set has a
 ratchet, a contention harness or the alert rules. Band width, baseline churn and
@@ -129,9 +141,23 @@ primary source for anything. What it changes is the cost estimate: harvesting
 starts from a written decision with named losers rather than from a topic
 summary.
 
-**Two rows were harvested the same day and are gone from the table below:
-`guardrails-toolchain` and `ai-maintainer-principles`, both published
-2026-08-01.**
+**Three rows were harvested the same day and are gone from the table below:
+`guardrails-toolchain`, `ai-maintainer-principles` and `primary-keys`, all
+published 2026-08-01.** The table gained one row it did not have —
+`business-numbering` — because the third harvest read a neighbouring record in
+full and deliberately carried only the part its own topic rested on.
+
+**What the third one changed about the cost estimate: nothing, and that is the
+finding.** Its row named "UUIDv7 research notes" as its source and no such notes
+exist — the same result as the second harvest, so **a row naming research notes
+has now twice named a hope rather than a location.** What existed was one decision
+record whose own status line names a three-way adversarial evaluation and records
+grounds per loser — **the best-structured source any harvest here has had** — plus
+five neighbours it names or is named by, all of which had to be read. One of them,
+the business-numbering record, **changed a directive rather than decorating it**:
+from the primary-keys record alone the rule would have read "keep the
+sequence-reset checklist short", and the neighbour resolves it to zero. The
+estimate held: a day, not a research project.
 
 **What the second one changed about the cost estimate.** Its row named "AI-maintenance
 research notes" as its source; **no such notes exist** — not in this repository, not
@@ -171,8 +197,8 @@ did not discharge.
 | Candidate skill | Named sources | What it would carry |
 | --------------- | ------------- | ------------------- |
 | `angular-frontend-ai` | CVE-2025-29927 (Next.js) | An explicit Angular profile for AI maintenance; Bun versus Node; the Next.js rejection on CVE-2025-29927; a signal-everything dialect, an eslint wall, and exemplar files |
-| `postgres-tenancy` | PostgreSQL documentation; HikariCP issue #1633; CVE-2018-1058 | Schema-per-tenant versus pooled row-level security versus database-per-tenant, with PostgreSQL-documented facts (`PREPARE` re-parse, HikariCP #1633, CVE-2018-1058), the ceiling on each, and the escape hatches |
-| `uuidv7-primary-keys` | UUIDv7 research notes | UUIDv7-everywhere versus bigint identity versus TSID hybrids, with the `ORDER BY` carve-out |
+| `postgres-tenancy` | PostgreSQL documentation; HikariCP issue #1633; CVE-2018-1058 | Schema-per-tenant versus pooled row-level security versus database-per-tenant, with PostgreSQL-documented facts (`PREPARE` re-parse, HikariCP #1633, CVE-2018-1058), the ceiling on each, and the escape hatches. **Its record was opened on 2026-08-01 during the `primary-keys` harvest, for one fact — that logical replication carries rows and not sequence values — and is otherwise unread. It carries the two cited issue numbers, and the pooled-RLS and database-per-tenant rejections, each with grounds** |
+| **`business-numbering`** — added 2026-08-01, **not salvaged from the corpus but left behind by the `primary-keys` harvest** | The same pass's business-numbering record, 2026-06-12, read in full for that harvest | Human-facing identifiers as a class distinct from row keys: number classes and their scopes, gapless as a transactional property of a same-transaction counter increment rather than a cleanup job, counter rows instead of engine sequences, a typed-parts format model against the string-interpolation pattern language it names as the anti-pattern, check-digit selection with the algorithm in stored config, and exhaustion with a hard-fail rather than silent widening. **`primary-keys` carries only the part its own decision rests on** — that the two identifiers are separate and that the sequential one is not implemented with sequences — and says so. The rest is a skill's worth of material restated nowhere in this set |
 
 ## Candidate topic
 

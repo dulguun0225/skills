@@ -161,6 +161,8 @@ Three things reader will look for here and not find.
 
 *Convention — **dormant where no such ban exists**; exemption scoped to the one pager class by ArchUnit. 2026-07-25.*
 
+**Where that ban is published, since 2026-08-01: `primary-keys`**, as *A time-ordered key is not an ordering* — a time-ordered key be monotonic per generator and not across a pool, so `ORDER BY id` be right in single-connection test and wrong under pool. That skill carry this carve-out from other side with **four constraints, and this directive state two of them**: business sort column precede tiebreak ("never leading sort", above) and exemption scoped to pager class alone. **Two are stated nowhere in this skill** — that id never appear in the declared `sort` vocabulary, and that **relative order of ties be an explicit non-promise in the contract text.** Repo wiring the pager off this skill alone get the ArchUnit half and neither contract half. **Condition above stay real** — repo install this skill without that one still have no ban, and this directive still dormant for it.
+
 ## Wire temporals
 
 ### Instants on the wire
