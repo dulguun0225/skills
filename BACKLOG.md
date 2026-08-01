@@ -50,21 +50,6 @@ the one the author holds:
 that exists outside this repository; the third is the same grep the skill
 publishes, run against another stack's rule set.
 
-## Owed on the 2026-08-01 compression pass
-
-All sixteen `SKILL.md` files were rewritten into the compressed house dialect on
-2026-08-01 (working tree, uncommitted at the time of this entry). No resource
-file — `evidence.md`, `api.md`, `storage.md`, `shapes.md` — was touched, so
-**every skill now carries a compressed directive body and an uncompressed
-evidence trail.** Whether that split is deliberate is itself undecided.
-
-| Owed | Why it is here |
-| ---- | -------------- |
-| **Restore the licence-name expansion in `caching-java`** | `Redis Source Available License v2` and `Server Side Public License v1` were reduced to `RSALv2` and `SSPLv1`, and the expansion now appears nowhere in the file. This is the de-naming defect the Java-backend reviews were built to catch — the only content loss the compression review found |
-| **Remove the thirteen introduced `→` arrows**, in `tech-decision-research` (5), `java-backend-api` (3), `money-storage` (2), and one each in `caching`, `caching-java`, `enforceable-rules`, `async-handoff` | The dialect bans them. Two arrows predate the pass and are legitimate — `absent → **428**` in `money-api` and `java-backend-api` — so a blanket strip is wrong; each of the thirteen needs a connective back |
-| **Remove `til` for `until`** (`async-handoff`, `async-handoff-java`) and the contractions `can't`/`don't`/`won't` | Invented abbreviations save no tokens and cost decode clarity, which is the dialect's own stated ground |
-| **Decide whether directive *statements* are compressible at all** | `async-handoff`'s thirty statements were rewritten; the statements in `money`, `money-api`, `money-storage`, `caching` and `async-handoff-shapes` were left byte-identical. Meaning survived in all thirty — each was compared — but the set is now uneven, and nothing records which side is the rule |
-
 **What the review verified, stated so a blank is not read as coverage.** Skill
 count, the 95 directive ids and their uniqueness, every `###` and `##` heading,
 backticked identifier tokens per file, every date, every confidence and
@@ -91,49 +76,6 @@ the skill. Order of magnitude: a day, not a research project.
 | `postgres-tenancy` | PostgreSQL documentation; HikariCP issue #1633; CVE-2018-1058 | Schema-per-tenant versus pooled row-level security versus database-per-tenant, with PostgreSQL-documented facts (`PREPARE` re-parse, HikariCP #1633, CVE-2018-1058), the ceiling on each, and the escape hatches |
 | `guardrails-toolchain` | a toolchain survey | The roughly forty-tool map: concern, tool, gate, licence, and the caveat that bites for each — plus the four gap classes the survey found |
 | `uuidv7-primary-keys` | UUIDv7 research notes | UUIDv7-everywhere versus bigint identity versus TSID hybrids, with the `ORDER BY` carve-out |
-
-## Stacks with no instantiation
-
-`money`, `caching` and `async-handoff` each carry an open item reading "revisit
-when a second stack is real" — every rule set here has been instantiated on
-exactly one stack, Java with Spring Boot MVC, jOOQ and PostgreSQL. **The
-predictions below are the corpus's answer to that item**, and they are
-predictions: no pass tested any of them.
-
-- **`dotnet-backend`** — strongest candidate, and the first that would instantiate
-  the money rules from scratch: every `M-n` written with a .NET check, on a second
-  type system where the exact decimal is a language primitive rather than a
-  library type. Whatever it cannot check becomes the first honest gap, recorded
-  there rather than worked around.
-- **`llm-service`** — highest value, least settled ground. It breaks the "evidence
-  is deterministic tests" assumption every skill here rests on, so research has to
-  precede drafting.
-- **typescript-node-backend, python-backend, go-backend, rust-backend,
-  typescript-frontend, data-pipeline, iac, supply-chain.** Each would instantiate
-  all three rule sets — every `M-n`, every `C-n` and every `E-n` with that stack's
-  check, or a named gap with the reason. Two are predicted to strain the money
-  rules: **typescript-node-backend**, where the corpus default is the IEEE-754
-  `number` and the check has to make an exact decimal type the only writable one,
-  and **go-backend**, whose standard library has no fixed-point decimal type at
-  all. The caching rules strain differently — `caching/evidence.md` names the
-  directives that lean on type design (no bare write, no atomic primitive,
-  registration-only expiry, key-is-the-tuple, immutable value type, a loader
-  return that distinguishes absence), so **typescript-node-backend** is expected
-  to convert several into runtime guards, while **go-backend** should host them
-  *more* strongly than Java does, via a compiler-enforced package boundary and an
-  unexported method on the loader port that makes an outside implementation
-  impossible. The asynchronous-handoff rules are the largest set and predict the
-  same split on a wider surface, and the Java instantiation already records that
-  the same-transaction property could not be type-designed at all and fell back
-  to a test. Expect that worse on a dynamically
-  typed stack and better on one whose transaction scope is a distinct type. The
-  allow-list seam is the one rule whose cost scales with the language's async
-  surface: a stack with `async`/`await` everywhere has far more constructs to
-  enumerate than Java does.
-
-**Money in a new language is not a new topic** — it is an instantiation, a
-`money-<stack>` skill keyed to the existing ids, plus a divergence note wherever
-the language forces one.
 
 ## Candidate topic
 
