@@ -1,6 +1,6 @@
 ---
 name: money-storage
-description: Money-grade rules for an amount that crosses a store boundary — exact-decimal money columns with explicit precision and scale, over-scale writes rejected rather than rounded, non-finite and free-text-currency constraints, arithmetic in the query language banned, one named read boundary, appended effect rows, version-guarded updates, migrations that compute money, and the verdict on every shape a repo assembles out of stored money. Load before adding or changing a money column, a migration, a view, a query that reads or totals an amount, a row mapper, or a stored balance. States the kind of check each rule needs; the tool is named in the matching stack skill (money-java).
+description: Money-grade rules for an amount that crosses a store boundary — exact-decimal money columns with explicit precision and scale, over-scale writes rejected rather than rounded, non-finite and free-text-currency constraints, arithmetic in the query language banned, one named read boundary, appended effect rows, version-guarded updates, migrations that compute money, and the verdict on every shape a repo assembles out of stored money. ALWAYS load before adding or changing a money column, a migration, a view, a query that reads or totals an amount, a row mapper, or a stored balance. States the kind of check each rule needs; the tool is named in the matching stack skill (money-java).
 ---
 # Money-grade rules: the store boundary
 

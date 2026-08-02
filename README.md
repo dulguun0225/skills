@@ -138,3 +138,28 @@ The preflight session says so before spending anything.
 ```bash
 npx skills add dulguun0225/skills -a claude-code -y
 ```
+
+Installing places the skills; it does not make them fire. A skill fires when
+the agent judges its `description` relevant at session start, and a miss is
+silent — the measured baseline and its caveats are in
+[docs/history/firing-harness.md](docs/history/firing-harness.md). Two levers
+raise the odds. The descriptions here are directive-worded ("ALWAYS load
+before …") since 2026-08-03. The other lever is the consumer's: add a pointer
+block to the installing repo's `CLAUDE.md`, so every session starts with an
+always-loaded line saying the skills exist:
+
+```markdown
+Agent Skills from dulguun0225/skills are installed here. Before writing or
+changing code that touches money, caching, asynchronous work, database keys,
+human-facing numbers, logging, HTTP contracts, CI gates or dependency picks —
+and before picking any library, tool or stack — check the installed skills
+and load every one whose description matches the work.
+```
+
+Both levers come from one external 650-trial activation study (web-sourced
+2026-08-03, unverified here — see
+[docs/history/premise-review.md](docs/history/premise-review.md)): an
+always-loaded pointer line moved activation from roughly half to roughly
+two-thirds, and directive-worded descriptions moved it above 90%. Those are
+another model's numbers on another skill set; the check that measures this
+set is `npm run firing`.

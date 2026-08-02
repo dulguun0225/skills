@@ -1,6 +1,6 @@
 ---
 name: money-api
-description: Money-grade rules for money crossing a process boundary — a string decimal plus an explicit currency on the wire, a JSON number on a money field rejected at parse, required money fields, counterparty minor-unit tables, constructor-only deserialization, idempotency keys on money-mutating POSTs, required preconditions, and the money edge cases the conformance fuzzer must send. Load before adding or changing a request or response payload, a schema, or an endpoint that carries an amount of money, and before parsing or producing a file that carries one — a batch import, a statement, a settlement report, a spreadsheet upload. States the kind of check each rule needs; the tool is named in the matching stack skill (money-java).
+description: Money-grade rules for money crossing a process boundary — a string decimal plus an explicit currency on the wire, a JSON number on a money field rejected at parse, required money fields, counterparty minor-unit tables, constructor-only deserialization, idempotency keys on money-mutating POSTs, required preconditions, and the money edge cases the conformance fuzzer must send. ALWAYS load before adding or changing a request or response payload, a schema, or an endpoint that carries an amount of money, and before parsing or producing a file that carries one — a batch import, a statement, a settlement report, a spreadsheet upload. States the kind of check each rule needs; the tool is named in the matching stack skill (money-java).
 ---
 # Money-grade rules: the wire and the API contract
 
