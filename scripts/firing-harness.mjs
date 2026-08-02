@@ -112,10 +112,17 @@ try {
  */
 function runOne(cwd, prompt) {
   return new Promise((done) => {
+    // The prompt travels on stdin, never on the command line. On Windows the
+    // CLI may be a .cmd shim, which spawn can only reach with shell: true —
+    // and a shell:true arg list is concatenated through cmd.exe unescaped, so
+    // a multi-word prompt arrives as one word plus garbage. That shape burned
+    // a full A/B run on 2026-08-03: every session answered a fragment, nothing
+    // fired, and the run read as a firing result. Every remaining argument is
+    // a fixed single token, which cmd.exe concatenation cannot damage.
     const child = spawn(
       "claude",
       [
-        "-p", prompt,
+        "-p",
         "--output-format", "stream-json",
         "--verbose",
         "--max-turns", "2",
@@ -123,8 +130,9 @@ function runOne(cwd, prompt) {
         "--disallowed-tools", "Bash", "Read", "Write", "Edit", "Grep", "Glob", "WebFetch", "WebSearch", "Task", "Agent",
         ...(args.model ? ["--model", args.model] : []),
       ],
-      { cwd, env: { ...process.env, CLAUDE_CONFIG_DIR: join(cwd, "..", "cfg") }, stdio: ["ignore", "pipe", "pipe"], shell: process.platform === "win32" },
+      { cwd, env: { ...process.env, CLAUDE_CONFIG_DIR: join(cwd, "..", "cfg") }, stdio: ["pipe", "pipe", "pipe"], shell: process.platform === "win32" },
     );
+    child.stdin.end(prompt);
     const timer = setTimeout(() => child.kill("SIGKILL"), TIMEOUT_MS);
     let out = "";
     let err = "";
@@ -139,6 +147,7 @@ function runOne(cwd, prompt) {
 
 function parseSession(stdout, stderr) {
   const skills = [];
+  let text = "";
   let cost = 0;
   let error = null;
   for (const line of stdout.split("\n")) {
@@ -160,12 +169,13 @@ function parseSession(stdout, stderr) {
       if (block.type === "tool_use" && block.name === "Skill" && block.input?.skill) {
         if (!skills.includes(block.input.skill)) skills.push(block.input.skill);
       }
+      if (block.type === "text" && typeof block.text === "string") text += block.text;
     }
     if (ev.error) error = ev.error;
     if (typeof ev.total_cost_usd === "number") cost = ev.total_cost_usd;
   }
   if (!stdout.trim()) error = error ?? (stderr.trim().split("\n").pop() || "no output");
-  return { skills, cost, error };
+  return { skills, text, cost, error };
 }
 
 /**
@@ -174,7 +184,19 @@ function parseSession(stdout, stderr) {
  * times, and the operator reads it as a firing result rather than a setup one.
  */
 async function preflight(cwd) {
-  const probe = await runOne(cwd, "Reply with the single word: ready.");
+  const probe = await runOne(cwd, "Reply with the single word: pomegranate.");
+  if (!probe.error && !/pomegranate/i.test(probe.text)) {
+    // An error-free session that cannot echo one word back did not receive the
+    // prompt. This is a real failure shape, not paranoia: on 2026-08-03 a
+    // Windows run passed the error-only preflight and burned all 88 sessions
+    // answering prompt fragments mangled by cmd.exe concatenation, and the
+    // output read as a firing result — every positive case a miss, every
+    // negative a pass. The word is one no model volunteers unprompted, so the
+    // check cannot pass by accident the way "ready" could.
+    console.error(`\nPreflight failed: the probe session ran without error but did not echo the probe word.`);
+    console.error(`The prompt is not reaching the model intact. Response received: ${JSON.stringify(probe.text.slice(0, 200))}`);
+    process.exit(1);
+  }
   if (probe.error) {
     console.error(`\nPreflight failed: ${probe.error}`);
     console.error(`

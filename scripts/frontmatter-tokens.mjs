@@ -111,7 +111,7 @@ console.log(`
 What this count does not decide:
   - whether a description is too long; it is also the only thing that makes the
     skill fire, and an unfired skill costs its description and delivers nothing.
-    `npm run firing --skill <name> --against <ref>` is what decides that half
+    \`npm run firing --skill <name> --against <ref>\` is what decides that half
   - what the harness actually injects — it renders name and description in its
     own format, so the framing column is this script's guess at that cost
   - the true Claude count; o200k_base is a different tokenizer
