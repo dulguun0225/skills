@@ -76,7 +76,7 @@ So dependency run **storage → api → core**, one back-edge core → api.
 
 ### Distribution
 
-`metadata.internal` stay **unset**. Absence from skills.sh directory already keep these unlisted; set `internal` would hide them from `npx skills --list`, which `npm run check` — only self-check in repo — depend on.
+`metadata.internal` stay **unset**. Absence from skills.sh directory already keep these unlisted; set `internal` would hide them from `npx skills --list`, which `npm run check` depend on. (Written when it was the only self-check here; two gates wired 2026-08-02 — [wired-gates](wired-gates.md) — and neither use `--list`, so the reason hold unchanged.)
 
 ### Carried forward, undecided
 

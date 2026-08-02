@@ -1,6 +1,6 @@
 # What each harvest cost
 
-*Moved out of `BACKLOG.md` on 2026-08-02, because it records what four closed harvests changed rather than what is owed. One correction applied on the way: the fourth harvest's paragraph said `primary-keys` carried "four sentences" of numbering material that were all pointed at rather than restated — it carries six things, two of them full directives `business-numbering` also states, now resolved as deliberate duplication with a named owner. See [business-numbering](business-numbering.md).*
+*Moved out of `BACKLOG.md` on 2026-08-02, because it records what the closed harvests changed rather than what is owed. One correction applied on the way: the fourth harvest's paragraph said `primary-keys` carried "four sentences" of numbering material that were all pointed at rather than restated — it carries six things, two of them full directives `business-numbering` also states, now resolved as deliberate duplication with a named owner. See [business-numbering](business-numbering.md).*
 
 Each row is a topic whose sources were identified during the corpus era. **The
 underlying research notes were never in this repository** and are not in its git

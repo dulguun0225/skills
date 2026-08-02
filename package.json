@@ -7,6 +7,9 @@
   },
   "scripts": {
     "check": "skills add . --list",
+    "check:evidence-order": "node scripts/evidence-order.mjs",
+    "check:pointers": "node scripts/dangling-pointer.mjs",
+    "gates": "npm run check:evidence-order && npm run check:pointers",
     "try": "skills use ./ --agent claude-code --skill"
   },
   "devDependencies": {

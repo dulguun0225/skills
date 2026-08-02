@@ -64,6 +64,7 @@ facts decay faster than anything else here. Each `SKILL.md` states its own ceili
 mise trust && mise install   # once per machine: mise refuses to run an untrusted config
 npm ci                       # exact tool versions from package-lock.json
 npm run check
+npm run gates
 ```
 
 `mise` pins node; `package-lock.json` pins the `skills` CLI, whose discovery
@@ -73,14 +74,22 @@ behaviour decides what counts as a skill in this repo.
 
 | Command | What it does |
 | ------- | ------------ |
-| `npm run check` | Lists the skills the CLI discovers here — the only self-check that exists. Anything it does not list is invisible to every consumer. |
+| `npm run check` | Lists the skills the CLI discovers here. Anything it does not list is invisible to every consumer. |
+| `npm run gates` | Runs both wired gates below. Fails the build; neither is advisory. |
+| `npm run check:evidence-order` | Every evidence heading that names a directive section runs in the directive text's order (`--orphans` lists the headings that name none). |
+| `npm run check:pointers` | No skill text cites a rule id, or links to a file, that its own installed dir does not carry (`--pairs` lists the cross-skill id citations). |
 | `npm run try -- <name>` | Runs one skill straight from the working tree, without installing it. |
 
 `npm run check` should list every directory under `skills/` — compare its output
 against `ls skills/` rather than against a number written here. It checks
 discovery and frontmatter, nothing else: it does not see a skill's resource files
-(`evidence.md`, `api.md`, `storage.md`, `shapes.md`), so a broken link inside one
-passes.
+(`evidence.md`, `api.md`, `storage.md`, `shapes.md`).
+
+The two gates are the pair `enforceable-rules` says are the only machine-checkable
+part of it, wired here on 2026-08-02. **Each prints what it does not decide on
+every run** — a check that is trusted past its reach is the false assurance that
+skill's first principle bans. Everything else in this repo, including all five
+incompleteness checks, is still reading.
 
 ## Installing from this repo
 

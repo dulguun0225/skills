@@ -295,11 +295,19 @@ and no implementation, which `SKILL.md` states as a gap rather than a plan.
   incompleteness checks.** All five ground out in failures of rule sets written by
   one author under one bar. An outside rule set either reproduces the failures or
   narrows the checks.
-- **Either wireable check actually being built here.** Gap 2 records that both
-  existed once, in an unpublished build nobody installing this skill can reach;
-  building one closes the gap and, more
-  usefully, produces the first evidence about how often the two failures they
-  catch actually occur.
+- *Fired 2026-08-02:* **both wireable checks were built, over this skill set
+  itself.** The trigger asked for the first evidence about how often the two
+  failures they catch actually occur, and the answer on a clean tree is **zero of
+  either** — one rule set, one author, so it is a weak number and not a rate.
+  What the build produced instead was a finding about the evidence-order rule as
+  this skill states it: **9 of 17 evidence files anchor to the directive text and
+  8 anchor to nothing**, being organised by research pass rather than by
+  directive. The gate declares those 8 by name rather than bending the rule, and
+  gap 2 is narrowed, not closed — the checks are still described here and not
+  shipped as code, and nothing runs them automatically. **What is still owed is
+  the same trigger run by someone else**: either check built against a rule set
+  written outside this corpus, where a non-zero failure rate would be the first
+  real evidence for the rule.
 - **A false-green gate found in this skill set's own rules.** The first principle's
   strongest clause has three instances, all of them tools this set bans or names.
   One inside the set would be worth more than all three, and would test whether

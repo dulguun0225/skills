@@ -1,39 +1,22 @@
 # Backlog
 
-Topics, not verdicts. **Nothing on this page has had a research pass in this
-repository**, and nothing here is a commitment to build. A row becomes a skill
-only at the bar `tech-decision-research` and `enforceable-rules` state: a framed
-decision, an adversarial panel, refutation votes against primary sources, dated
-evidence, and a named check per directive.
+Owed work, in two kinds. **The topic rows are topics, not verdicts: none has had a
+research pass in this repository**, and none is a commitment to build. A topic
+becomes a skill only at the bar `tech-decision-research` and `enforceable-rules`
+state: a framed decision, an adversarial panel, refutation votes against primary
+sources, dated evidence, and a named check per directive. **The evidence rows are the
+opposite** — skills already published, carrying what each still owes to raise a
+marker.
 
-Salvaged on 2026-08-01 from the imported decision corpus, which was deleted the
-same day once every one of its rule sets had been published as a skill. The
-corpus is recoverable from git history at commit
-`428bd5411884567d68bdf5554a0492977427a815`.
+The topic rows were salvaged on 2026-08-01 from the imported decision corpus, which
+was deleted the same day once every one of its rule sets had been published as a
+skill, except where a later harvest added one. The corpus is recoverable from git
+history at commit `428bd5411884567d68bdf5554a0492977427a815`.
 
-**This page carries what is owed and nothing else.** What a pass closed, and what
-each check found, goes to `docs/history/`. **That split was violated on 2026-08-02
-and the page nearly doubled while the work on it was being finished** — 221 lines to
-317, because every closed check wrote its findings here instead of into a history
-file. Restored the same day to 116. **A backlog that grows as work completes is
-recording the wrong thing**; the closure records are in
-[incompleteness-checks](docs/history/incompleteness-checks.md),
-[harvests](docs/history/harvests.md) and
-[evidence-owed-longform](docs/history/evidence-owed-longform.md).
-
-## Checks over the published skills — closed 2026-08-02
-
-**All five of `enforceable-rules`' incompleteness checks have been run over every
-published skill.** Nothing here is owed. What each check found, per skill, is in
-[docs/history/incompleteness-checks.md](docs/history/incompleteness-checks.md) —
-**a closure record, which is why it is not on this page.**
-
-**What that leaves owed, and it is not a check**: none of the five is wired
-anywhere. Every pass was scratch scripts plus reading, and `enforceable-rules` says
-plainly that all five are unhostable by construction. **The two wireable checks that
-skill describes — the evidence-order check and the dangling-pointer check — are
-still not in this repo**, and both were run by hand on 2026-08-02 against the newest
-skill. Writing them is a bounded session.
+**This page carries what is owed and nothing else.** When a row closes, it leaves
+this page — what a pass closed, and what each check found, goes to
+`docs/history/`. **A backlog that grows as work completes is recording the wrong
+thing.**
 
 ## Evidence owed on a published skill
 
@@ -87,18 +70,13 @@ re-verifying its claims from primary sources, splitting portable rules from
 project-shaped facts, recording the premise each rule holds under, and writing the
 skill.
 
-**Cost, from four harvests: a day, not a research project** — the estimate has held
-every time. **Both remaining rows have a decision record in `../net-saas`**, so a
-harvest starts from a written decision with named losers rather than from a topic
-summary. **That does not promote either row**: a decision record states grounds, it
-is not research notes, and the records found so far cite no primary source for
-anything.
-
-**What each of the four harvests cost and changed is in
-[docs/history/harvests.md](docs/history/harvests.md)** — closure records, not owed
-work. The one lesson that binds the rows below: **a row naming "research notes" has
-three times named a hope rather than a location**, and the two below name records
-that exist.
+**Cost, from every harvest run so far: a day, not a research project.** **Both
+remaining rows have a decision record in `../net-saas`**, so a harvest starts from a
+written decision with named losers rather than from a topic summary. **That does not
+promote either row**: a decision record states grounds, it is not research notes, and
+the records found so far cite no primary source for anything. The lesson that binds
+both rows: **a row naming "research notes" has repeatedly named a hope rather than a
+location**, and these two name records that exist.
 
 | Candidate skill | Named sources | What it would carry |
 | --------------- | ------------- | ------------------- |
