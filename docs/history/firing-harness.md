@@ -196,6 +196,52 @@ and `async-handoff-java-1` missed with nothing rather than pulling
 `java-backend-rules`. One new wrong-sibling appeared: `caching-java-2` pulled
 `caching` alone on the worktree arm.
 
+## The Java collapse explained, 2026-08-03 — it is the harness's design, not the descriptions
+
+The 16 Java-fixture cases re-run at `--repeats 5` on the `ALWAYS load`
+descriptions: **16/80 over all, $16.71** (`claude-opus-5`, CLI 2.1.220,
+win32) — the collapse is real, not one-repeat noise. But the harness now
+persists each session's response text, and the transcripts are unanimous
+about the mechanism. Of the 55 sessions where nothing fired, **48 open with
+explore intent** — *"I'll start by finding the endpoint"*, *"I'll start by
+looking at the codebase"* — **7 produced no text, and zero answered the task
+directly.** Given a concrete repo and an execution-shaped prompt, Opus's
+first move is to read code. Every tool but `Skill` is denied and `max-turns`
+is 2, so the session dies at that first move, before the skill decision was
+ever going to happen.
+
+Three consequences, in order of weight:
+
+- **This is not description work, and no wording edit can fix it.** The
+  confound this file has carried since 2026-08-02 — *every tool but `Skill`
+  is denied, so the model cannot look at the repo before choosing, and a real
+  agent often can* — is not a caveat on these 80 sessions; it is the whole
+  result. The harness measures whether a skill fires **as the model's first
+  action**. Opus in a repo does not take skill-loading as a first action;
+  Sonnet evidently does, which also dissolves most of the 19/44-versus-31/44
+  model gap into a behavioral difference rather than a description or
+  platform one.
+- **What the harness cannot see is whether the skill fires on the second or
+  third turn of a real session** — after the exploration the model wanted,
+  when it starts writing code. Measuring that means a redesigned experiment:
+  read tools allowed, more turns, scored as *skill loaded before the first
+  code edit* rather than *skill loaded first*. More expensive per session,
+  and the only version whose java-case numbers mean delivery.
+- **The corpus's prompt shape decides the rate for repo-fixture cases.** The
+  two question-shaped java cases — `backend-stack-2` ("…Thoughts?") and
+  `guardrails-toolchain-2` ("Can I baseline them and move on?") — fired
+  **5/5 each**: nothing to explore first, so the relevance judgment happens
+  immediately. The execution-shaped prompts ("Add pagination…", "Implement
+  it") sat at 0–3/5. For bare-fixture cases the two shapes coincide, which is
+  why the bare rate was never distorted.
+
+Nine of the 64 misses fired a sibling instead of the skill under test —
+`money` without `money-java`, `async-handoff` without `async-handoff-java`,
+`caching` without `caching-java` — the stack-sibling boundary showing up
+inside the artifact: when Opus does load something before exploring, it
+reaches for the language-neutral parent, not the `-java` tool mapping its
+description tells it to install alongside.
+
 ## Running it on another machine
 
 This repo is developed on several. The script runs anywhere the `claude` CLI runs

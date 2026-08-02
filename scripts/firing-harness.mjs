@@ -83,7 +83,7 @@ try {
       const fired = await runOne(v.sandboxes[c.fixture], c.prompt);
       const line = verdict(c, fired);
       console.log(`  ${symbol(line.status)} ${c.id}${args.repeats > 1 ? `#${i + 1}` : ""}`.padEnd(30) + describe(c, fired));
-      return { case: c, run: i, fired: fired.skills, cost: fired.cost, error: fired.error, ...line };
+      return { case: c, run: i, fired: fired.skills, text: fired.text, cost: fired.cost, error: fired.error, ...line };
     });
   }
 
@@ -402,7 +402,11 @@ function symbol(status) {
 function strip(v) {
   return {
     label: v.label,
-    results: v.results.map((r) => ({ id: r.case.id, skill: r.case.skill, run: r.run, status: r.status, fired: r.fired, cost: r.cost, error: r.error })),
+    // The response text is the only record of what the model did INSTEAD of
+    // loading a skill — the diagnostic every miss needs and the console line
+    // cannot carry. Truncated: a session that answers the task at length is
+    // legible from its opening, and 88 full transcripts is a log, not a report.
+    results: v.results.map((r) => ({ id: r.case.id, skill: r.case.skill, run: r.run, status: r.status, fired: r.fired, cost: r.cost, error: r.error, text: (r.text ?? "").slice(0, 4000) })),
   };
 }
 
