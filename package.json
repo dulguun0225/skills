@@ -11,6 +11,8 @@
     "check:pointers": "node scripts/dangling-pointer.mjs",
     "tokens": "node scripts/token-count.mjs",
     "tokens:frontmatter": "node scripts/frontmatter-tokens.mjs",
+    "tokens:sections": "node scripts/token-sections.mjs",
+    "firing": "node scripts/firing-harness.mjs",
     "gates": "npm run check:evidence-order && npm run check:pointers",
     "try": "skills use ./ --agent claude-code --skill"
   },

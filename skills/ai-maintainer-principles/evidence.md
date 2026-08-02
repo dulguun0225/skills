@@ -363,6 +363,32 @@ hand-built piece without both is not done.
 most wrongly" is the conversion's ground.** The record states the obligation and
 its instances.
 
+## The worked case — one repo, 2026-06-11..14
+
+**Moved here from `SKILL.md` on 2026-08-02, verbatim.** Its own opening sentence
+calls it evidence that the directives discriminate, and says it is not a template.
+What stayed in the directive text is the corpus favourites this repo rejected, each
+with the ground it lost on, and the one directive the worked case half-fails.
+
+**One org's decisions, listed as evidence directives above discriminate. Not
+template.** That repo is single multi-tenant financial backend, agent as sole
+maintainer, no operations role, no human code reader.
+
+| Decision | Directive it instantiate |
+| -------- | ------------------------ |
+| Fourteen enforced modules, one deployable, roles selected at startup | *Count the independent wills* |
+| Boundary criteria set of eight, last one "fits one session", with nested sub-modules as relief valve — seven such sub-modules declared | *A module is what one session can hold* |
+| **jOOQ** chosen for zero runtime-silent machinery; **Hibernate ORM and Spring Data JPA** rejected — even in a stateless profile with no persistence context, no dirty checking, no lazy loading and no cascades — on the four grounds in `evidence.md`, of which the load-bearing pair are corpus gravity toward the banned idioms and the silent `UPDATE` any lapse back into the stateful API reintroduces | *Design out any requirement that needs whole-program reasoning* |
+| Constructor injection, Spring MVC route registration and `@ConfigurationProperties` kept as boot-failing; **Spring Security and the Modulith event registry kept as priced runtime trust**, each pinned by a standing test — per-endpoint authorization probes, and a kill-between-commit-and-handler redelivery test | *Startup-loud magic is acceptable*, all three branches |
+| `@Transactional` banned; **`DSLContext` not an injectable bean**, reachable only as the lambda parameter of a transaction wrapper, so a query outside a transaction is unwritable rather than merely banned | *Startup-loud / runtime-silent*, with `enforceable-rules`' *unwritable beats banned* |
+| **palantir-java-format via Spotless**, zero per-file configuration, `spotless:check` failing the build; **Picnic error-prone-support Refaster rules** rewriting equivalent constructs to one canonical shape on the compile pass | *One idiom, imposed mechanically* |
+| Every schema change a committed Flyway migration; alert rules committed with a `promtool` fire-test; no application surface managed from a console | *Operational state lives in the repo* |
+| Verification stack declared to *be* the code review; fresh-context adversarial pass with committed verdict; **PIT mutation testing on the money modules**, goldens from hand-computed worked examples, and the ledger invariant suite named as the non-model backstops | *The review substitute* |
+| Predecessor system declared capability inventory with no parity fixture layer | *A predecessor system is an inventory* |
+| Zero retries, un-rottable quarantine file, named non-quarantinable set | *Zero retries* |
+| **jOOQ's** single-maintainer vendor priced once: health signals, failure shape, three-step exit ladder, trigger to step down. **The repo's other load-bearing dependency, Spring, was never priced this way** — so the worked case half-fails the directive it is published under, exactly as its runtime-framework clause predicts | *Price the bus factor by failure shape* |
+| Concurrency suite, crash injection, counter contention, sweep volume caps each named as obligation beside the piece they cover | *A hand-built subtle piece* |
+
 ## The two counterfactuals
 
 **They are two documents, they change different axioms, and the first draft of this
@@ -384,6 +410,21 @@ the record whose axiom it stated, which is why both are now named separately.
 **The fused version asserted that the transactional core stays inseparable under the
 team-per-deployable axiom.** It does not; that is true only of the note's weaker
 scenario. The date attached to the fusion was the note's, applied to the variant.
+
+**What each counterfactual left standing, from the copy that was in `SKILL.md`
+until 2026-08-02.** Under the team-per-deployable variant: **the boundaries
+themselves survive**, drawn on criteria that hold either way, and the
+money-on-the-wire rules survive by being restated on every new transport — while
+the boundary criterion *fits one session* is replaced by team cognitive load.
+Under the note's one-owner-per-module scenario: **nothing in money or data moves
+at all**, the transactional core stays inseparable because physics does not care
+who maintains it, and ban lists plus compile-checked catalogs become the only
+thing holding one codebase together against fourteen agents' idiom drift. Its
+conclusion was that you would still start where the real repo is and let the
+recorded triggers fire.
+
+**Read both as method, not verdict:** change exactly one premise, keep everything
+else, re-derive, list what survived.
 
 **Both are carried as method, not verdict**, and two things travel with them:
 

@@ -438,6 +438,80 @@ confidence.
   routinely confused with, and `java-backend-observability` for request identity,
   which a row key may be logged beside and never stand in for.
 
+## The worked case — one repo, 2026-06-12
+
+**Moved here from `SKILL.md` on 2026-08-02, verbatim.** Its own opening sentence
+calls it evidence that the directives discriminate, and says it is not a template.
+What stayed in the directive text is the verdict, one line per losing candidate with
+the ground it lost on, and the directive this worked case half-fails.
+
+**One org's verdict, listed as evidence the directives above discriminate. Not a
+template.** That repo is a single multi-tenant financial backend on PostgreSQL,
+agent as sole maintainer, whose REST API is a sold product banks integrate against
+and whose tenants move between database cells by logical replication.
+
+**The verdict: every table's surrogate key is `id uuid NOT NULL DEFAULT uuidv7()`.**
+Pure children take a composite natural key instead. Standards-defined codes stay
+natural. Library tables keep their own. Sequences banned everywhere — `serial`,
+`bigserial`, `GENERATED ... AS IDENTITY`, `CREATE SEQUENCE` — with sequential
+business numbers implemented as transactional counter rows in the tenant schema,
+so a tenant move carry **zero** sequence-reset obligations.
+
+### The candidate list and the ground each lost on
+
+| Candidate | What it won on | What it lost on |
+| --------- | -------------- | --------------- |
+| **UUIDv7 everywhere** *(winner)* | one mechanical rule; no sequence state to move; unambiguous in a grep across tables and tenants; client-assignable, which the named escape-hatch store (TigerBeetle behind a posting seam) require | index and heap size, and 36-character ids in every URL and log line |
+| **bigint `GENERATED ALWAYS AS IDENTITY` everywhere** | smallest indexes — roughly a quarter less footprint on hot tables; best token ergonomics in logs; loud failure modes; per-schema sequences isolate tenant id spaces hermetically | **the sold API**: raw sequential ids in URLs are enumerable and leak volume and growth, forcing an external-id retrofit later anyway. Plus a two-to-four-hundred-sequence reset obligation per tenant move, log-wide id ambiguity, string serialization needed regardless, and an id-remapping layer at the escape-hatch seam at the worst moment |
+| **Hybrid — bigint key internally, uuid `external_id` on API-exposed roots** | the strongest-sounding compromise, and its table-classification problem **is** solvable mechanically by the same document-derived ratchet | its enforcement core — an internal-id wrapper type with no JSON serializer — **collide with the repo's own outbox**: cross-module events legitimately carry internal ids, so the rule become serialization-context-dependent, two DTO tiers with scoped bans, and "which context is this DTO in" is the standing judgment call the constitution forbid. Also keep bigint's per-move sequence obligation, double identifier bookkeeping forever, and pay the wide-key cost anyway on precisely the API-visible tables |
+| **TSID / Snowflake, 64-bit time-sorted** | eight bytes **and** time-sorted — the only candidate that get both | node-id coordination is a hand-wired per-deployment obligation whose failure mode is **silent key collisions on the money path**; the libraries on that stack are single-maintainer; no native generation in the engine, so the generator is a hand-built subtle piece by that repo's own rule; and near-zero entropy mean a sold API need an external id anyway — **it collapse into the hybrid with worse dependencies** |
+
+**Precedent the pass recorded**, and it is the two-identifier split of *The opaque
+key and the human-facing number*: **Mambu**, the closest comparable multi-tenant
+core-banking product, key every table with an application-generated UUID and carry
+separate short business identifiers. **SWIFT gpi** track every cross-border payment
+by a mandated UUID.
+
+### What the choice cost, booked rather than discovered
+
+- Primary- and foreign-key indexes roughly a quarter larger on keyed tables — with
+  the heaviest table exempted by the pure-child rule, and per-tenant schemas keeping
+  each index tenant-sized.
+- Joins single-digit percent larger.
+- 36-character ids in every URL and log line.
+- Export columns rendering as text until the columnar logical type is verified in
+  that toolchain.
+
+### The re-open triggers, and the shape of them
+
+**Named on the winner, and both narrow deliberately:** journal-line read latency
+at the 99th percentile degrading past twice the bigint baseline at the projected
+ceiling, or a sustained ledger-insert requirement above fifty thousand per second on
+a single stream — **either flip only the ledger tables to a named exception behind
+the posting seam, never the universal rule.** And separately, a regulatory or
+customer-contract prohibition on timestamp-bearing identifiers — none found at the
+time — would swap the default for the affected class only.
+
+**What make the first of those executable rather than aspirational, and it is the
+part worth copying**: it is measured against a **committed baseline for the losing
+candidate**. The bigint number is kept rather than discarded at the moment bigint
+loses. A trigger phrased as "if it gets too slow" have nothing to compare against
+and never fire.
+
+### What the record do not carry
+
+- **No re-open trigger per loser.** The triggers above are conditions on the
+  winner. Nothing state what would make the hybrid or TSID worth re-examining.
+  `backend-stack`'s *Record the losers and their grounds* require one per loser, so
+  **this worked case half-fail that directive, exactly as `backend-stack`'s own
+  does** — and inventing a trigger nobody set would author the pass's verdict rather
+  than record it.
+- **No primary source for any of it.** The engine behaviours, the write-ahead-log
+  multiplier, the RFC mandate, the index-pointer difference between engines are all
+  checkable and none are cited.
+- **The benchmark is the pass's own**, run at that repo's scale on that repo's
+  hardware, and not reproduced anywhere in this skill set.
+
 ## What this skill does not carry
 
 - **The whole business-numbering machinery**, named above. It is the largest single

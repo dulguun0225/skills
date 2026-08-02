@@ -311,3 +311,33 @@ Recorded by the 2026-07-27 pass, plus the items its own notes flag.
   belongs in a transactional table instead. This trigger is why the phrase's
   meaning is defended in [SKILL.md](SKILL.md) against being redefined for a
   cache.
+
+## Markers, dates, and what they mean
+
+**Moved here from `SKILL.md` on 2026-08-02, verbatim.** The marker definitions, the
+per-claim markers beside each directive, the marker ceiling and the lapse rule all
+stayed in the directive text; this is the claim ledger they refer to — what each
+claim is, what marker it carries, and the date it was taken.
+
+| Claim | Marker | Date |
+| ----- | ------ | ---- |
+| A Scoped Value binding never reaches a forked subtask on this stack | confirmed | 2026-07-27 |
+| Logback never inherits its context map into a child thread, and offers no flag | confirmed | 2026-07-27 |
+| Log4j 2 inherits only under a system property; the JUL and reload4j bindings inherit by default | confirmed | 2026-07-27 |
+| A missing context key renders as the empty string and throws nothing | confirmed | 2026-07-27 |
+| The weaving agent's mechanism, and its vendor-default status | primary-source verified | 2026-07-27 |
+| The starter uses autoconfiguration, not weaving | primary-source verified | 2026-07-27 |
+| Structured JSON logging ships natively in Spring Boot since 3.4 | primary-source verified | 2026-07-27 |
+| ArchUnit's standard-stream and logging-framework rules are public API | primary-source verified | 2026-07-27 |
+| ArchUnit cannot host the unloggable-domain-type rule | primary-source verified | 2026-07-27 |
+| Every unique label combination is a new time series; high-cardinality labels are advised against | primary-source verified | 2026-07-27 |
+| Cardinality is boundable off the shelf on both sides | primary-source verified — corrected from bespoke | 2026-07-27 |
+| Alert fire-tests are off-the-shelf, must-not-fire included | primary-source verified — corrected from bespoke | 2026-07-27 |
+| The off-the-shelf context-propagation library's three caveats | primary-source verified | 2026-07-27 |
+| Call-site prevention over pipeline scrubbing | convention | 2026-07-27 |
+| The autoconfiguration probe test | convention | 2026-07-27 |
+| The event and metric catalogs | convention | 2026-07-27 |
+| The mandatory-correlation-field contract test | convention | 2026-07-27 |
+| The error-id-resolves-to-a-log-event test | convention | 2026-07-27 |
+| The database-export poller | convention | 2026-07-27 |
+| Telemetry's disposability | convention | 2026-07-27 |

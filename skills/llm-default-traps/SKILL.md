@@ -174,24 +174,8 @@ Silence read as coverage, so state each.
 
 ## Markers, dates, and what they mean
 
-Confidence, per claim: **confirmed** mean survived three independent refutation vote against primary source. **Convention** mean defensible design argument no such pass confirmed. **Recorded** — third value in table below, used once — mean dated observation carried as history not current fact, re-verify before rely on or repeat. Date attached to every claim because of lapse rule: **past `review-by` 2027-01-24, every *confirmed* marker in this skill reads as *convention* until a new pass re-dates it**, no maintainer action needed. That rule only work if date visible beside claim, so each directive carry one.
+Confidence, per claim: **confirmed** mean survived three independent refutation vote against primary source. **Convention** mean defensible design argument no such pass confirmed. **Recorded** — this skill's own third value, used for exactly one claim, the scanner-compromise record — mean dated observation carried as history not current fact, re-verify before rely on or repeat. Date attached to every claim because of lapse rule: **past `review-by` 2027-01-24, every *confirmed* marker in this skill reads as *convention* until a new pass re-dates it**, no maintainer action needed. That rule only work if date visible beside claim, so each directive carry one.
 
 Enforcement, per rule: **off-the-shelf** mean tool do it with config; **bespoke** mean check must be written; **convention** mean human or agent asserting it be all there is.
-
-Confidence markers as they stand:
-
-| Claim | Marker | Date |
-| ----- | ------ | ---- |
-| Hallucinated packages and slopsquatting are a real threat | confirmed | 2026-07-24 |
-| The lockfile-and-plan-gate response to it | convention | 2026-07-24 |
-| jqwik 1.10.0 and 1.10.1 write into agent-read output | confirmed | 2026-07-21 |
-| The general injection-surface rule | convention | 2026-07-24 |
-| SHA-pinning actions and scanners | confirmed (standing practice) | 2026-06-13 |
-| The specific scanner-compromise record behind it | recorded, re-verify at adoption | 2026-06-13 |
-| "Just store UTC" is wrong for a future legal deadline | confirmed | 2026-07-22 |
-| `de.jollyday` is dead; the fork is maintained | confirmed | 2026-07-22 |
-| ArchUnit cannot host a non-loggability rule | confirmed | 2026-07-22 |
-| JSR-275 and JScience are withdrawn or abandoned; JSR-385 is live | confirmed | 2026-07-22 |
-| The `char[]` clearing and String-pool claims are false | confirmed | 2026-07-22 |
 
 Ground behind each claim — with source where pass named one — claim that must **not** be cited, and condition that reopen a rule: one hop away in **[evidence.md](evidence.md)**.

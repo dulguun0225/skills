@@ -26,12 +26,16 @@ const ROOT = fileURLToPath(new URL("..", import.meta.url));
 // that anchors to nothing is exactly what a silent reorganisation looks like —
 // the difference is that these were written that way and reviewed that way.
 // Adding a name here is a decision; leaving one out fails the build.
+//
+// The list shrinks as evidence files gain directive-named sections. It lost
+// `guardrails-toolchain` on 2026-08-02, when that skill's worked case moved into
+// its evidence file under the directive heading it had in the body — one anchored
+// heading is enough to make the declaration stale, and the check says so by name
+// rather than tolerating it.
 const PASS_ORGANISED = new Map([
   ["async-handoff", "grouped by pass, hostile audit and rejected alternatives, then a transport-landscape appendix"],
   ["async-handoff-shapes", "grouped by pass, dated claims, and the workflow engines it rejected"],
   ["caching", "grouped by pass, hostile audit and rejected alternatives, then an engine-landscape appendix"],
-  ["guardrails-toolchain", "one section places every directive in the source record, in place of one section per directive"],
-  ["llm-default-traps", "grouped by claim, each heading carrying its own confirmation date"],
   ["money-api", "grouped by wire, idempotency, preconditions and schema — one pass per group"],
   ["money-storage", "grouped by boundary and dated pass, not by directive"],
   ["tech-decision-research", "grouped by provenance, claims, and one worked case a reader can verify"],

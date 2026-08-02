@@ -6,7 +6,7 @@
 // exclusion is the point — `evidence.md` is read by a human deciding whether to
 // trust a rule set, never by the agent following it, so its size is not a cost
 // the consumer pays. Every other markdown file in a skill dir is counted:
-// `api.md`, `storage.md` and `shapes.md` are directive text one hop away, loaded
+// `api.md`, `storage.md`, `shapes.md` and `gates.md` are directive text one hop away, loaded
 // on demand and paid for when they are.
 //
 // This is a PER-FIRING cost, not a per-session one. Only frontmatter is loaded

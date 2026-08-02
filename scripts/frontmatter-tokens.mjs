@@ -10,7 +10,8 @@
 //      every session and every turn, for skills that never fire. THIS SCRIPT.
 //   2. skill fires — the SKILL.md body loads. Paid per invocation. `npm run
 //      tokens` measures that.
-//   3. resource file read — `evidence.md`, `api.md`, `storage.md`, `shapes.md`
+//   3. resource file read — `evidence.md`, `api.md`, `storage.md`, `shapes.md`,
+//      `gates.md`
 //      load only if the body points at one and the agent opens it. Often never.
 //
 // The consequence for authoring: a long `description` is expensive in a way a
@@ -109,7 +110,8 @@ if (broken.length) {
 console.log(`
 What this count does not decide:
   - whether a description is too long; it is also the only thing that makes the
-    skill fire, and an unfired skill costs its description and delivers nothing
+    skill fire, and an unfired skill costs its description and delivers nothing.
+    `npm run firing --skill <name> --against <ref>` is what decides that half
   - what the harness actually injects — it renders name and description in its
     own format, so the framing column is this script's guess at that cost
   - the true Claude count; o200k_base is a different tokenizer

@@ -375,3 +375,38 @@ the founding pass, which did not cover this area at all.
   colon-form vacuum lint. **Until it is verified it stays out**, because a bare 404 makes
   the case fail loud, which makes leaving it out a fail-loud convention rather
   than a premise-derived rule.
+
+## Markers, dates, and what they mean
+
+**Moved here from `SKILL.md` on 2026-08-02, verbatim.** The marker definitions, the
+per-claim markers beside each directive, the marker ceiling and the lapse rule all
+stayed in the directive text; this is the claim ledger they refer to — what each
+claim is, what marker it carries, and the date it was taken.
+
+| Claim | Marker | Date |
+| ----- | ------ | ---- |
+| 3.1-or-later document is JSON Schema a fuzzer can validate against | confirmed | 2026-07-25 |
+| OpenAPI's dominance as contract format | convention | 2026-07-25 |
+| springdoc output ordering non-deterministic run to run | primary-source verified | 2026-07-25 |
+| Specific cross-OS reference-ordering defect | uncertain — do not cite | 2026-07-25 |
+| Conformance fuzzer capabilities, determinism, seed keys | confirmed (keys are 4.x-specific) | 2026-07-25 |
+| Promoting fuzz gate from money-only to general | convention | 2026-07-25 |
+| RFC 9457 obsoletes RFC 7807, requires unknown members ignored | confirmed | 2026-07-25 |
+| Framework ships problem type + exception funnel | confirmed | 2026-07-25 |
+| No-message-leak guarantee | convention (rests on bespoke test) | 2026-07-25 |
+| Error catalog invisible to structural contract diff | convention (diff's scope confirmed) | 2026-07-25 |
+| Offset skips and duplicates; keyset immune given unique tiebreak | confirmed | 2026-07-25 |
+| Query builder emits offset through several targets | confirmed | 2026-07-25 |
+| Rejecting over-cap `limit` with 400 | convention — overrides Spring Boot clamp default | 2026-07-25 |
+| Cursor tamper and stale-sort rejection | confirmed enablement, bespoke construction | 2026-07-25 |
+| RFC 3339 instants, JSON number imprecision, strict local-date parsing | confirmed | 2026-07-25 |
+| `uuuu`-versus-`yyyy` era rationale | uncertain | 2026-07-25 |
+| Merge Patch treats null member as delete | confirmed | 2026-07-25 |
+| Categorical repo-wide `PATCH` ban | convention | 2026-07-25 |
+| Rejected versioning scheme rewrites responses at runtime | confirmed | 2026-07-25 |
+| Breaking-change differ exit behaviour | confirmed | 2026-07-25 |
+| Scope of breaking-change gate | convention | 2026-07-25 |
+| Guarded update affects zero rows when stale or absent | confirmed | 2026-07-25 |
+| `If-Match` uses strong comparison, never matches weak validator | confirmed | 2026-07-25 |
+| 412-versus-404 split | convention — needs re-read | 2026-07-25 |
+| Flat list-response shape, and pager carve-out | convention | 2026-07-25 |

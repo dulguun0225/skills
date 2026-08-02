@@ -151,3 +151,25 @@ carry this skill's.
   with the tool left to the ecosystem. See the sixth named gap in
   [SKILL.md](SKILL.md) for what a repo must record when a kind has no
   off-the-shelf host on its stack.
+
+## Markers, dates, and what they mean
+
+**Moved here from `SKILL.md` on 2026-08-02, verbatim.** The marker definitions —
+including this skill's own fifth value, *recorded* — and the lapse rule stayed in
+the directive text beside the directives they qualify. This is the claim ledger:
+what each claim is, its marker, and the date it was taken. The grounds for each sit
+in *The claims, with their grounds* above.
+
+| Claim | Marker | Date |
+| ----- | ------ | ---- |
+| Hallucinated packages and slopsquatting are a real threat | confirmed | 2026-07-24 |
+| The lockfile-and-plan-gate response to it | convention | 2026-07-24 |
+| jqwik 1.10.0 and 1.10.1 write into agent-read output | confirmed | 2026-07-21 |
+| The general injection-surface rule | convention | 2026-07-24 |
+| SHA-pinning actions and scanners | confirmed (standing practice) | 2026-06-13 |
+| The specific scanner-compromise record behind it | recorded, re-verify at adoption | 2026-06-13 |
+| "Just store UTC" is wrong for a future legal deadline | confirmed | 2026-07-22 |
+| `de.jollyday` is dead; the fork is maintained | confirmed | 2026-07-22 |
+| ArchUnit cannot host a non-loggability rule | confirmed | 2026-07-22 |
+| JSR-275 and JScience are withdrawn or abandoned; JSR-385 is live | confirmed | 2026-07-22 |
+| The `char[]` clearing and String-pool claims are false | confirmed | 2026-07-22 |

@@ -323,33 +323,5 @@ Enforcement, per rule: **off-the-shelf** mean tool do it with configuration; **b
 
 **Lapse rule:** past `review-by` **2027-01-21**, every *confirmed* marker in this skill read as *convention* until new pass re-date it, no maintainer action needed. That be why date sit beside every claim.
 
-| Claim | Marker | Date |
-| ----- | ------ | ---- |
-| jOOQ attached-record writes choose INSERT-versus-UPDATE and column set from in-memory state | confirmed | 2026-07-25 |
-| `fetchOne` tolerate zero rows, `fetchAny` pick arbitrarily; `fetchSingle` throw on both | confirmed | 2026-07-25 |
-| Plain SQL defeat jOOQ type checking, reopen injection surface | confirmed | 2026-07-25 |
-| jOOQ transaction API lambda-scoped, JDBC connection start in autocommit | confirmed | 2026-07-25 |
-| Four flagged migration operations lock or rewrite | confirmed | 2026-07-25 |
-| Generating jOOQ code from migrations in throwaway container | convention (mechanism primary-sourced) | 2026-07-25 |
-| Single-seam plain-SQL discipline, and checker wireability | convention | 2026-07-25 |
-| Making `DSLContext` non-injectable | convention | 2026-07-25 |
-| Choosing squawk over alternative migration linters | convention | 2026-07-25 |
-| Virtual threads final, request-handling API stable | confirmed | 2026-07-24 |
-| Virtual threads should never be pooled | confirmed | 2026-07-24 |
-| Connection pool already semaphore, need no second one | confirmed | 2026-07-24 |
-| Virtual-threads enablement property | confirmed | 2026-07-24 |
-| `keep-alive` be *required* | **refuted** — do not restore | 2026-07-24 |
-| `StructuredTaskScope` preview, artifacts version-locked | confirmed | 2026-07-24 |
-| Residual pinning on JDK 25 native-only | confirmed | 2026-07-24 |
-| Fan-out while holding connection can deadlock small pool | convention (mechanics primary-sourced) | 2026-07-24 |
-| Fan-out helper necessity, from executor close semantics | convention | 2026-07-24 |
-| Scoped Value binding never reach subtask on this stack | confirmed | 2026-07-27 |
-| JSpecify with NullAway mainstream on this stack | confirmed | 2026-07-21 |
-| JaCoCo `check` goal halt build on ratio floor | confirmed | 2026-07-25 |
-| Injected clock and business-date split | convention, no citation | 2026-07-21 |
-| Ban list defect-source claim | convention, no citation | 2026-07-21 |
-| Real PostgreSQL over in-memory substitute | convention, no citation | 2026-07-21 |
-| Choice of jOOQ over JPA | convention (no per-claim marker recorded) | 2026-06-11..14 |
-| WebFlux paradigm ban, Flyway rule, Jackson pick | convention, no evidence note | 2026-06-11..14 (inferred) |
 
 Ground behind each claim — with source where pass named one — claims that must **not** be cited, and conditions reopening rule be one hop away in **[evidence.md](evidence.md)**.

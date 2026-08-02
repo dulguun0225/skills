@@ -61,6 +61,42 @@ a ratchet, a contention harness or the alert rules. Band width, baseline churn a
 whether the gate flakes are all unobserved — which is what that skill's own *a gate
 only gates where its measurement is honest* would demand evidence for.
 
+## Context budget owed
+
+**Measured 2026-08-02, and four of the five reductions closed the same day** —
+directive text across the set fell from 175,380 to 150,918 tokens. The procedure —
+what moves, what must stay inline, which gate to run afterwards, and how to tell it
+worked — plus what each closed pass found and **one reduction that was built,
+measured and rejected because it made the set larger**, are in
+[docs/history/context-budget.md](docs/history/context-budget.md).
+
+| Owed | Why it is owed | Watch |
+| ---- | -------------- | ----- |
+| **Cut the enumeration out of the three long descriptions left** — `primary-keys` 358, `business-numbering` 306, `guardrails-toolchain` 300; `ai-maintainer-principles` done 2026-08-02, 360 → 277 | Frontmatter is paid every session whether the skill fires or not, and these three enumerate directives the agent gets in full once the skill fires | A check exists now — `npm run firing --skill <name> --against <ref>` — but it costs money and needs repeats, so measure before and after each edit rather than trimming all three and running once. All three fired 2/2 in the baseline as they stand. Method and the one worked example are in the history file |
+
+**Every figure behind these rows is re-runnable**: `npm run tokens:sections`,
+wired 2026-08-02. Re-measure before starting a row and after finishing one —
+`--repeated` for a section name carried by several skills, `--skill <name>` for
+one body.
+
+## Firing owed
+
+**Measured 2026-08-02 by `npm run firing`, the first check here that reaches a
+`description`.** Set-wide baseline: 31 of 44 cases fired as expected, four negative
+cases all clean, one session per case, $5.86 — **on `claude-sonnet-5`, which was
+the headless default and not a choice.** Method, the A/B that cleared the
+context-budget trim, the three confounds that make a single miss weak evidence, and
+what running this on a second machine needs are in
+[docs/history/firing-harness.md](docs/history/firing-harness.md).
+
+| Owed | Why it is owed | Watch |
+| ---- | -------------- | ----- |
+| **Re-take the baseline with `--model opus`** | Every figure in the row below it is Sonnet 5 by accident. These descriptions were written for agents running Opus, and the one Opus spot check contradicted the Sonnet result on the case it was run against. **Until this is done, no rate here is this set's firing rate** | ~$11 at $0.25 a session. Do it before acting on any other row in this table — all of them may be measuring the wrong model |
+| **Re-run the thirteen baseline misses at `--repeats 5`** | One session per case is a ranking of where to spend repeats, not a defect list — `money-1` is on it having fired minutes earlier on the identical prompt. Nothing on the list should be acted on until it stays below about half | ~$8 on Sonnet, ~$17 on Opus. Do this **before** any description edit prompted by the baseline, and after the re-take above — the list itself may change |
+| **`ai-maintainer-principles` fires about a third of the time on Sonnet 5** — 5/16 on the long description, 6/16 on the trimmed one | Its 277 tokens are paid every session by every consumer and delivered on a minority of the sessions it was written for. **It predates the trim**, so if it is real it is a description defect and not refactor damage | The only miss with repeats behind it — and the one case re-run on Opus fired first try, so this may be a Sonnet finding rather than a description finding. Settle the model before rewriting anything |
+| **Two sibling-boundary misses** — an `@Async` method pulled `java-backend-rules` over `async-handoff-java`; an invoice auto-cancelling after 14 days pulled `llm-default-traps` over `async-handoff-shapes` | A prompt landing on the wrong sibling is the most actionable failure the harness reports, because both descriptions are ours and the boundary between them is a thing we chose | One session each. Confirm with repeats first — and check whether the sibling that fired was actually wrong to |
+| **A second corpus author** | Every prompt in `firing-cases.json` was written by the same pass that read the descriptions, which is the harness's own version of the panel-of-one problem `guardrails-toolchain` owes a fix for. A prompt written by someone who has not read a description is worth several written by someone who has | Cheap. Anyone can add cases; the corpus rule is stated at the top of the file |
+
 ## Researched, unwritten
 
 Each row is a topic whose sources were identified during the corpus era. **The

@@ -1,6 +1,6 @@
 ---
 name: backend-stack
-description: How to choose a backend stack for a repo whose code is written by LLM agents and read line by line by nobody — rank candidates by what their build can refuse to ship rather than by what they let you express, count the independent enforcement hosts a stack offers rather than its type-system features, prefer a stack where the wrong call cannot be written over one where it is written and then flagged, price corpus gravity as a cost the winner carries rather than a reason it won, and treat operability as a veto rather than as the deciding criterion. Carries this skill set's own worked case, Java with Spring Boot Web MVC, jOOQ and PostgreSQL, with the enforcement-host census that grounds it and the language-layer candidate list — C#/.NET, Kotlin, Go and TypeScript, each with the ground it lost on, plus the verdict on every shape an organisation assembles out of stack choices — a second stack beside the first, a second language inside one repository, and a rejected candidate that arrives as a dependency anyway. Load before picking a language, runtime, web framework, persistence library or database for a new backend, before arguing that an existing stack should change, before adding a second language to a repository or an organisation, and before writing a rule set for a stack nobody has justified in writing.
+description: How to choose a backend stack for a repo whose code is written by LLM agents and read line by line by nobody — rank candidates by what their build can refuse to ship rather than by what they let you express, count the independent enforcement hosts a stack offers rather than its type-system features, prefer a stack where the wrong call cannot be written over one where it is written and then flagged, price corpus gravity as a cost the winner carries rather than a reason it won, and treat operability as a veto rather than as the deciding criterion. Carries this skill set's own worked case, Java with Spring Boot Web MVC, jOOQ and PostgreSQL, with the language-layer losers — C#/.NET, Kotlin, Go and TypeScript, each with the ground it lost on — plus the verdict on every shape an organisation assembles out of stack choices — a second stack beside the first, a second language inside one repository, and a rejected candidate that arrives as a dependency anyway. Load before picking a language, runtime, web framework, persistence library or database for a new backend, before arguing that an existing stack should change, before adding a second language to a repository or an organisation, and before writing a rule set for a stack nobody has justified in writing.
 ---
 # Choosing a backend stack for code nobody reviews
 
@@ -35,11 +35,11 @@ strong argument read like verified one.
   **2026-06-11..14** and its record is dated **2026-06-12**; it recorded
   rejections + grounds at both layers **with no per-claim confidence marker**.
   So *convention* is floor here, not verdict anyone wrote down. Primary sources
-  behind those grounds not published here — owed, see *What is recorded and
-  what still is not*.
+  behind those grounds not published here — owed, and the four gaps are named in
+  [evidence.md](evidence.md).
 - **Only non-opinion thing here is host census**, and it not research: it grep
-  over published skills, dated, stated with its command so anyone re-run it and
-  watch it move.
+  over published skills, dated, stated in [evidence.md](evidence.md) with its
+  command so anyone re-run it and watch it move.
 - **Lapse rule vacuous here — stated, not hidden.** Past `review-by`, every
   *confirmed* marker read as *convention* with no maintainer action, and
   **nothing here above convention**, so rule demote nothing. Stated because
@@ -194,7 +194,7 @@ easy to miss when rule set is artifact in front of you — fifteen skills on one
 stack look like accumulated justification. They accumulated *consequence*.
 
 Sentence survive from `java-backend-rules`, which carried it before this skill
-existed. It the reason host census below is stated as **re-runnable grep with a
+existed. It the reason host census is stated as **re-runnable grep with a
 date**, not as claim: census of this repo's own tool names is evidence about
 **Java's enforcement surface** — fact about ecosystem — and *not* evidence
 choosing Java was right.
@@ -245,219 +245,53 @@ and unbuilt. **Convention**, 2026-08-01.*
 
 ## The worked case — Java, Spring Boot Web MVC, jOOQ, PostgreSQL
 
-**Verdict, dated 2026-06-11..14, marked convention.** This section = criterion
-applied once. Not recommendation to adopt this stack, and by *A rule set is
-never a reason to adopt a stack* it cannot be read as one.
+**Verdict, dated 2026-06-11..14, marked convention.** Criterion applied once. Not a
+recommendation to adopt this stack, and by *A rule set is never a reason to adopt a
+stack* it cannot be read as one. **The record it come from is not published in this
+skill set**, so everything here is restated, not a pointer a reader can open.
 
-### The candidate list at the language and runtime layer
+**Winner — JVM, Java 25 LTS**, on verification-platform merit: every ground the pass
+gave is a host or a fail-loud default, not an expressiveness claim — pitest as the
+mutation ratchet, Error Prone as the one cheap host for *custom* compile-time checks,
+sealed interfaces plus exhaustive switch, `BigDecimal.divide` throwing with no
+rounding mode, Spring Modulith, and the deepest banking-domain corpus.
 
-**Recovered 2026-08-01 from the platform decision's own record, dated
-2026-06-12.** That record is the ADR set of the product repository the pass was
-run for; **it is not published in this skill set**, so what follow is the
-candidate list restated, not a pointer reader can open. Grounds are the pass's,
-verbatim in substance; markers are not — pass wrote none, so every line here is
-**convention**.
+**Losers, each with the ground it lost on** — the half of this record that overrides
+an instinct, so it stay in directive text:
 
-**What the pass was choosing under.** Same premise as this skill — one AI
-maintainer, humans never read code — plus its own scoping call that existing
-system is capability inventory only, so evaluation ran on **greenfield merit**
-and hiring pool counted for nothing.
+- **C#/.NET**, close second — silent zero-defaults on deserialization, and **open,
+  non-exhaustive enums**, so state machines are not compiler-checked.
+- **Kotlin** — mutation testing commercial-or-noisy on its bytecode, and a stdlib
+  **silently-rounding `BigDecimal /` operator**.
+- **Go** — **no maintained mutation testing**, statement-only coverage, and pervasive
+  silent zero-values landing in money code. It lost **despite** the best ops story of
+  the four, which is *Operability is a veto, not the criterion* in practice.
+- **TypeScript backend** — no enforced decimal type. Disqualified outright for a
+  ledger.
 
-**Winner — JVM, Java 25 LTS.** Won on verification-platform merit, and every
-ground is a host or a fail-loud default, not an expressiveness claim:
+**What the choice costs, booked rather than discovered.** Java on Spring Boot is near
+worst case for corpus gravity, and the ban lists are the bill: the corpus-dominant
+idiom for this stack is runtime-silent almost everywhere it matter —
+annotation-driven transactions, caching and scheduling, JPA dirty checking, field
+injection, annotation-bound message consumers, `-javaagent` bytecode weaving. **Every
+one banned by name in a sibling skill, each with a check**, cuz corpus advantage
+self-cancel. Those bans live in `java-backend-rules`, `caching` and `caching-java`,
+`async-handoff`, `java-backend-observability` and `llm-default-traps`;
+`ai-maintainer-principles` own the line they get drawn on — startup-loud machinery
+kept, runtime-silent banned — so a repo reading only a ban list have no way to tell
+which framework machinery survive it.
 
-- **PIT** = the mutation-testing ratchet against vacuous machine-written tests.
-- **Error Prone** = the one platform where *custom* compile-time checks are
-  cheap. Pass's own words: when lint is the reviewer, linter extensibility is
-  first-order.
-- **Sealed interfaces + exhaustive switch** = compiler-checked state machines.
-- **`BigDecimal.divide` with no rounding mode throws** — money math fail loud.
-- **Spring Modulith** = boundary verification plus a PostgreSQL outbox.
-- **Deepest banking-domain corpus** — and see *Price corpus gravity*, which is
-  the bill this same fact generate.
+*Check: none — this a record of a decision, not a directive. Grounds **convention**,
+2026-06-11..14. Re-open trigger per loser **not recorded by the pass**, and not
+invented here.*
 
-**Losers, each with the ground it lost on:**
+**The rest of this record is evidence and sit one hop away in
+[evidence.md](evidence.md):** the pass's full candidate list and what each candidate
+had, the dated enforcement-host census and the grep that re-runs it, the one
+competing census that exist — TypeScript, frontend, same org, role-confounded — and
+what the record does not carry: primary sources, a backend-role competing census, a
+re-open trigger per loser, and a criterion ever selected against a real alternative.
 
-| Candidate | What it had | Why it lost |
-| --------- | ----------- | ----------- |
-| **C#/.NET** — close second | Native `decimal`; compile-time project boundaries | Silent zero-defaults on deserialization; **open, non-exhaustive enums**, so state machines are not compiler-checked; commercially drifting outbox landscape |
-| **Kotlin** | Better language ergonomics | Mutation testing commercial-or-noisy on Kotlin bytecode; stdlib ship a **silently-rounding `BigDecimal /` operator**; idiom variance hurt fresh-session consistency |
-| **Go** | Best explicitness and best ops story of the four | **No maintained mutation testing**; statement-only coverage; pervasive silent zero-values land exactly in money code |
-| **TypeScript backend** | — | No enforced decimal type. Disqualified outright for a ledger |
-
-**Two things this list settle about the criterion above, and one it contradict.**
-Losers were rejected on **host absence and silent defaults**, not on
-expressiveness — which is *Rank a stack by what its build can refuse to ship*
-being applied before it was written down. Go lost **despite** best ops story,
-which is *Operability is a veto, not the criterion* in practice. The
-contradiction: pass **listed** minimal operational surface among things to
-maximise, i.e. as a ranked criterion, and this skill demote it to veto. **Pass's
-practice support the veto reading, its wording does not.** Stated, not resolved.
-
-*Check: none — this a record of a decision, not a directive. Grounds
-**convention**, 2026-06-12. Re-open trigger per loser **not recorded by the
-pass**.*
-
-### What the census actually shows
-
-**Java's enforcement-host surface unusually deep — that the ground verdict rest
-on.** Sixteen distinct build-failing hosts named across skills here, covering
-every category in *Count the independent enforcement hosts*:
-
-| Host category | Named in this skill set |
-| ------------- | ----------------------- |
-| Compiler plugin / processor | Error Prone, NullAway, JSpecify, the Checker Framework, jOOQ's `PlainSQLChecker` |
-| Architecture test | ArchUnit |
-| Property / fuzz generator | jqwik, Schemathesis |
-| Real-dependency container test | Testcontainers, Toxiproxy |
-| Schema / artifact lint | squawk, vacuum, promtool |
-| Contract diff | oasdiff |
-| Coverage and mutation | JaCoCo, pitest |
-| Dependency and build policy | maven-enforcer |
-
-**This a grep, not research, and stated so it can be re-run:**
-
-```bash
-grep -rlE 'ArchUnit|Error Prone|NullAway|JSpecify|Checker Framework|PlainSQLChecker|jqwik|Testcontainers|Toxiproxy|pitest|JaCoCo|squawk|vacuum|oasdiff|Schemathesis|promtool|maven-enforcer' skills/*/*.md
-```
-
-Taken **2026-08-01**. Counts move whenever skill added — that the point, not a
-defect. Census is evidence only with the date it was taken. What it establish is
-narrow: **compiler-plugin surface, architecture-test library, container-test
-story and artifact-lint story all exist and all in use here at once.** It does
-not establish no other stack have them. **One competing census exist, next
-section, and it a frontend one** — nothing here compare a stack doing this
-stack's job.
-
-**Candidate list give this its first discriminating data, and only for two host
-categories.** Pass recorded, per loser, that mutation testing is absent and
-unmaintained on Go, commercial-or-noisy on Kotlin bytecode, and that Go coverage
-is statement-only. That is the *coverage and mutation* host compared across
-three candidates — **not a census**, which would need all eight categories
-counted per candidate with a tool named for each.
-
-### The one competing census that exist, and what it actually discriminate
-
-**Recovered 2026-08-01, dated 2026-06-12..13, and it is a TypeScript census in a
-frontend role.** Same pass, same org, same premise, one repo — so it is not an
-independent evaluation, and its role confound is stated before its result, not
-after. Restated here, cuz that record not published in this skill set.
-
-| Host category | TypeScript, as that pass equipped it | Against the Java column |
-| ------------- | ------------------------------------ | ----------------------- |
-| Compiler | TypeScript strict, plus template type checking on by default | Parity |
-| Compiler plugin / processor | **None.** Lint run beside type checker, not inside it — no host for custom check on compile path | **Java-only category** |
-| Architecture test | dependency-cruiser, blocking. Pass's own words: the frontend's ArchUnit-equivalent | Parity |
-| Source-level rule | eslint wall plus framework template rules; dead-code gate blocking | Parity |
-| Property / fuzz | fast-check | Parity |
-| Real-dependency test | Browser-driver E2E per surface, accessibility assertions in same session | Analogue, not container |
-| Contract diff | Types generated from committed contract, so contract drift is a compile error | Parity, and shared contract lint sit above both |
-| Coverage and mutation | Coverage thresholds blocking. **Mutation host advisory, never blocking, narrow scope, adoption conditioned on unresolved upstream issue** | **Java blocking at 75% on money modules** |
-
-**Result cut against naive reading of this skill's own criterion.** Counting
-hosts, the two stacks near parity — seven of eight categories filled either
-side. Difference is **not count, it is gate strength and tool maturity**: one
-category absent entirely, and mutation host present-but-advisory with an open
-upstream issue gating its adoption. **That is *Enforcement-tool maturity is a
-separate question from runtime maturity* landing on real data**, and it the
-first case where a host category counted and then didn't decide anything.
-
-**What this census cannot settle.** It is a frontend, so schema-lint and
-container-test categories are role-shaped not language-shaped; browser E2E is
-not real-dependency container test; and TypeScript **backend** lost the language
-decision on absent decimal type, which no host count touch. **A backend-role
-census on a serious competitor is still owed** — this one narrow it, no close
-it.
-
-*Check: same grep discipline as census above — enumerate categories, name tool
-per cell, mark empty cell as gap not omission. **Convention**, 2026-06-12..13.*
-
-*Check: grep above, re-run with fresh date. Off-the-shelf — it a grep.
-**Convention**, 2026-08-01 — census is fact, inference from it is not.*
-
-### What the choice costs, booked rather than discovered
-
-**Java on Spring Boot near worst case for corpus gravity, and ban lists here are
-the bill.** Corpus-dominant idiom for this stack is runtime-silent almost
-everywhere it matter — annotation-driven transactions, caching and scheduling,
-JPA dirty checking, field injection, annotation-bound message consumers,
-`-javaagent` bytecode weaving. Every one banned by name in a sibling skill, each
-with a check, and **bans exist because corpus advantage self-cancel**: every
-future agent session generate with gravity toward exactly the constructs rules
-forbid.
-
-**Those bans published elsewhere, not restated here.** `java-backend-rules` own
-platform and annotation bans; `caching` and `caching-java` own
-caching-annotation ban; `async-handoff` own annotation-bound-consumer ban;
-`java-backend-observability` own bytecode-weaving ban; `llm-default-traps` own
-cross-stack dependency traps. This section name the cost; those skills carry the
-rules. **`ai-maintainer-principles` own the line those bans get drawn on** —
-startup-loud machinery kept, runtime-silent banned, runtime trust accepted only when
-priced by a standing test — so repo reading only ban list have no way to tell which
-framework machinery survive it.
-
-*Check: none — this a statement about a cost, and rules that discharge it carry
-own checks in skills named above. **Convention**, 2026-06-11..14.*
-
-### What is recorded and what still is not
-
-*This heading state a gap, not a directive — why it carry no check line. Every
-other `###` here carry one.*
-
-**Verdict is a contested win now, not an unexamined one.** Pass recorded
-rejections and grounds at **both** layers — persistence (JPA, Hibernate, Spring
-Data JPA, rejected as runtime-silent, named and grounded in
-`java-backend-rules`) and language/runtime (four candidates, table above,
-recovered 2026-08-01). Until that recovery this skill said no candidate list
-survived and stated its verdict as unexamined, same honesty
-`java-backend-rules/evidence.md` apply to the WebFlux ban. **That sentence
-retired, cuz the list exist.**
-
-**Nothing promote above convention anyway, and reason changed.** Before: no list.
-Now: list is a decision record with **no per-claim marker and no primary source
-cited anywhere in it**. Grounds are checkable claims — mutation-tool coverage per
-language, `BigDecimal` division semantics, enum exhaustiveness in .NET — and
-**none of them verified here against a primary source.** Anyone treating this
-verdict as verified is reading a dated decision as research.
-
-Four named gaps follow, none closable from inside this repo:
-
-- **Primary sources still owed, and now searched-for.** Record cite none, and
-  the material this skill set was converted from cite none either — it point at
-  the pass's own transcripts for steelmen and grounds, and those transcripts are
-  published nowhere. **Two records searched, both silent**, so treat sources as
-  possibly non-existent rather than merely unlocated. Every ground above is
-  therefore a claim someone made in June 2026 about another ecosystem's tooling,
-  and tooling claims decay fastest of any kind here.
-- **No competing census in a backend role.** One competing census exist and it
-  above — TypeScript, frontend, same pass and same org, so role-confounded and
-  not independent. Until an equivalent run for a competitor doing this stack's
-  job, census show Java's surface deep and **not** that it deeper.
-- **One recorded expectation point the other way, and no skill carry it.** The
-  material behind `caching` and `async-handoff` predicted a second stack would
-  host their type-design directives worse — that prediction is published in
-  those skills. **What is not published anywhere is its per-candidate half**,
-  which expected **Go** to host them *more* strongly than Java, on compiler-
-  enforced package boundaries and an unexported method making outside
-  implementation impossible. Restated here because it the only recorded claim in
-  this material pointing away from the winner; it is a prediction, nobody ran
-  it, and Go lost the actual decision on a different host category entirely.
-- **No re-open trigger per loser.** *Record the losers* require one and pass
-  wrote none, so nothing say what would make Go or C# worth re-examining. Not
-  invented here — inventing a trigger nobody set would be authoring the pass's
-  verdict, not recording it.
-- **Criterion never selected against a real alternative.** Written after the
-  choice it explain, generalising criteria that choice stated. Criterion that
-  only ever ratified one decision has not been tested — why central claim marked
-  *uncertain*, not *convention*.
-- **The rejected candidates' operational presence was never priced — added
-  2026-08-02 by the composite-shape check.** Losers are recorded as losers of a
-  ranking. **Nothing record which of them the build actually run** — a frontend
-  toolchain, CI actions, scanners, code generators — and a candidate that lose the
-  ranking while remaining load-bearing in the build have had no operability veto
-  applied to it and no bus-factor price attached. `ai-maintainer-principles` govern
-  it from the moment it arrive that way; **this skill never hand it over, and the
-  shape table now does.**
 
 ## Composite shapes an organisation assembles out of stack choices
 
@@ -466,16 +300,16 @@ Directives above govern one decision: a candidate, its enforcement hosts, its co
 gravity, its operability veto, its losers and their grounds. **An organisation build
 things out of two of those and this skill decided none of them** — which matter here
 more than the section's usual reason, cuz the organisation this worked case come from
-**already run more than one stack**, and the competing census below is drawn from its
-frontend. Every entry marked; **silence about a shape is a defect in this section.**
+**already run more than one stack**, and the competing census in
+[evidence.md](evidence.md) is drawn from its frontend. Every entry marked; **silence about a shape is a defect in this section.**
 The table promote no marker and add **no ban**.
 
 | Shape | Verdict |
 | ----- | ------- |
-| **A second stack in the same organisation** — a frontend, a data pipeline, a function in another language | **permitted, and it is the actual condition here, not a hypothetical.** The census below is a *frontend* profile, so the pass that produced this worked case had already made a second choice. What no directive say: **the host census, the gravity price and the rule sets are per stack, and none of them reach the second one.** Condition: each stack carry its own census and its own record, and **the rule sets published for the winner be read as binding nothing outside it** — a repo that assume otherwise have a defect class covered on one side of a language boundary and nowhere on the other |
+| **A second stack in the same organisation** — a frontend, a data pipeline, a function in another language | **permitted, and it is the actual condition here, not a hypothetical.** The competing census in [evidence.md](evidence.md) is a *frontend* profile, so the pass that produced this worked case had already made a second choice. What no directive say: **the host census, the gravity price and the rule sets are per stack, and none of them reach the second one.** Condition: each stack carry its own census and its own record, and **the rule sets published for the winner be read as binding nothing outside it** — a repo that assume otherwise have a defect class covered on one side of a language boundary and nowhere on the other |
 | **A second stack inside one repository** — a worker, a build tool, a test harness, a script | **permitted with conditions, and the conditions are absent.** *Count the independent enforcement hosts* count them for the language the service is written in. **A repository's build scripts, its code generators and its test fixtures routinely run on a different one**, and every host counted for the winner reach none of it. Condition: the census state which parts of the repository it cover, so the uncounted parts are visible as a blank rather than absent from the question |
 | **A rejected candidate that arrive as a dependency** — the losing runtime running the frontend build, the CI actions, the scanners, the code generators | **permitted, and this is the entry most likely to be missed.** A stack can lose the ranking and still be **operationally load-bearing**, and when it arrive that way it arrive with none of this skill's machinery: no operability veto applied to it, no gravity priced, no losers recorded. Condition: **a rejected candidate present in the build is a load-bearing dependency**, and `ai-maintainer-principles`' *Price the bus factor by failure shape, with an exit ladder* govern it from that moment — not this skill |
-| **An enforcement host that exist but whose gate is advisory** | **banned as a filled census row, and the census below is where this was caught.** *Count the independent enforcement hosts* already say hosts worth counting are ones that **fail a build**; the recovered competing census found a category where the tool exist and the gate is advisory with an unresolved upstream issue. **Counting that category as filled is the defect** — `guardrails-toolchain` own the general form, that an advisory tool is the one described as coverage later. Restated here because a census is a count, and a count is this repo's most-recorded failure |
+| **An enforcement host that exist but whose gate is advisory** | **banned as a filled census row, and the competing census in [evidence.md](evidence.md) is where this was caught.** *Count the independent enforcement hosts* already say hosts worth counting are ones that **fail a build**; the recovered competing census found a category where the tool exist and the gate is advisory with an unresolved upstream issue. **Counting that category as filled is the defect** — `guardrails-toolchain` own the general form, that an advisory tool is the one described as coverage later. Restated here because a census is a count, and a count is this repo's most-recorded failure |
 | **Two candidates tied on host count** | **permitted, and the tie is where the other directives start doing the work.** The recovered census have two columns filling seven of eight categories, so **host count did not discriminate and was never going to on its own.** What separated them was one absent category and one advisory gate — then *Price corpus gravity*, *Prefer a stack where the wrong call cannot be written* and the operability veto. Condition: a record that stop at the census have not finished the comparison |
 | **One host carrying most of a stack's rules** | **permitted with conditions, and the condition is named in a directive that stop short of it.** *Enforcement-tool maturity* record this as a live condition — one architecture-test library appear in more files than any other host here. What it do not say is what the repo owe because of it. Condition: **the rules that die with each host are enumerated per host**, so the blast radius of one tool going unmaintained is a list rather than a discovery |
 | **A rule the winning stack can host nowhere** | **permitted, and already decided** — *Count the independent enforcement hosts* say a stack missing a host carry that rule class as convention, and `enforceable-rules`' accounting rule require it be named as a gap rather than passed over. Restated because a stack chosen on a strong census read as covering everything it was ranked for |
@@ -507,8 +341,8 @@ downstream of that one**. Install it alongside.
   what follow from worked case, once chosen.
 - **`guardrails-toolchain`** — once stack picked, which tool may occupy a host
   and what disqualify one, plus four defect classes a host count never reach.
-  **Frontend census in section above is that skill's map read from other side**;
-  same record, published once, here.
+  **Frontend census in [evidence.md](evidence.md) is that skill's map read from
+  other side**; same record, published once, here.
 - **`llm-default-traps`** — picks an agent make by training-data default on any
   stack, including ones a fresh stack choice hit first.
 - **`ai-maintainer-principles`** — decisions above the stack: how system get cut,

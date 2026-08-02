@@ -433,47 +433,45 @@ load from configuration. **Bespoke**. **Convention**, 2026-06-12.*
 
 ## The worked case — one repo, 2026-06-12
 
-**One organisation's catalog, listed as evidence the criteria discriminate. Not a
+**One organisation's catalog, kept as evidence the criteria above discriminate. Not a
 template.** A multi-tenant financial backend on PostgreSQL, agent as sole maintainer,
 tenants in per-tenant schemas that move between database cells by logical
 replication, with a jurisdiction whose interbank scheme mandates a twelve-digit
-account slot.
+account slot. **Its seven classes, their widths and scopes, and the counter-table
+mechanism behind them are in [evidence.md](evidence.md).**
 
-**Seven classes.** Customer, account and loan numbers: tenant-scoped, gap-tolerant,
-Damm check digit, sequence widths of eight to nine digits with disjoint initial
-values so two classes cannot collide by eye. Journal numbers: scoped to tenant **and
-fiscal year**, **gapless**, no check digit, period token plus sequence.
-Transaction-reference, operation and document numbers: tenant-scoped, gap-tolerant,
-no check digit.
+**The alternatives it rejected, and the ground each lost on:**
 
-**The mechanism is one counter table** — class, series key, period, last value — in
-the tenant schema, incremented and returned in one statement inside the caller's
-transaction. **No engine sequences anywhere in the system.**
+- **Engine sequences for the gap-tolerant classes** — the obvious mechanism, lost
+  because **sequences do not replicate**, so every tenant move owes a manual reset
+  per sequence, and one mechanism beats two. At the recorded volumes the row lock is
+  noise.
+- **Gapless everywhere** — one rule with no per-class argument, lost because it
+  serializes every issuance in the system **for no evidence of need**: no statute
+  found, and the predecessor system had no gapless numbering anywhere with no audit
+  complaint against it.
+- **Gapless nowhere** — the honest reading of a statutory search that found nothing,
+  rejected **narrowly, for journals only**: one hot row per tenant and fiscal year is
+  bounded, and a gap-free register is cheap insurance against a standing expectation.
+- **A pattern-string format language** — flexible, familiar, and what the predecessor
+  had; lost because dynamically composed counter keys **contaminated counters across
+  domains** in that system.
+- **A two-digit checksum as the default** — stronger detection and a named standard,
+  lost on two digits of a scarce width; available to a country pack as a typed
+  option, not the domestic default.
+- **Random or opaque business identifiers** — lost because the row key already
+  provides opacity, and **the business number exists precisely to be short, keyable
+  and human-orderable**.
 
-### The alternatives and the ground each lost on
+**No re-open trigger per rejected alternative**, and that is one habit failing three
+times rather than three omissions — **`primary-keys` and `backend-stack` owe it
+identically.** The record sets a threshold on the winner and nothing states what
+would make sequences or gapless-everywhere worth re-examining. Not invented here:
+writing a trigger nobody set authors the verdict rather than records it.
 
-| Alternative | What it offered | What it lost on |
-| ----------- | --------------- | --------------- |
-| **Engine sequences for the gap-tolerant classes** | The obvious mechanism, no row lock, and a carve-out its own predecessor decision had already granted | Sequences do not replicate, so every tenant move owes a manual reset per sequence; and **one mechanism beats two**. At the recorded volumes the row lock is noise. The carve-out stayed on the books, **deliberately unexercised** |
-| **Gapless everywhere** | One rule, no per-class argument, and it satisfies any audit expectation by construction | Serializes every issuance in the system **for no evidence of need** — no statute found, and the predecessor system had no gapless numbering anywhere with no audit complaint recorded against it. Gaps in customer and account numbering are ordinary business |
-| **Gapless nowhere** | No hot rows at all, and the honest reading of a statutory search that found nothing | Rejected **narrowly, for journals only**: one hot row per tenant and fiscal year is bounded, block allocation amortises it, and a gap-free register plus commit-order-as-number is cheap insurance against a standing expectation |
-| **A pattern-string format language** | Flexible, familiar, and what the predecessor system had | Dynamically composed counter keys **contaminated counters across domains** in that system. Typed parts are validated at boot and have no expressive room to drift |
-| **A two-digit checksum as the default** | Stronger detection, and a standard with a name | Two digits of a scarce width, and its home is bank-account construction. Available to a country pack as a typed option, not the domestic default |
-| **Random or opaque business identifiers** | Opacity, no counters, no contention | The row key already provides opacity. **The business number exists precisely to be short, keyable and human-orderable**, so this alternative removes its reason to exist |
+*Check: none — this a record of a decision, not a directive. Grounds **convention**,
+2026-06-12.*
 
-### What the record does not carry
-
-- **No re-open trigger per rejected alternative.** The record sets a threshold on the
-  winner — the contention trigger and its relief ladder — and nothing states what
-  would make sequences or gapless-everywhere worth re-examining. **`primary-keys` and
-  `backend-stack` owe this identically**, so it is one habit failing three times
-  rather than three omissions. **Not invented here**: writing a trigger nobody set
-  authors the verdict rather than records it.
-- **No primary source for anything.** The check-digit detection guarantees, the
-  statutory search, the interbank format and the contention ceiling are all
-  checkable and none are cited.
-- **The contention ceiling is the pass's own estimate**, not a measurement, and the
-  workload it is compared against is a projection.
 
 ## Wiring the gates
 

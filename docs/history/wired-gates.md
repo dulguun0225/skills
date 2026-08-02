@@ -41,19 +41,23 @@ by dated claim, which is how the research actually happened and how the files
 were reviewed. The directive-by-directive shape arrived later, with the harvested
 skills.
 
-**The gate ships with those eight declared by name and by reason, in
+**The gate ships with each of them declared by name and by reason, in
 `PASS_ORGANISED` in `scripts/evidence-order.mjs`, rather than with the rule bent
 to fit them.** Consequences, both deliberate:
 
-- The order half binds nine skills. On the other eight it binds nothing, and the
-  declaration is what makes that visible instead of silent — an evidence file
-  anchoring to nothing is exactly what a silent reorganisation looks like, so the
-  difference between these eight and a defect is a written line.
+- The order half binds only the skills whose evidence files anchor. On the
+  declared ones it binds nothing, and the declaration is what makes that visible
+  instead of silent — an evidence file anchoring to nothing is exactly what a
+  silent reorganisation looks like, so the difference between a declared file and
+  a defect is a written line. **The list shrinks as files gain directive-named
+  sections**: it lost `guardrails-toolchain` on 2026-08-02, the day it was
+  written, when that skill's worked case moved into its evidence file under the
+  heading it had in the body. Read the list, not a count of it.
 - **A new skill fails by default.** Zero anchors and no declaration is a
   failure, so the choice gets made in the open rather than skipped.
 
-What is owed and is not closed by this: nothing decides whether those eight
-*should* be reorganised. That is a call about published skills, and this pass did
+What is owed and is not closed by this: nothing decides whether the declared
+files *should* be reorganised. That is a call about published skills, and this pass did
 not take it.
 
 ## The heuristic that was written and dropped
@@ -108,8 +112,11 @@ repo-only filename were each reported, one line apiece. **A gate never seen to
 fail is a gate nobody has tested**, and this repo publishes that rule in
 `guardrails-toolchain`.
 
-Clean state: 0 failures on both, 17 evidence files checked, 95 rule ids defined,
-52 skill pairs citing ids across a dir boundary.
+Clean state at wiring: 0 failures on both, 17 evidence files checked, 95 rule ids
+defined, 52 skill pairs citing ids across a dir boundary. **The evidence-file
+figure moved the same day** — 20 checked, still 0 failures, once `money-java`,
+`caching-java` and `async-handoff-java` got the evidence files the context-budget
+work gave them. Re-run rather than cite: `npm run gates`.
 
 ## What this closes, and what it does not
 

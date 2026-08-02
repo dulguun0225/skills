@@ -235,6 +235,55 @@ hardcoded-registry defect attributed to the predecessor system.
 default width exists because the jurisdiction's interbank account slot is that wide,
 and the record states the reason beside the class.
 
+## The worked case — one repo, 2026-06-12
+
+**Moved here from `SKILL.md` on 2026-08-02, verbatim.** Its own opening sentence
+calls it evidence that the criteria discriminate, and says it is not a template. What
+stayed in the directive text is one line per rejected alternative with the ground it
+lost on, and the habit this record shares with two sibling skills.
+
+**One organisation's catalog, listed as evidence the criteria discriminate. Not a
+template.** A multi-tenant financial backend on PostgreSQL, agent as sole maintainer,
+tenants in per-tenant schemas that move between database cells by logical
+replication, with a jurisdiction whose interbank scheme mandates a twelve-digit
+account slot.
+
+**Seven classes.** Customer, account and loan numbers: tenant-scoped, gap-tolerant,
+Damm check digit, sequence widths of eight to nine digits with disjoint initial
+values so two classes cannot collide by eye. Journal numbers: scoped to tenant **and
+fiscal year**, **gapless**, no check digit, period token plus sequence.
+Transaction-reference, operation and document numbers: tenant-scoped, gap-tolerant,
+no check digit.
+
+**The mechanism is one counter table** — class, series key, period, last value — in
+the tenant schema, incremented and returned in one statement inside the caller's
+transaction. **No engine sequences anywhere in the system.**
+
+### The alternatives and the ground each lost on
+
+| Alternative | What it offered | What it lost on |
+| ----------- | --------------- | --------------- |
+| **Engine sequences for the gap-tolerant classes** | The obvious mechanism, no row lock, and a carve-out its own predecessor decision had already granted | Sequences do not replicate, so every tenant move owes a manual reset per sequence; and **one mechanism beats two**. At the recorded volumes the row lock is noise. The carve-out stayed on the books, **deliberately unexercised** |
+| **Gapless everywhere** | One rule, no per-class argument, and it satisfies any audit expectation by construction | Serializes every issuance in the system **for no evidence of need** — no statute found, and the predecessor system had no gapless numbering anywhere with no audit complaint recorded against it. Gaps in customer and account numbering are ordinary business |
+| **Gapless nowhere** | No hot rows at all, and the honest reading of a statutory search that found nothing | Rejected **narrowly, for journals only**: one hot row per tenant and fiscal year is bounded, block allocation amortises it, and a gap-free register plus commit-order-as-number is cheap insurance against a standing expectation |
+| **A pattern-string format language** | Flexible, familiar, and what the predecessor system had | Dynamically composed counter keys **contaminated counters across domains** in that system. Typed parts are validated at boot and have no expressive room to drift |
+| **A two-digit checksum as the default** | Stronger detection, and a standard with a name | Two digits of a scarce width, and its home is bank-account construction. Available to a country pack as a typed option, not the domestic default |
+| **Random or opaque business identifiers** | Opacity, no counters, no contention | The row key already provides opacity. **The business number exists precisely to be short, keyable and human-orderable**, so this alternative removes its reason to exist |
+
+### What the record does not carry
+
+- **No re-open trigger per rejected alternative.** The record sets a threshold on the
+  winner — the contention trigger and its relief ladder — and nothing states what
+  would make sequences or gapless-everywhere worth re-examining. **`primary-keys` and
+  `backend-stack` owe this identically**, so it is one habit failing three times
+  rather than three omissions. **Not invented here**: writing a trigger nobody set
+  authors the verdict rather than records it.
+- **No primary source for anything.** The check-digit detection guarantees, the
+  statutory search, the interbank format and the contention ceiling are all
+  checkable and none are cited.
+- **The contention ceiling is the pass's own estimate**, not a measurement, and the
+  workload it is compared against is a projection.
+
 ## What this skill does not carry
 
 - **The jurisdiction-specific material.** The interbank format, its check scheme, the

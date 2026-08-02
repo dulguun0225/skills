@@ -537,105 +537,8 @@ find-sec-bugs and error-prone-support, 2026-07-29:
 
 Run once per repo, in PR that land first async handoff — not per messaging
 change. Instructing agent do nothing for gate: **gate is what catch next agent**,
-and unwired gate is rule described as enforced that is not.
-
-1. **Ports first, because owning them is what make wrong call unwritable rather
-   than lint-banned.** Two-abstract-member handler port (`E-3`); void handler
-   port with adapter-private acknowledgement (`E-10`); transaction-handle
-   wrapper this repo own (`E-6`); private-constructor identity type with one
-   factory per strategy (`E-7`); private-constructor key type with no `String`
-   parameter (`E-15`); sealed terminal/retryable hierarchy (`E-11`); distinct
-   effect-free and deduplicated ports (`E-13`); data-scope and authorized-actor
-   types (`E-22`); one required registration `record` (`E-26`).
-2. **ArchUnit** — adapter seam over committed async-capable type list (`E-1`);
-   annotation ban on methods **and** classes with both annotated and
-   meta-annotated predicates (`E-2`); handler-implementation confinement
-   (`E-3`); in-process-bus ban and outbox-read confinement (`E-4`); publish
-   confinement to relay (`E-5`); port signature and its referencing packages
-   (`E-6`); identity factory package ban on clocks and random sources (`E-7`);
-   relay claim and publish confinement (`E-8`); acknowledgement type out of
-   handler packages (`E-10`); catch rule (`E-11`); no sleep, unbounded wait or
-   un-timed call in handler packages (`E-12`, `E-17`); effect-free port
-   transitive dependencies (`E-13`); dereference ban (`E-21`); request-context
-   accessor and ambient scope holders (`E-22`); clocks and random sources in
-   `replay-safe` packages (`E-23`); banned-group-id lists and query-package rule
-   (`E-32`); field rules (`E-33`). Fail build.
-3. **Every ArchUnit rule ship committed violating fixture that must fail build**
-   (`E-25`). `failOnEmptyShould` one line from being disabled and disabling
-   invisible in passing log. **Apply to every ArchUnit gate in repo, not only
-   these.**
-4. **Error Prone** — `FutureReturnValueIgnored` promoted from `WARNING` to
-   `ERROR` (`E-5`), and handler-catch rule if hosted there rather than in
-   ArchUnit (`E-11`).
-5. **Config-default assertions** — listener acknowledgement mode **and**
-   share-consumer mode (`E-10`); producer acknowledgement and durability
-   settings (`E-5`); Jackson strictness settings (`E-20`); decoder config in
-   adapter only (`E-20`).
-6. **Flyway** — outbox table with `NOT NULL UNIQUE` identity column (`E-7`),
-   matched to change-data-capture router expected columns, plus dedup table.
-7. **Catalog generator** and its regenerate-and-diff CI step (`E-26`), plus
-   subscription-list generator and diff (`E-2`), plus payload generator with its
-   `check` goal (`E-18`).
-8. **JUnit catalog tests** — processing budget against lease (`E-12`); dedup
-   retention bounds (`E-14`); cross-field ordering rules (`E-15`); five
-   failure-policy fields (`E-16`); terminal-destination retention comparison
-   (`E-17`); committed compatibility level against retention declaration
-   (`E-19`).
-9. **Compatibility gate over committed schema-history directory** (`E-19`) —
-   AsyncAPI CLI through exec plugin, or `buf breaking`. **Not the Java Maven
-   AsyncAPI comparator.**
-10. **Bespoke schema lints** — payload content bans (`E-21`); committed topology
-    file (`E-27`); event envelope.
-11. **`promtool` fire-tests** — relay depth and oldest-unpublished-row age
-    (`E-9`); terminal-destination arrivals and staleness with heartbeat
-    (`E-16`); unknown-field alert (`E-20`).
-12. **jqwik property tests** — same row, same identity (`E-7`); dedup key is
-    function of identity alone (`E-13`).
-13. **Testcontainers tests** — rollback and kill-after-commit arms (`E-6`); kill
-    relay between publish and mark-sent (`E-8`); transport outage arm (`E-9`);
-    throwing handler see message again (`E-10`, `E-11`); one message twice, one
-    effect (`E-13`); out-of-sequence per ordered subscription (`E-15`);
-    attempt-count exhaustion with dead-letter partition asserted (`E-16`,
-    `E-17`); parse-test corpus (`E-20`, `E-21`); two tenants per subscription
-    (`E-22`); double-pass replay (`E-23`); two-instance aggregate arm (`E-33`).
-14. **Four maven-failsafe executions** with duplicating and reordering harness
-    and Toxiproxy arm (`E-24`), plus **per-configuration counters and positive
-    controls** (`E-25`). **Wire `E-25` in same change as `E-24`, never after:
-    until it exist, `E-24` cannot be trusted at all.**
-15. **Broker pin** — image digest, client-package ban list, licence scan over
-    dependency graph. **And named cluster owner**, prerequisite rather than
-    gate: record the person.
-16. **If repo got flow across transactions, webhook, or oversized payload**,
-    wire gates in [shapes.md](shapes.md) too.
-
-**Then commit the record**, in repo own text — its constitution, its rules file,
-or decision record. One line per directive id: tool, and either *wired* or
-*deferred with reason and who own it*. **These entries already known and belong
-in that record on first run:**
-
-- **`E-5`, `E-6`, `E-10` and `E-16` bespoke on this stack** — nothing off shelf
-  detect publish inside transactional method, acknowledgement before handling,
-  or unbounded retry. Their evidence is test.
-- **`E-10` swallowing-catch half — spec and review.** Same gap as `M-5` and
-  `C-12`.
-- **`E-17` console-redrive clause — spec and review.** No check in repository see
-  button being clicked.
-- **`E-19` meaning half — spec and review** at plan gate. Compatibility checker
-  decide shape, never meaning.
-- **`E-26` cross-repository union check — no host.** Most consequential gap in
-  set for this org.
-- **`E-27` partition-count review gate and `E-28` — spec and review.**
-- **Broker-side and infrastructure configuration invisible to every check in
-  this build** (`E-5`, `E-14`, `E-27`) — durability, replica counts, minimum
-  in-sync replicas, retention, delivery limits as actually deployed. **Catalog
-  declarations are lints operands and they can be lie.**
-- **jqwik version pin** — no directive here own it and nothing here wire it.
-  `llm-default-traps` own it; install that skill and wire ceiling from there.
-  Repo that no install it get no pin from any skill here and must record one it
-  run. See named gaps below.
-
-**A record that list only what was wired read as complete coverage. That the
-failure this step exist to prevent.**
+and unwired gate is rule described as enforced that is not. **Ordering, and the
+record to commit after: [gates.md](gates.md).**
 
 ## Named gaps — where this stack can host no check
 
@@ -709,105 +612,24 @@ need. **If gate cut, `E-10`, `E-13`, `E-15`, `E-22` and `E-23` degrade to
 declarations while catalog still report green** — exactly what `E-25`
 per-subscription positive controls exist to make visible.
 
-## Evidence and dates
+## Markers, dates, and what they mean
 
-Java-specific claims. Platform-neutral evidence — what each directive rest on,
-transport defaults, hostile audit, full steelman for each rejected shape,
-wordings that must not be reintroduced, nine-candidate transport survey, and what
-reopen decision — in `async-handoff` skill own `evidence.md`.
+**Nothing in `E-1` … `E-33` confirmed** — all convention. **Read every tool claim
+behind them as primary-source verified by one researcher, not confirmed:** both
+passes behind this skill ran 2026-07-29, pass 1 skipped its three refutation votes
+on an exhausted agent budget and stood a canary-carrying hostile audit in their
+place, pass 2 closed the composite shapes with no panel and no audit. Between them
+the two weakest passes behind any skill in this set. Detail in
+[evidence.md](evidence.md).
 
-**Two passes, both 2026-07-29, and between them two weakest passes behind any
-skill in this set.** Pass 1 wrote `E-1` … `E-28` and did not finish protocol —
-published here as `tech-decision-research`, which is where missed requirement
-stated: three refutation votes not run, because session agent budget exhausted
-mid-pass. **Hostile audit carrying planted canary stand in their place, and
-canary was caught, so audit findings count.** Pass 2 closed composite shapes —
-including `E-32` and `E-33` here — with **one researcher, no panel, no audit at
-all.**
-
-**Read every tool claim below as primary-source verified by one researcher, not
-confirmed** — running votes is what promote them, and that a named trigger in
-neutral skill evidence. **Nothing in `E-1` … `E-33` confirmed**; all convention,
-and no marker below promote any of them.
-
-| Claim | Marker | Date |
-| ----- | ------ | ---- |
-| Boot 4.1.0 manage spring-kafka 4.1.0, kafka-clients 4.2.1, jOOQ 3.21.5, Testcontainers 2.0.5; ArchUnit 1.4.2 (2026-04-18) — read from Boot dependency manifest | primary-source verified | 2026-07-29 |
-| **Listener acknowledgement mode default to `BATCH`, not `RECORD`.** Commit offsets of all records from previous poll once all processed, so crash after record three of fifty redeliver all fifty. Rule reasoning "the default is at-least-once per record" wrong about *unit* | primary-source verified | 2026-07-29 |
-| **Share-consumer acknowledgement mode added in 4.1, implicit value have broker acknowledge every record regardless of processing outcome**, no listener involvement — so rule inspecting only listener mode report green over it. Why `E-10` pin two settings | primary-source verified | 2026-07-29 |
-| **`DefaultErrorHandler` bounded and tight-looping:** ten total attempts with `FixedBackOff(0, 9)` — zero-millisecond interval | primary-source verified | 2026-07-29 |
-| **`DeadLetterPublishingRecoverer` no create its destination and no fail loudly when missing.** Default destination is source topic suffixed `-dlt` on same partition number; partition check log unknown topic at DEBUG, missing partition at WARN before letting producer choose one | primary-source verified | 2026-07-29 |
-| **`@RetryableTopic` document its own ordering cost:** "By using this strategy you lose Kafka's ordering guarantees for that topic." Also documented unsupported with batch listeners and unable to combine with container transactions | primary-source verified | 2026-07-29 |
-| **Explicit non-annotation registration path exist and documented** — messages can be received "by configuring a `MessageListenerContainer` and providing a message listener or by using the `@KafkaListener` annotation". **`E-2` ban depend on this fact** | primary-source verified | 2026-07-29 |
-| **ArchUnit can read annotations** — `@KafkaListener` got runtime retention and "no annotated method outside package P" directly expressible — **but its `@Target` include annotation types and classes**, so repo-defined meta-annotation and class-level form both escape methods-only direct-annotation rule | primary-source verified | 2026-07-29 |
-| **ArchUnit rules no pass vacuously by default** (empty should-clause rejected since 0.23.0) **but guard one line from being disabled** — property or per-rule override — and no cover importer pointed at wrong path. **Not broker-specific: apply to every ArchUnit gate in repo** | primary-source verified | 2026-07-29 |
-| **Toxiproxy module confirm nothing about itself.** Client expose only name, stream, toxicity and remove — no counter, no bytes-affected, no fired flag — **and toxicity is probability**, so registered toxic can legitimately not affect call under test | primary-source verified | 2026-07-29 |
-| **Error Prone `FutureReturnValueIgnored` fire on bare `kafkaTemplate.send(...)`** — template return `CompletableFuture<SendResult<K,V>>` and carry **no** `@CanIgnoreReturnValue` (checked in its source). `WARNING` by default; must be raised to `ERROR`. Two limits: chaining `whenComplete` return another future and fire again, and variable named with tool `unused` prefix silence it | primary-source verified | 2026-07-29 |
-| **Nothing in Error Prone, SpotBugs, all 714 sonar-java rules, PMD, fb-contrib, find-sec-bugs or error-prone-support detect publish inside transactional method, consumer acknowledging before handling, or unbounded retry.** `acknowledg*` return zero hits across every index. **Semgrep, CodeQL and commercial analysers not searched and absence not claimed for them** | primary-source verified | 2026-07-29 |
-| **Same-transaction property cannot be type-designed on jOOQ own types.** `transaction()` hand back *derived* `Configuration` and manual warn that using outer scope inside block will "silently run outside the transaction" — but both same static type, and `jooq-checker` (3.21.6) ship only dialect checker and plain-SQL checker | primary-source verified | 2026-07-29 |
-| **Framework transaction docs are argument for outbox, and their silence is load-bearing part.** Recommended shape synchronise Kafka transaction with database one and state "The DB transaction is committed first; if the Kafka transaction fails to commit, the record will be redelivered so the DB update should be idempotent", and that failed synchronized commit now throw to caller where previously logged at debug, so applications "should take remedial action … to compensate for the committed primary transaction". **Never analyse crash between two commits, never quantify window** — that absence is basis for choosing outbox, and **this skill must not present it as documented probability** | primary-source verified | 2026-07-29 |
-| **`ChainedKafkaTransactionManager` deprecated since 2.7 and still shipping** in 4.1.0. **Not** removed | primary-source verified | 2026-07-29 |
-| Outbox libraries: gruelbox transaction-outbox **7.0.707** (Apache-2.0, jOOQ module, write row in caller transaction; README state polling loop "is up to you"); namastack-outbox **1.8.0** (Apache-2.0, automatic schema creation); Spring Modulith event publication registry **2.1.0** (Apache-2.0, write entry "as part of the original business transaction", republication on restart opt-in — **broker-externalization module not verified**). `raedbh/spring-outbox` got no releases. Debezium **3.6.0.Final** (Apache-2.0), outbox router is Kafka Connect transformation | primary-source verified | 2026-07-29 |
-| **Only Java Maven AsyncAPI comparator detect incompatibilities then pass build** — three declared parameters, no build-failing exception, report file, exit green. One published version, two stars, no commit since 2024. **False-green gate shipped as product** | primary-source verified | 2026-07-29 |
-| AsyncAPI **CLI** `diff` command do fail on breaking changes against committed file with no network unless opt-out flag passed; Node binary, no official Maven plugin. **`buf breaking`** for Protobuf compare against committed baseline including git ref, need no network, Apache-2.0. **No tool on JVM validate actual published message against committed AsyncAPI document** | primary-source verified | 2026-07-29 |
-| **Corpus-favourite schema registry not OSI-licensed:** own licence file put project under Confluent Community License "except some modules such as the client-* and avro-* libs, which are licensed under the Apache 2.0 license". **Apicurio Registry 3.3.1 and Karapace 6.2.1 Apache-2.0**; drop-in compatibility for given client **not verified** | primary-source verified | 2026-07-29 |
-| **`EmbeddedKafkaBroker` not deprecated, docs record no divergence from real broker** — `testing.adoc` contain zero occurrences of "testcontainer"; since 4.0 only KRaft implementation exist. Documented caveats operational: no shutdown mechanism when tests finish, do not mix global embedded broker with per-class ones, use distinct topic per test | primary-source verified | 2026-07-29 |
-| **LocalStack image require authentication token since 2026-03-23**, with CI-specific token injected from secret store. Any managed-queue gate built on it need account and CI secret | primary-source verified | 2026-07-29 |
-| **PostgreSQL queue extension not Java option, and usual objection wrong.** Control file set `superuser = false`; real barriers are host filesystem access and provider allowlisting, and absent from AWS RDS supported-extensions list for every version checked. No first-party Java client; of three third-party JVM clients one not on Maven Central, others last touched 2024 | primary-source verified | 2026-07-29 |
-| **Axon Framework Apache-2.0 and Axon Server not** — agent reading "Axon is open source" reading something true about wrong artifact. EventStoreDB moved to Event Store License v2 with 24.10 release, enterprise features behind licence key | primary-source verified | 2026-07-29 |
-| **Kafka Streams ship in same ecosystem as client repo legitimately need**, so one dependency line away at all times — why `E-33` is banned-dependency rule plus field rules rather than code-shape rule | primary-source verified | 2026-07-29 |
-| Since Java 9, `+` on strings compile to `invokedynamic`, so bytecode rule banning key concatenation got no operand — **contested, see below** | challenged and unverified | 2026-07-29 |
-| Kafka share groups move record to **archived state** past delivery-attempt limit, where not eligible for further delivery and routed nowhere. **Asserted by this pass with no primary-source citation recorded**, unlike RabbitMQ delivery-limit fact beside it in `E-16`. No rule depend on it | **not verified — do not cite as documented** | 2026-07-29 |
-
-**Research-method note worth keeping, because it invalidate habit.** Maven
-Central **search** API under-report: returned no 7.x for artifact whose
-`maven-metadata.xml` list 7.0.707, and zero results for group whose metadata list
-current release. **Use `repo1.maven.org/maven2/<path>/maven-metadata.xml` for
-existence claims**, not search endpoint.
-
-**One contradiction between sources, recorded rather than resolved.**
-`caching-java` skill pass record `invokedynamic` claim as confirmed. **This rule
-set hostile audit argued claim too strong** — concatenation recipe travel as
-constant-pool bootstrap argument, so bytecode-reading rule may got operand after
-all — and **could not reach primary specification, which returned HTTP 403.**
-Neither reading adopted, because **no rule depend on which right:** `E-15` key
-rule is parameter-type rule, and factory that cannot take `String` make wrong
-call uncompilable regardless. If challenge ever verified, drop impossibility
-clause wherever it survive and leave rules unchanged.
-
-**Do not cite.**
-
-- **"The framework documentation warns that a blocking retry holds up the rest of
-  the partition."** No such sentence exist. Consequence derivable from
-  retained-and-resubmitted text and pausing back-off handler note, but **must
-  not be cited as documented.**
-- **"The embedded test broker is deprecated, or the documentation recommends
-  containers because it diverges."** Neither stated anywhere. Divergence argument
-  is bet, not citation.
-- **"The dead-letter publishing recoverer fails loudly if its topic is
-  missing."** DEBUG for unknown topic, WARN plus producer-chosen partition for
-  missing one.
-- **"The default listener acknowledgement mode is per record."** Per poll batch.
-- **"`ChainedKafkaTransactionManager` was removed."** Deprecated since 2.7, still
-  shipping.
-- **"A PostgreSQL queue extension needs superuser."** Control file say otherwise.
-- **"The Maven Central search API can establish that an artifact is not
-  published."** It under-report.
-- **"Axon Server is Apache-2.0."** Axon *Framework* is.
-- **ArchUnit for anything inside lambda body, catch block body, or generic type
-  parameter.** Three separate limits, each reworded rule in this skill set.
-  Lambda-body and catch-body limits **confirmed**, by cache rules pass rather
-  than this one, and `caching-java` carry them with their issue references;
-  erasure limit on generic type parameter recorded there too. **This pass
-  confirmed none of them** — it reused them.
-- **Framework commit-then-commit docs as quantified risk.** Never analyse crash
-  between two commits, never quantify window. Its **silence** is argument for
-  outbox.
-- **Nine-candidate transport survey as this stack work.** Platform-neutral, live
-  once, in `async-handoff` skill own `evidence.md`.
-
-**Review by 2027-01-29.** Past that date every **confirmed** marker above read as
-**convention** until new pass re-date it — and nothing above confirmed today, so
+**Review by 2027-01-29.** Past that date every **confirmed** marker read as
+**convention** until new pass re-date it — and nothing here confirmed today, so
 lapse rule bite only if future pass promote something. Version pins and licences
-age fastest: **re-check Boot, spring-kafka, jOOQ, ArchUnit, Testcontainers,
-outbox libraries and every licence at adoption, not on calendar.**
+age fastest: **re-check Boot, spring-kafka, jOOQ, ArchUnit, Testcontainers, outbox
+libraries and every licence at adoption, not on calendar.**
+
+Ground behind each Java claim, with its source and date, the research-method note,
+one recorded contradiction between sources, and what must **not** be cited, one hop
+away in **[evidence.md](evidence.md)**. Platform-neutral evidence — transport
+defaults, hostile audit, steelman per rejected shape, nine-candidate transport
+survey, reopen conditions — in `async-handoff` skill own `evidence.md`.

@@ -1,6 +1,6 @@
 ---
 name: ai-maintainer-principles
-description: The architecture and process rules a repo commits to because its maintainer is an LLM agent rather than a person — startup-loud magic is acceptable while runtime-silent magic is banned, any correctness requirement needing whole-program reasoning must be designed out rather than documented, operational state lives in the repo or it does not exist, a module is as large as one session can hold and no larger, topology follows the number of independent wills pushing on the codebase rather than the number of services, one idiom is imposed mechanically because a second dialect is a standing drift generator, a human who steers the agent is not a code reviewer and never relaxes a gate, the review substitute is a fresh-context adversarial pass with a committed verdict backed by gates that do not share the author's model, a predecessor system is a capability inventory and never an oracle, retries are zero and quarantine cannot rot, every load-bearing dependency is priced by failure shape with an exit ladder, and a hand-built subtle piece ships with a written safety argument and a dedicated stress test. Carries one repo's worked case, with the products it picked named, the two re-derivations that repo ran under changed premises, and the verdict on every shape a repo assembles out of two of these primitives — a module two wills push on, a dependency that brings its own idiom, a quarantine that lives in a console, a predecessor still serving traffic. Load before drawing or moving a module boundary, choosing a runtime topology, deciding what a build gate may be relaxed for, adopting a framework, database, managed service or vendor API, writing a retry or an error handler, writing a piece of code subtle enough to need a safety argument, introducing a second way to do something the repo already does, migrating from an existing system, or writing a repo constitution.
+description: The architecture and process rules a repo commits to because its maintainer is an LLM agent rather than a person — startup-loud magic allowed and runtime-silent magic banned, whole-program reasoning designed out, operational state in the repo, a module sized to one session, topology by the number of independent wills rather than services, one idiom imposed mechanically, a steering human who is not a reviewer, a fresh-context adversarial pass as the review substitute, a predecessor system as inventory and never oracle, zero retries and a quarantine that cannot rot, dependencies priced by failure shape, and a safety argument beside every hand-built subtle piece. Carries one repo's worked case — the corpus favourites it rejected, each named with the ground it lost on — and the verdict on every shape a repo assembles out of two of these primitives — a module two wills push on, a dependency that brings its own idiom, a quarantine that lives in a console, a predecessor still serving traffic. Load before drawing or moving a module boundary, choosing a runtime topology, deciding what a build gate may be relaxed for, adopting a framework, database, managed service or vendor API, writing a retry or an error handler, writing a piece of code subtle enough to need a safety argument, introducing a second way to do something the repo already does, migrating from an existing system, or writing a repo constitution.
 ---
 # Rules for a codebase whose maintainer is an agent
 
@@ -407,63 +407,37 @@ test class; meta-test assert every listed construct have both. Bespoke.
 
 ## The worked case — one repo, 2026-06-11..14
 
-**One org's decisions, listed as evidence directives above discriminate. Not
-template.** That repo is single multi-tenant financial backend, agent as sole
-maintainer, no operations role, no human code reader.
+**One org's decisions, kept as evidence the directives above discriminate. Not
+template.** That repo is a single multi-tenant financial backend, agent as sole
+maintainer, no operations role, no human code reader. **The decision-by-decision
+table, and the two counterfactuals that re-derived it under changed premises, are
+in [evidence.md](evidence.md).**
 
-| Decision | Directive it instantiate |
-| -------- | ------------------------ |
-| Fourteen enforced modules, one deployable, roles selected at startup | *Count the independent wills* |
-| Boundary criteria set of eight, last one "fits one session", with nested sub-modules as relief valve — seven such sub-modules declared | *A module is what one session can hold* |
-| **jOOQ** chosen for zero runtime-silent machinery; **Hibernate ORM and Spring Data JPA** rejected — even in a stateless profile with no persistence context, no dirty checking, no lazy loading and no cascades — on the four grounds in `evidence.md`, of which the load-bearing pair are corpus gravity toward the banned idioms and the silent `UPDATE` any lapse back into the stateful API reintroduces | *Design out any requirement that needs whole-program reasoning* |
-| Constructor injection, Spring MVC route registration and `@ConfigurationProperties` kept as boot-failing; **Spring Security and the Modulith event registry kept as priced runtime trust**, each pinned by a standing test — per-endpoint authorization probes, and a kill-between-commit-and-handler redelivery test | *Startup-loud magic is acceptable*, all three branches |
-| `@Transactional` banned; **`DSLContext` not an injectable bean**, reachable only as the lambda parameter of a transaction wrapper, so a query outside a transaction is unwritable rather than merely banned | *Startup-loud / runtime-silent*, with `enforceable-rules`' *unwritable beats banned* |
-| **palantir-java-format via Spotless**, zero per-file configuration, `spotless:check` failing the build; **Picnic error-prone-support Refaster rules** rewriting equivalent constructs to one canonical shape on the compile pass | *One idiom, imposed mechanically* |
-| Every schema change a committed Flyway migration; alert rules committed with a `promtool` fire-test; no application surface managed from a console | *Operational state lives in the repo* |
-| Verification stack declared to *be* the code review; fresh-context adversarial pass with committed verdict; **PIT mutation testing on the money modules**, goldens from hand-computed worked examples, and the ledger invariant suite named as the non-model backstops | *The review substitute* |
-| Predecessor system declared capability inventory with no parity fixture layer | *A predecessor system is an inventory* |
-| Zero retries, un-rottable quarantine file, named non-quarantinable set | *Zero retries* |
-| **jOOQ's** single-maintainer vendor priced once: health signals, failure shape, three-step exit ladder, trigger to step down. **The repo's other load-bearing dependency, Spring, was never priced this way** — so the worked case half-fails the directive it is published under, exactly as its runtime-framework clause predicts | *Price the bus factor by failure shape* |
-| Concurrency suite, crash injection, counter contention, sweep volume caps each named as obligation beside the piece they cover | *A hand-built subtle piece* |
+**What it rejected, by name, and the ground each lost on** — the half that override
+an instinct rather than record a choice:
 
-### The two counterfactuals, and they change different axioms
+- **Hibernate ORM and Spring Data JPA**, rejected for jOOQ **even in a stateless
+  profile** with no persistence context, no dirty checking, no lazy loading and no
+  cascades. Load-bearing pair of grounds: corpus gravity toward the banned idioms,
+  and the silent `UPDATE` that any lapse back into the stateful API reintroduces.
+- **`@Transactional`**, banned — and `DSLContext` made reachable only as the lambda
+  parameter of a transaction wrapper, so a query outside a transaction is
+  **unwritable** rather than merely banned.
+- **Retries**, zero, against an un-rottable quarantine file and a named
+  non-quarantinable set.
+- **Kept instead of banned, and priced for it:** Spring Security and the Modulith
+  event registry, each held as runtime trust pinned by a standing test —
+  per-endpoint authorization probes, and a kill-between-commit-and-handler
+  redelivery test.
 
-**Same repo ran the exercise twice, on two different axioms, and result differ
-enough that merging them would misreport both.** Worked case for
-premise-specificity, and more useful than decisions themselves, cuz it show *which*
-of them premise carry.
+**One directive the worked case half-fails, stated because silence would read as
+coverage.** jOOQ's single-maintainer vendor was priced once — health signals,
+failure shape, three-step exit ladder, trigger to step down. **The repo's other
+load-bearing dependency, Spring, was never priced this way**, which is exactly what
+*Price the bus factor by failure shape*'s own runtime-framework clause predicts.
 
-**First: many independent teams, each owning one deployable.** Non-authoritative
-variant, deliberately kept out of that repo's index, undated. Under it **almost
-everything move.** Every module become separately deployed service, so
-transactional core split, and record's own heading call that **"the one consequence
-that is genuinely forced"** — cross-service posting become orchestrated saga with
-holds, deterministic idempotency keys and compensation, plus broker backbone,
-schema registry, and service identity as new infrastructure nobody previously
-operated. Boundary criterion "fits one session" replaced by team cognitive load.
-**What survive: boundaries themselves** — drawn on criteria that hold either way —
-and money-on-the-wire rules, which the variant restate on every new transport.
-
-**Second: fourteen human owners, each steering an agent, one deployable kept.**
-Scenario analysis inside a note written for management, 2026-06-13. Weaker axiom
-change, and it what produce the transferable findings:
-
-- **What no move:** transactional core still inseparable, cuz physics no care who
-  maintain it. **No money or data decision move at all.**
-- **What appear:** release-cadence conflict, ops burden multiplied across teams of
-  one, and **idiom drift as first-order force** — one maintainer hold one idiom
-  nearly free; fourteen owners with fourteen agents drift fast, and ban lists plus
-  compile-checked catalogs become the only thing keeping codebase one system.
-  **Verification stack matter *more* under relaxed premise, not less.**
-- **What it conclude:** you would still start where the real repo is and let
-  recorded triggers fire. **Decision robust to premise it was not optimised for.**
-
-**Read both as method, not verdict:** change exactly one premise, keep everything
-else, re-derive, list what survived. `tech-decision-research` require premises be
-recorded with verdict; this is what recording them buy. **And note the two
-exercises disagree about the transactional core** — first split it under force,
-second no — cuz they changed different axioms. Merging them into one "what
-survives" list is exactly the error that make a counterfactual read as reassurance.
+*Check: none — this a record of decisions, not a directive. Grounds **convention**,
+2026-06-11..14.*
 
 ## Wiring the gates
 

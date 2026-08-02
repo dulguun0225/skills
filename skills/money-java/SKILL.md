@@ -82,24 +82,10 @@ Record listing only what was wired read as complete coverage. That = failure thi
 - **Moneta (JSR 354; maintenance mode, 1.4.5, 2025-03-22, Java 8).** Correcting old "no algorithms" wording: it do ship percent, permil, minor-part and rounding operators. But ship no allocation, no call-site rounding discipline, and defaults that make silent rounding easy path — `multiply` and `divide` apply context `HALF_EVEN` with no call-site mode, `getDefaultRounding` repo-wide (`M-7` banned shape, as library feature), `FastMoney` round to scale 5.
 - **Either way, allocation and separate higher-precision rate type shipped by neither library, stay hand-written.**
 
-Sources: `joda.org/joda-money` javadoc and `JodaOrg/joda-money` README; `JavaMoney/jsr354-ri` repository. Re-run this evaluation, not inherit it, for any other ecosystem.
+Versions, sources and markers for this decision = [evidence.md](evidence.md).
 
-## Evidence and dates
+## Markers, dates, and what they mean
 
-Java-specific claims and markers. Platform-neutral evidence — what each directive rest on, what did not survive citation, what reopen decision — in `money` and `money-api` skills' own `evidence.md`.
+**Review by 2027-01-21.** Past that date every **confirmed** marker read as **convention** until new pass re-date it — no maintainer action needed. Version pins age fastest: re-check pitest, jqwik, Joda-Money at adoption, not on calendar.
 
-| Claim | Marker | Date |
-| ----- | ------ | ---- |
-| Hand-rolled `Money` over Joda-Money and Moneta, thin-wrapper runner-up named | confirmed — three independent refutation votes against live sources | 2026-07-24 |
-| `BigDecimal.add`/`subtract` exact at `max` scale, take no `RoundingMode`; only two-argument `MathContext` variants round (`java.math.BigDecimal` javadoc, JDK 25) | confirmed | 2026-07-25 |
-| Error Prone `EmptyCatch` = `WARNING` by default, must promote to `ERROR`, match only empty case, skip commented or `ignored`/`expected` block (errorprone.info) | confirmed | 2026-07-25 |
-| ArchUnit model caught throwable type but not catch-block body, so cannot see swallowing handler (TNG/ArchUnit issue 1120) | confirmed | 2026-07-25 |
-| pitest support bytecode through Java 26, actively maintained, fixed real Java 25 defect in `BigDecimal`/`BigInteger` mutators in 1.25.8 (2026-07-20) | confirmed | 2026-07-21 |
-| jqwik carry version trap, calling for CI version-ceiling check and treatment as re-decidable at every dependency review. Ceiling version itself stated once, by `llm-default-traps`, which own pin — same 2026-07-21 finding, recorded there with incident detail | confirmed | 2026-07-21 |
-| `promtool test rules` run unit tests over committed rule files; `alert_rule_test` assert which alerts fire at given evaluation time, must-not-fire case = empty expected-alerts list (prometheus.io) | primary-source verified — one researcher, no panel | 2026-07-27 |
-| Metric label cardinality boundable off the shelf on both sides: Micrometer `MeterFilter` maximum-allowable-tags filter with deny action, and registry high-cardinality-tags detector, which its docs support in one-time-check form for tests | primary-source verified | 2026-07-27 |
-| Schemathesis = conformance-fuzz oracle — MIT, on 4.x line — and `[generation] deterministic = true` plus top-level `seed` give reproducible runs; both keys 4.x-specific, so re-checked at every version bump | confirmed | 2026-07-25 |
-
-**Do not cite.** Prometheus own docs give **no** default cardinality threshold — do not state one. Do not cite `openjdk.org/jeps/*` (return HTTP 403 to fetcher); use Oracle javadoc or `openjdk/jdk` sources. Do not cite "adversarial AI reviewer catches silent catches" backstop as gate: non-deterministic, which = why `M-5` stay spec and review.
-
-**Review by 2027-01-21.** Past that date every **confirmed** marker above read as **convention** until new pass re-date it. Version pins age fastest — re-check pitest, jqwik, Joda-Money at adoption, not on calendar.
+Ground behind each Java claim, with its source and date, plus what must **not** be cited, one hop away in **[evidence.md](evidence.md)**. Platform-neutral evidence in `money` and `money-api` skills' own `evidence.md`.

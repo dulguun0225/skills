@@ -80,12 +80,14 @@ behaviour decides what counts as a skill in this repo.
 | `npm run check:pointers` | No skill text cites a rule id, or links to a file, that its own installed dir does not carry (`--pairs` lists the cross-skill id citations). |
 | `npm run tokens` | Size of every skill's directive text, `evidence.md` excluded — the cost paid each time a skill fires (`--files` breaks it down per file). A report, not a gate. |
 | `npm run tokens:frontmatter` | Size of every skill's `name` and `description` — the cost paid every session whether the skill fires or not. |
+| `npm run tokens:sections` | Size of each `##` section of each `SKILL.md` — where a body's cost sits (`--skill <name>` for one, `--repeated` to roll up by section name across skills, `--min 0` to fold nothing). |
+| `npm run firing` | Runs headless sessions against an isolated sandbox holding only this repo's skills, and reports which skills actually fired (`--skill <name>`, `--case <id>`, `--repeats N`, `--against <git-ref>` to A/B a frontmatter edit, `--model <name>` to pin one, `--dry-run` to price it first). A report, not a gate — it is stochastic and it spends money. |
 | `npm run try -- <name>` | Runs one skill straight from the working tree, without installing it. |
 
 `npm run check` should list every directory under `skills/` — compare its output
 against `ls skills/` rather than against a number written here. It checks
 discovery and frontmatter, nothing else: it does not see a skill's resource files
-(`evidence.md`, `api.md`, `storage.md`, `shapes.md`).
+(`evidence.md`, `api.md`, `storage.md`, `shapes.md`, `gates.md`).
 
 The two gates are the pair `enforceable-rules` says are the only machine-checkable
 part of it, wired here on 2026-08-02. **Each prints what it does not decide on
@@ -93,19 +95,43 @@ every run** — a check that is trusted past its reach is the false assurance th
 skill's first principle bans. Everything else in this repo, including all five
 incompleteness checks, is still reading.
 
-The two token reports measure size, not quality, and they measure different
-costs, because skill loading is three tiers. Frontmatter — `name` and
+The token reports — `tokens`, `tokens:frontmatter`, `tokens:sections` — measure
+size, not quality, and the first two measure different costs, because skill
+loading is three tiers. Frontmatter — `name` and
 `description` — is injected at session start so the agent can decide what is
 relevant, and is paid whether the skill fires or not: `npm run
 tokens:frontmatter`. The `SKILL.md` body loads when the skill fires, per
 invocation: `npm run tokens`. A resource file (`evidence.md`, `api.md`,
-`storage.md`, `shapes.md`) loads only if the body points at it and the agent
+`storage.md`, `shapes.md`, `gates.md`) loads only if the body points at it and the agent
 opens it, which for `evidence.md` is never, which is why it is excluded.
 
 So the `npm run tokens` total is a worst case — every skill installed and every
-one fired — and not a number any consumer pays. Both scripts tokenize with
-o200k_base, exact for GPT models and an approximation for Claude, which ships no
-offline tokenizer: read the ranking and the direction, not the absolute number.
+one fired — and not a number any consumer pays. `npm run tokens:sections` splits
+that per-firing tier by `##` section, which is the form the answer has to take
+when the question is which part of a body could move to `evidence.md`; it counts
+`SKILL.md` only. Every token script tokenizes with o200k_base, exact for GPT
+models and an approximation for Claude, which ships no offline tokenizer: read
+the ranking and the direction, not the absolute number.
+
+The token reports weigh a `description` without reading it, and a `description` is
+the only thing that makes a skill fire. `npm run firing` is the other half:
+it sends a headless session a prompt an engineer would plausibly type and records
+which skills the agent chose to load. **Firing is decided by frontmatter alone** —
+the body and every resource file are invisible until after the choice — so this is
+the only script here that reaches the one tier the others can only weigh. It spends
+money and it is stochastic, so it is never wired into `npm run gates`; run it with
+`--repeats` behind any claim you intend to make from it.
+
+**It runs on any machine with the `claude` CLI logged in, but a firing rate does
+not travel between machines.** A rate is a property of one model reading one
+description under one CLI version — headless sessions default to a different model
+than the one you are working in, which is a mistake this repo has already made
+once. Every run stamps its model and CLI version on the report and in `--json`, and
+`--model` pins one. The one setup difference worth knowing about: sessions run
+under an isolated `CLAUDE_CONFIG_DIR` so that globally installed skills cannot
+compete, and a machine that authenticates through an OS keychain rather than
+`~/.claude/.credentials.json` may need `ANTHROPIC_API_KEY` exported for the run.
+The preflight session says so before spending anything.
 
 ## Installing from this repo
 

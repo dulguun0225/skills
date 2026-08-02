@@ -65,6 +65,83 @@ no import a constraint that is not theirs.
 | Deterministic diff per consumer-bound surface | Fourth addition, listing internal contract, cross-module published types, event envelope schemas, error catalog and permission catalogs |
 | Standing sweep | Standing-hostile-audit record — cadence, cost envelope, lens rotation, evidence contract, the committed artifact a release gate require, the per-lens canary that makes "found nothing" trustworthy, and the mandatory different-vendor panel at the binding gate. **The last two were dropped by the first draft and restored by this skill's own hostile audit**, which is the shape the record predicts: the anti-theatre halves are the ones a self-authored pass omits |
 
+## The worked case — one repo's map, 2026-06-13
+
+**Moved here from `SKILL.md` on 2026-08-02, verbatim.** It was 16% of that file's
+always-loaded body, and it is a dated selection record — its own text says the
+names are what one org picked on 2026-06-13 and are a starting point to re-verify,
+never a current verdict. What stayed behind is the rejection grounds with the
+products named, the two frontend rows published in no skill, and the pointer here.
+
+**One org, one sweep, one map — Java backend plus a browser frontend.** That
+record **not published in this skill set**, so what follow is
+restated, not a pointer. Grounds are the sweep's; markers are not — it wrote
+none.
+
+**Rows this skill set already own, named not restated.** Architecture and
+boundary tests, compile-time nullness, migration lint, contract lint, contract
+diff, conformance fuzzing, property tests, real-dependency container tests,
+coverage floor, mutation on money paths, dependency ceiling: every one is a
+directive with a check in `java-backend-rules`, `java-backend-api`,
+`java-backend-observability`, `money-java`, `caching-java`,
+`async-handoff-java` or `llm-default-traps`. **Map's frontend column is restated
+in `backend-stack`, and restated *as host categories* rather than row for row** —
+compiler, architecture test, source-level rule, property generator,
+real-dependency test, contract diff, coverage and mutation, plus the one category
+it record as empty. Reading it there is deliberate: those cells are that skill's
+evidence about host counting.
+
+**Two frontend rows fall between the two skills and are published in neither** —
+the component test runner and committed visual-regression baselines. They map to
+no host category `backend-stack` count, and they are frontend-shaped so this
+skill's worked case no carry them. **Named as a gap, cuz a reader sent to
+`backend-stack` for them find nothing and cannot tell whether they were dropped
+or never existed.**
+
+**Rows nothing here own, which is what this section add:**
+
+**Products named, deliberately.** Hedging a tool behind its category is the most
+frequently recorded defect in this skill set's own reviews — reader cannot act on
+"a taint-analysis-class scanner".
+Names below are what one org picked on **2026-06-13** and versions deliberately
+not carried; treat each as starting point to re-verify, never as current verdict.
+
+**Licence column carried, cuz *Licences gate deny-by-default* require it of any
+selection record — including this one.**
+
+| Concern | What sweep adopted | Licence | The caveat that bites |
+| ------- | ------------------ | ------- | --------------------- |
+| Security taint analysis | **OpenGrep** (Semgrep CE fork keeping taint in free engine) **gates**; **Find-Sec-Bugs** bytecode sink detectors **advisory until a compatibility spike passes** | LGPL-2.1 / LGPL | Free taint is **intra-file only**, and riskiest flow — request handler through service into plugin boundary — is cross-file. Find-Sec-Bugs partially backstop it by following compiled call paths, **partial and not a guarantee**, and its compatibility with pinned SpotBugs and language version is **unverified**, which is why it does not gate. **Cross-file taint is therefore an uncovered class, not a covered one** |
+| Dependency vulnerabilities | **OSV-Scanner** over the committed inventory, chosen on **lowest false-positive rate** | Apache-2.0 | Ecosystem-precise ranges beat fuzzy matching *because* triage is done by an agent — noise is the deciding cost, not recall alone |
+| Dependency inventory | **CycloneDX** plugins, one inventory feeding both release bundle and scan | Apache-2.0 | Format version lag between generator and consumer is real; pin the format |
+| Dependency updates | **Renovate**, self-hosted, automerge with a cooldown before a fresh release is eligible | **AGPL-3.0** | Needs its own credential rather than the default CI token, and cooldown is the whole safety property — `llm-default-traps` own why a fresh release is the risk. **Its own licence is one the licence gate beside it denies by default** — a build tool that never ships is the standing exception, and an exception has to be written down as one |
+| Licence compliance | **Anchore Grant**, deny-by-default allowlist over the same inventory | Apache-2.0 | Undeclared licence must be rejected explicitly, else unknown pass. Pin the inventory format version Grant decodes |
+| Build provenance | **cosign** keyless signing plus explicit **SLSA in-toto** attestation, verified in deploy script against pinned trust root | Apache-2.0 | Signing alone prove blob trusted, not that **this** artifact came from **this** source at **this** revision. Attestation is the half that carry the claim. Vendor-hosted attestation was rejected — it forced a far more expensive plan tier |
+| Container image and base | **Trivy** for image, config and secrets, **hadolint** as one-second **Dockerfile** lint, **distroless** base with no shell or package manager | Apache-2.0 | **Trivy and its actions were compromised twice in one year** — digest-pin and mirror its database. `llm-default-traps` own the pin rule; here it is the example of guardrail as attack surface. **hadolint read Dockerfile text and nothing about the image it build** — that class is Trivy's |
+| Infrastructure config policy | **Trivy config** for generic misconfiguration classes; **bespoke invariants written as ordinary CI checks, not in Rego** — conftest/OPA and Checkov both rejected | Apache-2.0 | Policy language is a second behaviour language to maintain outside the compile wall. Ground held even though it is build-time only. Checkov lost differently — it is generic and knows none of the repo's own invariants |
+| Secrets scanning | **gitleaks** pinned binary, not its action, with committed allowlist for intentionally-committed ciphertext | MIT | Action needs a licence key; binary does not. gitleaks is feature-complete, security-patches-only, and its author's successor **Betterleaks** exists — re-evaluate on cadence |
+| Codemod and upgrade engine | **Picnic error-prone-support** Refaster rules riding the existing compile-time analyser, plus **OpenRewrite** for batch framework upgrades | Apache-2.0 / **Moderne Source Available License** | OpenRewrite's framework recipes are **source-available, not OSS** — free for internal build use on your own code, which is the condition, and the condition must be recorded beside the tool |
+| Coverage-guided fuzzing | **Jazzer**, replay mode with committed crash corpus | Apache-2.0 | Discovery mode blocked on **a JDK 25 segfault, Jazzer issue #1035**; replay unaffected. **Splitting the tool by mode is what let half of it ship** rather than deferring all of it |
+
+**Two things this map show about criterion above.** Rejections ran on **four**
+grounds, and naming them all matters cuz a repo screening on the first two alone
+will adopt something the sweep rejected. **Standing server**: SonarQube's server,
+Dependency-Track's server, pa11y-dashboard, Chromatic. **Advisory-only verdict**:
+Fallow, which was **adopted into an advisory MCP lane rather than rejected**, cuz
+its verdict class is one an agent might act on by deleting live code. **Licence
+or second dialect**: jQAssistant, on GPL plus a rule dialect outside the compile
+wall; conftest/OPA and CodeQL on the same second-language and licence axes.
+**Maturity, scope or abandonment**: Konsist on language scope, Deptective
+abandoned, Structurizr modelling rather than enforcing, Spectral stale, Atlas's
+lint paywalled, migra dead, Checkov generic. And **caveat column is where value
+concentrate**: intra-file taint limit, unverified Find-Sec-Bugs compatibility,
+inventory-format lag, the OpenRewrite licence condition, Renovate's own licence,
+and Jazzer's blocked discovery mode are each a thing a tool list without the
+column would have shipped as covered.
+
+*Check: none — this a record of a selection, not a directive. Grounds
+**convention**, 2026-06-13.*
+
 ## Do not cite
 
 - **Any tool version, free-tier boundary or compatibility claim from this

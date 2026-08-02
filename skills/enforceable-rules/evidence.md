@@ -300,9 +300,12 @@ and no implementation, which `SKILL.md` states as a gap rather than a plan.
   failures they catch actually occur, and the answer on a clean tree is **zero of
   either** — one rule set, one author, so it is a weak number and not a rate.
   What the build produced instead was a finding about the evidence-order rule as
-  this skill states it: **9 of 17 evidence files anchor to the directive text and
-  8 anchor to nothing**, being organised by research pass rather than by
-  directive. The gate declares those 8 by name rather than bending the rule, and
+  this skill states it: **the evidence files that anchor to nothing** are organised by
+  research pass rather than by directive. The other side of that ratio moved
+  within the day it was taken — 9 of 17 that morning, 12 of 20 by evening, when
+  three skills that had carried their evidence in the body gained a file — which
+  is the argument for citing the command, `npm run check:evidence-order`, over any
+  figure. The gate declares each of them by name rather than bending the rule, and
   gap 2 is narrowed, not closed — the checks are still described here and not
   shipped as code, and nothing runs them automatically. **What is still owed is
   the same trigger run by someone else**: either check built against a rule set

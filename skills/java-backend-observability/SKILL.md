@@ -474,28 +474,6 @@ it is all there is.
 **Lapse rule:** past `review-by` **2027-01-21**, every *confirmed* marker in this
 skill read as *convention* until new pass re-date it. No maintainer action need.
 
-| Claim | Marker | Date |
-| ----- | ------ | ---- |
-| A Scoped Value binding never reaches a forked subtask on this stack | confirmed | 2026-07-27 |
-| Logback never inherits its context map into a child thread, and offers no flag | confirmed | 2026-07-27 |
-| Log4j 2 inherits only under a system property; the JUL and reload4j bindings inherit by default | confirmed | 2026-07-27 |
-| A missing context key renders as the empty string and throws nothing | confirmed | 2026-07-27 |
-| The weaving agent's mechanism, and its vendor-default status | primary-source verified | 2026-07-27 |
-| The starter uses autoconfiguration, not weaving | primary-source verified | 2026-07-27 |
-| Structured JSON logging ships natively in Spring Boot since 3.4 | primary-source verified | 2026-07-27 |
-| ArchUnit's standard-stream and logging-framework rules are public API | primary-source verified | 2026-07-27 |
-| ArchUnit cannot host the unloggable-domain-type rule | primary-source verified | 2026-07-27 |
-| Every unique label combination is a new time series; high-cardinality labels are advised against | primary-source verified | 2026-07-27 |
-| Cardinality is boundable off the shelf on both sides | primary-source verified — corrected from bespoke | 2026-07-27 |
-| Alert fire-tests are off-the-shelf, must-not-fire included | primary-source verified — corrected from bespoke | 2026-07-27 |
-| The off-the-shelf context-propagation library's three caveats | primary-source verified | 2026-07-27 |
-| Call-site prevention over pipeline scrubbing | convention | 2026-07-27 |
-| The autoconfiguration probe test | convention | 2026-07-27 |
-| The event and metric catalogs | convention | 2026-07-27 |
-| The mandatory-correlation-field contract test | convention | 2026-07-27 |
-| The error-id-resolves-to-a-log-event test | convention | 2026-07-27 |
-| The database-export poller | convention | 2026-07-27 |
-| Telemetry's disposability | convention | 2026-07-27 |
 
 Ground behind each claim — with its sources — claims that must **not** be cite,
 and conditions that reopen rule are one hop away in

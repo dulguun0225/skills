@@ -68,30 +68,7 @@ description: The Java checks that make the cache rules fail the build — which 
 
 ## Wiring the gates
 
-Run once per repo, in the PR that land first cache — not per cache change. Instructing agent do nothing for gate: **gate is what catch next agent**, and unwired gate is rule described as enforced that is not.
-
-1. **ArchUnit** — adapter seam with engine-complete client ban list and long-lived-bean field-type rule (`C-1`); domain-interface predicate and annotation ban entries (`C-2`); loader and database-client confinement (`C-3`); port declared methods and parameter types (`C-4`, `C-5`); key factory and port signatures (`C-6`); expiry construction confinement (`C-7`); invalidate confinement to post-commit callback (`C-9`). Fail build.
-2. **Loader port with two abstract members** (`C-3`) and port absent signatures — no bare write, no atomic primitive, no free-text parameter, no call-site expiry (`C-4`, `C-5`, `C-6`, `C-7`). **Owning the port is what make these unwritable rather than lint-banned** — stronger gate.
-3. **Ban list as executable ArchUnit test class**, with caching annotations named and meta-test that every entry enforced or explicitly deferred with reason (`C-2`).
-4. **Error Prone** — registration-site serialization check (`C-10`), and `EmptyCatch` promoted from default `WARNING` to `ERROR` (`C-12`); at `WARNING` it gate nothing.
-5. **Jackson strict deserialization** and **Maven shape-hash plugin** with committed file and `check` goal (`C-11`).
-6. **Catalog generator** and its regenerate-and-diff CI step (`C-15`), and committed staleness ceiling as machine-readable value in it (`C-7`).
-7. **JUnit catalog test** asserting every expiry at or below ceiling (`C-7`).
-8. **Testcontainers tests** — two-tenant per cached read path (`C-6`), negative-caching read-create-read (`C-8`), rollback test (`C-9`), Toxiproxy fault test per read-path class (`C-12`).
-9. **jqwik property tests** — distinct tuples render distinct keys (`C-6`) and serialize-then-compare per cached type (`C-10`).
-10. **Three maven-failsafe executions** with test-scoped always-miss binding and Toxiproxy arm (`C-13`), plus **hit and miss counters on port asserted per configuration** (`C-14`). Wire `C-14` in same change as `C-13`, never after: until it exist, `C-13` cannot be trusted at all.
-11. **Engine pin** — image digest and client-package ban list, plus licence scan over dependency graph.
-
-**Then commit the record**, in repo own text — constitution, rules file, or decision record. One line per directive id: tool, and either *wired* or *deferred with reason and who own it*. These entries already known and belong in that record on first run:
-
-- **`C-12` general half and `C-9` residual ordering — spec and review**, with `C-12` carrying only partial `EmptyCatch` gate. Neither got full build gate by design.
-- **`C-16` — spec and review** at plan approval gate.
-- **`C-7` engine-side eviction gap** — nothing in this build read cache server memory policy.
-- **`C-1` hand-rolled-memo half** — field-type rule opt-out list, and how many entries it needed. See named gaps below.
-- **`C-15` "what invalidates it" field** — prose, no diff can check it against behaviour.
-- **jqwik version pin** — no cache directive own it, nothing here wire it. `llm-default-traps` own it; install that skill and wire ceiling from there. Repo that no install it get no pin from any skill here and must record the one it run. See named gaps below.
-
-Record listing only what was wired read as complete coverage. That the failure this step exist to prevent.
+Run once per repo, in the PR that land first cache — not per cache change. Instructing agent do nothing for gate: **gate is what catch next agent**, and unwired gate is rule described as enforced that is not. **Ordering, and the record to commit after: [gates.md](gates.md).**
 
 ## Named gaps — where this stack can host no check
 
@@ -114,42 +91,10 @@ Silence read as coverage, so each stated.
 
 **In-process libraries — one checked, rest not.** Caffeine 3.2.4 (2026-05-03, Apache-2.0, last push 2026-07-28) verified from its own release API. **Guava cache and every other in-process library not** — no licence, version or API-surface check. Rules ban them *outside* the seam, which need no such check; repo that permit one *inside* the seam do that evaluation itself.
 
-## Evidence and dates
+## Markers, dates, and what they mean
 
-Java- and engine-specific claims. Platform-neutral evidence — what each directive rest on, full steelman for each rejected shape, wordings that must not be reintroduced, nine-candidate engine survey, and what reopen a decision — in `caching` skill own `evidence.md`.
+**Nothing in `C-1` … `C-16` confirmed** — all sixteen convention. What confirmed for this stack is tool, licence and price evidence, and none of it promote a directive.
 
-**Nothing in `C-1` … `C-16` confirmed** — all sixteen convention, no marker below promote any. What confirmed here is tool and licence evidence.
+**Review by 2027-01-29.** Past that date every **confirmed** marker read as **convention** until new pass re-date it. Version pins and prices age fastest — re-check Valkey, Redis, Caffeine and managed pricing at adoption, not on calendar.
 
-| Claim | Marker | Date |
-| ----- | ------ | ---- |
-| Valkey 9.1.1 (published 2026-07-21), BSD-3-Clause in `COPYING`, TSC under LF Projects with written cap of no more than one third of TSC members from one organisation (GitHub release API; `valkey-io/valkey` `COPYING` and `GOVERNANCE.md`) | confirmed | 2026-07-29 |
-| Valkey guarantee compatibility with "Redis OSS 7.2 and all earlier open-source Redis versions" and existing Redis clients connect unchanged; one stated incompatibility is "RDB files produced by Redis CE 7.4 and later are not compatible" (`valkey.io/topics/migration/`) | confirmed | 2026-07-29 |
-| Redis 8.8.1 (published 2026-07-23) tri-licensed at recipient choice — RSALv2, SSPLv1, or AGPLv3; Redis 7.4–7.8 offer RSALv2 or SSPLv1 only, no OSI-approved option (`redis/redis` `LICENSE.txt`, at those tags) | confirmed | 2026-07-29 |
-| AGPLv3 §13 trigger only "if you modify the Program", and §0 define modifying as adapting, "other than the making of an exact copy" — so running unmodified server as backing service no trigger it (`gnu.org/licenses/agpl-3.0.txt`) | confirmed | 2026-07-29 |
-| ArchUnit cannot follow lambda or method reference into its body (TNG/ArchUnit #1258, opened 2024-03-05, closed unresolved) — so "the loader must query the database" unsound by construction and `C-3` make lambda uncompilable instead | confirmed | 2026-07-29 |
-| ArchUnit expose catch block caught type but not its body (TNG/ArchUnit #1120, still open), and Error Prone `EmptyCatch` no fire on catch that return a default — so swallowing cache-error catch invisible to this toolchain | confirmed | 2026-07-29 |
-| Error Prone `EmptyCatch` is `WARNING` by default, so must be promoted to `ERROR` to gate a build, and it skip commented or `ignored`/`expected` block (errorprone.info) | confirmed | 2026-07-25 |
-| Spring `NoOpCacheManager` "will simply accept any items into the cache, not actually storing them", so always-miss arm pass condition byte-identical to arm never applied | confirmed | 2026-07-29 |
-| Testcontainers Toxiproxy module document toxics applied imperatively with no toxic-verification API and no assertion helper; its own example verify at application level instead | confirmed | 2026-07-29 |
-| Spring Boot profile validation setting govern profile-name *pattern*, not whether profile exist or is used, so mis-named test profile raise nothing | confirmed | 2026-07-29 |
-| Caffeine 3.2.4, 2026-05-03, Apache-2.0, last push 2026-07-28 (its own release API) | primary-source verified — one researcher, no panel | 2026-07-29 |
-| Since Java 9, `+` on strings compile to `invokedynamic`, so bytecode rule banning key concatenation got no operand — **contested, see below** | confirmed by this stack's pass; **challenged and unverified by a later audit** | 2026-07-29 |
-
-**One contradiction between sources, recorded rather than resolved.** This stack pass record `invokedynamic` claim as confirmed. Later hostile audit, run for rules now published as `async-handoff`, argue claim too strong — concatenation recipe travel as constant-pool bootstrap argument, so bytecode-reading rule may have operand after all — and **could not reach primary specification, which returned HTTP 403**. Neither reading adopted here, because **no rule depend on which is right**: `C-6` is parameter-type rule, and factory that cannot take free-text parameter make wrong call uncompilable regardless. If challenge ever verified, delete impossibility clause from `C-6` entry above and leave rule unchanged.
-
-**Managed cache pricing — partly checked, gap named.** Prices move, so each figure carry source and date and **must be re-checked at adoption**:
-
-- **Azure**, from Microsoft own retail-prices API, `eastus`, USD, `priceType eq 'Consumption'`, read 2026-07-29: Azure Managed Redis **Balanced B0 at $0.016/hour**; Azure Cache for Redis **Basic C0 at $0.022/hour** and **Standard C0 at $0.055/hour**. No free tier. **Filter on `priceType` and check for duplicate meters before quoting** — Premium P1 return two rows, $0.277/hour on meter effective 2019-05-01 and $0.555/hour on one effective 2016-01-01, so naive read of that SKU give whichever row came first.
-- **AWS ElastiCache Serverless**, from AWS pricing page, US East (N. Virginia), read 2026-07-29: **$0.084 per GB-hour** stored and **$0.0023 per million ECPUs** for Valkey; Memcached is $0.125 and $0.00340. **Discriminator that matter at this scale is billing floor, not rate:** minimum is **100 MB per cache for Valkey** against **1 GB for Redis OSS and Memcached** — ten-fold difference in monthly minimum for small cache.
-- **Not obtained: Google Cloud Memorystore pricing.** Its tables render client-side and no resolve to text. No figure quoted rather than one guessed, and provider named so reader on that platform can tell gap is theirs.
-
-**Do not cite.**
-
-- **"Redis is no longer open source" as rejection ground.** True of 7.4–7.8, **false of 8.x**, which may be taken under AGPLv3. Real grounds: recorded election, two non-OSI branches, and having nobody to run that analysis.
-- **AWS own "33% lower pricing" claim as computed saving.** Page state it verbatim but publish Valkey and Memcached serverless rates and **not** Redis OSS one, so nothing on page let reader verify comparison. Cite as vendor claim or not at all. Saving this pass stand behind is billing floor.
-- **ArchUnit for anything inside lambda body, catch block body, or generic type parameter.** Three separate confirmed limits, three separate rules reworded because of them.
-- **In-memory cache substitute for `C-13` and `C-14` runs.** Behaviour under test is the wiring one, and no-op manager documented as indistinguishable from unapplied binding.
-- **Guava cache, or any in-process library other than Caffeine, as checked.** Only Caffeine verified this pass.
-- **Nine-candidate engine survey as this stack work.** Platform-neutral, live once, in `caching` skill own `evidence.md`.
-
-**Review by 2027-01-29.** Past that date every **confirmed** marker above read as **convention** until new pass re-date it. Version pins and prices age fastest — re-check Valkey, Redis, Caffeine and managed pricing at adoption, not on calendar.
+Ground behind each Java and engine claim, with its source and date, the managed-cache prices, one recorded contradiction between sources, and what must **not** be cited, one hop away in **[evidence.md](evidence.md)**. Platform-neutral evidence — nine-candidate engine survey, steelman per rejected shape, reopen conditions — in `caching` skill own `evidence.md`.
