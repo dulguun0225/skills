@@ -49,7 +49,7 @@ first.
 candidate list at the language and runtime layer was recovered the same day and
 its row is gone** — the four candidates and the ground each lost on are in the
 skill, the verdict is a contested win rather than an unexamined one, and
-`CLAUDE.md` holds the account of what the recovery changed. What it did **not**
+`docs/history/backend-stack.md` holds the account of what the recovery changed. What it did **not**
 supply is below.
 
 | Owed | What it unblocks |
@@ -103,7 +103,7 @@ evidence for.
 
 **What the recovery cost, recorded so the next one is priced.** Outside the two
 `backend-stack` files it changed both `java-backend-rules` files, `README.md`,
-`CLAUDE.md` and this page — and every one of those edits was a sentence
+the project record and this page — and every one of those edits was a sentence
 asserting the absence of the thing recovered. **A recovery obliges the same sweep a publish
 does**, and for the same reason: the claim that something is missing is a
 cross-file claim nothing checks. **Deleting a closed row is part of that sweep**:

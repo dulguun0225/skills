@@ -8,8 +8,10 @@ regardless.
 The skills are the artifact. The imported decision corpus they were written from
 was deleted on 2026-08-01, once every rule set in it had shipped as a skill; its
 researched-but-unwritten topics live on in [BACKLOG.md](BACKLOG.md). How each
-skill is split, and why, is recorded in [CLAUDE.md](CLAUDE.md) — read it before
-authoring anything here.
+skill is split, and why, is recorded in [CLAUDE.md](CLAUDE.md) — the operative
+rules there, and the per-skill account of each authoring pass, its sweeps and its
+reviews under [docs/history/](docs/history/). Read both before authoring anything
+here.
 
 ## What is published
 
