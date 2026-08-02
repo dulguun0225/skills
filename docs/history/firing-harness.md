@@ -75,7 +75,8 @@ firing rate.
 ## It is a report, never a gate
 
 It spends money — **$0.115 per session on `claude-sonnet-5`, measured over 100
-sessions on 2026-08-02; about $0.25 on `claude-opus-5`, measured over two** — and
+sessions on 2026-08-02; $0.22 on `claude-opus-5`, measured over 88 sessions on
+2026-08-03** — and
 it is stochastic. `money-1` fired on its own and missed in the full run
 twenty minutes later, same prompt, same description. **One miss is a coin flip.**
 Re-run with `--repeats` before touching anything. Do not wire it into
@@ -143,6 +144,58 @@ often can; and the corpus prompts are deliberately oblique, which is the point o
 the corpus rule and also a way to write a prompt no description could reasonably
 catch. **A case that fails twice may be a bad case.**
 
+## The Opus baseline and the ALWAYS A/B, 2026-08-03
+
+One run answered both of the table's top rows: `npm run firing --against HEAD
+--model opus`, taken the same day the descriptions were edited, so the `HEAD`
+arm is the pre-edit set — the Opus re-baseline `BACKLOG.md` owed — and the
+worktree arm is the same set with every description's closing `Load …` clause
+strengthened to `ALWAYS load …` (the directive-wording lever from the
+2026-08-03 premise review). **All figures: `claude-opus-5`, CLI 2.1.220,
+win32, one session per case, $18.98 for 88 sessions — $0.22 a session, which
+replaces the two-session $0.25 estimate.**
+
+| Arm | Fired as expected | Negatives clean |
+| --- | ----------------- | --------------- |
+| `HEAD` (pre-edit descriptions) | **19/44** | 4/4 |
+| worktree (`ALWAYS load` descriptions) | **23/44** | 4/4 |
+
+Eight cases changed between arms: six up (`money-api-2`, `caching-1`,
+`async-handoff-2`, `business-numbering-2`, `enforceable-rules-2`,
+`tech-decision-research-1`), two down (`async-handoff-1`,
+`java-backend-api-2`). **At one repeat per case that split is consistent with
+an improvement and is not evidence of one** — the same file that recorded
+`money-1` firing and missing on the identical prompt twenty minutes apart does
+not get to read 6-up-2-down as a result. The half that needed no repeats: the
+four negative cases stayed clean on both arms, so the pushier wording caused
+no false firing on a rename, a rebase question, a Javadoc typo or a postcode
+regex.
+
+Two findings bigger than the edit:
+
+- **Opus fired less than Sonnet on the identical pre-edit descriptions —
+  19/44 against 31/44 — and the comparison is confounded exactly the way this
+  file says all cross-machine comparisons are**: the Sonnet baseline is linux,
+  this run is win32, same CLI version. Whichever way that resolves, the
+  assumption behind the re-baseline row — that the Sonnet rates understated
+  what Opus would do — went the other way. `ai-maintainer-principles`, the
+  Sonnet baseline's worst case at 5–6/16, fired every session on both arms
+  here; the weakness moved, it did not lift.
+- **The miss list is dominated by the Java fixture.** On the worktree arm, 15
+  of 21 misses are `[java]` cases; every `money-java`, `caching-java`,
+  `async-handoff-java`, `java-backend-rules`, `java-backend-api` and
+  `java-backend-observability` case missed on at least one arm, most with
+  "nothing fired". The fixture's files are invisible to the model — every
+  tool but `Skill` is denied — so whatever drives this is in the prompt
+  wording or the model's judgment, not the repo contents. That pattern is the
+  ranking for where `--repeats` goes next.
+
+The 2026-08-02 sibling-boundary findings did not reproduce on Opus:
+`async-handoff-shapes-2` (the invoice timeout) fired correctly on both arms,
+and `async-handoff-java-1` missed with nothing rather than pulling
+`java-backend-rules`. One new wrong-sibling appeared: `caching-java-2` pulled
+`caching` alone on the worktree arm.
+
 ## Running it on another machine
 
 This repo is developed on several. The script runs anywhere the `claude` CLI runs
@@ -160,6 +213,26 @@ would, and one thing still does not travel.
   producing the same error, and it reads like a firing result. The preflight
   prints what to check instead.
 - **Model and CLI version stamped** on the header, the footer and the `--json`.
+
+**A fifth thing was needed on 2026-08-03, and it cost a full run to find.** The
+first Windows run of this harness — the Opus A/B over the `ALWAYS load`
+description edit — reported both arms at 4/44: every positive case a miss with
+"nothing fired", all four negatives passing. That is not a firing rate; it is
+the signature of sessions that never saw their prompts. `spawn` can only reach
+a `.cmd` shim on Windows through `shell: true`, and a `shell: true` argument
+list is concatenated through `cmd.exe` unescaped — the deprecation warning
+Node prints about it was in the log of the void run — so every multi-word
+prompt arrived as a fragment. A probe session asked to repeat its prompt back
+answered that it had received nothing. Two changes, both in `runOne` and
+`preflight`: the prompt now travels on **stdin**, which `claude -p` reads,
+leaving only fixed single-token arguments on the command line where cmd.exe
+concatenation cannot damage them; and the preflight now requires its probe
+word echoed back, because the error-only preflight passed — a session asked a
+fragment still answers politely, bills normally, and stamps its model. The
+void run cost $12.52 and its report was plausible enough to act on.
+**Recognise the shape: all positives missing while all negatives pass is
+equally what "prompts mangled" and "no skills installed" look like, and
+neither is a measurement.**
 
 **The thing that does not travel is authentication, and it is the isolated
 `CLAUDE_CONFIG_DIR` that makes it fragile.** The sandbox copies
@@ -202,8 +275,11 @@ consumer* — and this time the consumer-facing half was already clean.
   all three fired 2/2 in the baseline as they stand.
 - **What the model does.** A miss is a model's relevance judgement, not a parse
   failure, and this harness observes the outcome without any access to the reason.
-- **Anything about Opus**, which is what these descriptions were written for and
-  what this repo is worked in. Every rate here is `claude-sonnet-5` by accident,
-  and the one Opus spot check disagreed with it.
+- **Whether Opus actually fires less than Sonnet on this set.** The 2026-08-03
+  Opus baseline (19/44) sits far under the 2026-08-02 Sonnet one (31/44) on
+  identical descriptions and the same CLI version, but the runs are on
+  different platforms — win32 against linux — and this file's own rule is that
+  such rates are different measurements, not comparable ones. Settling it
+  means one model's run repeated on the other's platform.
 - **Whether the result holds on another CLI version.** Run under Claude Code
   2.1.220. A description is a prompt, and the thing reading it changes.

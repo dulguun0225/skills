@@ -148,7 +148,21 @@ it independently:
    here**: these descriptions are relevance prose, and the README's install section
    ships no recommended consumer pointer block. Both are cheap; both are
    measurable with the harness this repo already built; both belong on the backlog
-   ahead of any description trim.
+   ahead of any description trim. *(Applied later the same day, 2026-08-03: every
+   description's closing `Load …` clause now reads `ALWAYS load …` — an additive
+   edit, no hook word removed — and the README install section carries a
+   recommended consumer pointer block. "Relevance prose" also overstated the
+   before-state: every description already ended in an imperative `Load before …`
+   clause; the edit strengthened it to the study's tested wording rather than
+   introducing a directive where none was. The A/B ran the same day on `claude-opus-5`,
+   CLI 2.1.220, win32, one repeat per case: pre-edit descriptions 19/44, `ALWAYS
+   load` descriptions 23/44, eight cases changed — six up, two down — which at
+   one repeat is consistent with an improvement, not evidence of one; the four
+   negative cases stayed clean on both arms, so the pushier wording caused no
+   false firing. The same run's pre-edit arm is the Opus re-baseline the backlog
+   owed, and it landed below Sonnet, not above — see
+   [firing-harness.md](firing-harness.md) for the platform confound on that
+   comparison.)*
 2. **The frontmatter tier has the same growth law as the disease it cured** —
    linear in skill count, paid unconditionally, no ceiling — only with a slower
    onset (4,383 tokens at twenty skills, against a corpus that had grown past
