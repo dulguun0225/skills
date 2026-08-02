@@ -131,6 +131,7 @@ Per-skill records: what each authoring pass decided, its sweeps, its adversarial
 - [evidence-owed-longform](docs/history/evidence-owed-longform.md) — the prose the backlog's owed-evidence table was compressed from
 - [context-budget](docs/history/context-budget.md) — measured per-firing and per-session cost, and the five reductions owed against it. Nothing done; the rows are in `BACKLOG.md`
 - [whole-project-review](docs/history/whole-project-review.md) — 2026-07-31, first review whose unit was the repo
+- [premise-review](docs/history/premise-review.md) — 2026-08-03, the owner's two questions: skills versus a knowledge-base tool, and per-skill necessity; verdicts, the inverted cost/evidence finding, and the two unapplied firing mitigations
 
 Live owed work is in [BACKLOG.md](BACKLOG.md), not in these files: a history file records what a pass closed, the backlog carries what is still owed.
 
