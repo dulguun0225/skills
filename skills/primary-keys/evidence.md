@@ -379,6 +379,65 @@ the key cannot be removed without changing the key. **Conversion-dated 2026-08-0
 marked in `SKILL.md` as this conversion's own observation, and not attributed to the
 pass.**
 
+## The incompleteness checks, run 2026-08-02
+
+**`enforceable-rules` publishes five checks a rule set passes while still being
+incomplete. Its layer, predicate and composite-shape checks were run over this skill
+on 2026-08-02, by reading; its enumeration and token-placement checks were not, and
+a blank is not coverage.** No run promoted a marker — finding nothing is not
+verification, and finding something adds a check line or a shape verdict rather than
+confidence.
+
+- **The layer check found the skill's one false coverage claim.** *A time-ordered
+  key is not an ordering* named an architecture test as its only host and its gap
+  entry said the ban "catch the SQL". An architecture test on the JVM reads
+  bytecode; it never reads query text. So the ban was written in one language and
+  enforced in another, and the gap list asserted the opposite of the truth — the
+  *false green* shape `enforceable-rules` calls worse than a missing gate. The
+  remedy is `money-storage`'s two-part form, `M-35`: the architecture predicate over
+  builder calls **plus** a lint over committed query text. That neighbour had
+  published the identical finding for money arithmetic and this skill did not carry
+  it across.
+- **The other second languages it named**, each now beside its own check line: a
+  sequence declarable in a mapping annotation or a non-SQL changelog where the
+  migration grep looks only at DDL text; the version-4 generator's application-side
+  twin, which the migration grep cannot see; substring reads of a business number in
+  query text and in a reporting tool's expression language; an id dereferenced by a
+  message consumer, a batch job or a pre-signed URL rather than by an endpoint; a
+  serializer that emits a number under a document declaring a string; an
+  object-storage path concatenated at runtime.
+- **It cleared three.** *One mechanical key rule* and *A pure child* were already
+  written across both their languages, and *A library's own tables* governs a value
+  that never leaves the schema.
+- **It left one open.** The enumerable-key contract lint reads the committed API
+  document; a route declared only in framework annotations binds an id that document
+  never mentions, and the route-table assertion that would reach it is not carried.
+- **The predicate check widened the load trigger.** It had been framed on *creating a
+  table* — the technology in the skill's name — while three directives govern acts
+  nobody creates a table to perform: writing an object-storage key template,
+  designing a human-facing number format, and generating an id in application code.
+  The cheapest way to do each of those missed the predicate entirely, which is the
+  exact failure that check was written against.
+- **The composite-shape check produced the table now in `SKILL.md`, and most of it
+  was already decided and never stated.** The key and the business number in one
+  payload, the business number as a URL identifier, the key rendered into a document,
+  the key in an outbox row — each followed from a published directive, and a reader
+  looking for the shape rather than the directive found nothing. **Four entries were
+  decided by nothing at all**: the key as a range-partition key, where the insert
+  locality the verdict rests on becomes a hot partition and neither side is measured;
+  a composite child key three levels deep, which the pure-child test caps at one
+  level without saying so; the key in a reporting store, whose query layer the
+  `ORDER BY` lint does not reach; and a key derived from another identifier, **the
+  one shape the check banned outright**. Its grounds are in the section itself, with
+  the organisation fact and the re-open condition `enforceable-rules` requires of any
+  ban a shape table produces.
+- **Three entries were handed to skills that already own them**, each verified by
+  opening the file rather than by memory: `caching` `C-6` for a key inside a cache
+  key (the cache key is the loader's full argument tuple, hand-built key strings
+  banned), `money-api` `M-17` for the idempotency key a client-supplied create id is
+  routinely confused with, and `java-backend-observability` for request identity,
+  which a row key may be logged beside and never stand in for.
+
 ## What this skill does not carry
 
 - **The whole business-numbering machinery**, named above. It is the largest single

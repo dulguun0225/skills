@@ -668,6 +668,38 @@ Silence read as coverage, so each stated.
    repo that install these.** Repo that no install it got no pin from any skill
    here and must decide it at its own dependency review.
 
+8. **The six second languages `async-handoff`'s layer check named 2026-08-02, and
+   what this stack can host for each.** Stated here because a check kind with no
+   tool is wish, and **one of the six already have a host here that nobody
+   wired**.
+   - **`E-1`, a handoff declared outside Java.** ArchUnit and the
+     dependency-manifest check read bytecode and the build file. A Kubernetes
+     `CronJob`, a managed scheduler, a `pg_cron` entry and a broker-side shovel or
+     Kafka Connect connector reference no type, so **the allow-list have no
+     operand for any of them**. Host would be a lint over committed manifests and
+     infrastructure code — no Java tool do it, and this repo run none.
+   - **`E-4`, the outbox read from query text.** ArchUnit decide which module
+     import the outbox repository and read no SQL. **The stronger half is not a
+     Java check at all**: a database grant that make the outbox table unreadable to
+     every role but the relay's, asserted by the same schema lint that already read
+     committed migrations. Cheap, and not wired.
+   - **`E-21`, an untyped schema field.** Schema lint read the Avro or AsyncAPI
+     file, so **a `map` or `bytes` field defeat every content ban by declaring
+     nothing** — the float ban's fifth layer included. Decidable response is a lint
+     clause banning those constructs per subject; same host as the existing schema
+     lint, one more rule in it.
+   - **`E-22` and `E-23`, scope and clock in query text.** **This one have a host
+     already in this stack, in the sibling skill**: `money-java` `M-35` pair an
+     ArchUnit predicate with a lint over committed query text, view and function
+     definitions and Flyway migrations. Same lint, two more patterns — a missing
+     scope predicate cannot be pattern-matched, but `now()`, `current_timestamp`
+     and a clock default on a column written by a replay-safe handler can. **Not
+     wired, and the lint it would extend already exist in a neighbouring family.**
+   - **`E-27`, topology drift.** No host. Reconciliation job reading topology from
+     the broker's admin API and diffing against the committed declaration —
+     bespoke, and gap 2 above already say the declarations are the lint's operands.
+     **This is that gap with a check named for it.**
+
 **Two costs, stated rather than absorbed, and both real numbers for three-person
 team.** Cache rules already **triple** integration CI time; this set run suite in
 **four** configurations against real broker in container, **which make it most

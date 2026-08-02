@@ -231,8 +231,10 @@ conversion's.** Each record states its own instance.
 **One tool row is not restated here and one does not exist.** `guardrails-toolchain`'s
 worked-case map carries the canonical-form rewriter — Picnic error-prone-support's
 Refaster rules, beside OpenRewrite — with its licence and caveat. **It carries no
-formatter row, and no skill in this set does**, so palantir-java-format and Spotless
-are named here or nowhere.
+formatter row, and no skill in this set does** — **a grep for `Spotless` and
+`palantir-java-format` across `skills/` was clean on 2026-08-02, and that command is
+the claim; re-run it rather than citing this sentence.** So those two are named here
+or nowhere.
 
 ### A human who steers the agent is not a code reviewer
 

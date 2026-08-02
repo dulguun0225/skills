@@ -66,3 +66,29 @@ Five that no generalise: `E-26` carried none of second-consumer extra condition 
 
 **Left standing deliberately.** 1282-line core skill + dormancy split (rejected producer/consumer/machinery cut still right rejection); naming Kafka, RabbitMQ, SQS, NATS, Kafka Streams in neutral skills (ground not enforcement); `E-28` dropping source "in its Decision Trace" from neutral text while stack skill keep and now gloss it; and claim this family passes **worse than caching family** — checked against the cache-discipline source own frontmatter, which record evidence panel + three-vote refutation broker pass never ran, so comparison exact not rhetorical.
 
+
+## The layer check, 2026-08-02
+
+**The last of the three families' owed checks.** The predicate and composite-shape checks ran 2026-07-29 — this is the rule set the composite-shape check was written against — so only the layer check was owed. **It promoted nothing**; every clause added is *convention*, conversion-dated, and names a check that is absent.
+
+### The backlog row's ground was false, and it is the second one
+
+The row read: *its values cross into a payload contract, an outbox row, and a schema registry if one is ever added.* **`E-18` names the payload contract and gates it with regenerate-and-diff, `E-7` and `E-8` name the outbox row and lint its schema, and `E-19` names the registry explicitly — to reject it as the gate, because a setting a running registry enforces at publish time is not a check the build can read.** All three named before the row said none were. **`caching`'s row had the same defect the same day**, and the generalisation is in `BACKLOG.md`: those cells were written from memory of the skills rather than from a read of them, which is the same failure as running a check without opening the file.
+
+### The six second languages
+
+1. **`E-1` — an allow-list of types has no operand where the cheapest handoff is declared.** A scheduled job in a **deployment manifest**, a **managed platform's scheduler or task queue** configured in infrastructure code, a **scheduler inside the database** running a statement on a timer with no application process involved, and **broker-side routing** — a shovel, a federation link, a connector, a topic-to-topic stream. Each produces at-least-once delivery, poison items and a backlog nobody watches, which is this rule set's own predicate. **The sharpest part: the hostile audit that produced the allow-list found a manifest cron entry as one of its examples**, and the fix — an allow-list of async-capable types — gave that example no operand. The finding survived its own remedy.
+2. **`E-4` — the outbox is readable from three languages and confinement covers one.** A view definition, a report query, a support script and a database prompt import nothing. **A read model built on a view over the outbox is `E-32`'s banned shape arriving where `E-32`'s dependency-direction check cannot see it.** The stronger remedy is not a lint: a **database grant** making the table unreadable to every role but the relay's.
+3. **`E-21` — every payload ban reads the schema, and a schema can decline to be typed.** A free-form map, a bytes blob, an any-typed extension field: the lint sees a declared type and the content is decided in application source one language later. **The float ban's fifth layer has a hole exactly where the schema stops describing content**, and so do the timestamp, enumeration, dereference and personal-data bans. Decidable response is a lint clause banning those constructs per subject.
+4. **`E-22` — the scope is typed in one language and applied in another.** Type design establishes the handler *has* the scope; whether the statement it issues filters on it is query text. The two-tenant integration test is what actually covers this, per subscription and only on driven paths.
+5. **`E-23` — the clock is readable in the store's language.** `now()` in a statement, a column default, a trigger. Each reaches the effect through the row the handler writes, and replay then produces a different row and looks like it worked — this directive's own failure with its ban satisfied.
+6. **`E-27` — a committed input is not the only writer.** The broker's console, command-line tool and administrative API write the same settings and nothing compares the two. Drift is invisible in the direction that matters: retention shortened, delivery limit lowered, a dead-letter binding removed, a partition count raised.
+
+### The sweep
+
+**`async-handoff-java` gained an eighth named gap** with the per-check host analysis, and **one of the six already has a host one family over**: `money-java` `M-35` pairs an ArchUnit predicate with a lint over committed query text, view and function definitions and migrations. `E-23`'s clock patterns drop straight into it. `E-4`'s grant belongs in the same schema lint that already reads committed migrations. Neither is wired.
+
+### Still open on this family
+
+- **The enumeration and token-placement checks have not been run here**, and this is the largest rule set in the set, so both are worth more here than anywhere.
+- **`E-1`'s manifest gap is stated, not closed**, and it is the one that admits a whole handoff mechanism rather than weakening a check on an existing one.

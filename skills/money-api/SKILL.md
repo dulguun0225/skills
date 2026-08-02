@@ -1,6 +1,6 @@
 ---
 name: money-api
-description: Money-grade rules for money crossing a process boundary — a string decimal plus an explicit currency on the wire, a JSON number on a money field rejected at parse, required money fields, counterparty minor-unit tables, constructor-only deserialization, idempotency keys on money-mutating POSTs, required preconditions, and the money edge cases the conformance fuzzer must send. Load before adding or changing a request or response payload, a schema, or an endpoint that carries an amount of money. States the kind of check each rule needs; the tool is named in the matching stack skill (money-java).
+description: Money-grade rules for money crossing a process boundary — a string decimal plus an explicit currency on the wire, a JSON number on a money field rejected at parse, required money fields, counterparty minor-unit tables, constructor-only deserialization, idempotency keys on money-mutating POSTs, required preconditions, and the money edge cases the conformance fuzzer must send. Load before adding or changing a request or response payload, a schema, or an endpoint that carries an amount of money, and before parsing or producing a file that carries one — a batch import, a statement, a settlement report, a spreadsheet upload. States the kind of check each rule needs; the tool is named in the matching stack skill (money-java).
 ---
 # Money-grade rules: the wire and the API contract
 
@@ -47,6 +47,8 @@ Eight directives, `M-12` … `M-19`. Each say **kind** of check need. No tool na
 **M-14 — Converting to a counterparty's minor units uses that counterparty's published exponent table, never an ISO 4217 assumption.** Processor tables deviate from ISO for specific currencies, so ISO-derived exponent silently multiply or divide amount by ten or hundred for exactly those currencies.
 *Spec-and-review. Premise — processor tables deviate — confirmed 2026-07-21, deviations named in [evidence.md](evidence.md); rule built on it is convention.*
 
+**A file is a wire this group never named — added 2026-08-02 by `enforceable-rules`' predicate check, conversion-dated.** `M-12` and `M-13` are stated for a payload and enforced by a parse test. **A batch import, a bank statement, a settlement report or a spreadsheet upload carry amounts in from outside with the same decisions to make** — is a bare number accepted, is a missing amount defaulted, is the currency beside it — and none of them is a request payload, a schema or an endpoint, so **no trigger in this skill set fired on any of them.** The directives transfer unchanged: a money field in a file is a string decimal with an explicit currency, a numeric field is rejected at parse rather than coerced, a missing amount fails rather than defaults. **What does not transfer is the gate** — `M-19`'s conformance fuzzer generate against a committed API document, and a file format usually have none, so the check for a file-borne amount is a parse test over a committed corpus of malformed and truncated files, authored per format. **Not carried here beyond this paragraph, and named rather than left silent.**
+
 ## API contract
 
 Bind extra when money move over HTTP API described by committed schema.
@@ -61,6 +63,8 @@ Bind extra when money move over HTTP API described by committed schema.
 *Contract lint require key on every money-path `POST`, same-transaction integration test, replay test. Convention, 2026-07-25 — no standard fix semantics or status, so repo pin own; see [evidence.md](evidence.md).*
 
 **M-18 — On a money-path mutation the conditional-request precondition is required, not merely honored:** absent → **428**, stale → **412**, effect never run. This = money-grade refinement of repo optimistic-concurrency rule, reuse same version column, so repo with no such general rule state one here rather than assume one. **On Java backend that general rule published** — *the guarded version-column update* and *strong ETags* in `java-backend-api`, which name this directive as money refinement of both.
+**The precondition has a name — token-placement check, 2026-08-02, conversion-dated.** Directive said *the conditional-request precondition* and named its two status codes while leaving the header described. **It is `If-Match`, carrying a strong entity tag**, and a contract lint cannot key off a description. `java-backend-api` names it on both sides — *strong ETags, and when the precondition is honored* — and this directive is the money refinement of that one, so the two must spell the header the same way.
+
 *Contract lint keyed off money tag. Convention, 2026-07-25 — mechanism it rest on confirmed: guarded update affect zero rows when row stale or absent, and treating zero rows as no-op = lost-update failure.*
 
 **M-19 — The conformance-fuzz gate's input set includes the money edge cases** — boundary decimals at and beyond currency minor-unit scale, JSON number on money field, oversized amounts — each rejected with coded error or conforming to schema, **never a 500**. Extend `M-26` in `money` skill; add no second tool, only inputs.

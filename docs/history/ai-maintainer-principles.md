@@ -64,3 +64,37 @@ Rest, no generalise: "four have real build gates" enumerated four where five dir
 
 **What audit checked and found clean**, stated so blanks no read as coverage: discovery + frontmatter parse, structure, forbidden tokens, marker-word-as-plain-English, status-tier gloss word-for-word against `enforceable-rules`, nine cross-skill citations verified by opening cited rule, six re-derivable counts, source fidelity on exit ladder + non-quarantinable set + review inputs + "no threshold in any unit", three narrowing sweeps in `java-backend-api` + `money-java` with both files of former reached, `java-backend-observability` correctly left alone, `README.md` swept, `BACKLOG.md` row deleted with residues promoted. **Not checked**: the unread records in source repo, and whether every published skill hold sentence this publish should have swept — audit swept one term set.
 
+
+## The predicate and composite-shape checks, 2026-08-02
+
+**Both were owed. The layer check is not applicable** — nothing this skill governs crosses a layer; its subject is where a boundary falls, not what crosses one. **Neither run promoted a marker**, and the composite-shape check deliberately produced **no ban**: a ban here removes a system shape from every future repo, on grounds this skill's own central claim marks *uncertain*.
+
+### What the predicate check found
+
+**The backlog row's ground was accurate this time** — unlike the `caching` and `async-handoff` rows the same day. Three directives do quantify over a set given by example, and the examples are the definition: *every operational surface* (schema, topic, ACL, alert rule, cron, feature flag, connector config), *every load-bearing dependency*, *anything subtle enough to need a safety argument*. Now named in the gap list **with the check that would close the first**: an inventory of every out-of-repo control plane the deployment touches, **generated from the deployment rather than listed by hand** — because a hand-listed inventory reproduces the defect.
+
+**The bigger finding was one the row did not predict.** The load trigger named drawing a boundary, choosing a topology, relaxing a gate, adopting a framework whose behaviour is not in the program text, and writing a constitution. **Five directives govern acts none of those describe:**
+
+1. *Zero retries* — the governed act is writing a retry or an error handler, which is the cheapest edit in the set.
+2. *A hand-built subtle piece* — the governed act is writing subtle code.
+3. *Price the bus factor* — a database, a vendor API or a managed service is not a framework, and its behaviour may well be in the program text.
+4. *One idiom, imposed mechanically* — the governed act is introducing a second way to do something.
+5. *A predecessor system is an inventory, not an oracle* — **the governed act is migrating from an existing system, and it had no trigger at all.**
+
+Trigger widened in the description and in `README.md`; the directives are unchanged.
+
+### What the composite-shape check found
+
+The directives govern a module, a sub-module, a will, a topology, an idiom, a gate, a review pass, a dependency, a quarantine, a subtle piece, an operational surface — **and decided nothing about what a repo builds out of two of them.** Four entries were decided by nothing:
+
+- **One module, two independent wills.** This is the composite of the two central directives: *A module is what one session can hold* sizes it, *Count the independent wills* says N wills buy a network boundary, and neither says whether the module is the unit of one will. **The loadability criterion structurally cannot see it** — a two-will module loads exactly as well as a one-will one. Resolved as a condition: a module two wills push on is a topology decision not yet taken.
+- **A quarantine living in a broker, a dead-letter queue or a console.** It satisfies *Zero retries, and a quarantine that cannot rot* while being exactly the state *Operational state lives in the repo* says the maintainer cannot reason about. **Each directive reads as satisfied on its own**, which is why the shape needed stating.
+- **A dependency that arrives with its own idiom.** *One idiom, imposed mechanically* governs idioms the repo chooses; a client library, a date type, a concurrency model or a test style arrives with a dependency and is never chosen separately. Condition: the imposed idiom is priced in the adoption decision, beside the bus-factor price.
+- **A predecessor still serving traffic during a strangler migration.** It is a capability inventory and a load-bearing dependency at once, and **the second reading is the one a migration plan forgets.**
+
+Two more entries restate a verdict two published directives already imply — a gate relaxed by build configuration rather than by a person (`guardrails-toolchain` owns it from the branch-protection side, added the same day), and a review substitute run by the author's own model, where the fresh-context half is the memorable half and the different-model half is the load-bearing one.
+
+### Still open on this family
+
+- **The enumeration and token-placement checks have not been run here.**
+- **The open-set problem is named, not closed.** Two of the three enumerations — *every load-bearing dependency* and *anything subtle enough to need a safety argument* — have no proposed generator at all, and unlike the operational-surface one they may not admit of a mechanical inventory.

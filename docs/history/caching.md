@@ -60,3 +60,39 @@ Findings no generalise: `caching/SKILL.md` no state marker ceiling anywhere near
 
 **Left standing deliberately.** `caching/SKILL.md` say "No tool is named here" then name seven Java tools in pointer bullet for `caching-java` — that bullet say what named *there*, strip it cost reader more than inconsistency cost. `C-14` keep Java seed "the normal run asserts at least one", overlapping `C-13` zero-hit assertion; both readings same build artifact and C-14 framing (each configuration prove it took effect) need it. `caching-java` `C-6` property test assert key injectivity where neutral `C-6` state "equal keys imply equal uncached results" — stack skill changing *what asserted* not only tool, which skill reconcile inline and seed require.
 
+
+## The layer and composite-shape checks, 2026-08-02
+
+**Both were owed on this family. Both ran, by reading, in one session** — the price `BACKLOG.md` put on them. **Neither promoted a marker**; everything added is *convention*, conversion-dated, and weaker than the directives it derives from.
+
+### The backlog row's own ground was false
+
+The row read: *cached values cross into a serializer and into whatever the engine stores on the wire, and no directive names either.* **`C-10` names the serializer in its directive text and `C-11` names the bytes the engine holds after a deploy.** A cross-document claim about another file's contents, wrong at the moment it was written — the defect class this repo has recorded most often, appearing in the page that catalogues it. **Corrected in place rather than deleted**, so what the check actually found sits where the wrong reason used to.
+
+### What the layer check found
+
+Four second languages, one beside each of `C-1`, `C-6`, `C-10`, `C-12`:
+
+1. **`C-1` — a cache is declarable in configuration and in the deployment.** A framework cache manager configured in a properties file imports nothing at a call site. Sharper: **a response cache in a reverse proxy or a content-delivery network serves a value from memory instead of recomputing it from the durable store, which is this skill's predicate word for word**, and no directive reached it — no catalog entry, no ceiling, no `C-13` run, invalidation on somebody else's console. **This is a predicate finding surfacing through the layer check**, and the description now fires on it.
+2. **`C-6` — the rendered key lands in the engine's keyspace.** memcached, already named in `C-5` as this set's most restricted engine, caps a key at 250 bytes and forbids whitespace and control characters. A tuple that renders past the cap is truncated or rejected, and **truncation collides two tenants' keys** — `C-6`'s own failure arriving through the one language its three checks do not read.
+3. **`C-10` — the serializer's configuration is global and the check is per-registration-site.** A module, mixin or naming policy registered once changes every cached type's round-trip with no edit at any site the static rule reads. The per-type property test does catch it; **the gap is exactly the set of cached types with no property test**, and that set is enumerable from the committed catalog.
+4. **`C-12` — the banned substitution is writable in configuration.** A resilience library's declared fallback returns a value on error with no exception, no catch block and no application source involved. `C-13`'s fault run is the only check that sees it, and only on paths the suite drives.
+
+**`caching-java` gained what each costs on that stack** — and one of the four **already has a host there that nobody wired**: the ban-list ArchUnit class `C-2` requires can match a fallback annotation by name exactly as it matches `@Cacheable`.
+
+### What the composite-shape check found
+
+Sixteen directives, each naming its own honest limit, **silent about every shape a repo builds out of two of them** — the same shape the check was written against. Undecided until this table: two cache tiers, a collection cached beside its individually-cached members, a cached value holding another entry's key, a background warm or scheduled refresh, a request-scoped memo, and a loader that reads another service's API rather than the durable store.
+
+- **One ban: a cache shared by two deployables.** `C-9` invalidates from the writing transaction's post-commit registration, which lives inside one deployable; a second reader has no delete path and degrades silently to expiry-only. It also **falsifies the *writer and reader are one deployable* premise the interlocks rest `C-11`'s whole shape-hash argument on**. Grounds, the organisation fact (no platform or operations role — the same fact *Start by not caching* rests on), the absence of a panel, and the re-open condition are all in the section.
+- **Two entries were derived rather than authored.** A background warm is already banned by `C-4` — a populate that is not a loader's return on a read-through is a bare write, whatever schedules it; a loading library's refresh-on-access is not. And a cached value as an input to a money effect is banned **mirroring `money-storage`'s own replica verdict**, which permits replica reads and bans them as money-effect inputs on staleness. `C-5` reaches the value's *loss*; neither directive reached its *age*.
+- **The weakest entry is the two-tier one**, and the reason is `C-15`'s own admitted limit: for a collection cached beside its members, the obligation to invalidate the aggregate lives in the catalog's *what invalidates it* field, which `C-15` says plainly is prose no regenerate-and-diff compares against behaviour.
+
+### The sweep
+
+`caching/SKILL.md` description widened (shape table, and the proxy trigger), markers section records which checks ran and which did not, `caching-java` gained a seventh named gap with the per-check host analysis, `BACKLOG.md` row corrected. **`money-storage`'s hand-off to this skill and `primary-keys`' cache-key hand-off both checked and left alone** — each is still accurate, and the new table now names both from this side.
+
+### Still open on this family
+
+- **The predicate, enumeration and token-placement checks have not been run here.** The predicate check is the interesting one: the proxy finding above arrived through the layer check, which suggests a deliberate predicate pass would find more.
+- **The proxy and content-delivery-network gap is stated, not closed.** Closing it means a lint over committed deployment manifests and the header values the API document declares — a check kind this family does not carry, in a language none of its tools read.

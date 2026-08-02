@@ -67,3 +67,27 @@ Also swept: `java-backend-rules/evidence.md` (platform-pass note now say candida
 - **Criterion never selected against real alternative.** Marked *uncertain* for that reason, no caveated. Recovery no change this: list = decision criterion written to describe, not decision criterion made.
 - **Defect this skill create for future sweeps**: it name six sibling skills + four tool-owning skills in prose. Every one = cross-skill claim nothing check.
 
+
+## The composite-shape check, 2026-08-02
+
+**The only check that was owed on this skill** — the predicate check is n/a (its directives bind a decision, not a technology) and the layer check is n/a (nothing it governs crosses a layer). **No marker promoted, no ban added.**
+
+### The check bit on a condition already true in the worked case
+
+This skill decides *a* stack. **The competing census it carries is a frontend profile from the same pass** — so the organisation behind the worked case had already made a second stack choice before this record was written, and **no directive says that the host census, the corpus-gravity price and the rule sets are per stack and reach no other one.** A repo that assumes otherwise has a defect class covered on one side of a language boundary and nowhere on the other.
+
+The same shape one level down: **a second language inside one repository.** Build scripts, code generators and test fixtures routinely run on something other than the service's language, and every host counted for the winner reaches none of it. The condition is that the census state which parts of the repository it covers, so the uncounted parts are a visible blank.
+
+### The entry most likely to be missed
+
+**A rejected candidate that arrives as a dependency anyway.** The losing runtime running the frontend build; the CI actions; the scanners; the code generators. It lost the ranking and is **operationally load-bearing**, and it arrived with none of this skill's machinery — no operability veto applied to it, no gravity priced, no losers recorded about it. `ai-maintainer-principles`' *Price the bus factor by failure shape, with an exit ladder* governs it from the moment it arrives that way, and **this skill never handed it over.** Added as a fifth entry to *What is recorded and what still is not*, because it is a gap in the worked case and not only in the criterion.
+
+### Two entries about the census itself
+
+- **An advisory gate counted as a filled census row — banned, and the recovered competing census actually contains one.** *Count the independent enforcement hosts* already says hosts worth counting are ones that fail a build; the TypeScript column has a category where the tool exists and the gate is advisory with an unresolved upstream issue. **A census is a count**, which is this repo's most-recorded failure class, so the row is stated rather than left to the reader.
+- **Two candidates tied on host count.** The recovered census has two columns filling seven of eight categories, so **host count did not discriminate and structurally was not going to.** What separated them was one absent category and one advisory gate, then corpus gravity, unwritability and the operability veto. A record that stops at the census has not finished the comparison — which is worth saying because the census is the most quotable artefact in this skill.
+
+### Still open on this family
+
+- **The enumeration and token-placement checks have not been run here.** The enumeration check has obvious candidates: this skill carries a census, a candidate list and a host list, and the census is explicitly a re-runnable grep with a date.
+- **The new shape table shares the skill's own honest limit** — every entry is a written-artifact obligation, and this skill has no gates to wire.

@@ -189,3 +189,32 @@ sentences this publish should have swept — audit swept only for
 - **Completeness-critic claim has no control arm** — one run, no comparison
   against ordinary tool-by-tool review.
 
+
+## The layer and composite-shape checks, 2026-08-02
+
+**Both were owed. The backlog predicted the layer check would bite hardest here** — this skill's whole subject is which layer owns which defect class — **and it was right, though not for the reason it gave.** The failure was not a directive naming one layer and missing another. It was that **every directive's check reads committed files, and a gate's actual authority lives partly outside the repository.**
+
+### What the layer check found
+
+1. **The forge's branch-protection settings**, beside *A guardrail is a tool whose verdict fails a build by itself*. Whether a tool fails the build is decided in the CI configuration, the build file, the tool's own configuration — and past all three, in **which checks are required to merge, which is a settings page nobody diffs**. A gate can exit non-zero, be listed, be recorded in the selection record, and still not block a merge. **That is this directive's own failure — an unwired host that keeps calling itself enforced — one layer above where it looks for it.**
+2. **Suppression and baseline files**, beside *Record the caveat that bites, per tool*. The record holds the caveat in prose; the build reads the suppression. **A caveat that gets encoded stops being a caveat and becomes an exemption**, and the generated baseline is the worst shape — made once, exempting an unbounded set, its regeneration invisible to every check here. The remedy is the shape `C-15` and `E-26` already use: commit the inventory and diff it.
+3. **The container base image, vendored source, downloaded binaries and submodules**, beside the licence gate. Deny-by-default holds only over the set the inventory enumerates, and the inventory comes from the package manifest. **A green licence gate says nothing about the image the service ships.**
+4. **The forge's scheduling lifecycle**, beside *A diff-scoped review cannot see erosion across changes*. The check finds the sweep declared in committed CI configuration; whether it fires is decided by the forge — schedules disabled after repository inactivity, a runner label that stops matching, an expired credential failing every run identically to none. **The erosion failure, landing on the gate whose whole job is erosion**, and worse than a missing sweep because the committed file reads as coverage. **Its remedy is one line of an artifact contract this skill already requires**: the sweep artifact carries its run timestamp, and the milestone gate fails when the newest is older than the declared cadence.
+
+### What the composite-shape check found
+
+The skill decided which tool may occupy a gate and which layer owns which class, **and nothing about what a repo builds out of two gates**.
+
+- **One ban: a gate plus a generated baseline.** Ground, organisation fact, no-panel note and re-open condition are in the section. **The other side is real and stated** — a baseline is how a large existing codebase adopts a strict tool at all — which is why the re-open condition is a committed expiry per entry, at which point it becomes the ratchet the table already permits.
+- **The sharpest new entry is a gate scoped by another gate's output.** `money-java`'s mutation-on-money-packages is the published worked instance, already named there as its own gap. Everything outside the scoping gate's output is ungated **and reported by neither gate**, which is how a stack produces a confident blank.
+- **Three entries restate an existing directive as a shape**, because each reads as covered otherwise: two gates on one class (the map's stated purpose is exclusion, not just ordering), a diff-scoped gate with no sweep partner (that directive reads as being about agent review and holds for every changed-files-only gate), and a quarantined gate left in the map (the flaky-gate directive names quarantine as the terminal state and never says what happens to the map).
+- **One entry is about this organisation specifically**: a gate configuration shared across repositories — a shared workflow, a parent build file — changes every consumer's gates with no diff in any of them. Eighteen teams makes that the normal case, not the exotic one.
+
+### The sweep
+
+Description widened (the shape table, plus triggers for adding a suppression or baseline and for changing branch protection or a shared workflow). Markers section records which checks ran and which did not. **Opening `money-java` rather than citing it found a defect in a third skill.** The shape table needed the mutation-scope instance, and `enforceable-rules` describes it as *scoped, itself a named gap that skill state*. **It is not.** `M-23` states the scope as a fact about the pin and draws no conclusion, and **`money-java` carries no named-gaps section at all** — alone among the stack skills here. So the gap was `enforceable-rules`' own reading, published as a report of what a sibling says. **A follow-the-pointer failure inside the skill that publishes the follow-the-pointer discipline, surviving one adversarial review.** Both sides fixed: `enforceable-rules` carries the correction and attributes the reading to itself, and `M-23` now states the gap on the side that owns the pin, including that its own lack of a named-gaps section is not evidence of coverage.
+
+### Still open on this family
+
+- **The predicate, enumeration and token-placement checks have not been run here.** The token-placement check is the interesting one: this skill's source is a tool map, so identifier-shaped tokens are most of what it carries, and the de-naming defect class is the one it is most exposed to.
+- **Four of the five new layer remedies are unbuilt** — the required-check assertion, the suppression inventory, the image licence scan, and the sweep-freshness assertion. The fifth is the shape table itself, which gates nothing.

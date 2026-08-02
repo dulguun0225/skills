@@ -185,6 +185,32 @@ carrying personal data cannot pass to it. Log entity ids, never names or account
 numbers.** Regex scrubbing in collection pipeline is **not substitute** — it run
 after value already leave process.
 
+***Error Prone read this repo source, and two other things emit log lines.* Layer
+check, 2026-08-02, conversion-dated.** Check see call sites in code this build
+compile. **A dependency that log a domain type do not appear there** — a client
+library logging a request object at debug, a framework logging a bound parameter,
+an error handler logging what it caught — and the facade cannot make a type
+unloggable to code that never import the facade. **And the appender's own
+configuration decide what a log line actually contain**: a pattern that render the
+whole context map, a structured layout that serialise an object's fields, an
+exception renderer that walk a cause chain into a domain object. Both are
+configuration and a dependency, neither is source this check read. **Decidable half
+be a serializer-level rule at the logging backend — a converter that refuse the
+banned types wherever they arrive — which hold regardless of who call.** Not
+carried here, and it be the only form that reach a dependency at all.
+
+**Second rule set reach same split independently, and that worth stating because
+nothing else here have corroboration.** `primary-keys`, published 2026-08-01 from
+external records of a different pass, carry *The opaque key and the human-facing
+number are two identifiers* — logs carry keys, the account number is the human and
+API handle, grep namespaces stay disjoint — and *The key is what survives erasure*,
+which require log lines and object-storage paths carry the key and **never a name**.
+**Same verdict, different source, neither pass reading the other.** What that skill
+add on top: which identifier a repo may sort on, and that a key derived from personal
+data is not pseudonymous after erasure — it is the erased data, encoded. Install it
+in any repo choosing a key. **It corroborate the split only**, not this directive's
+tool choice.
+
 *Error Prone on source — check itself bespoke. **Not ArchUnit**: it see logger's
 erased `Object...` signature, not argument's static type, so ArchUnit rule here
 **report green while protect nothing.** Tool split is **primary-source verified
@@ -309,6 +335,24 @@ threshold plus margin and **stay silent below it.** Rule that cannot fire is
 **including empty-expected-alerts case for must-not-fire**; fixtures author per
 repo. Rule-file validation step run in CI. **Primary-source verified 2026-07-27**
 — earlier draft mark this bespoke, which was wrong.*
+
+***A rule that fire in a test and a rule that reach somebody are two claims.* Layer
+check, 2026-08-02, conversion-dated.** Fire-test read the committed rule file and
+prove the expression fire at its threshold. **Whether anything happen then be
+decided outside this repo entirely** — and the mechanisms have names, cuz the host
+above is `promtool`, so the delivery side is **Alertmanager**: a **silence**, an
+**inhibition rule**, a **route** whose matchers drop the label set, a **receiver**
+whose credential expired. Each be a configured object, none be in a rule file, and
+`promtool test rules` validate none of them. **Under this skill's own premise the alert is the whole channel** —
+no staffed rota, operator come only after alert fire — so a silenced rule is the
+exact failure this directive exist to prevent, with a green fire-test beside it.
+Two published rules already say what to do about state like this and neither cover
+it: `ai-maintainer-principles` require **every operational surface, alert rule named
+in its own list, be committed text the build read**, and `guardrails-toolchain`
+require a gate state the environment its claim hold in. **Decidable half be
+committing the routing and silence configuration alongside the rules and diffing
+it**, which make a silence a git-visible line rather than a console action. Not
+carried here.
 
 ### Telemetry is rebuildable, disposable data
 

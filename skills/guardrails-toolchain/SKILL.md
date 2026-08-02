@@ -1,6 +1,6 @@
 ---
 name: guardrails-toolchain
-description: How to choose and compose the machine guardrails that stand in for human code review in a repo whose code is written by LLM agents and read line by line by nobody — adopt only tools whose verdict fails a build by itself, reject the ones that need a standing server to operate or a paid vendor plan to report, keep a non-deterministic reviewer out of any defect class a deterministic gate can own, record the caveat that bites beside every tool so an empty caveat reads as unexamined rather than clean, assign each defect class to the earliest layer that can own it, and gate a measurement only where that measurement is honest. Carries the four whole concerns a tool-by-tool comparison never surfaces — an unguarded performance threshold, end-to-end output stability, byte-reproducible generation of committed artifacts, and semantic diff on every surface a consumer binds to — plus the standing full-system adversarial sweep that catches erosion no diff-scoped review can see, and one repo's whole tool map as the worked case. Load before adopting a static analyser, scanner, coverage or mutation tool, contract or migration lint, before wiring or removing a CI gate, and before claiming a defect class is covered.
+description: How to choose and compose the machine guardrails that stand in for human code review in a repo whose code is written by LLM agents and read line by line by nobody — adopt only tools whose verdict fails a build by itself, reject the ones that need a standing server to operate or a paid vendor plan to report, keep a non-deterministic reviewer out of any defect class a deterministic gate can own, record the caveat that bites beside every tool so an empty caveat reads as unexamined rather than clean, assign each defect class to the earliest layer that can own it, and gate a measurement only where that measurement is honest. Carries the four whole concerns a tool-by-tool comparison never surfaces — an unguarded performance threshold, end-to-end output stability, byte-reproducible generation of committed artifacts, and semantic diff on every surface a consumer binds to — plus the standing full-system adversarial sweep that catches erosion no diff-scoped review can see, the verdict on every shape a repo assembles out of two gates — a suppression, a generated baseline, a ratchet, a gate scoped by another gate's output, a shared configuration — and one repo's whole tool map as the worked case. Load before adopting a static analyser, scanner, coverage or mutation tool, contract or migration lint, before wiring or removing a CI gate, before adding a suppression or a baseline file, before changing branch protection or a shared workflow, and before claiming a defect class is covered.
 ---
 # The guardrail toolchain for code nobody reviews
 
@@ -77,6 +77,21 @@ fail on it, and no tool appear as host for defect class while marked advisory.
 Convention as enforcement — check is written artifact, absence visible.
 **Convention**, 2026-06-13.*
 
+***"Fails the build" be a property of four files and the record be a fifth.* Layer
+check, 2026-08-02, conversion-dated.** Record state whether a tool fail build.
+Whether it actually do is decided in **CI configuration** (is the step allowed to
+continue on error), in the **build file** (is the plugin's failure severity set to
+error or warning), in the **tool's own configuration** (severity per rule, and
+whether a baseline file exempt existing findings) — and, past all three, in the
+**hosting forge's branch-protection or ruleset settings, which are not a committed
+file at all** (on **GitHub**, the one this skill name elsewhere, that is the
+required-status-checks list on a branch protection rule or ruleset).
+**A gate can exit non-zero, be listed, be recorded, and still not block a merge**,
+cuz which checks are required lives in a settings page nobody diff. That is this
+directive's own failure — an unwired host that keep calling itself enforced — one
+layer above where it look. **Decidable half: assert the required-check list against
+the committed CI job names, from the forge's API, in the build.** Not carried here.
+
 ### Reject a guardrail that needs a standing server
 
 **Prefer self-contained CLI or CI-native binary. Reject tool whose analysis
@@ -152,6 +167,18 @@ analyser and source-level analyser both needed, cuz bytecode one cannot see
 string literal or raw arithmetic on erased types. Repo that record only "we have
 architecture tests" adopt one and believe it cover both.
 
+***A caveat that get encoded stop being a caveat and become an exemption.* Layer
+check, 2026-08-02, conversion-dated.** Record hold the caveat in prose. **What the
+build read is the suppression** — an inline comment that switch a rule off for one
+line, an annotation, a committed baseline file that exempt every finding present on
+the day it was generated, a per-rule severity override. Each is a second language
+where a recorded caveat become a silent green, and **the baseline is the worst
+shape**: it is generated once, it exempt an unbounded set, and its own regeneration
+is invisible in any gate this skill require. Nothing here read any of them.
+**Decidable half: commit the suppression inventory and diff it, so a new
+suppression is a git-visible line at the gate a human read** — same shape `E-26`
+and `C-15` use for their catalogs, and not carried here.
+
 *Check: selection record have caveat per adopted tool, empty ones listed as
 unexamined. Convention as enforcement — written artifact, catch omission, cannot
 catch a caveat written vaguely. **Convention**, 2026-06-13.*
@@ -173,6 +200,18 @@ forbid your use is gate you cannot keep.
 undeclared licence rejected; selection record carry licence column. Off-the-shelf
 — licence-gate tools consume standard inventory formats. **Convention**,
 2026-06-13.*
+
+***The inventory be generated from the package manifest and code arrive four other
+ways.* Layer check, 2026-08-02, conversion-dated.** Gate read a dependency
+inventory, which a package manager produce from declared dependencies. **Licensed
+code also enter as the container base image's operating-system packages, as
+vendored or copied source, as a binary the build download, and as a git
+submodule** — none of which the package manager know about, and the base image is
+usually the largest set of the four. **Deny-by-default hold only over the set the
+inventory enumerate**, so a green licence gate say nothing about the image the
+service actually ship. Decidable half is a second inventory over the built image
+and a rule that the build download no unpinned binary; **the image scan is
+off-the-shelf and the vendored-source half is not.** Neither carried here.
 
 ## Composing the gates
 
@@ -426,6 +465,27 @@ canary result per lens and which vendor's models the panel ran**, so a clean
 report carry its own evidence of being able to fail. Bespoke. **Convention**,
 2026-06-13.*
 
+***A schedule in a committed file be not a schedule that run.* Layer check,
+2026-08-02, conversion-dated.** Check read the CI configuration inventory and find
+the sweep declared. **Whether it fire is decided by the hosting forge**, in a
+language this repo do not hold — and the forge get named here, **GitHub**, cuz this
+skill already name it above for the code-scanning surface and a described host is
+one a reader cannot check: **GitHub Actions disable a scheduled workflow after a
+period of repository inactivity**, a fork inherit the workflow file and never its
+schedule, a self-hosted runner label can stop matching, and a disabled or expired
+credential make every run fail identically to none. **Verify the inactivity
+behaviour and its window against the forge's current documentation at adoption** —
+it is a vendor policy, not a standard, and this skill's own *record the caveat that
+bites* apply to it. **Failure mode is exactly the one this directive exist for** —
+erosion nobody see, on the gate whose whole job is to see erosion — and it is worse
+than a missing sweep, cuz the committed file read as coverage. **Decidable half:
+the milestone gate already require the sweep's committed artifact, so require it to
+carry its own run timestamp and fail when the newest is older than the declared
+cadence.** That make the forge's silence visible inside the build, and it is one
+line of the artifact contract this check already ask for — **and it hold on any
+forge**, which is why the remedy is stated in terms of the artifact rather than in
+terms of GitHub.
+
 ## The worked case — one repo's map, 2026-06-13
 
 **One org, one sweep, one map — Java backend plus a browser frontend.** That
@@ -522,6 +582,48 @@ with no record become skipped item nobody remember choosing.
 9. **Record what stayed advisory**, and for each, which defect class is therefore
    uncovered. This list is the honest half of steps above.
 
+## Composite shapes a repo assembles out of gates
+
+**Added 2026-08-02 by `enforceable-rules`' composite-shape check, conversion-dated.
+This skill decide which tool may occupy a gate and which layer own which class, and
+it decided nothing about what a repo build out of two gates.** Every entry marked;
+**silence about a shape is a defect in this section.** The table promote no marker,
+and **one ban is new**, carrying its ground, the organisation fact, the absence of a
+panel, and its re-open condition.
+
+| Shape | Verdict |
+| ----- | ------- |
+| **A gate plus a suppression** — inline comment, annotation, per-rule override | **permitted with conditions, and the conditions were stated nowhere.** The suppression inventory is committed and diffed, so a new exemption is a git-visible line; without that, this composite is how every gate here turn green while covering less each month, and no directive above read it |
+| **A gate plus a generated baseline** — a file exempting every finding present the day it was made | **banned** — grounds below |
+| **A gate plus a ratchet against a committed baseline** — the performance shape this skill's own worked case use | **permitted, and it is the recommended shape** — with one condition the worked case leave implicit: **the baseline move in one direction only, and its regeneration is a reviewed change**, else the ratchet reset silently and the band read as held |
+| **Two gates covering one defect class** | **banned by *Assign each defect class to the earliest layer*** — that directive's stated purpose is stopping exactly this, and it is restated here because a map with one owning layer per class read as an ordering rather than as an exclusion. The two drift, and the class read as doubly covered while each half-cover it |
+| **A gate whose scope is another gate's output** — mutation scoped to the packages coverage report as covered, a lint reading a generated artifact | **permitted with conditions, and this is the composite most likely to produce a confident blank.** Everything outside the scoping gate's output is ungated **and reported by neither**. `money-java` `M-23` carry the worked instance — mutation scoped to money packages — and the condition is that the scope be committed and enumerated, never derived at run time |
+| **A diff-scoped gate with no sweep partner** | **banned by *A diff-scoped review cannot see erosion***, restated as a shape because that directive read as being about agent review and hold for **every** gate that runs only over changed files |
+| **A quarantined gate that stays in the map** | **banned.** *A gate only gates where its measurement is honest* name quarantine as the terminal state of a flaky gate; the shape it did not name is what happen to the map afterwards. A quarantined gate **leaves the map or the class it owned becomes a blank row** — those are the only two honest outcomes, and doing neither is how a class reads as covered by a gate nobody has watched run |
+| **An agent reviewer plus a mechanical gate on one class** | **permitted, and it is the designed shape** — *A non-deterministic reviewer is never sole arbiter* decide it: mechanical class keep its mechanical owner, reviewer take semantics |
+| **A gate configuration shared across repositories** — a shared workflow, a parent build file, a common ruleset | **permitted with conditions, and the conditions bite hardest in this organisation.** A change to the shared configuration change every consuming repo's gates **with no diff in any of them**, which is this skill's *what does this build enforce* question answered from a file the repo do not hold. Condition: the shared configuration is pinned by revision in each consumer, so an upgrade is a git-visible line there |
+| **An advisory lane plus a defect class** | **permitted only where the class is recorded uncovered** — *A guardrail is a tool whose verdict fails a build* already say so, and it is restated because the advisory tool being *in the stack* is what later get described as coverage |
+
+### The one ban
+
+**A gate plus a generated baseline that exempts every existing finding — banned.**
+
+- *Ground.* The baseline exempt an unbounded set, chosen by a date rather than by a
+  decision, and **its regeneration is invisible to every check in this skill**. A
+  build that fail on new findings and hold thousands of exempted ones report the
+  same green as a clean repo, which is the false assurance `enforceable-rules`'
+  first principle put above a missing gate. Adopting a tool with a baseline is
+  adopting the tool's caveat as its default.
+- *Organisation fact it rest on.* No human read the code, so nobody encounter the
+  exempted findings incidentally; and one engineer per team mean nobody is going to
+  work the baseline down. Elsewhere a baseline is a migration plan somebody execute.
+- *No panel.* Case written by this conversion; nobody argued the other side, and the
+  other side is real — a baseline is how a large existing codebase adopt a strict
+  tool at all.
+- *Reopens when* the baseline carry a committed expiry per entry and the build fail
+  on an entry past it, which turn the unbounded exemption into a dated one. **Then it
+  is a ratchet**, and the row above already permit it.
+
 ## Named gaps — where no check reaches
 
 - **Nothing here check completeness of any enumeration this skill require.**
@@ -572,7 +674,20 @@ with no record become skipped item nobody remember choosing.
   `enforceable-rules`.
 - **Dates.** **2026-06-13** = the sweep and the decisions folded from it same
   day. **2026-08-01** = conversion date, stated once, not a verification date.
-  No date invented; where sweep gave none, none appear.
+  No date invented; where sweep gave none, none appear. **2026-08-02** = the date
+  of `enforceable-rules`' layer and composite-shape checks, run over this skill by
+  reading; also a conversion date, also not a verification date.
+- **What those two checks added, and what they did not.** Layer clauses sit beside
+  *A guardrail is a tool whose verdict fails a build*, *Record the caveat that
+  bites*, *Licences gate deny-by-default* and *A diff-scoped review cannot see
+  erosion*, each naming a language that directive's own check do not read — the
+  forge's branch-protection settings, the suppression and baseline files, the
+  container image and the vendored sources, and the forge's own scheduling
+  lifecycle. *Composite shapes a repo assembles out of gates* is the composite-shape
+  check's whole output. **All convention, all conversion-dated, none promoting
+  anything** — each name a check that is absent, which say nothing about any claim's
+  confidence. **The predicate, enumeration and token-placement checks have not been
+  run on this skill.**
 
 [evidence.md](evidence.md) carry the grounds, the claims that must not be cited,
 and the conditions that reopen each directive.

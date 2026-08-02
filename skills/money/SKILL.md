@@ -1,6 +1,6 @@
 ---
 name: money
-description: Money-grade rules for code that holds or computes an amount of money, in any language — one money type, exact-decimal arithmetic, rounding named at every call site, fail-loud money paths, the telemetry a money effect emits, and the evidence gates money code carries. Load before adding or changing a field, a payload, a computation, a rounding step, or a test that carries an amount of money, and before picking a money library. States the kind of check each rule needs; the tool is named in the matching stack skill (money-java).
+description: Money-grade rules for code that holds or computes an amount of money, in any language — one money type, exact-decimal arithmetic, rounding named at every call site, fail-loud money paths, the telemetry a money effect emits, and the evidence gates money code carries. Load before adding or changing a field, a payload, a computation, a rounding step, or a test that carries an amount of money, before setting a fee, price, limit or threshold in configuration, before adding a rate, factor or percentage, before deciding whether a quantity that is not called money — points, credits, allowances — is governed by these rules, and before picking a money library. States the kind of check each rule needs; the tool is named in the matching stack skill (money-java).
 ---
 # Money-grade rules
 
@@ -107,6 +107,15 @@ These the outside checks. After implementation, model reviewing model output sha
 
 **M-29 — The plan or spec that introduces the first money-carrying feature records that these rules bind it.** Not arming mechanism — this skill description is what fire when agent about to add amount, and it fire without anyone remembering to re-read anything. What `M-29` add: decision written down at the one gate human read, so choice to adopt or diverge visible there rather than only in code.
 *Spec-and-review at the plan approval gate. Convention, 2026-07-21.*
+
+## What the predicate misses — run 2026-08-02
+
+**`enforceable-rules`' predicate check, run over `M-1` … `M-29` on 2026-08-02, conversion-dated.** That check say: frame the predicate on **what the rules must reach**, never on the technology in the name — and here the name is a *domain*, which turn out to be the same trap with a different label. Four things the trigger miss. **None change a directive**; the trigger widen and the last one is recorded as a decision nobody has taken.
+
+- **An amount that arrive as configuration.** A fee, a limit, a threshold, a price, a default charge, set as a property, an environment variable or a feature-flag value. **Nobody add a field doing it**, so no trigger fire, and `M-1`'s money type reach nothing in a properties file. **This is the cheapest way to put an amount into a system and it was outside every trigger here.** Same class the layer check find elsewhere, arriving as a predicate problem instead: the value never become a money type because it never pass through code that construct one.
+- **A rate, a factor, a percentage.** `M-6` govern them — separate types, higher precision, rounded only when they produce a payable amount — while the trigger name *an amount of money*. **A directive whose whole subject is that these are not amounts, behind a trigger that only fire on amounts.**
+- **An amount arriving in a file rather than a payload.** `money-api`'s trigger name a request or response payload, a schema, an endpoint. **A batch import, a statement file, a settlement report, a spreadsheet upload** is none of those and carry amounts in from outside, with the same parse-time decisions `M-13` make for JSON and no rule reaching them.
+- **A quantity with money's exactness requirements that nobody call money** — loyalty points, prepaid credits, allowances, units of an instrument. **The predicate check's own target, exactly**: these rules are framed on the domain in the skill's name, and a balance of prepaid credits fail the same way for the same reason. **Not resolved here, and the reason is honest rather than procedural**: these rules are conditioned on a premise about money — *a wrong cent is a defect with a victim outside the system* — and whether that premise hold for points is a decision, not a consequence. **Three adjacent exactness domains — physical quantities, legal time, and security-critical values — were considered for this skill set and not shipped**, for the related reason that enforcement for each is bespoke or partial. **What the widened trigger do is make the decision get taken rather than skipped.**
 
 ## Markers, dates, and what they mean
 

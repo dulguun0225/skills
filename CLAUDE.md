@@ -14,6 +14,8 @@ Skills authored since are harvested from `BACKLOG.md` and from the sibling repo 
 
 **Never state a skill count here.** Run `npm run check` and compare against `ls skills/`. A count in this file is a failure the repo has recorded a dozen times.
 
+**This file is loaded every session, so it carries only what is needed every session.** New authoring records, sweeps and review findings go to `docs/history/<family>.md`. Add a line here only when the finding changes an operative rule or names a new recurring defect class. Same split the skills use: `SKILL.md` always loaded, `evidence.md` one hop away.
+
 ## Commands
 
 Fresh machine setup = [README.md](README.md), *Setup on a new machine* — `mise trust`, `mise install`, `npm ci`, that order. No build/lint/test command. The two that exist wrap the distribution CLI, pinned in `package-lock.json`:
@@ -61,7 +63,7 @@ Rules every skill here is held to. They came from the deleted corpus; **publishe
 - **Directive text and evidence stay separate.** `SKILL.md` = instinct-override payload for a scarce context window; `evidence.md` = for a human deciding whether to trust it. Progressive disclosure maps onto this directly, and it is why no family fits one always-loaded body.
 - **Ids resolve inside the installed skill dir, or they do not ship.** `M-n`, `C-n`, `E-n` ship because a consumer installing `money-java` has `money/`, `money-api/`, `money-storage/` on the same disk. `P-n` **never** ships, and the rule is absolute not contingent: an id resolves for one reader and dangles for another, and a stable `###` heading name carries the whole point of never renumbering. `DECISIONS.md` `B-n` is unreachable and never appears. No relative link leaves its own skill dir.
 - **Name the corpus favourite and why it lost.** "Use X" does not override an agent's instinct; "the default is Y, rejected because Z" does. That sentence is the most important line in a skill — never compress it away.
-- **Where duplication is deliberate, one owner + one index** — the only thing that catches drift. Preferred fix is write-once: each directive's text exists exactly once, which every family did.
+- **Where duplication is deliberate, one owner + one index** — the only thing that catches drift. Preferred fix is write-once: each directive's text exists exactly once, **which every family did until 2026-08-02**. `primary-keys` and `business-numbering` now state two directives in full each — the immutability rule and the parsing ban — because a repo can install either alone and both bans bear on both subjects. **`business-numbering` is the owner; the index is the paragraph beside those bullets in `primary-keys`.** That is the first deliberate duplication in this set, and it exists because the alternative was a dangling pointer for half its readers.
 - Directive shape: **bold directive**, then reasoning, then the check in parentheses with its enforcement marker.
 
 **Markers, per claim and per rule.** Confidence: *confirmed* (survived three independent refutation votes against primary sources) / *primary-source verified* (one researcher, no panel) / *convention* / *uncertain*. Enforcement: *off-the-shelf* / *bespoke* / *convention*. Status tier: *production-confirmed* / *decided, not yet validated* (= researched and decided, **no production use yet**) / *deferred — evidence-driven*. **Lapse rule**: past `review-by`, every *confirmed* marker reads as *convention* until a new pass re-dates it — no maintainer action needed.
@@ -83,6 +85,9 @@ Every review found defects in files the authoring pass had called clean. These a
 - **Publish obliges a sweep, in both directions.** Publishing a skill obliges finding every sentence in every other file that says the thing does not exist — **including `README.md`**, which is consumer-facing and was missed for eleven skills. **Narrow, do not replace wholesale**: check what the new skill actually publishes against what the old sentence actually claimed, because wholesale replacement is sometimes false. Recoveries of external material oblige the same sweep.
 - **`evidence.md` fixed, `SKILL.md` missed.** The repo's worst recorded shape, and it has happened three times: the always-loaded file keeps the stale sentence while the file one hop away is corrected. The consumer reads the stale one.
 - **Marker words leak into prose.** *confirmed* used as ordinary English over material its own table marks otherwise. Gloss a marker or tier by diffing against its definition, never by writing from the phrase.
+- **A named gap can be false, and it fails in the flattering direction.** Found 2026-08-02 running the layer check on `primary-keys`: a *Named gaps* entry claimed the `ORDER BY` ban "catch the SQL" while the check line beside it named an architecture test reading bytecode as its only host. **A gap list is text like any other** — read each entry against the check line beside it, not only against the directives. **The same shape recurred twice in `BACKLOG.md` the same day**: the `caching` and `async-handoff` layer-check cells each stated a crossing the directives already named, because the cells were written from memory of those skills rather than from a read of them. **The verdict *owed* is reliable; the reason beside it is not.** The remedy for the two-language problem is usually already published in a sibling (`money-storage` `M-35`), so look there before naming a host.
+- **De-naming is born in new prose, not only inherited in old.** The token-placement check run 2026-08-02 found two described-not-named subjects in published directive text (`M-10`, `M-18`) and **three in the additions that same session had just written** — Caffeine's `refreshAfterWrite`, Alertmanager's silences and inhibition rules, GitHub's scheduled-workflow disablement, each described where the writer knew the name. **Run the check over the pass that just finished, not only over what it inherited.**
+- **A sweep that greps is not a sweep that reads.** Publishing `business-numbering` on 2026-08-02 swept `primary-keys` for sentences claiming the new material did not exist — the absence-assertion class — found none, and recorded the sibling as *checked and left alone*. **It had not opened the section it was pointing at**, which publishes two of the new skill's directives in full. **Grep finds the absence-assertion class; only reading finds the duplication class**, and a publish creates both. Resolved the way the write-once rule says: one named owner plus an index paragraph, not a deletion.
 - **A note in this file is evidence a defect was seen, never that it was fixed.** Only the file is the check.
 
 **Nothing enforces any of this.** Every review recorded below was scratch scripts plus reading; not one lives in the repo.
@@ -100,8 +105,14 @@ Per-skill records: what each authoring pass decided, its sweeps, its adversarial
 - [backend-stack](docs/history/backend-stack.md) — the stack argument, its candidate list and competing census
 - [guardrails-toolchain](docs/history/guardrails-toolchain.md) — what makes a gate adoptable
 - [ai-maintainer-principles](docs/history/ai-maintainer-principles.md) — system shape under an agent maintainer
-- [primary-keys](docs/history/primary-keys.md) — newest; no adversarial review run on it yet
+- [primary-keys](docs/history/primary-keys.md) — no adversarial review run on it
+- [business-numbering](docs/history/business-numbering.md) — newest; harvested from the same external record `primary-keys` read for one fact. No adversarial review run on it either
 - [decomposition](docs/history/decomposition.md) — corpus provenance table, what became no skill, the two shape questions
+- [incompleteness-checks](docs/history/incompleteness-checks.md) — what all five checks found, per skill, 2026-08-02
+- [harvests](docs/history/harvests.md) — what each of the four backlog harvests cost and changed
+- [evidence-owed-longform](docs/history/evidence-owed-longform.md) — the prose the backlog's owed-evidence table was compressed from
 - [whole-project-review](docs/history/whole-project-review.md) — 2026-07-31, first review whose unit was the repo
 
 Live owed work is in [BACKLOG.md](BACKLOG.md), not in these files: a history file records what a pass closed, the backlog carries what is still owed.
+
+**That split failed on 2026-08-02 and the failure mode is worth naming: `BACKLOG.md` went from 221 lines to 317 during the session that closed every check on it**, because each closed check wrote its findings into the row it was closing. **A backlog that grows as work completes is recording closure, not obligation.** Restored to 116 by moving three sections to `docs/history/`. **When a row closes, the finding leaves this page with it.**

@@ -1,6 +1,6 @@
 ---
 name: primary-keys
-description: How a row is identified, and what that identity may never be used for — rank key candidates by the surfaces the id lands on rather than by index size, treat a key an outsider can enumerate as a volume disclosure and a forced retrofit, count the manual steps each key mechanism costs a data move because sequences do not replicate and counter rows do, apply one mechanical rule with a computed table classification instead of per-table judgment, check the anti-UUID cost folklore against your own engine because the classic numbers are UUIDv4 numbers and the fat-key-multiplies-every-index claim is InnoDB lore, ban ORDER BY on any id column because a time-ordered key is monotonic per generator and not across a pool, keep the opaque key and the human-facing business number as two identifiers with disjoint namespaces, put the generator default in the schema and the banned generator beside it, give pure-child tables their parent's key plus a sequence, and remember the key is what survives erasure. Carries one repo's UUIDv7-everywhere verdict as its worked case, with bigint identity, the bigint-plus-external-id hybrid and TSID recorded as losers with the ground each lost on. Load before creating a table, choosing or changing a primary key, putting an id in a URL, a log line, a payload or an export, writing an ORDER BY over an id column, or moving tenant data between databases.
+description: How a row is identified, and what that identity may never be used for — rank key candidates by the surfaces the id lands on rather than by index size, treat a key an outsider can enumerate as a volume disclosure and a forced retrofit, count the manual steps each key mechanism costs a data move because sequences do not replicate and counter rows do, apply one mechanical rule with a computed table classification instead of per-table judgment, check the anti-UUID cost folklore against your own engine because the classic numbers are UUIDv4 numbers and the fat-key-multiplies-every-index claim is InnoDB lore, ban ORDER BY on any id column because a time-ordered key is monotonic per generator and not across a pool, keep the opaque key and the human-facing business number as two identifiers with disjoint namespaces, put the generator default in the schema and the banned generator beside it, give pure-child tables their parent's key plus a sequence, and remember the key is what survives erasure. Carries the verdict on every shape a repo assembles out of the key — the key as a partition key, inside a cache key, inside an object-storage path, as a correlation id, derived from another identifier — and one repo's UUIDv7-everywhere verdict as its worked case, with bigint identity, the bigint-plus-external-id hybrid and TSID recorded as losers with the ground each lost on. Load before creating a table, choosing or changing a primary key, generating an id in application code, designing a human-facing number format, writing an object-storage key template or a log field set, putting an id in a URL, a log line, a payload or an export, writing an ORDER BY over an id column in any language, or moving tenant data between databases.
 ---
 # Primary keys — what identifies a row, and what that identity may never mean
 
@@ -137,6 +137,16 @@ entire state is the data.
 whose reset step is enumerated rather than assumed. **Off-the-shelf** for the grep;
 convention for the procedure. **Convention**, 2026-06-12.*
 
+***A sequence is declarable in three languages and the grep reads one.*** *Added by
+the layer check, **2026-08-02**, conversion-dated. DDL text is where the grep looks;
+the same sequence is also created by an **object-relational mapping annotation**
+(`@GeneratedValue(strategy = SEQUENCE)` and its equivalents), by a **non-SQL
+changelog format** — Liquibase XML, YAML or JSON, where the token is `<createSequence>`
+or `autoIncrement`, not `CREATE SEQUENCE` — and by a third-party library's own
+migrations, which the* library-table *exception below deliberately leaves alone. A
+repo on any of those three gets a green grep and a non-zero reset obligation, which
+is the exact number this directive exists to make visible.*
+
 ### One mechanical key rule, and the exceptions are computed
 
 **State one key rule for every table, and make each exception to it a
@@ -226,6 +236,19 @@ exemption scoped to the single pager class by name; contract lint asserting no i
 in any declared sort enum. **Off-the-shelf** host (ArchUnit), predicate authored per
 repo. **Convention**, 2026-06-12.*
 
+***The architecture test reads one language, and the ban is written in three.***
+*Added by the layer check, run **2026-08-02**, conversion-dated. An architecture
+test on the JVM reads bytecode: it can see a query-builder `orderBy` call and the
+id field it is handed, and it cannot see the four letters `ORDER BY` inside a
+string. The same sort crosses into **query text, view and materialized-view
+definitions, stored functions, migrations, reporting and analytics queries, and
+support scripts** — every one of them a place `ORDER BY id` is written and none
+of them reachable by that host. So the ban needs the same two-part shape
+`money-storage` gives arithmetic in the query language: the architecture
+predicate over builder calls, **plus a lint over committed query text**. Blind
+spot on both, stated because a green pair reads as coverage: query text assembled
+at runtime from fragments is reached by neither.*
+
 ### A key is never a capability and never a secret
 
 **Holding an id must never be what authorizes access to the row.** RFC 9562 state
@@ -246,6 +269,14 @@ strategy for every table.
 another principal return the same response as an id that never existed —
 byte-identical, no existence oracle. **Off-the-shelf** as a test; the probe matrix
 is authored per repo. **Convention**, 2026-06-12.*
+
+***An endpoint is one of the ways an id gets dereferenced.*** *Layer check,
+**2026-08-02**, conversion-dated. A probe matrix built per endpoint covers the HTTP
+surface and nothing else, and the same id is handed to **a message consumer, a
+batch or import job, a pre-signed object-storage URL, a report parameter and a
+support script** — each a place where "holding the id" can quietly become the
+authorization, and none of them an endpoint. The rule is stated wider than the
+format; the check is narrower than the rule.*
 
 ### The opaque key and the human-facing number are two identifiers
 
@@ -270,6 +301,15 @@ Three rules that follow, and each of them is a defect somebody shipped:
   reassigned, and **stored exactly as issued** — canonical form, no separators;
   display grouping is rendering.
 
+**Those two bans are `business-numbering`'s, and it is the owner of record since
+2026-08-02.** They are stated here rather than pointed at, and **the duplication is
+deliberate rather than accidental**: a repo can install this skill and not that one,
+and both bans bear directly on the split this directive exists to make. **What lives
+only there**: the class catalog, the counter mechanism, gaplessness, periods,
+formats, check digits, exhaustion and legacy import — a skill's worth of material,
+none of it restated here. **The index is this paragraph**; a change to either ban's
+wording is a change in two files, and the owner is the other one.
+
 **Where an ordering over business numbers is wanted, persist the ordering columns
 beside the rendered string** and sort on those, never on the string and never on
 the key.
@@ -277,6 +317,14 @@ the key.
 *Check: schema check that no business-number column is a primary key or a foreign-key
 target and that each carry a unique index; lint banning substring or pattern reads of
 a number column outside its own rendering module. Bespoke. **Convention**, 2026-06-12.*
+
+***The directive bans parsing in reports and the lint reads only code.*** *Layer
+check, **2026-08-02**, conversion-dated. `substring(account_no, 1, 2)`,
+`LIKE '01%'` and their equivalents are written in **query text, view definitions
+and the report or business-intelligence tool's own expression language** — the
+last of which is usually not committed to this repo at all. The lint over
+application source reaches none of them, and the ban was stated for exactly those
+places.*
 
 ## Generating it
 
@@ -303,6 +351,18 @@ than assumed away.
 banned generator by name; gate on exit code. **Off-the-shelf** as a migration grep,
 patterns authored per repo. **Convention**, 2026-06-12.*
 
+***The banned generator has a twin in application source and the migration grep
+never sees it.*** *Added by the layer check, **2026-08-02**, conversion-dated. The
+schema default is the backstop precisely because the application is the usual
+writer — so the version-4 random generator has to be banned by name in the
+application's language too, and it is the same function everywhere the corpus
+reaches for it: `UUID.randomUUID()` on the JVM, `uuid.uuid4()` in Python,
+`crypto.randomUUID()` in Node. Each produces the scatter the time-ordered choice
+exists to avoid; each is what an agent writes when the column default is present
+and it decides to be explicit anyway. The migration grep is over migration text and
+reads none of them; the ban belongs in the same host as* Exactly one
+application-side producer *below.*
+
 ### Exactly one application-side producer, adopted rather than hand-rolled
 
 **Where the application assign ids itself, exactly one utility produce them, it
@@ -326,9 +386,22 @@ maintained generator on your stack is asking you to hand-build a subtle piece**,
 and that is a cost against the candidate, not a detail.
 
 *Check: architecture test that exactly one type construct key values and nothing else
-call a generator; golden test asserting the emitted bit layout — version field,
-timestamp field, monotonic counter. **Off-the-shelf** hosts, both predicates authored
-per repo. **Convention**, 2026-06-12.*
+call a generator — **and the banned version-4 generator named in that predicate by
+name**, per the directive above. Golden test asserting the emitted bit layout —
+version field, timestamp field, monotonic counter. **Off-the-shelf** hosts, both
+predicates authored per repo. **Convention**, 2026-06-12; the named-ban clause
+**2026-08-02**, conversion-dated.*
+
+***The client is a language nothing here reads.*** *Added by the layer check, same
+date, **and corrected the same day by the enumeration check, which found the count
+below wrong**. Of the three cases above, the one that hands id generation to code
+this repo does not compile is **the idempotent-create endpoint where the client
+supplies the id** — the draft said two, counting the escape-hatch store, where this
+application is itself the client that generates. Batch inserts generate here too.
+The architecture test governs one codebase; the id arriving over the wire was made
+by another. **The check that reaches it is an ingress assertion on the contract** —
+the version field and the format rejected at parse rather than trusted — and this
+skill does not carry one.*
 
 ## Where a surrogate key is the wrong shape
 
@@ -408,6 +481,15 @@ round-trip test through the actual export toolchain before any logical-type clai
 is made. **Off-the-shelf** for the lint where a committed contract exist.
 **Convention**, 2026-06-12.*
 
+***The document declares the type and the serializer emits it.*** *Layer check,
+**2026-08-02**, conversion-dated. The lint reads the committed contract; what a
+consumer actually receives is decided by the **serializer configuration** — a
+mapper module, a custom serializer, a field annotation — and by the **generated
+client** on the far side. A document saying `type: string` over a serializer
+emitting a number passes this lint and truncates in the consumer anyway, which is
+the defect the directive names. The check that closes it is a serialization
+round-trip assertion over a real payload, not a read of the document.*
+
 ### The key is what survives erasure
 
 **Under a right-to-erasure regime the key is usually what remain.** Where a record
@@ -438,6 +520,71 @@ this skill made it.
 set; grep asserting object-storage key templates and log field sets carry the key and
 no name field. Bespoke. **Convention**, 2026-06-12 — except the time-ordered-key
 clause, **2026-08-01, conversion-dated**.*
+
+***A path concatenated at runtime is a template the grep never sees.*** *Layer
+check, **2026-08-02**, conversion-dated. The grep reads committed templates. An
+object key built by string concatenation at the call site, a log field set assembled
+from a map, and a filename a third-party library chooses are the same three shapes
+`money-storage` names for runtime-assembled query text, and they carry the same
+blind spot — with one difference that makes it worse here: **the value lands in a
+control-plane log the repo does not own and cannot sweep**, so a name that reaches
+it is not retractable.*
+
+## Composite shapes a repo assembles out of the key
+
+**Added 2026-08-02 by `enforceable-rules`' composite-shape check, conversion-dated.**
+The directives above govern primitives — a row key, a composite child key, an
+externally governed code, a library's own key, a human-facing number, an id on the
+wire. **A repo assembles things out of two of them, and naming an undecidable
+property inside each directive does nothing to surface a shape nobody wrote a rule
+about.** That is the failure this check exists for, and this skill had it: every
+shape below was decided by nothing here until this table was written. **Silence
+about a shape is a defect in this section, not the reader's problem.**
+
+**This table promotes no marker and adds one ban.** Most entries are a verdict that
+already followed from a published directive and was never stated as a shape; those
+name the directive that decides them. The one ban carries its ground, the
+organisation fact it rests on, the absence of a panel, and the condition that
+reopens it.
+
+| Shape | Verdict |
+| ----- | ------- |
+| The key as a **partition or shard key**, range-partitioned | **permitted with conditions, and the conditions are unmeasured.** A time-ordered key sends every insert to the newest partition. That is the same fact *Check the key-cost folklore* books as the benefit — right-edge insert locality — restated at a level where it becomes a hot partition, and nothing in this set has measured either. Hash-partition, or partition on a business column, or accept the hot partition deliberately |
+| A **composite child key three levels deep** — parent key, ordinal, ordinal | **not reachable under *A pure child*, and this is derived from the published test rather than newly banned.** A grandchild declaring a foreign key to the middle table makes that table referenced, so it fails the pure-child test and takes a surrogate. **The chain caps at one level**, and no directive said so |
+| The key inside an **object-storage path** | **permitted, and it is the shape *The key is what survives erasure* requires** — the key, never a name. Residue that directive's own 2026-08-01 clause does not extend to: with a time-ordered key the path publishes the row's creation instant into a control-plane log **this repo does not own and cannot sweep** |
+| The key inside a **cache key** | **out of scope here, owned by published `caching` `C-6`** — the cache key is the loader's full argument tuple with the caller's authorization scope as one of its arguments, and hand-built key strings are banned. Install `caching` in any repo that caches a row |
+| The key as a **client-supplied id on an idempotent create** | **permitted, and named by *Exactly one application-side producer*** — the key's own unique index does the deduplication. **It is not an idempotency key**: `money-api` `M-17` defines that as a client-supplied value with a hash of the request body, written in the money effect's transaction. Two mechanisms, two identifiers; do not let one stand in for the other |
+| The key as a **correlation id** | **permitted as a logged field, never as the correlation id.** `java-backend-observability` owns request identity — correlation fields established by visible wrappers, and an error response carrying only the correlation id. A row key is not a request identity, and merging them collapses two grep namespaces exactly as *The opaque key and the human-facing number* forbids for the third |
+| The key **derived from another identifier** — a hash, a UUIDv5, any deterministic function of committed inputs | **banned** — grounds below |
+| The key and the **business number in one payload** | **permitted, and it is the designed shape.** *The opaque key and the human-facing number* decides which does which job |
+| The **business number as a URL identifier or a foreign-key target** | **banned by *The opaque key and the human-facing number***, restated here because a shape table that omits it reads as permitting it |
+| The key **rendered into a human-facing document** — an invoice, a letter, a code a person reads out | **that is the business number's job**, same directive. The key is not a display value |
+| An **externally governed code inside a composite key** of a keyed table | **permitted** — the code is its own table's key and the value every foreign key carries. Condition: *externally governed* means the authority publishes retirements and successors, so the reference table carries the code's **lifecycle**, not only the code |
+| The key in a **message payload or an outbox row** | **permitted, and it is the ground the hybrid candidate lost on** — cross-module events legitimately carry it. The message's *own* identity is a different identifier, `async-handoff` `E-7`, and the two rules do not transfer |
+| The key in a **read replica or a reporting store** | **permitted, and under-covered.** The `ORDER BY` ban's query-text lint reads this repo's committed SQL; a reporting or business-intelligence tool's own query layer is outside it, and that is where a sort on an id is most likely to be written (layer check, 2026-08-02) |
+| **Two ids in one pagination cursor** | **permitted with conditions** — the four constraints of *A time-ordered key is not an ordering*, cursor opaque and sealed |
+
+### The one ban
+
+**A key derived from another identifier — a hash of a natural key, a UUIDv5, any
+deterministic function of committed inputs — is banned.**
+
+- *Ground.* A derived key is placed by its hash, not by its clock, so it scatters
+  inserts across the whole index — **the exact behaviour the time-ordered choice
+  exists to avoid**, reintroduced by a route no directive above watched. And where
+  the derivation reads a natural key, the key becomes derivable from personal data,
+  which *The key is what survives erasure* bans outright.
+- *Organisation fact it rests on.* This repo's verdict rests on insert locality and
+  on the key remaining a pseudonym after erasure. Both are properties of this
+  decision, not of key design in general.
+- *No panel.* Same position as everything else here: the case was written by the
+  conversion, and nobody argued the other side.
+- *Reopens when* the store's write position stops being key-ordered — a
+  hash-partitioned or log-structured engine where insert locality is not a property
+  of the key — **or** when a repo needs a re-derivable row identity badly enough to
+  pay the scatter, in which case it is choosing a different key strategy and should
+  record it as one. **`async-handoff` `E-7` is not that case**: a message identity is
+  a different identifier and stays deterministic.
 
 ## The worked case — one repo, 2026-06-12
 
@@ -514,16 +661,23 @@ Run once, in a repo adopting this skill. Record what got wired and what got skip
 with reason — skipped item with no reason read as done by the next session.
 
 1. **Migration grep** — primary-key column shape, the sequence ban, the banned
-   random generator by name. Exit code, over migrations in the diff.
+   random generator by name. Exit code, over migrations in the diff. **Point it at
+   the changelog format and the mapping annotations this repo actually uses**, not
+   at `CREATE SEQUENCE` alone.
 2. **Table classification job** — foreign-key graph from `information_schema` crossed
    with the committed API document's path templates; fail on a table whose declared
    class disagree with the computed one.
-3. **`ORDER BY` ban on id columns** in the architecture-test host, with the pagination
-   helper named as the single scoped exemption.
+3. **`ORDER BY` ban on id columns**, in **two hosts**: the architecture-test host over
+   query-builder calls, and a lint over committed query text, views, functions and
+   migrations — with the pagination helper named as the single scoped exemption in
+   both. One host alone leaves the ban written in a language it cannot read.
 4. **Contract lint** — every id field declare a string type; no id in any declared
-   sort vocabulary; no path template bind a densely sequential id.
-5. **Key-producer test** — exactly one type produce key values; golden test pinning
-   the emitted bit layout.
+   sort vocabulary; no path template bind a densely sequential id. **Plus a
+   serialization round-trip over a real payload**, because the document is not what
+   the consumer receives.
+5. **Key-producer test** — exactly one type produce key values; the version-4
+   generator banned by name in the same predicate; golden test pinning the emitted
+   bit layout.
 6. **Cross-tenant and cross-principal probe** — a valid foreign id return the same
    bytes as an id that never existed.
 7. **Generated database classes** — assert the key column's generated type match the
@@ -535,9 +689,10 @@ with reason — skipped item with no reason read as done by the next session.
 
 **Which of these fail a build off the shelf, named rather than counted:** the
 migration grep, the `ORDER BY` architecture test, the contract lints where a
-committed document exist, the key-producer and golden tests, the probe suite, and
-the generated-class assertions. **Bespoke:** the table classification job, and the
-move-procedure artifact, which gate nothing by itself.
+committed document exist, the serialization round-trip, the key-producer and golden
+tests, the probe suite, and the generated-class assertions. **Bespoke:** the table
+classification job, the `ORDER BY` query-text lint, and the move-procedure artifact,
+which gate nothing by itself.
 
 ## Named gaps — where no check reaches
 
@@ -546,13 +701,46 @@ move-procedure artifact, which gate nothing by itself.
   surface list is given by example — URL, log, payload, export, replication stream,
   escape-hatch store — and a repo with a surface outside it get a green selection
   record and a wrong key.
+- **`enforceable-rules`' layer, predicate and composite-shape checks were all run
+  over this skill on 2026-08-02**, and its enumeration and token-placement checks
+  were not. The layer check found a
+  second language beside the named check of *Count the manual steps*, *A time-ordered
+  key is not an ordering*, *A key is never a capability*, *The opaque key and the
+  human-facing number*, *The schema default is the backstop*, *Exactly one
+  application-side producer*, *Ids cross the wire as strings* and *The key is what
+  survives erasure*, each now carrying that second language beside its check. It
+  cleared *One mechanical key rule* and *A pure child*, whose classification job
+  reads the foreign-key graph and the API document and so was already written
+  across both languages, and *A library's own tables*, whose value never leaves the
+  schema. **It left one open rather than closing it**: the enumerable-key contract
+  lint reads the committed API document, and a route declared only in framework
+  annotations binds an id the document never mentions. The remedy is a route-table
+  assertion this skill does not carry — **and a stack whose document is *generated
+  from code* has it for free**, which `java-backend-api` is, found by opening that
+  skill on 2026-08-02 rather than assuming. So this gap is real for a repo whose
+  document is hand-written or generated from a separate specification, and closed
+  for one whose document is regenerated and diffed from the routes themselves.
+  The check also found one stated gap
+  that was **false in the direction that matters**, claiming coverage the named host
+  could not deliver. The predicate check widened this skill's own load trigger,
+  which had been framed on creating a table while three of its directives govern
+  things nobody creates a table to do: an object-storage key template, a
+  human-facing number format, and an id generated in application code. **The
+  composite-shape check produced *Composite shapes a repo assembles out of the key*
+  above** — every entry in it was decided by nothing here before that date, and the
+  check's own limit applies unchanged: producing the list is the work, and nothing
+  can tell you the list is complete.
 - **The classification job need a committed API document for half its input.** Where
   none exist, the pure-child test have only its foreign-key half, and the exception
   class silently widen.
-- **Nothing verify the ordering non-property.** The `ORDER BY` ban catch the SQL. It
-  do not catch application code that read rows in key order from a set and assume it,
-  nor a report that sort in memory. The ban is over one construct; the assumption is
-  a belief.
+- **Nothing verify the ordering non-property, and the ban reaches less SQL than it
+  reads as reaching.** Corrected **2026-08-02** by the layer check, which found this
+  entry claiming the ban "catch the SQL" while the check line beside it named an
+  architecture test as its only host — a host that reads bytecode and never reads
+  query text. With the query-text lint added the ban catch the committed SQL and
+  the builder calls; it still do not catch SQL assembled at runtime, application
+  code that read rows in key order from a set and assume it, nor a report that sort
+  in memory. The ban is over two constructs; the assumption is a belief.
 - **The benchmark is unreproduced and the engine facts are undated beyond the
   record's own date.** They are the fastest-decaying claims here — a major engine
   release change generator availability, index behaviour and the numbers together.
@@ -586,6 +774,14 @@ move-procedure artifact, which gate nothing by itself.
   ground under this skill's insistence on a computed classification, and *A
   hand-built subtle piece*, which is the ground under adopting a key generator rather
   than writing one.
+- **`java-backend-observability`** — request identity on that stack, which the shape
+  table above keeps separate from a row key. **And the closest thing this skill have
+  to independent corroboration**: its *Domain types are unloggable by type* directive,
+  written 2026-07-27 by a different pass from a different source, say *log entity ids,
+  never names or account numbers* — the same split as *The opaque key and the
+  human-facing number* and the same log rule as *The key is what survives erasure*,
+  reached without reference to either. **It corroborate nothing about the key choice**,
+  only the two-identifier split and what a log line may carry.
 - **`guardrails-toolchain`** — which tool may occupy a gate at all, and the
   byte-reproducibility rule the generated-class step above defer to.
 - **`backend-stack`** — *Record the losers and their grounds*, the bar this skill's
@@ -615,13 +811,15 @@ than by storage cost — is *uncertain*.** Argued, never measured.
 | Every directive under *Choosing the key*, *What the key may never mean*, *Generating it*, *Where a surrogate key is the wrong shape*, and *Ids cross the wire as strings* | 2026-06-12 |
 | *The key is what survives erasure*, apart from its final clause | 2026-06-12 |
 | The time-ordered-key-survives-anonymization clause of that directive | 2026-08-01 — conversion-dated, stated in the directive |
+| Every *layer check* clause added beside a check line, and the widened load trigger in this skill's own description | 2026-08-02 — conversion-dated, each stated where it sits. **These add no directive and promote no marker**: each names a second language the existing directive already binds and the existing check never read |
+| *Composite shapes a repo assembles out of the key*, and its one ban | 2026-08-02 — conversion-dated. **Convention**, and weaker than the directives it derives from: most entries restate what a published directive already decided, and the ban is the conversion's own with no panel behind it. See its grounds and re-open condition in that section |
 
 **Enforcement markers sit beside each check.** The ones carrying an off-the-shelf
 host are named rather than counted: the migration grep, the `ORDER BY` architecture
 test, the key-producer and golden-layout tests, the authorization probe, the
-library-table foreign-key assertion, and the wire-type contract lint. The table
-classification job, the business-number checks, the erasure-scheme greps and the
-selection and move records are **bespoke or convention**, and each check line say
-which.
+library-table foreign-key assertion, the wire-type contract lint and its
+serialization round-trip. The table classification job, the `ORDER BY` query-text
+lint, the business-number checks, the erasure-scheme greps and the selection and
+move records are **bespoke or convention**, and each check line say which.
 
 Evidence, sources, the reading window and the do-not-cite list are in `evidence.md`.

@@ -123,7 +123,11 @@ Reason one sentence: **here the diff is the review.** Regenerate-and-diff gate i
 
 This principle decide whether green build mean anything. Model write implementation then write tests describing what it wrote; both pass; nothing verified except internal consistency. **A coverage floor does not fix this**, coverage cannot see whether test asserted anything.
 
-Two worked cases: `java-backend-api`, whose committed interface document is single conformance oracle a fuzzer generate against, and `money-java`, which pin mutation testing scoped to money packages — scoped, itself a named gap that skill state, because everything outside scope can sit green over vacuous tests.
+Two worked cases: `java-backend-api`, whose committed interface document is single conformance oracle a fuzzer generate against, and `money-java` `M-23`, which pin mutation testing scoped to money packages — **scope is a gap, because everything outside it sit green over vacuous tests.**
+
+**Correction, 2026-08-02, made by opening the file rather than citing it.** This sentence said the scope was *a named gap that skill state*. **It is not.** `M-23` state the scope as a fact about the pin and draw no conclusion from it, and `money-java` carry **no named-gaps section at all**, where `caching-java`, `async-handoff-java`, `java-backend-rules`, `java-backend-api` and `java-backend-observability` each carry one — **re-runnable as `grep -l "^## Named gaps" skills/*/SKILL.md`, taken 2026-08-02.** So the gap named above is **this skill's reading**, published here and now stated on `M-23`'s own side too.
+
+**And the first wording of this correction was itself an instance of a different check.** It said *alone among the stack skills here* — a superlative about other files, written without running the grep, which the enumeration check below calls a count in disguise. **It happened to be true**, and that is the point: a reader cannot tell a checked superlative from an unchecked one, so it is now stated with its date and its command. **A follow-the-pointer failure inside the skill that publishes the follow-the-pointer discipline**, and it survived one adversarial review.
 
 *Check: the oracle is named per gate, and a gate with no outside oracle says so. **Off-the-shelf** for fuzzer and mutation tooling; naming the oracle is **convention**.*
 

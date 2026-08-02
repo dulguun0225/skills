@@ -1,6 +1,6 @@
 ---
 name: backend-stack
-description: How to choose a backend stack for a repo whose code is written by LLM agents and read line by line by nobody — rank candidates by what their build can refuse to ship rather than by what they let you express, count the independent enforcement hosts a stack offers rather than its type-system features, prefer a stack where the wrong call cannot be written over one where it is written and then flagged, price corpus gravity as a cost the winner carries rather than a reason it won, and treat operability as a veto rather than as the deciding criterion. Carries this skill set's own worked case, Java with Spring Boot Web MVC, jOOQ and PostgreSQL, with the enforcement-host census that grounds it and the language-layer candidate list — C#/.NET, Kotlin, Go and TypeScript, each with the ground it lost on. Load before picking a language, runtime, web framework, persistence library or database for a new backend, before arguing that an existing stack should change, and before writing a rule set for a stack nobody has justified in writing.
+description: How to choose a backend stack for a repo whose code is written by LLM agents and read line by line by nobody — rank candidates by what their build can refuse to ship rather than by what they let you express, count the independent enforcement hosts a stack offers rather than its type-system features, prefer a stack where the wrong call cannot be written over one where it is written and then flagged, price corpus gravity as a cost the winner carries rather than a reason it won, and treat operability as a veto rather than as the deciding criterion. Carries this skill set's own worked case, Java with Spring Boot Web MVC, jOOQ and PostgreSQL, with the enforcement-host census that grounds it and the language-layer candidate list — C#/.NET, Kotlin, Go and TypeScript, each with the ground it lost on, plus the verdict on every shape an organisation assembles out of stack choices — a second stack beside the first, a second language inside one repository, and a rejected candidate that arrives as a dependency anyway. Load before picking a language, runtime, web framework, persistence library or database for a new backend, before arguing that an existing stack should change, before adding a second language to a repository or an organisation, and before writing a rule set for a stack nobody has justified in writing.
 ---
 # Choosing a backend stack for code nobody reviews
 
@@ -450,6 +450,35 @@ Four named gaps follow, none closable from inside this repo:
   choice it explain, generalising criteria that choice stated. Criterion that
   only ever ratified one decision has not been tested — why central claim marked
   *uncertain*, not *convention*.
+- **The rejected candidates' operational presence was never priced — added
+  2026-08-02 by the composite-shape check.** Losers are recorded as losers of a
+  ranking. **Nothing record which of them the build actually run** — a frontend
+  toolchain, CI actions, scanners, code generators — and a candidate that lose the
+  ranking while remaining load-bearing in the build have had no operability veto
+  applied to it and no bus-factor price attached. `ai-maintainer-principles` govern
+  it from the moment it arrive that way; **this skill never hand it over, and the
+  shape table now does.**
+
+## Composite shapes an organisation assembles out of stack choices
+
+**Added 2026-08-02 by `enforceable-rules`' composite-shape check, conversion-dated.**
+Directives above govern one decision: a candidate, its enforcement hosts, its corpus
+gravity, its operability veto, its losers and their grounds. **An organisation build
+things out of two of those and this skill decided none of them** — which matter here
+more than the section's usual reason, cuz the organisation this worked case come from
+**already run more than one stack**, and the competing census below is drawn from its
+frontend. Every entry marked; **silence about a shape is a defect in this section.**
+The table promote no marker and add **no ban**.
+
+| Shape | Verdict |
+| ----- | ------- |
+| **A second stack in the same organisation** — a frontend, a data pipeline, a function in another language | **permitted, and it is the actual condition here, not a hypothetical.** The census below is a *frontend* profile, so the pass that produced this worked case had already made a second choice. What no directive say: **the host census, the gravity price and the rule sets are per stack, and none of them reach the second one.** Condition: each stack carry its own census and its own record, and **the rule sets published for the winner be read as binding nothing outside it** — a repo that assume otherwise have a defect class covered on one side of a language boundary and nowhere on the other |
+| **A second stack inside one repository** — a worker, a build tool, a test harness, a script | **permitted with conditions, and the conditions are absent.** *Count the independent enforcement hosts* count them for the language the service is written in. **A repository's build scripts, its code generators and its test fixtures routinely run on a different one**, and every host counted for the winner reach none of it. Condition: the census state which parts of the repository it cover, so the uncounted parts are visible as a blank rather than absent from the question |
+| **A rejected candidate that arrive as a dependency** — the losing runtime running the frontend build, the CI actions, the scanners, the code generators | **permitted, and this is the entry most likely to be missed.** A stack can lose the ranking and still be **operationally load-bearing**, and when it arrive that way it arrive with none of this skill's machinery: no operability veto applied to it, no gravity priced, no losers recorded. Condition: **a rejected candidate present in the build is a load-bearing dependency**, and `ai-maintainer-principles`' *Price the bus factor by failure shape, with an exit ladder* govern it from that moment — not this skill |
+| **An enforcement host that exist but whose gate is advisory** | **banned as a filled census row, and the census below is where this was caught.** *Count the independent enforcement hosts* already say hosts worth counting are ones that **fail a build**; the recovered competing census found a category where the tool exist and the gate is advisory with an unresolved upstream issue. **Counting that category as filled is the defect** — `guardrails-toolchain` own the general form, that an advisory tool is the one described as coverage later. Restated here because a census is a count, and a count is this repo's most-recorded failure |
+| **Two candidates tied on host count** | **permitted, and the tie is where the other directives start doing the work.** The recovered census have two columns filling seven of eight categories, so **host count did not discriminate and was never going to on its own.** What separated them was one absent category and one advisory gate — then *Price corpus gravity*, *Prefer a stack where the wrong call cannot be written* and the operability veto. Condition: a record that stop at the census have not finished the comparison |
+| **One host carrying most of a stack's rules** | **permitted with conditions, and the condition is named in a directive that stop short of it.** *Enforcement-tool maturity* record this as a live condition — one architecture-test library appear in more files than any other host here. What it do not say is what the repo owe because of it. Condition: **the rules that die with each host are enumerated per host**, so the blast radius of one tool going unmaintained is a list rather than a discovery |
+| **A rule the winning stack can host nowhere** | **permitted, and already decided** — *Count the independent enforcement hosts* say a stack missing a host carry that rule class as convention, and `enforceable-rules`' accounting rule require it be named as a gap rather than passed over. Restated because a stack chosen on a strong census read as covering everything it was ranked for |
 
 ## What this skill does not carry
 

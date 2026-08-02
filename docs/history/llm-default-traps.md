@@ -80,3 +80,34 @@ Rest, no generalise: gap 2 called registry verification defence against "**the**
 
 **Authored 2026-07-30, fourth of five — this subsection superseded by [the llm-default-traps history](llm-default-traps.md)** = record. It used to hold plan: skill instruct agent directly, no directive check-kind-only, three open questions with recommendation each. **All three recommendations accepted on authoring, none overturned** — five JVM-only directives stayed in this skill as group conditioned on JVM repos, each directive carry marker + date inline with evidence one hop away, name `llm-default-traps` kept. Reasons in new section; no re-derive from here.
 
+
+## The layer and composite-shape checks, 2026-08-02
+
+**Both were owed.** Neither promoted a marker — and that matters more here than elsewhere, because this is the one skill in the set where most claims are *confirmed*. **Everything added is *convention*, conversion-dated, and each names a check that is absent.**
+
+### What the layer check found
+
+**The finding that reframes a directive: the injection-surface rule's only check is a version ceiling in a build file, and the rule is about text in channels.** The ceiling gates a dependency *version*. It reads no channel. So it can only ever act on a channel somebody already investigated and traced back to a version — which has happened once, for jqwik. The skill already says the rule "stands on a single case"; what it did not say is that **the check cannot detect a second case, only respond to one already found by hand.** And the four named channels are examples while the rule quantifies over *everything the implementing agent reads* — pull-request descriptions and issue bodies, commit messages, committed fixtures, generated reports, a scanner's own findings text, a dependency's README. **Several of those are writable by someone outside the repo**, which the four named channels mostly are not.
+
+Four more, each beside its directive:
+
+- **The lockfile is one arrival path.** Code also enters as the container base image's packages, a vendored or copied source file, a binary a CI step downloads, a git submodule, and a plugin the build tool resolves. **A hallucinated name in any of them is the same slopsquat surface this skill's first rule exists for, with no gate at all** — and the sharpest instance is one the skill already touches from the other side: a CI action *is* a dependency, and the SHA-pin rule governs how it is referenced while nothing governs whether the name is real.
+- **A moving reference lives in five files and the pin-check lint reads one.** Container image tags, `FROM` lines, tool-installer steps, hook configurations — and **inside a reusable workflow this repo pins by SHA, which can reference its own actions by tag.** Pinning the caller does not pin the callee, and the lint reports green.
+- **The deadline wrapper governs an object; the value lands in a column, a wire contract and a message schema.** An instant-typed column under a correct wrapper defeats the rule silently. **Half of the remedy is already published in this set** — `async-handoff` `E-21` bans a zone-less timestamp anywhere in a committed message schema — and the column and contract halves exist nowhere.
+- **The banned-dependency rules read coordinates**, which a shaded, relocated or vendored copy does not have. Carried into the shape table rather than the check lines, because it is a shape verdict.
+
+### What the composite-shape check found
+
+**No ban added, deliberately**: every entry is a legitimate practice this rule set happened to leave undecided, not a design somebody should be stopped from taking.
+
+- **A channel plus the review substitute is the sharpest interaction in the table, and it is cross-skill.** `ai-maintainer-principles` makes a fresh-context agent pass the substitute for human review; this skill says every channel that agent reads is an injection surface. **The only reviewer reads attacker-influenceable text while reviewing.** Condition: the substitute's inputs are enumerated and committed, and text authored outside the repo is quoted as data rather than supplied as instruction.
+- **A ceiling against a transitive requirement.** The jqwik pin is *a safety control, not version hygiene* — and a resolver that upgrades past a ceiling to satisfy a transitive constraint turns it back into hygiene. The conflict is resolved by excluding the requirer, never by raising the ceiling.
+- **A lockfile against an internal or proxying registry.** The lockfile pins a name and a version; which registry answers for that name is configuration. **This is dependency confusion sitting next door to the slopsquatting threat the skill's first rule is built on**, and nothing here decided it.
+- **A banned dependency shaded inside another artifact** — restated as a shape because the ban reads as complete otherwise.
+- **A claim ban plus a generated security review.** The `char[]` ban is review-only and lives here; the agent regenerating the section reads the repo's text. **A ban an agent never reads is a ban on the wrong reader.**
+- **The two-halves growth path has a shape nobody stated**: a consuming repo's local trap list and this one are two documents with no owner between them, so a trap fixed in one and not the other is invisible from both sides.
+
+### Still open on this family
+
+- **The predicate check is n/a and the enumeration and token-placement checks have not been run.** Token-placement is the one worth doing here: this skill is almost entirely named products and versions, so it is the most exposed in the set to the de-naming defect and the easiest to check mechanically.
+- **None of the five layer remedies is wired**, and two have no host at all — the vendored-source half of the arrival-path gap, and the transitive half of the pin gap.
