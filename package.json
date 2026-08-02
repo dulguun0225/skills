@@ -9,10 +9,13 @@
     "check": "skills add . --list",
     "check:evidence-order": "node scripts/evidence-order.mjs",
     "check:pointers": "node scripts/dangling-pointer.mjs",
+    "tokens": "node scripts/token-count.mjs",
+    "tokens:frontmatter": "node scripts/frontmatter-tokens.mjs",
     "gates": "npm run check:evidence-order && npm run check:pointers",
     "try": "skills use ./ --agent claude-code --skill"
   },
   "devDependencies": {
+    "gpt-tokenizer": "^3.4.0",
     "skills": "1.5.21"
   }
 }

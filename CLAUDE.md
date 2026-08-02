@@ -23,6 +23,8 @@ Fresh machine setup = [README.md](README.md), *Setup on a new machine* — `mise
 ```bash
 npm run check                 # list the skills the CLI discovers here — the discovery check
 npm run gates                 # both wired gates; fails the build, not advisory
+npm run tokens                # per-firing size of the directive text, evidence.md excluded; a report
+npm run tokens:frontmatter    # per-session size: name + description, paid whether a skill fires or not
 npm run try -- <name>         # run one skill from the working tree without installing it
 ```
 
@@ -35,6 +37,10 @@ npm run try -- <name>         # run one skill from the working tree without inst
 **`npm ci` must run first** — `npm run check` shells out to the pinned CLI in `node_modules`; without it the script fails with `'skills' is not recognized` rather than reporting zero skills.
 
 Two more CLI commands, not wrapped, each one-off: `npx skills init <name>` scaffolds `<name>/SKILL.md` at repo root, so anything it makes must be moved under `skills/`; `npx skills add <owner>/<repo> -a claude-code -y` = how a consumer installs from here.
+
+The two token scripts are **reports, not gates** — no size budget to fail against, and they measure size not redundancy. They are also **the only scripts here with a dependency** (`gpt-tokenizer`, o200k_base): exact for GPT models, an approximation for Claude, which ships no offline tokenizer. **The two gates stay dependency-free.** Read the ranking, not the absolute number.
+
+**They measure different costs and the distinction is load-bearing for authoring.** Skill loading is three tiers: frontmatter injected at session start so the agent can decide relevance, **paid whether the skill fires or not**; the `SKILL.md` body loaded when it fires; a resource file loaded only if the body points at it and the agent opens it. `npm run tokens:frontmatter` is tier one, `npm run tokens` is tier two plus the resource files, **excluding `evidence.md` because no agent ever loads it** — that exclusion is why its number means context cost. **A `SKILL.md` body is not "always loaded"**, and the phrase in *Authoring invariants* below means always-loaded-once-the-skill-fires; the `npm run tokens` total is a worst case no consumer pays. Consequence for authoring: **a long `description` is expensive in a way a long body is not**, because nobody chose to load it — and it is also the only text that makes the skill fire, so short is not automatically better.
 
 Two gates the deleted corpus referred to are **still not in this repo under their own names**: `ci/check_packs.py` and a `bundle-checks.yml` freshness step. **`scripts/` now covers what `check_packs.py` was described as doing** — mis-grouped evidence subheadings, and rule ids or links that do not resolve — written against `enforceable-rules` rather than recovered, since the corpus is gone. **The freshness step has no equivalent**: nothing warns when a `review-by` date passes, and the lapse rule is still self-executing on the reader.
 

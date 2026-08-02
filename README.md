@@ -78,6 +78,8 @@ behaviour decides what counts as a skill in this repo.
 | `npm run gates` | Runs both wired gates below. Fails the build; neither is advisory. |
 | `npm run check:evidence-order` | Every evidence heading that names a directive section runs in the directive text's order (`--orphans` lists the headings that name none). |
 | `npm run check:pointers` | No skill text cites a rule id, or links to a file, that its own installed dir does not carry (`--pairs` lists the cross-skill id citations). |
+| `npm run tokens` | Size of every skill's directive text, `evidence.md` excluded — the cost paid each time a skill fires (`--files` breaks it down per file). A report, not a gate. |
+| `npm run tokens:frontmatter` | Size of every skill's `name` and `description` — the cost paid every session whether the skill fires or not. |
 | `npm run try -- <name>` | Runs one skill straight from the working tree, without installing it. |
 
 `npm run check` should list every directory under `skills/` — compare its output
@@ -90,6 +92,20 @@ part of it, wired here on 2026-08-02. **Each prints what it does not decide on
 every run** — a check that is trusted past its reach is the false assurance that
 skill's first principle bans. Everything else in this repo, including all five
 incompleteness checks, is still reading.
+
+The two token reports measure size, not quality, and they measure different
+costs, because skill loading is three tiers. Frontmatter — `name` and
+`description` — is injected at session start so the agent can decide what is
+relevant, and is paid whether the skill fires or not: `npm run
+tokens:frontmatter`. The `SKILL.md` body loads when the skill fires, per
+invocation: `npm run tokens`. A resource file (`evidence.md`, `api.md`,
+`storage.md`, `shapes.md`) loads only if the body points at it and the agent
+opens it, which for `evidence.md` is never, which is why it is excluded.
+
+So the `npm run tokens` total is a worst case — every skill installed and every
+one fired — and not a number any consumer pays. Both scripts tokenize with
+o200k_base, exact for GPT models and an approximation for Claude, which ships no
+offline tokenizer: read the ranking and the direction, not the absolute number.
 
 ## Installing from this repo
 
