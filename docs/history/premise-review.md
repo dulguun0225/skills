@@ -227,9 +227,12 @@ tokens, 35.8% of the tier every consumer pays unconditionally — and those five
 the least-researched members of the set by its own markers**: everything
 *convention*, central claims *uncertain*, source records citing no primary source,
 two source searches failed. The best-researched skill in the repo
-(`llm-default-traps`, mostly *confirmed*) costs 247. `BACKLOG.md` already owes
-trims on three of the five; this review adds the ranking as the reason those rows
-should not wait.
+(`llm-default-traps`, mostly *confirmed*) costs 247. *(The trim rows this
+paragraph pointed at were removed from `BACKLOG.md` on 2026-08-03 and the
+procedure behind them withdrawn: the first sealed firing baseline — 43/44, 4/4
+negatives clean — was measured on these descriptions as they stand, so a trim is
+now an unforced edit to the only text that makes a skill fire. The ranking below
+stands as a statement about where the money goes, not as a queue.)*
 
 **2. "Well-researched" is currently satisfied more by honest labeling than by
 verification, and that gap — not skill inventory — is the larger distance from the

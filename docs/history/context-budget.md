@@ -333,6 +333,17 @@ against what is left, not against what you remember was there.**
 
 ## 3. Frontmatter descriptions — one of four done, 4,383 per session
 
+> **Withdrawn 2026-08-03. Do not run the procedure below.** The three remaining
+> trims came off this page and out of `BACKLOG.md` on the owner's decision, and
+> the evidence that made them look safe is void: the A/B that found the first
+> trim cost no firing was taken on an unsealed harness
+> ([firing-harness.md](firing-harness.md)). The first sealed baseline — 43/44,
+> 4/4 negatives clean, `claude-opus-5`, CLI 2.1.220, win32 — was measured on the
+> descriptions as they stand, enumerations included. **A trim would now be an
+> unforced edit to the only text that makes a skill fire, against a measurement
+> that says it is working.** The token counts below remain accurate and the
+> procedure remains correct in method; what is gone is the reason to apply it.
+
 **The highest leverage per edit in this file, and the smallest absolute number.**
 Nobody chose to load it; it is paid by every session of every consumer, for skills
 that never fire.

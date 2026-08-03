@@ -133,7 +133,7 @@ Per-skill records: what each authoring pass decided, its sweeps, its adversarial
 - [firing-harness](docs/history/firing-harness.md) — `npm run firing`, the only check here that reaches a `description`; every rate it produced before 2026-08-03 evening is void, and the section at the foot of that file is the one to read first
 - [harvests](docs/history/harvests.md) — what each closed backlog harvest cost and changed: `guardrails-toolchain`, `ai-maintainer-principles`, `primary-keys`, `business-numbering`
 - [evidence-owed-longform](docs/history/evidence-owed-longform.md) — the prose the backlog's owed-evidence table was compressed from
-- [context-budget](docs/history/context-budget.md) — measured per-firing and per-session cost, and the five reductions owed against it. Nothing done; the rows are in `BACKLOG.md`
+- [context-budget](docs/history/context-budget.md) — measured per-firing and per-session cost, and the five reductions weighed against it: four closed 2026-08-02, the fifth — trimming the three long `description`s — withdrawn 2026-08-03 once a sealed firing baseline was measured on them as they stand
 - [whole-project-review](docs/history/whole-project-review.md) — 2026-07-31, first review whose unit was the repo
 - [premise-review](docs/history/premise-review.md) — 2026-08-03, the owner's two questions: skills versus a knowledge-base tool, and per-skill necessity; verdicts, the inverted cost/evidence finding, and the two firing mitigations — the description edit applied and first-measured the same day ([firing-harness](docs/history/firing-harness.md)); the consumer pointer block shipped and withdrawn the same day under the frontmatter-or-hooks rule
 
