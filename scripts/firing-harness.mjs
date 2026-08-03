@@ -22,17 +22,32 @@
 //   node scripts/firing-harness.mjs --dry-run             what it would spend
 //
 // TWO MODES, measuring two different things. The default denies every tool but
-// Skill and caps at 2 turns, so it scores whether a skill fires as the model's
-// FIRST action. That is the cheap question, and for repo-fixture cases with
-// execution-shaped prompts it is the wrong one: measured 2026-08-03, Opus's
-// first move in a concrete repo is to read code, and 48 of 55 such misses were
-// sessions dying at a denied read, not relevance judgments. --explore allows
+// Skill and caps the turns low, so it scores whether a skill fires as the
+// model's FIRST action. That is the cheap question, and for repo-fixture cases
+// with execution-shaped prompts it is the wrong one: measured 2026-08-03,
+// Opus's first move in a concrete repo is to look at code. --explore allows
 // Read, Glob, Grep, Write and Edit inside the disposable sandbox, raises the
 // turn cap, and scores whether the skill under test loaded BEFORE the first
 // Write or Edit — fired-but-late is reported as its own verdict, because rules
 // that arrive after the code is written did not govern it. Explore sessions
 // cost several times a first-move session. The two modes' rates are different
 // measurements; never compare across them.
+//
+// THE DENIAL WAS NOT REAL BEFORE 2026-08-03, AND EVERY FIRST-MOVE RATE TAKEN
+// BEFORE THEN IS VOID. `--allowed-tools` is an auto-approve list, not a
+// restriction; only `--disallowed-tools` removes a tool. Passing
+// `--allowed-tools Skill` therefore restricted nothing, and the deny list
+// beside it named `Bash` while the Windows shell tool is called `PowerShell`.
+// A probe session read the whole fixture with `Get-ChildItem -Recurse`, spent
+// its second turn on `ToolSearch` asking for the five tools that were denied,
+// and died at the turn cap — recorded as "nothing fired", indistinguishable
+// from a relevance judgment. So the platform gap this file agonised over is
+// not one: the linux runs had `Bash` in the deny list and were near-sealed,
+// the win32 runs had an open shell. Different experiments, not comparable
+// rates. The fix is not a longer list — it is `PERMITTED` below plus the
+// assertion in `parseSession`, which fails any session that used a tool the
+// mode does not permit. A deny list can only ever omit the tool the CLI added
+// last week; the assertion cannot.
 //
 // ACROSS MACHINES: it runs anywhere the `claude` CLI runs and is logged in —
 // nothing here is bound to one developer's box. What does not travel is the
@@ -55,6 +70,47 @@ const CREDENTIALS = join(homedir(), ".claude", ".credentials.json");
 
 const args = parseArgs(process.argv.slice(2));
 const corpus = JSON.parse(readFileSync(join(ROOT, "scripts", "firing-cases.json"), "utf8"));
+
+/**
+ * The tools a session in this mode is allowed to use. This list is the
+ * measurement's definition, not a convenience: a first-move session that can
+ * shell out is an explore session wearing the wrong label, and it reports as a
+ * miss rather than as a broken run. `parseSession` fails any session that used
+ * a name absent from here, so the harness stops trusting the deny list to be
+ * complete — it checks the outcome instead.
+ */
+const PERMITTED = args.explore ? ["Skill", "Read", "Glob", "Grep", "Write", "Edit"] : ["Skill"];
+
+/**
+ * Everything known to ship with the CLI that `PERMITTED` does not include.
+ * Best effort by construction — `PowerShell` and `ToolSearch` were both absent
+ * until a probe session used them — which is why the assertion exists. Add to
+ * it when the assertion catches something; never rely on it alone.
+ */
+const DENIED = [
+  "Bash", "PowerShell", "BashOutput", "KillShell", "KillBash",
+  "ToolSearch", "TodoWrite", "Task", "Agent", "NotebookEdit",
+  "WebFetch", "WebSearch", "SlashCommand", "EnterPlanMode", "ExitPlanMode",
+  "AskUserQuestion", "ListMcpResources", "ReadMcpResource", "Artifact",
+  ...(args.explore ? [] : ["Read", "Write", "Edit", "Glob", "Grep"]),
+];
+
+/**
+ * Turn caps. First-move used to be 2, which left no room: one turn went to a
+ * tool call and the session died before it could answer or reconsider. Four
+ * still ends long before exploration becomes useful, and a session that spends
+ * all four on denied calls now shows up as an error, not a miss.
+ */
+const MAX_TURNS = args.explore ? 8 : 4;
+
+/**
+ * The only variables from the operator's shell that reach a session, and they
+ * exist because auth must survive the allowlist in `childEnv`: a machine with
+ * no credentials file authenticates by key, and one behind a proxy needs its
+ * base URL. Declared here rather than beside `childEnv` because the top-level
+ * run starts before the function definitions are reached.
+ */
+const AUTH_VARS = ["ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_BASE_URL"];
 
 const cases = corpus.cases.filter((c) => {
   if (args.case.length && !args.case.includes(c.id)) return false;
@@ -116,7 +172,25 @@ try {
   if (args.json) {
     writeFileSync(
       args.json,
-      JSON.stringify({ ran: new Date().toISOString(), model: stamp.model, cli: stamp.cli, host: process.platform, mode: args.explore ? "explore" : "first-move", variants: variants.map(strip) }, null, 2),
+      JSON.stringify(
+        {
+          ran: new Date().toISOString(),
+          model: stamp.model,
+          cli: stamp.cli,
+          host: process.platform,
+          mode: args.explore ? "explore" : "first-move",
+          // The mode is not defined by its name. Two runs labelled `first-move`
+          // measured different things on 2026-08-03 because one had a shell and
+          // the other did not, and neither file recorded which.
+          permitted: PERMITTED,
+          denied: DENIED,
+          maxTurns: MAX_TURNS,
+          repeats: args.repeats,
+          variants: variants.map(strip),
+        },
+        null,
+        2,
+      ),
     );
     console.log(`\nWrote ${args.json}`);
   }
@@ -150,12 +224,12 @@ function runOne(cwd, prompt) {
         "-p",
         "--output-format", "stream-json",
         "--verbose",
-        "--max-turns", args.explore ? "8" : "2",
-        "--allowed-tools", ...(args.explore ? ["Skill", "Read", "Glob", "Grep", "Write", "Edit"] : ["Skill"]),
-        "--disallowed-tools", "Bash", "WebFetch", "WebSearch", "Task", "Agent", "NotebookEdit", ...(args.explore ? [] : ["Read", "Write", "Edit", "Grep", "Glob"]),
+        "--max-turns", String(MAX_TURNS),
+        "--allowed-tools", ...PERMITTED,
+        "--disallowed-tools", ...DENIED,
         ...(args.model ? ["--model", args.model] : []),
       ],
-      { cwd, env: { ...process.env, CLAUDE_CONFIG_DIR: join(cwd, "..", "cfg") }, stdio: ["pipe", "pipe", "pipe"], shell: process.platform === "win32" },
+      { cwd, env: childEnv(join(cwd, "..", "cfg")), stdio: ["pipe", "pipe", "pipe"], shell: process.platform === "win32" },
     );
     child.stdin.end(prompt);
     const timer = setTimeout(() => child.kill("SIGKILL"), TIMEOUT_MS);
@@ -170,9 +244,29 @@ function runOne(cwd, prompt) {
   });
 }
 
+/**
+ * The session's environment, built by allowlist rather than inherited.
+ * `{ ...process.env }` passed the operator's entire session through, and when
+ * the harness is launched from inside a Claude Code session that is 23
+ * `CLAUDE_*`/`ANTHROPIC_*` variables including feature flags and a base URL —
+ * so the same command produced a different environment depending on where it
+ * was typed, silently. Auth is the one thing that must survive: the credentials
+ * file is copied into the sandbox, and a machine that authenticates by key or
+ * proxy needs these three. Everything `CLAUDE_*` is dropped; the sandbox sets
+ * its own `CLAUDE_CONFIG_DIR` and nothing else may reach the child.
+ */
+function childEnv(cfgDir) {
+  const platform = ["PATH", "Path", "PATHEXT", "SystemRoot", "SYSTEMROOT", "COMSPEC", "ComSpec", "WINDIR", "TEMP", "TMP", "TMPDIR", "HOME", "USERPROFILE", "HOMEDRIVE", "HOMEPATH", "APPDATA", "LOCALAPPDATA", "PROGRAMFILES", "PROGRAMDATA", "SHELL", "LANG", "LC_ALL", "USER", "LOGNAME"];
+  const env = {};
+  for (const key of [...platform, ...AUTH_VARS]) if (process.env[key] !== undefined) env[key] = process.env[key];
+  env.CLAUDE_CONFIG_DIR = cfgDir;
+  return env;
+}
+
 function parseSession(stdout, stderr) {
   const skills = [];
   const lateSkills = [];
+  const unexpected = [];
   let editSeen = false;
   let text = "";
   let cost = 0;
@@ -202,13 +296,20 @@ function parseSession(stdout, stderr) {
         }
       }
       if (block.type === "tool_use" && (block.name === "Write" || block.name === "Edit")) editSeen = true;
+      // The mode's definition, checked rather than assumed. A tool outside
+      // PERMITTED means the deny list missed one, and every rate in the run is
+      // measuring a session that could do something the mode says it cannot.
+      if (block.type === "tool_use" && !PERMITTED.includes(block.name) && !unexpected.includes(block.name)) unexpected.push(block.name);
       if (block.type === "text" && typeof block.text === "string") text += block.text;
     }
     if (ev.error) error = ev.error;
     if (typeof ev.total_cost_usd === "number") cost = ev.total_cost_usd;
   }
   if (!stdout.trim()) error = error ?? (stderr.trim().split("\n").pop() || "no output");
-  return { skills, lateSkills, text, cost, error };
+  if (unexpected.length && !error) {
+    error = `used tools this mode does not permit: ${unexpected.join(", ")}. The deny list is incomplete — add them to DENIED. Every rate in this run is void.`;
+  }
+  return { skills, lateSkills, unexpected, text, cost, error };
 }
 
 /**
@@ -230,6 +331,17 @@ async function preflight(cwd) {
     console.error(`The prompt is not reaching the model intact. Response received: ${JSON.stringify(probe.text.slice(0, 200))}`);
     process.exit(1);
   }
+  if (probe.unexpected?.length) {
+    // Not an auth problem, and the auth help below would send the operator to
+    // the wrong place. A tool outside PERMITTED reached the model, so the mode
+    // is not the mode: on 2026-08-03 that was `PowerShell` — the deny list said
+    // `Bash` — and an open shell turned every first-move rate into a number
+    // about something else.
+    console.error(`\nPreflight failed: the probe session used ${probe.unexpected.join(", ")}, which this mode does not permit.`);
+    console.error(`--allowed-tools only auto-approves; only --disallowed-tools removes a tool.`);
+    console.error(`Add the names above to DENIED near the top of this file and re-run. No sessions were spent on cases.`);
+    process.exit(1);
+  }
   if (probe.error) {
     console.error(`\nPreflight failed: ${probe.error}`);
     console.error(`
@@ -246,7 +358,12 @@ working \`claude\` in your terminal is not sufficient on its own:
     dir is the difference.`);
     process.exit(1);
   }
-  console.log(`Preflight ok. model=${stamp.model ?? "unknown"} cli=${stamp.cli ?? "unknown"} platform=${process.platform} mode=${args.explore ? "explore" : "first-move"}`);
+  console.log(`Preflight ok. model=${stamp.model ?? "unknown"} cli=${stamp.cli ?? "unknown"} platform=${process.platform} mode=${args.explore ? "explore" : "first-move"} turns=${MAX_TURNS} tools=${PERMITTED.join("+")}`);
+  // Which auth reached the child, since the rest of the operator's environment
+  // deliberately does not. A run that authenticated by copied credentials and
+  // one that authenticated by an inherited key are not obviously the same run.
+  const auth = AUTH_VARS.filter((v) => process.env[v] !== undefined);
+  console.log(`Environment: allowlisted${auth.length ? `, auth vars passed: ${auth.join(", ")}` : ", no auth vars passed (credentials file only)"}.`);
   if (!args.model) console.log("No --model pinned: this run's rate is comparable only to runs on the same model.");
 }
 
@@ -300,9 +417,29 @@ function buildSandboxes(variant, base) {
       cpSync(src, join(dir, ".claude", "skills", name), { recursive: true });
     }
     if (fixture === "java") writeJavaFixture(dir);
+    gitInit(dir);
     boxes[fixture] = dir;
   }
   return boxes;
+}
+
+/**
+ * A fixture that is not a git repository reads as a scratch directory, and
+ * transcripts show the model saying so and stopping — "it isn't a git
+ * repository, so there's no history to search either". Real consumer repos are
+ * versioned; an unversioned one is a property of the sandbox leaking into the
+ * measurement. Skipped silently where git is unavailable, which leaves the
+ * fixture exactly as it was before.
+ */
+function gitInit(dir) {
+  const git = (...argv) => execFileSync("git", argv, { cwd: dir, stdio: "ignore" });
+  try {
+    git("init", "-q");
+    git("add", "-A");
+    git("-c", "user.email=harness@invalid", "-c", "user.name=firing harness", "-c", "commit.gpgsign=false", "commit", "-qm", "fixture");
+  } catch {
+    // No git, or a global hook refusing the commit. Not worth failing a run over.
+  }
 }
 
 /**
@@ -410,10 +547,13 @@ What this run does not decide:
   - whether a miss is a defect. Firing is stochastic; one miss is a coin flip.
     Re-run the case with --repeats before touching a description
   - what a real session does. ${args.explore ? `Explore mode allows the read and edit
-    tools, but the sandbox still has no CLAUDE.md, no user, and an 8-turn cap` : `Every tool but Skill was denied, so the model
-    could not read the repo before choosing, and a real agent often can —
+    tools, but the sandbox still has no CLAUDE.md, no user, and a ${MAX_TURNS}-turn cap` : `Only ${PERMITTED.join(", ")} was permitted, so the
+    model could not look at the repo before choosing, and a real agent can —
     repo-fixture rates in this mode are first-move rates, not delivery (see
     docs/history/firing-harness.md, 2026-08-03)`}
+  - whether the prompt's subject exists in the fixture. Several cases name code
+    the fixture does not contain; those sessions ask for it and stop, and that
+    reports as a miss without any relevance judgment having happened
   - whether the skill that fired was the right one to fire. This scores the
     skill under test and records the rest; it never says a skill was wrong to load
   - anything about the body. Firing is decided by frontmatter alone, so a skill
