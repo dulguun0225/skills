@@ -17,8 +17,22 @@
 //   node scripts/firing-harness.mjs --repeats 3           firing is stochastic
 //   node scripts/firing-harness.mjs --against HEAD~1      A/B a frontmatter edit
 //   node scripts/firing-harness.mjs --model opus          pin the model; see below
+//   node scripts/firing-harness.mjs --explore             explore-tolerant mode; see below
 //   node scripts/firing-harness.mjs --json out.json       machine-readable run
 //   node scripts/firing-harness.mjs --dry-run             what it would spend
+//
+// TWO MODES, measuring two different things. The default denies every tool but
+// Skill and caps at 2 turns, so it scores whether a skill fires as the model's
+// FIRST action. That is the cheap question, and for repo-fixture cases with
+// execution-shaped prompts it is the wrong one: measured 2026-08-03, Opus's
+// first move in a concrete repo is to read code, and 48 of 55 such misses were
+// sessions dying at a denied read, not relevance judgments. --explore allows
+// Read, Glob, Grep, Write and Edit inside the disposable sandbox, raises the
+// turn cap, and scores whether the skill under test loaded BEFORE the first
+// Write or Edit — fired-but-late is reported as its own verdict, because rules
+// that arrive after the code is written did not govern it. Explore sessions
+// cost several times a first-move session. The two modes' rates are different
+// measurements; never compare across them.
 //
 // ACROSS MACHINES: it runs anywhere the `claude` CLI runs and is logged in —
 // nothing here is bound to one developer's box. What does not travel is the
@@ -66,6 +80,7 @@ if (args.dryRun) {
 
 const work = mkdtempSync(join(tmpdir(), "firing-harness-"));
 const stamp = { model: null, cli: null };
+let runSeq = 0;
 try {
   for (const v of variants) {
     if (v.ref) v.skills = exportRef(v.ref, join(work, "src-" + sanitise(v.label)));
@@ -80,7 +95,17 @@ try {
     const queue = [];
     for (const c of cases) for (let i = 0; i < args.repeats; i++) queue.push({ c, i });
     v.results = await pool(queue, args.concurrency, async ({ c, i }) => {
-      const fired = await runOne(v.sandboxes[c.fixture], c.prompt);
+      // Explore sessions Write and Edit their repo, and the per-fixture box is
+      // shared by every session — concurrent runs would mutate each other's
+      // evidence and later repeats would find the task already half-done. Each
+      // explore session gets its own copy, as a sibling of the box so the
+      // ../cfg lookup still lands on the variant's isolated config.
+      let box = v.sandboxes[c.fixture];
+      if (args.explore) {
+        box = join(dirname(box), `${c.fixture}-run-${runSeq++}`);
+        cpSync(v.sandboxes[c.fixture], box, { recursive: true });
+      }
+      const fired = await runOne(box, c.prompt);
       const line = verdict(c, fired);
       console.log(`  ${symbol(line.status)} ${c.id}${args.repeats > 1 ? `#${i + 1}` : ""}`.padEnd(30) + describe(c, fired));
       return { case: c, run: i, fired: fired.skills, text: fired.text, cost: fired.cost, error: fired.error, ...line };
@@ -91,7 +116,7 @@ try {
   if (args.json) {
     writeFileSync(
       args.json,
-      JSON.stringify({ ran: new Date().toISOString(), model: stamp.model, cli: stamp.cli, host: process.platform, variants: variants.map(strip) }, null, 2),
+      JSON.stringify({ ran: new Date().toISOString(), model: stamp.model, cli: stamp.cli, host: process.platform, mode: args.explore ? "explore" : "first-move", variants: variants.map(strip) }, null, 2),
     );
     console.log(`\nWrote ${args.json}`);
   }
@@ -125,9 +150,9 @@ function runOne(cwd, prompt) {
         "-p",
         "--output-format", "stream-json",
         "--verbose",
-        "--max-turns", "2",
-        "--allowed-tools", "Skill",
-        "--disallowed-tools", "Bash", "Read", "Write", "Edit", "Grep", "Glob", "WebFetch", "WebSearch", "Task", "Agent",
+        "--max-turns", args.explore ? "8" : "2",
+        "--allowed-tools", ...(args.explore ? ["Skill", "Read", "Glob", "Grep", "Write", "Edit"] : ["Skill"]),
+        "--disallowed-tools", "Bash", "WebFetch", "WebSearch", "Task", "Agent", "NotebookEdit", ...(args.explore ? [] : ["Read", "Write", "Edit", "Grep", "Glob"]),
         ...(args.model ? ["--model", args.model] : []),
       ],
       { cwd, env: { ...process.env, CLAUDE_CONFIG_DIR: join(cwd, "..", "cfg") }, stdio: ["pipe", "pipe", "pipe"], shell: process.platform === "win32" },
@@ -147,6 +172,8 @@ function runOne(cwd, prompt) {
 
 function parseSession(stdout, stderr) {
   const skills = [];
+  const lateSkills = [];
+  let editSeen = false;
   let text = "";
   let cost = 0;
   let error = null;
@@ -167,15 +194,21 @@ function parseSession(stdout, stderr) {
     }
     for (const block of ev?.message?.content ?? []) {
       if (block.type === "tool_use" && block.name === "Skill" && block.input?.skill) {
-        if (!skills.includes(block.input.skill)) skills.push(block.input.skill);
+        if (!skills.includes(block.input.skill)) {
+          skills.push(block.input.skill);
+          // Stream order is the session's action order: a skill first loaded
+          // after a Write or Edit arrived too late to govern that code.
+          if (editSeen) lateSkills.push(block.input.skill);
+        }
       }
+      if (block.type === "tool_use" && (block.name === "Write" || block.name === "Edit")) editSeen = true;
       if (block.type === "text" && typeof block.text === "string") text += block.text;
     }
     if (ev.error) error = ev.error;
     if (typeof ev.total_cost_usd === "number") cost = ev.total_cost_usd;
   }
   if (!stdout.trim()) error = error ?? (stderr.trim().split("\n").pop() || "no output");
-  return { skills, text, cost, error };
+  return { skills, lateSkills, text, cost, error };
 }
 
 /**
@@ -213,7 +246,7 @@ working \`claude\` in your terminal is not sufficient on its own:
     dir is the difference.`);
     process.exit(1);
   }
-  console.log(`Preflight ok. model=${stamp.model ?? "unknown"} cli=${stamp.cli ?? "unknown"} platform=${process.platform}`);
+  console.log(`Preflight ok. model=${stamp.model ?? "unknown"} cli=${stamp.cli ?? "unknown"} platform=${process.platform} mode=${args.explore ? "explore" : "first-move"}`);
   if (!args.model) console.log("No --model pinned: this run's rate is comparable only to runs on the same model.");
 }
 
@@ -227,7 +260,9 @@ function verdict(c, fired) {
   const violated = (c.forbid ?? []).filter((f) => fired.skills.includes(f));
   if (violated.length) return { status: "forbidden", violated };
   if (c.skill === null) return { status: "pass" };
-  return { status: fired.skills.includes(c.skill) ? "pass" : "miss" };
+  if (!fired.skills.includes(c.skill)) return { status: "miss" };
+  if (args.explore && fired.lateSkills.includes(c.skill)) return { status: "late" };
+  return { status: "pass" };
 }
 
 // --- sandboxes ---------------------------------------------------------------
@@ -340,11 +375,14 @@ function exportRef(ref, dest) {
 function report(variants, cases) {
   for (const v of variants) {
     const pass = v.results.filter((r) => r.status === "pass").length;
+    const late = v.results.filter((r) => r.status === "late");
     const miss = v.results.filter((r) => r.status === "miss");
     const forb = v.results.filter((r) => r.status === "forbidden");
     const errs = v.results.filter((r) => r.status === "error");
     const cost = v.results.reduce((a, r) => a + (r.cost ?? 0), 0);
-    console.log(`\n=== ${v.label} [${stamp.model ?? "?"} / cli ${stamp.cli ?? "?"}]: ${pass}/${v.results.length} fired as expected, ${forb.length} forbidden, ${errs.length} error, $${cost.toFixed(2)} ===`);
+    const lateNote = args.explore ? `, ${late.length} late` : "";
+    console.log(`\n=== ${v.label} [${stamp.model ?? "?"} / cli ${stamp.cli ?? "?"} / ${args.explore ? "explore" : "first-move"}]: ${pass}/${v.results.length} fired as expected${lateNote}, ${forb.length} forbidden, ${errs.length} error, $${cost.toFixed(2)} ===`);
+    for (const r of late) console.log(`  LATE      ${r.case.id.padEnd(30)} ${r.case.skill} fired after the first Write/Edit`);
     for (const r of miss) console.log(`  MISS      ${r.case.id.padEnd(30)} wanted ${r.case.skill}, got ${r.fired.join(", ") || "nothing"}`);
     for (const r of forb) console.log(`  FORBIDDEN ${r.case.id.padEnd(30)} ${r.violated.join(", ")} fired`);
     for (const r of errs) console.log(`  ERROR     ${r.case.id.padEnd(30)} ${r.error}`);
@@ -371,8 +409,11 @@ machine, model or CLI version is a different measurement, not a later one.
 What this run does not decide:
   - whether a miss is a defect. Firing is stochastic; one miss is a coin flip.
     Re-run the case with --repeats before touching a description
-  - what a real session does. Every tool but Skill was denied, so the model
-    could not read the repo before choosing, and a real agent often can
+  - what a real session does. ${args.explore ? `Explore mode allows the read and edit
+    tools, but the sandbox still has no CLAUDE.md, no user, and an 8-turn cap` : `Every tool but Skill was denied, so the model
+    could not read the repo before choosing, and a real agent often can —
+    repo-fixture rates in this mode are first-move rates, not delivery (see
+    docs/history/firing-harness.md, 2026-08-03)`}
   - whether the skill that fired was the right one to fire. This scores the
     skill under test and records the rest; it never says a skill was wrong to load
   - anything about the body. Firing is decided by frontmatter alone, so a skill
@@ -396,7 +437,7 @@ function describe(c, fired) {
 }
 
 function symbol(status) {
-  return { pass: "ok  ", miss: "MISS", forbidden: "FORB", error: "ERR " }[status] ?? status;
+  return { pass: "ok  ", late: "LATE", miss: "MISS", forbidden: "FORB", error: "ERR " }[status] ?? status;
 }
 
 function strip(v) {
@@ -424,7 +465,7 @@ async function pool(items, size, fn) {
 }
 
 function parseArgs(argv) {
-  const out = { skill: [], case: [], repeats: 1, concurrency: 4, against: null, model: null, json: null, keep: false, dryRun: false };
+  const out = { skill: [], case: [], repeats: 1, concurrency: 4, against: null, model: null, json: null, keep: false, dryRun: false, explore: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--skill") out.skill.push(argv[++i]);
@@ -436,6 +477,7 @@ function parseArgs(argv) {
     else if (a === "--json") out.json = argv[++i];
     else if (a === "--keep") out.keep = true;
     else if (a === "--dry-run") out.dryRun = true;
+    else if (a === "--explore") out.explore = true;
     else {
       console.error(`Unknown argument: ${a}`);
       process.exit(2);

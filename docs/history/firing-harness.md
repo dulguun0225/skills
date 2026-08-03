@@ -242,6 +242,51 @@ inside the artifact: when Opus does load something before exploring, it
 reaches for the language-neutral parent, not the `-java` tool mapping its
 description tells it to install alongside.
 
+## Explore mode, 2026-08-03 — the delivery number, and what is left after it
+
+`--explore` exists now: Read, Glob, Grep, Write and Edit allowed, the turn cap
+raised to 8, each session in its own copy of the fixture because explore
+sessions mutate their repo, and a third verdict — **late**, the skill under
+test loading only after the first Write or Edit, because rules that arrive
+after the code is written did not govern it. Mode is stamped on every report
+and in the `--json`; a first-move rate and an explore rate are different
+measurements and are never comparable. An explore session costs about
+**$0.63** against first-move's $0.22 (`claude-opus-5`, measured over 32 and
+88 sessions respectively), and can hit the 300-second timeout — one session
+did, and it is the run's single error.
+
+The 16 Java cases at `--repeats 2`, `claude-opus-5`, CLI 2.1.220, win32,
+$20.05: **19/32 fired as expected, 0 late** — against 16/80 for the same
+cases in first-move mode. Six cases that were 0/5 first-move went 2/2 the
+moment exploration was allowed (`money-java-1`, `money-java-2`,
+`async-handoff-java-2`, `java-backend-api-2`, `guardrails-toolchain-1`,
+`llm-default-traps-1`). **Zero late is the finding that matters most**: when
+Opus loads a skill at all, it loads it before writing code — the explore-first
+behavior delays the decision past the harness's old horizon, not past the
+point where the rules still govern the code.
+
+The bare-fixture tail, re-run the same day at `--repeats 5` in first-move
+mode ($6.00): the seven bare misses from the A/B held at **3/35** — but 22 of
+their 32 fired-nothing sessions also open with explore intent. The artifact
+is not fixture-bound; it follows any prompt that references artifacts the
+model would want to look at ("the line items are doubles", "this ADR"), which
+a bare fixture merely fails to contain. Those seven owe an explore-mode
+measurement before any of them is called description work.
+
+What survives both modes, and is therefore real:
+
+- **Six java cases dead in both** — `caching-java-1`, `caching-java-2`,
+  `async-handoff-java-1`, `java-backend-rules-2`, `java-backend-api-1`,
+  `java-backend-observability-1` (0/2 explore, 0–1/5 first-move each; two
+  repeats is thin, so rank them, do not sentence them).
+- **The parent-without-sibling boundary, now demonstrated where it counts**:
+  in explore mode `caching-java-2` loaded `caching` and `async-handoff-java-1`
+  loaded `async-handoff` plus `java-backend-rules`, then wrote code without
+  ever opening the `-java` sibling that carries the build gates. The generic
+  rules arrived; the tool mapping did not. That is the first
+  description-shaped defect this harness has isolated cleanly, and it belongs
+  to the `-java` descriptions' "alongside" clause.
+
 ## Running it on another machine
 
 This repo is developed on several. The script runs anywhere the `claude` CLI runs

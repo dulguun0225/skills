@@ -26,7 +26,7 @@ npm run gates                 # both wired gates; fails the build, not advisory
 npm run tokens                # per-firing size of the directive text, evidence.md excluded; a report
 npm run tokens:frontmatter    # per-session size: name + description, paid whether a skill fires or not
 npm run tokens:sections       # per-`##`-section size of each SKILL.md; --repeated rolls up by section name
-npm run firing                # do the skills fire? headless sessions; --against <ref> A/Bs a frontmatter edit
+npm run firing                # do the skills fire? headless sessions; --against <ref> A/Bs a frontmatter edit; --explore scores firing before the first code edit rather than as the first action
 npm run try -- <name>         # run one skill from the working tree without installing it
 ```
 
