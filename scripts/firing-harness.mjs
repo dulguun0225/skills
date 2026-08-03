@@ -92,6 +92,13 @@ const DENIED = [
   "ToolSearch", "TodoWrite", "Task", "Agent", "NotebookEdit",
   "WebFetch", "WebSearch", "SlashCommand", "EnterPlanMode", "ExitPlanMode",
   "AskUserQuestion", "ListMcpResources", "ReadMcpResource", "Artifact",
+  // Everything else CLI 2.1.220 exposed once the obvious names were gone. The
+  // preflight tool-list check found these seventeen in one probe; none would
+  // have been guessed, and several did not exist when this harness was written.
+  "CronCreate", "CronDelete", "CronList", "DesignSync", "EnterWorktree", "ExitWorktree",
+  "PushNotification", "RemoteTrigger", "ReportFindings", "ScheduleWakeup", "SendMessage",
+  "ShareOnboardingGuide", "TaskCreate", "TaskGet", "TaskList", "TaskOutput", "TaskStop",
+  "TaskUpdate", "Workflow",
   ...(args.explore ? [] : ["Read", "Write", "Edit", "Glob", "Grep"]),
 ];
 
@@ -111,6 +118,20 @@ const MAX_TURNS = args.explore ? 8 : 4;
  * run starts before the function definitions are reached.
  */
 const AUTH_VARS = ["ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_BASE_URL"];
+
+/**
+ * Fixture name to builder. Up here with the other constants because the
+ * top-level run reaches `buildSandboxes` before the file's `const`s further
+ * down are initialised; the builders themselves are hoisted declarations, so
+ * only this table has to move. See the builders for what a fixture owes its
+ * prompts.
+ */
+const FIXTURES = {
+  bare: () => ({}),
+  java: javaFixture,
+  sql: sqlFixture,
+  docs: docsFixture,
+};
 
 const cases = corpus.cases.filter((c) => {
   if (args.case.length && !args.case.includes(c.id)) return false;
@@ -267,6 +288,7 @@ function parseSession(stdout, stderr) {
   const skills = [];
   const lateSkills = [];
   const unexpected = [];
+  let exposed = [];
   let editSeen = false;
   let text = "";
   let cost = 0;
@@ -278,6 +300,14 @@ function parseSession(stdout, stderr) {
       ev = JSON.parse(line);
     } catch {
       continue;
+    }
+    if (ev.subtype === "init" && Array.isArray(ev.tools)) {
+      // The definitive answer to what this session could do, printed by the CLI
+      // before the model takes a turn. Checking it in preflight is the only way
+      // to learn the deny list is incomplete without paying for a whole run to
+      // find out — and the deny list WILL go incomplete, because the CLI adds
+      // tools and this file does not hear about it.
+      exposed = ev.tools;
     }
     if (ev.subtype === "init") {
       // Which model read the descriptions, and which CLI injected them. A
@@ -299,7 +329,12 @@ function parseSession(stdout, stderr) {
       // The mode's definition, checked rather than assumed. A tool outside
       // PERMITTED means the deny list missed one, and every rate in the run is
       // measuring a session that could do something the mode says it cannot.
-      if (block.type === "tool_use" && !PERMITTED.includes(block.name) && !unexpected.includes(block.name)) unexpected.push(block.name);
+      // Only tools the CLI actually handed this session count. A model may also
+      // call a name that was removed — it gets an error back and nothing
+      // happens, which is noise, not a broken measurement.
+      if (block.type === "tool_use" && exposed.includes(block.name) && !PERMITTED.includes(block.name) && !unexpected.includes(block.name)) {
+        unexpected.push(block.name);
+      }
       if (block.type === "text" && typeof block.text === "string") text += block.text;
     }
     if (ev.error) error = ev.error;
@@ -309,7 +344,7 @@ function parseSession(stdout, stderr) {
   if (unexpected.length && !error) {
     error = `used tools this mode does not permit: ${unexpected.join(", ")}. The deny list is incomplete — add them to DENIED. Every rate in this run is void.`;
   }
-  return { skills, lateSkills, unexpected, text, cost, error };
+  return { skills, lateSkills, unexpected, exposed, text, cost, error };
 }
 
 /**
@@ -329,6 +364,17 @@ async function preflight(cwd) {
     // check cannot pass by accident the way "ready" could.
     console.error(`\nPreflight failed: the probe session ran without error but did not echo the probe word.`);
     console.error(`The prompt is not reaching the model intact. Response received: ${JSON.stringify(probe.text.slice(0, 200))}`);
+    process.exit(1);
+  }
+  const extras = (probe.exposed ?? []).filter((t) => !PERMITTED.includes(t));
+  if (extras.length) {
+    // The session's own manifest, read before any case is paid for. The
+    // tool_use assertion below catches the same class only when the model
+    // happens to reach for one; this catches it always.
+    console.error(`\nPreflight failed: the session was given ${extras.length} tool(s) this mode does not permit.`);
+    console.error(`  ${extras.join(", ")}`);
+    console.error(`\nMode permits: ${PERMITTED.join(", ")}. Add the names above to DENIED near the top of this file.`);
+    console.error(`--allowed-tools only auto-approves; only --disallowed-tools removes a tool. No case sessions were spent.`);
     process.exit(1);
   }
   if (probe.unexpected?.length) {
@@ -416,7 +462,13 @@ function buildSandboxes(variant, base) {
       // markdown files, so the copy is not worth optimising away.
       cpSync(src, join(dir, ".claude", "skills", name), { recursive: true });
     }
-    if (fixture === "java") writeJavaFixture(dir);
+    const build = FIXTURES[fixture];
+    if (!build) throw new Error(`Unknown fixture "${fixture}" — add it to FIXTURES or fix the case.`);
+    for (const [path, content] of Object.entries(build())) {
+      const out = join(dir, ...path.split("/"));
+      mkdirSync(dirname(out), { recursive: true });
+      writeFileSync(out, content);
+    }
     gitInit(dir);
     boxes[fixture] = dir;
   }
@@ -443,16 +495,26 @@ function gitInit(dir) {
 }
 
 /**
- * Minimum that makes a repo read as Java. Four skills say `Load in a Java repo`
- * and are entitled to see one; running them against an empty directory would
- * measure the fixture rather than the description.
+ * The fixture a case runs in, as a path-to-content map.
+ *
+ * A FIXTURE MUST CONTAIN WHAT ITS PROMPTS POINT AT. Until 2026-08-03 the java
+ * box was a pom and two files while prompts named a TaxService, a ReceiptService
+ * and a GET /customers, so the model looked, found nothing, asked for it and
+ * stopped — scored as "nothing fired" with no relevance judgment having
+ * happened. That was most of the miss list in both modes. When a case is added,
+ * either its referent goes in here or the prompt stops naming one.
+ *
+ * The code is deliberately ORDINARY, not exemplary: doubles for money, a plain
+ * string 400 body, a lookup per request. Writing it the way the skills prescribe
+ * would answer the prompt before the model read it. The opposite risk is real
+ * and unmeasured — a fixture exhibiting the exact defect a skill bans may cue
+ * that skill by itself — so a rate is a rate for THIS fixture, and changing
+ * these files starts a new baseline.
  */
-function writeJavaFixture(dir) {
-  const pkg = join(dir, "src", "main", "java", "com", "example", "order");
-  mkdirSync(pkg, { recursive: true });
-  writeFileSync(
-    join(dir, "pom.xml"),
-    `<project xmlns="http://maven.apache.org/POM/4.0.0">
+function javaFixture() {
+  const src = "src/main/java/com/example/order/";
+  return {
+    "pom.xml": `<project xmlns="http://maven.apache.org/POM/4.0.0">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.example</groupId>
   <artifactId>orders</artifactId>
@@ -463,30 +525,358 @@ function writeJavaFixture(dir) {
     <artifactId>spring-boot-starter-parent</artifactId>
     <version>3.3.0</version>
   </parent>
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+      <version>3.12.0</version>
+    </dependency>
+  </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.github.spotbugs</groupId>
+        <artifactId>spotbugs-maven-plugin</artifactId>
+        <version>4.8.3.1</version>
+      </plugin>
+    </plugins>
+  </build>
 </project>
 `,
-  );
-  writeFileSync(
-    join(pkg, "Order.java"),
-    `package com.example.order;
-
-public record Order(long id, String customerRef, double subtotal) {}
+    "src/main/resources/application.yml": `spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/orders
+  jpa:
+    hibernate:
+      ddl-auto: validate
 `,
-  );
-  writeFileSync(
-    join(pkg, "OrderService.java"),
-    `package com.example.order;
+    "src/main/resources/db/migration/V1__orders.sql": `create table customers (
+  id bigserial primary key,
+  name text not null,
+  country_code text not null
+);
+
+create table orders (
+  id bigserial primary key,
+  customer_id bigint not null references customers (id),
+  status text not null,
+  subtotal double precision not null
+);
+
+create table order_lines (
+  id bigserial primary key,
+  order_id bigint not null references orders (id),
+  product_id bigint not null,
+  quantity int not null,
+  unit_price double precision not null
+);
+`,
+    [src + "Order.java"]: `package com.example.order;
+
+import java.util.List;
+
+public record Order(long id, long customerId, String status, double subtotal, List<OrderLine> lines) {}
+`,
+    [src + "OrderLine.java"]: `package com.example.order;
+
+public record OrderLine(long id, long productId, int quantity, double unitPrice) {}
+`,
+    [src + "OrderRepository.java"]: `package com.example.order;
+
+import java.util.List;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface OrderRepository extends JpaRepository<Order, Long> {
+    List<Order> findByCustomerId(long customerId);
+}
+`,
+    [src + "OrderService.java"]: `package com.example.order;
 
 import org.springframework.stereotype.Service;
 
 @Service
 public class OrderService {
+    private final OrderRepository orders;
+
+    public OrderService(OrderRepository orders) {
+        this.orders = orders;
+    }
+
     public Order find(long id) {
-        throw new UnsupportedOperationException("stub");
+        return orders.findById(id).orElseThrow(() -> new IllegalArgumentException("no order " + id));
+    }
+
+    public void confirm(long id) {
+        Order order = find(id);
+        orders.save(new Order(order.id(), order.customerId(), "CONFIRMED", order.subtotal(), order.lines()));
     }
 }
 `,
-  );
+    [src + "OrderController.java"]: `package com.example.order;
+
+import java.util.ArrayList;
+import java.util.List;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class OrderController {
+    private final OrderService orders;
+    private final ProductClient products;
+
+    public OrderController(OrderService orders, ProductClient products) {
+        this.orders = orders;
+        this.products = products;
+    }
+
+    @GetMapping("/orders/{id}")
+    public Object get(@PathVariable long id) {
+        Order order = orders.find(id);
+        List<String> names = new ArrayList<>();
+        for (OrderLine line : order.lines()) {
+            names.add(products.name(line.productId()));
+        }
+        return new Object[] {order, names};
+    }
+
+    @GetMapping("/orders/{id}/total")
+    public ResponseEntity<Object> total(@PathVariable long id) {
+        try {
+            return ResponseEntity.ok(orders.find(id).subtotal());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("bad request: " + e.getMessage());
+        }
+    }
+}
+`,
+    [src + "ProductClient.java"]: `package com.example.order;
+
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+
+@Component
+public class ProductClient {
+    private final RestTemplate http = new RestTemplate();
+
+    public String name(long productId) {
+        return http.getForObject("http://catalog/products/" + productId + "/name", String.class);
+    }
+}
+`,
+    [src + "CustomerController.java"]: `package com.example.order;
+
+import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class CustomerController {
+    private final CustomerRepository customers;
+
+    public CustomerController(CustomerRepository customers) {
+        this.customers = customers;
+    }
+
+    @GetMapping("/customers")
+    public List<Customer> all() {
+        return customers.findAll();
+    }
+}
+`,
+    [src + "Customer.java"]: `package com.example.order;
+
+public record Customer(long id, String name, String countryCode) {}
+`,
+    [src + "CustomerRepository.java"]: `package com.example.order;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface CustomerRepository extends JpaRepository<Customer, Long> {}
+`,
+    [src + "TaxService.java"]: `package com.example.order;
+
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Service;
+
+@Service
+public class TaxService {
+    private final JdbcTemplate jdbc;
+
+    public TaxService(JdbcTemplate jdbc) {
+        this.jdbc = jdbc;
+    }
+
+    public double rateFor(String countryCode) {
+        return jdbc.queryForObject("select rate from tax_rates where country_code = ?", Double.class, countryCode);
+    }
+}
+`,
+    [src + "CountryLookupService.java"]: `package com.example.order;
+
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+@Service
+public class CountryLookupService {
+    private final RestTemplate http = new RestTemplate();
+
+    public String nameFor(String countryCode) {
+        return http.getForObject("http://reference/countries/" + countryCode, String.class);
+    }
+}
+`,
+    [src + "ReceiptService.java"]: `package com.example.order;
+
+import org.springframework.stereotype.Service;
+
+@Service
+public class ReceiptService {
+    private final OrderService orders;
+
+    public ReceiptService(OrderService orders) {
+        this.orders = orders;
+    }
+
+    public byte[] generate(long orderId) {
+        Order order = orders.find(orderId);
+        return ("receipt for order " + order.id()).getBytes();
+    }
+}
+`,
+    [src + "CheckoutService.java"]: `package com.example.order;
+
+import org.springframework.stereotype.Service;
+
+@Service
+public class CheckoutService {
+    private final OrderService orders;
+    private final PaymentClient payments;
+    private final ReceiptService receipts;
+
+    public CheckoutService(OrderService orders, PaymentClient payments, ReceiptService receipts) {
+        this.orders = orders;
+        this.payments = payments;
+        this.receipts = receipts;
+    }
+
+    public void checkout(long orderId) {
+        Order order = orders.find(orderId);
+        payments.charge(order.customerId(), order.subtotal());
+        orders.confirm(orderId);
+        receipts.generate(orderId);
+    }
+}
+`,
+    [src + "PaymentClient.java"]: `package com.example.order;
+
+import java.util.Map;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+
+@Component
+public class PaymentClient {
+    private final RestTemplate http = new RestTemplate();
+
+    public void charge(long customerId, double amount) {
+        http.postForObject("http://payments/charges", Map.of("customerId", customerId, "amount", amount), Void.class);
+    }
+}
+`,
+  };
+}
+
+/**
+ * A repo whose subject is SQL rather than application code, for the cases whose
+ * prompt points at a query or a schema. Postgres dialect, named in the file so
+ * the model does not have to ask which database it is.
+ */
+function sqlFixture() {
+  return {
+    "README.md": `# reporting
+
+Postgres 16. Migrations in migrations/, report queries in reports/.
+`,
+    "migrations/V1__schema.sql": `create table customers (
+  id bigserial primary key,
+  name text not null
+);
+
+create table orders (
+  id bigserial primary key,
+  customer_id bigint not null references customers (id),
+  placed_at timestamptz not null,
+  total double precision not null
+);
+`,
+    "reports/monthly_customer_totals.sql": `select c.name,
+       date_trunc('month', o.placed_at) as month,
+       (select sum(o2.total)
+          from orders o2
+         where o2.customer_id = c.id
+           and date_trunc('month', o2.placed_at) = date_trunc('month', o.placed_at)) as total
+  from orders o
+  join customers c on c.id = o.customer_id
+ group by c.name, date_trunc('month', o.placed_at), c.id
+ order by month;
+`,
+  };
+}
+
+/**
+ * A decision record old enough to be worth re-checking, for the case that asks
+ * whether one still holds. Dates are inside the document because the harness
+ * cannot pass a clock to the model.
+ */
+function docsFixture() {
+  return {
+    "docs/adr/0004-message-broker.md": `# ADR 0004: RabbitMQ for asynchronous work
+
+Status: accepted
+Date: 2024-03-11
+
+## Context
+
+We need to move receipt generation and partner exports off the request thread.
+Two of us have run RabbitMQ before. Kafka was considered and rejected: at our
+volume (about 40 messages a second at peak) the operational cost of a broker
+cluster is not worth it, and the managed Kafka offerings we priced were roughly
+four times the cost of a managed RabbitMQ instance.
+
+## Decision
+
+RabbitMQ, single node to start, with a mirrored queue added when we have a
+second availability zone.
+
+## Consequences
+
+- No replay of consumed messages. If a consumer loses a message it is gone.
+- Ordering is per-queue only.
+- We revisit this if sustained throughput passes 500 messages a second.
+`,
+    "src/exports/partner_export.py": `import pika
+
+
+def publish(payload):
+    connection = pika.BlockingConnection(pika.ConnectionParameters("rabbitmq"))
+    channel = connection.channel()
+    channel.basic_publish(exchange="", routing_key="partner-exports", body=payload)
+    connection.close()
+`,
+  };
 }
 
 /**

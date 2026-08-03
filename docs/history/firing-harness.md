@@ -1,5 +1,12 @@
 # The firing harness — the first check here that reaches a `description`
 
+> **2026-08-03: every first-move number below this line is void, and the
+> explore-mode numbers are damaged.** The sessions were not sealed. See
+> *[The environment was not the environment](#the-environment-was-not-the-environment-2026-08-03)*
+> at the foot of this file for what was actually running and what was fixed.
+> The findings sections are kept unedited because the reasoning in them is the
+> record of how the defect stayed hidden — read them as history, not as rates.
+
 Built 2026-08-02, in answer to the one thing `docs/history/context-budget.md` said
 it could not decide: **whether a shortened description still fires its skill.**
 
@@ -354,6 +361,155 @@ token scripts weigh a description without reading it and say so on every run;
 That is the good outcome of the shape recorded in `CLAUDE.md` — *the repo files are
 the easy half of the sweep; the published skills are the half that reaches a
 consumer* — and this time the consumer-facing half was already clean.
+
+## The environment was not the environment, 2026-08-03
+
+Every rate above was taken in a sandbox that did not have the properties the
+harness said it had. Found by reading one session's raw stream instead of its
+parsed result, after the explore-mode run made the first-move numbers look
+suspicious.
+
+**`--allowed-tools` is an auto-approve list, not a restriction.** The harness
+passed `--allowed-tools Skill` and the file's own comment read *every tool but
+Skill is denied*. It never was. Only `--disallowed-tools` removes a tool, and
+the deny list beside it was written by enumeration.
+
+What the enumeration missed, in the order it was found:
+
+- **`PowerShell`.** The list named `Bash`. On Windows the shell tool has a
+  different name, so first-move sessions on win32 had a working shell. The
+  probe's first act was `Get-ChildItem -Recurse`, which listed the whole
+  fixture including all twenty `SKILL.md` files.
+- **`ToolSearch`.** Unlisted, present, and the probe spent its second turn
+  asking it for the five tools that *were* denied. With `--max-turns 2` the
+  session then died — `error_max_turns`, no text, recorded as *nothing fired*
+  and indistinguishable in the report from a relevance judgment.
+- **Seventeen more**, read off the session's own `init` event once the harness
+  started checking it: `CronCreate`, `CronDelete`, `CronList`, `DesignSync`,
+  `EnterWorktree`, `ExitWorktree`, `PushNotification`, `RemoteTrigger`,
+  `ReportFindings`, `ScheduleWakeup`, `SendMessage`, `ShareOnboardingGuide`,
+  `TaskCreate`, `TaskGet`, `TaskList`, `TaskUpdate`, `Workflow`. None would
+  have been guessed and several postdate the harness.
+
+**The environment was inherited wholesale**: `{ ...process.env }`, which from
+inside a Claude Code session is 23 `CLAUDE_*`/`ANTHROPIC_*` variables including
+feature flags and a base URL. The same command produced a different environment
+depending on where it was typed, and no run recorded which.
+
+### What this does to the record
+
+- **The platform confound was never about the platform.** This file spent two
+  sections on *Opus 19/44 win32 against Sonnet 31/44 linux, same CLI, not
+  comparable*. The linux runs had `Bash` in the deny list and were near-sealed;
+  the win32 runs had an open shell. Two different experiments, and the model
+  and OS differences were reading a difference in tool availability.
+- **The Java-collapse explanation is wrong in its mechanism.** *Sessions dying
+  at a denied read* — the read was never denied. The model explored
+  successfully and ran out of turns. The conclusion it supported (first-move
+  mode does not measure delivery for execution-shaped prompts) survives; the
+  reason given for it does not.
+- **The one description defect this harness had isolated is unproven.** The
+  parent-without-sibling finding on `caching-java-2` and `async-handoff-java-1`
+  came from unsealed sessions. On the sealed harness `money-java-1` — 0/5
+  before — fired `money` and `money-java` together on its first session.
+
+### The second defect, found in the same pass: fixtures without referents
+
+Prompts named a `TaxService`, a `GET /customers`, a `ReceiptService`, an ADR and
+a report query. No fixture contained any of them. The transcripts are
+unanimous — *"There is no `TaxService` in this project"*, *"I can't find the
+ADR"*, *"the endpoint isn't in this repo"* — the model looked, asked for the
+missing thing and stopped. Scored as a miss with no relevance judgment having
+occurred. This is most of the miss list in both modes, and it is why the six
+cases called *dead in both* were not evidence of anything.
+
+### What was changed
+
+In `scripts/firing-harness.mjs`:
+
+- **`PERMITTED`, and two checks against it.** The preflight reads the session's
+  `init` tool list and refuses to run if it holds anything outside the mode's
+  set — before a single case is paid for. `parseSession` additionally fails any
+  session that *used* such a tool. The deny list is still enumeration and will
+  go stale again; the checks are what make that survivable.
+- **`DENIED` extended** with every name above.
+- **First-move turn cap 2 → 4.** Two left no room for a rejected call plus an
+  answer.
+- **`childEnv`**, an allowlist. Platform variables plus `ANTHROPIC_API_KEY`,
+  `ANTHROPIC_AUTH_TOKEN`, `ANTHROPIC_BASE_URL`, which must survive for machines
+  that authenticate by key or proxy. Every `CLAUDE_*` is dropped. Which auth
+  variables passed is printed and stamped.
+- **`FIXTURES`**, a name-to-files table replacing the single hardcoded Java
+  writer, with `java` enriched to hold what its prompts name, and two new
+  fixtures: `sql` (schema plus a slow report query) and `docs` (a 2024 ADR
+  choosing RabbitMQ). `money-storage-2`, `tech-decision-research-2` and
+  `llm-default-traps-2` moved onto fixtures that contain their subject;
+  `ai-maintainer-principles-1` reworded to state its context instead of
+  pointing at a service that was not there.
+- **`gitInit` on every fixture.** Transcripts kept stopping at *"it isn't a git
+  repository"*.
+- **The run's shape in the `--json`** — `permitted`, `denied`, `maxTurns`,
+  `repeats` — because two runs labelled `first-move` measured different things
+  and neither file recorded which.
+
+**The fixture code is deliberately ordinary** — doubles for money, a plain
+string 400 body, a lookup per request. Writing it the way the skills prescribe
+would answer the prompt before the model read it. The opposite risk is real and
+unmeasured: a fixture exhibiting the defect a skill bans may cue that skill by
+itself. A rate is a rate for this fixture, and editing these files starts a new
+baseline.
+
+### The first sealed baseline, 2026-08-03
+
+`claude-opus-5`, CLI 2.1.220, win32, first-move mode, 4 turns, `Skill` the only
+permitted tool, one repeat per case, **$19.14 over 45 sessions** — $0.47 each,
+not the $0.22 the pre-fix runs cost, because a session now has turns to use.
+Taken in two parts: 36 cases, then the 8 that died on `rate_limit` re-run at
+`--concurrency 2`.
+
+**43/44 fired as expected. 0 forbidden. 4/4 negatives clean.**
+
+The negatives are what make the rest readable: with `Skill` as the only tool
+available, the model still loaded nothing on a variable rename, a `git rebase`
+question, a Javadoc typo or a postcode regex. A run where everything fires and
+no negative ran would not have distinguished working descriptions from
+indiscriminate loading.
+
+What this reverses:
+
+- **The six cases "dead in both modes" all fired** — `caching-java-1`,
+  `caching-java-2`, `async-handoff-java-1`, `java-backend-rules-2`,
+  `java-backend-api-1`, `java-backend-observability-1`. The backlog row is
+  withdrawn.
+- **The parent-without-sibling defect did not appear once.** `caching-java-1`
+  pulled `caching` and `caching-java`; `async-handoff-java-1` pulled
+  `async-handoff`, `async-handoff-java` and `java-backend-rules`. The
+  "alongside" clause needs no work on this evidence.
+- The single miss is `enforceable-rules-1` — *write a CLAUDE.md for this repo* —
+  which loaded `ai-maintainer-principles` and the CLI's own built-in `init`
+  skill instead. One session, a plausible boundary, worth repeats before it is
+  called anything.
+
+**Three things this number is not.** It is one repeat per case, so it ranks
+rather than proves. It is a first-move rate in a session whose only tool is
+`Skill`, which is an upper bound on delivery, not delivery — the mirror of the
+defect that produced the void numbers, and the reason explore mode still owes
+its own sealed run. And it belongs to these fixtures: they now contain the
+defects the skills ban, which may cue firing by itself and is unmeasured.
+
+### The shape worth remembering
+
+**A configuration flag was believed rather than checked, for the whole life of
+the harness.** Every guard this file already carried — the preflight, the probe
+word, the stamping — guards against a session that fails or answers the wrong
+prompt. None of them asked whether the session was the session. The check that
+found it costs one `init` event that every run already receives and throws away.
+
+It is also the second time this harness produced a plausible report from a
+broken run: the void Windows run of 2026-08-03 morning read as a firing result,
+and these numbers read as a firing result for two days. **A firing report is
+plausible by construction — some cases pass, some miss — so plausibility is not
+evidence that the run happened.**
 
 ## What this file does not decide
 

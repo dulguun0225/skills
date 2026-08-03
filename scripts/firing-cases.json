@@ -13,7 +13,15 @@
     "`money-java` and `money-storage` together is the set working, not noise.",
     "`forbid` is scored: those must not fire. `fixture` picks the sandbox the",
     "session runs in, because a skill that says `Load in a Java repo` is entitled",
-    "to see one."
+    "to see one.",
+    "",
+    "SECOND RULE, added 2026-08-03: a prompt may only point at something its",
+    "fixture contains. Prompts here named a TaxService, a GET /customers, an ADR",
+    "and a report query that no fixture held; the model looked, found nothing,",
+    "asked for it and stopped, and every one of those sessions was scored as a",
+    "miss although no relevance judgment ever happened. That was most of the miss",
+    "list in both modes. Either add the referent to FIXTURES in the harness, or",
+    "write the context into the prompt the way an engineer would state it."
   ],
   "cases": [
     {
@@ -49,7 +57,7 @@
     {
       "id": "money-storage-2",
       "skill": "money-storage",
-      "fixture": "bare",
+      "fixture": "sql",
       "prompt": "This report query sums the order totals per customer per month and it's slow. Rewrite it."
     },
     {
@@ -217,14 +225,14 @@
     {
       "id": "llm-default-traps-2",
       "skill": "llm-default-traps",
-      "fixture": "bare",
+      "fixture": "java",
       "prompt": "Write the Dockerfile for this service. Pick a sensible base image."
     },
     {
       "id": "ai-maintainer-principles-1",
       "skill": "ai-maintainer-principles",
       "fixture": "bare",
-      "prompt": "This service is getting big. Should I split it into two, and where's the seam?"
+      "prompt": "Our orders service has grown to about 40k lines — billing, notifications and reporting all live in it. Should I split it into two, and where's the seam?"
     },
     {
       "id": "ai-maintainer-principles-2",
@@ -253,7 +261,7 @@
     {
       "id": "tech-decision-research-2",
       "skill": "tech-decision-research",
-      "fixture": "bare",
+      "fixture": "docs",
       "prompt": "This ADR is from two years ago and nobody's checked it since. Is it still right?"
     },
     {

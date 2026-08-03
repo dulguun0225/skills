@@ -131,6 +131,15 @@ once. Every run stamps its model and CLI version on the report and in `--json`, 
 under an isolated `CLAUDE_CONFIG_DIR` so that globally installed skills cannot
 compete, and a machine that authenticates through an OS keychain rather than
 `~/.claude/.credentials.json` may need `ANTHROPIC_API_KEY` exported for the run.
+
+**Every rate this harness produced before 2026-08-03 evening is void**, because
+the sandbox was not sealed: `--allowed-tools` auto-approves rather than
+restricts, and the deny list beside it missed the Windows shell and eighteen
+other tools, so sessions explored freely and then died at the turn cap. The run
+now refuses to start when the session holds a tool its mode does not permit,
+and the environment passed to a session is an allowlist rather than whatever
+the operator's shell happened to hold. Full account in
+[docs/history/firing-harness.md](docs/history/firing-harness.md).
 The preflight session says so before spending anything.
 
 ## Installing from this repo

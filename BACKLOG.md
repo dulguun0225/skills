@@ -81,22 +81,25 @@ one body.
 
 ## Firing owed
 
-**Two baselines exist now, and neither is comparable to the other.** Sonnet
-2026-08-02: 31/44, linux, $5.86. Opus 2026-08-03: 19/44 on the pre-edit
-descriptions and 23/44 on the `ALWAYS load` ones, win32, same CLI 2.1.220,
-$18.98 — taken as one `--against` run, so the pre-edit arm is the Opus
-re-baseline this table used to owe. Four negative cases clean on every run so
-far. Method, both baselines, the void Windows run that preceded the real one,
-and the confounds that make any single miss weak evidence are in
-[docs/history/firing-harness.md](docs/history/firing-harness.md).
+**No baseline exists. Every rate taken before 2026-08-03 evening is void.** The
+sandbox was not sealed: `--allowed-tools` auto-approves rather than restricts,
+and the deny list beside it missed the Windows shell, `ToolSearch` and
+seventeen further tools. First-move sessions could shell out; explore sessions
+inherited the operator's whole environment; and several prompts named code no
+fixture contained, so the model asked for it and stopped — scored as a miss
+with no relevance judgment having happened. The mechanism, the fixes, and what
+each void number was actually measuring are in
+[docs/history/firing-harness.md](docs/history/firing-harness.md). The harness
+now refuses to run when the session holds a tool the mode does not permit, so
+this class fails loudly instead of reporting a rate.
 
 | Owed | Why it is owed | Watch |
 | ---- | -------------- | ----- |
-| **Fix the `-java` "alongside" clause — the one description defect both modes agree on** | In explore mode (built 2026-08-03, `--explore`) `caching-java-2` loaded `caching` and `async-handoff-java-1` loaded `async-handoff`, explored, and wrote code without ever opening the `-java` sibling carrying the build gates. The generic rules arrived; the tool mapping did not. First-move mode saw the same shape nine times | Description work on the `-java` skills' trigger wording, A/B-able with `--against` in explore mode. The parents fired — the boundary, not the topic, is what misses |
-| **The six cases dead in both modes** | `caching-java-1`, `caching-java-2`, `async-handoff-java-1`, `java-backend-rules-2`, `java-backend-api-1`, `java-backend-observability-1`: 0/2 explore, 0–1/5 first-move. Exploration does not rescue them, so they are either description work or bad cases | Two explore repeats is thin — rank, do not sentence. More explore repeats ≈ $0.63 a session; read the transcripts already captured in the JSON first, they are free |
-| **The seven bare misses, re-measured in explore mode** | They held at 3/35 in first-move mode, but 22 of 32 fired-nothing sessions open with explore intent — the artifact follows any prompt referencing artifacts the model wants to look at, and a bare fixture merely fails to contain them. Not description work until explore mode says so | ~$9 for 7 cases × 2 at $0.63. Same rule as the java cases: only what stays dead under exploration is description work |
-| **Settle the `ALWAYS load` edit with repeats** | 19/44 → 23/44 with eight cases changed, six up and two down, is one repeat per case: consistent with an improvement, not evidence of one — and the whole gain sits in the bare fixture (12/24 → 17/24), where the measurement is not distorted by the explore artifact. The negatives' half is settled: 4/4 clean on both arms | The eight changed cases first: 8 cases × 2 arms × 5 repeats ≈ $18. The edit is additive and 20 frontmatter tokens; it stays unless repeats show the two down-flips are real |
-| **The Opus/Sonnet gap, residual** | Most of 19/44-against-31/44 dissolved into the explore-first behavior on the java cases. The residual question is the bare fixture — Opus 12/24 pre-edit against Sonnet's bare rate — still confounded by win32-against-linux | One model's bare-fixture run repeated on the other's platform. Smaller question than it was on 2026-08-03 morning |
+| **The sealed explore-mode run** | First-move is done — 43/44, 4/4 negatives clean, 2026-08-03, `claude-opus-5`, CLI 2.1.220, win32, $19.14 ([firing-harness.md](docs/history/firing-harness.md)) — but it is an upper bound: `Skill` was the only tool a session had. Explore mode is the one whose number means delivery, and it has never run against sealed sessions or the fixtures that contain their referents | 44 cases ≈ $28 at one repeat. Watch the `late` verdict, which first-move cannot produce at all |
+| **Repeats on the one miss** | `enforceable-rules-1` — *write a CLAUDE.md for this repo* — loaded `ai-maintainer-principles` and the CLI's built-in `init` skill instead. One session; the boundary is plausible enough to be real and thin enough to be noise | 5 repeats ≈ $2.50. It is the only description-shaped question the sealed baseline raised |
+| **Settle the `ALWAYS load` edit** | 19/44 → 23/44 was one repeat per case on the unsealed harness, so it is not evidence in either direction. The edit is additive and 20 frontmatter tokens; it stays until a sealed A/B says otherwise | `--against` with repeats on the sealed harness. Cheapest honest version is the bare-fixture cases, which the fixture work changed least |
+| **The Opus/Sonnet gap is dissolved, not open** | 19/44 against 31/44 was read as a model or platform difference for two days. The linux run had `Bash` denied and was near-sealed; the win32 run had a working shell. Two experiments, not two rates | Nothing owed unless a sealed Sonnet run is wanted for its own sake |
+| **Fixture bias, unmeasured** | The fixtures now contain the referents their prompts name, written as ordinary naive code — doubles for money, a plain string 400 body, a lookup per request. A fixture exhibiting the defect a skill bans may cue that skill by itself, which would inflate a rate rather than deflate it | No cheap check known. At minimum, treat a rate as belonging to this fixture, and start a new baseline whenever the fixture files change |
 | **A second corpus author** | Every prompt in `firing-cases.json` was written by the same pass that read the descriptions, which is the harness's own version of the panel-of-one problem `guardrails-toolchain` owes a fix for. A prompt written by someone who has not read a description is worth several written by someone who has — and the repeats run adds a shape rule: for repo fixtures, question-shaped and execution-shaped prompts measure different things (5/5 against 0/5 on the same skills) | Cheap. Anyone can add cases; the corpus rule is stated at the top of the file |
 
 ## Researched, unwritten

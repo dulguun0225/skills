@@ -297,8 +297,17 @@ directives they sit beside, not a purge.
 
 ## What this review does not decide
 
-- **The set's real firing rate.** Every rate cited is Sonnet-by-accident; the Opus
-  baseline is still the first row of `BACKLOG.md`'s firing table.
+- **The set's real firing rate.** Every rate cited in this document is void —
+  found 2026-08-03 evening, after this review was written: the harness sandbox
+  was not sealed, so 31/44, 19/44, 23/44 and the 5–6/16
+  `ai-maintainer-principles` figure all measure sessions that could shell out
+  and then ran out of turns. See
+  [firing-harness.md](firing-harness.md). **The argument of Question 1 does not
+  depend on the rates** — its load-bearing claim is that a knowledge base's
+  delivery rate for a question the agent never asks is zero by construction,
+  whatever the skills' rate turns out to be. What the void numbers do remove is
+  the honest-bill figure in cost 1: the delivery layer's unreliability is still
+  real and still runtime-silent, but its size is unmeasured.
 - **Whether any shrink, merge or demotion executes.** Every action above is a
   recommendation; no skill, description or file was changed by this review.
 - **The truth of the external figures.** The 650-trial activation study, the
