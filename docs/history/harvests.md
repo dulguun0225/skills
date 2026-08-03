@@ -9,6 +9,19 @@ means re-verifying its claims from primary sources, splitting portable rules fro
 project-shaped facts, recording the premise each rule holds under, and writing
 the skill. Order of magnitude: a day, not a research project.
 
+**Every cost on this page is authoring labor, and since 2026-08-03 that is no
+longer the whole bill.** A harvest also spends context: its `description` is
+injected into every session of every consumer whether the skill fires or not.
+The rule added to `CLAUDE.md` that day requires a harvest record to state that
+number and the new skill's measured firing rate before the harvest is called
+done. **Every harvest recorded here predates that rule and states neither
+number** — `guardrails-toolchain`, `ai-maintainer-principles`, `primary-keys`,
+`business-numbering`. Both are recoverable after the fact, the frontmatter cost
+from `npm run tokens:frontmatter` and the firing rate from
+[firing-harness.md](firing-harness.md); neither was weighed when the decision to
+publish was made, and each of these four holds a description slot larger than
+the best-researched skill in the set.
+
 **Located 2026-08-01, while recovering the `backend-stack` candidate list: every
 row below has a decision record in the same external repository**, as did both
 rows harvested out of this table since. A frontend

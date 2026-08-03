@@ -296,7 +296,10 @@ directives they sit beside, not a purge.
   present measure the tier both of this review's questions price. Found
   2026-08-03; deliberately left unfixed, because the owner scoped this pass to
   answering the questions. The description figures above came from a scratch
-  counter against the same `gpt-tokenizer` dependency.
+  counter against the same `gpt-tokenizer` dependency. **Fixed later the same
+  day in `aadd050`, alongside the Windows firing-harness repairs; the script
+  runs; its total on 2026-08-03 was 4,403 tokens across twenty skills, and
+  4,406 after that day's `llm-default-traps` description edit.**
 
 ## What this review does not decide
 
@@ -310,7 +313,13 @@ directives they sit beside, not a purge.
   delivery rate for a question the agent never asks is zero by construction,
   whatever the skills' rate turns out to be. What the void numbers do remove is
   the honest-bill figure in cost 1: the delivery layer's unreliability is still
-  real and still runtime-silent, but its size is unmeasured.
+  real and still runtime-silent, but its size is unmeasured. **Measured later
+  the same day, after this review: 43/44 sealed first-move and 43/44 sealed
+  explore with 0 late. Cost 1 stands as a shape — a silent, stochastic
+  mechanism — and falls as a quantity; the delivery layer is not where this set
+  is weak.** The two mitigations this review recommended are unaffected by that:
+  the description edit was applied, and the consumer pointer block was withdrawn
+  by the owner and never measured.
 - **Whether any shrink, merge or demotion executes.** Every action above is a
   recommendation; no skill, description or file was changed by this review.
 - **The truth of the external figures.** The 650-trial activation study, the

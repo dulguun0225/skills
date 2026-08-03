@@ -131,6 +131,7 @@ const FIXTURES = {
   java: javaFixture,
   sql: sqlFixture,
   docs: docsFixture,
+  ci: ciFixture,
 };
 
 const cases = corpus.cases.filter((c) => {
@@ -795,6 +796,62 @@ public class PaymentClient {
         http.postForObject("http://payments/charges", Map.of("customerId", customerId, "amount", amount), Void.class);
     }
 }
+`,
+  };
+}
+
+/**
+ * A repo whose subject is the build pipeline: a Dockerfile and a workflow, both
+ * referencing moving tags. Added 2026-08-03 because `llm-default-traps-2` was
+ * rewritten onto the subject that skill actually governs — a reference that
+ * resolves to different bytes tomorrow — and the `java` fixture holds neither
+ * file, so the session went looking, found nothing and stopped. A separate
+ * fixture rather than files added to `java`: editing `java` would restart the
+ * baseline for all sixteen java cases, and this one restarts nothing.
+ *
+ * The tags are the ordinary thing an engineer would have written. As with
+ * every fixture here, writing it the way the skills prescribe would answer the
+ * prompt before the model read it.
+ */
+function ciFixture() {
+  return {
+    Dockerfile: `FROM eclipse-temurin:21-jre
+
+WORKDIR /app
+COPY target/orders.jar /app/orders.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "/app/orders.jar"]
+`,
+    ".github/workflows/build.yml": `name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: mvn -B verify
+      - uses: docker/build-push-action@v5
+        with:
+          push: false
+`,
+    "pom.xml": `<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>orders</artifactId>
+  <version>0.1.0</version>
+  <properties>
+    <maven.compiler.release>21</maven.compiler.release>
+  </properties>
+</project>
 `,
   };
 }

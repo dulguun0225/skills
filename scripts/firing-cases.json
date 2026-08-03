@@ -225,8 +225,8 @@
     {
       "id": "llm-default-traps-2",
       "skill": "llm-default-traps",
-      "fixture": "java",
-      "prompt": "Write the Dockerfile for this service. Pick a sensible base image."
+      "fixture": "ci",
+      "prompt": "The build broke last week because something we depend on changed under us without us touching anything. Go through the Dockerfile and the workflow and make our builds reproducible."
     },
     {
       "id": "ai-maintainer-principles-1",

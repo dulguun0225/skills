@@ -13,6 +13,21 @@ rules there, and the per-skill account of each authoring pass, its sweeps and it
 reviews under [docs/history/](docs/history/). Read both before authoring anything
 here.
 
+## Why this exists
+
+An LLM writes code by training-data default, and the default is whatever was most
+common in the corpus — not what is best where no human writes or reviews the code
+line by line. Overriding a default takes research: frame the question, rank the
+candidates, verify the facts, date them. That research does not change from project
+to project, so redoing it in each one is waste.
+
+This repo does the research once and turns the result into knowledge an agent
+loads at the moment it is about to write — technology choices, principles, methods,
+guardrails, each with its check, its confidence marker and its date. Skills are the
+form because they are shareable and installable: one command puts the same rules in
+any repo, and the agent picks up the ones relevant to what it is doing. That is the
+whole purpose; everything else here is in service of it.
+
 ## What is published
 
 | Skill | For an agent about to… |
@@ -150,7 +165,12 @@ npx skills add dulguun0225/skills -a claude-code -y
 
 Installing places the skills; it does not make them fire. A skill fires when
 the agent judges its `description` relevant at session start, and a miss is
-silent — the measured rates and their caveats are in
+silent. **Measured on sealed sessions, 2026-08-03, `claude-opus-5` under CLI
+2.1.220 on win32, one repeat per case: 43 of 44 prompts loaded the skill they
+should have, none of the four negative prompts loaded anything, and in the run
+that allowed the read and edit tools, no skill arrived after the code it
+governs.** Both runs, and everything they do not decide — one repeat ranks
+rather than proves, and the rate belongs to that fixture set — are in
 [docs/history/firing-harness.md](docs/history/firing-harness.md). The
 descriptions are directive-worded ("ALWAYS load before …") since 2026-08-03,
 which one external study (web-sourced 2026-08-03, unverified here) associates

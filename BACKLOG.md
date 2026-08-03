@@ -4,7 +4,11 @@ Owed work, in two kinds. **The topic rows are topics, not verdicts: none has had
 research pass in this repository**, and none is a commitment to build. A topic
 becomes a skill only at the bar `tech-decision-research` and `enforceable-rules`
 state: a framed decision, an adversarial panel, refutation votes against primary
-sources, dated evidence, and a named check per directive. **The evidence rows are the
+sources, dated evidence, and a named check per directive. **Since 2026-08-03 it
+also has to be worth loading, not only worth writing**: a harvest is not done
+until its `docs/history/` record states the frontmatter tokens the new skill adds
+to every session and the firing rate it measured, with its model and CLI stamp.
+The rule is in [CLAUDE.md](CLAUDE.md), *Authoring invariants*. **The evidence rows are the
 opposite** — skills already published, carrying what each still owes to raise a
 marker. **Those rows sit at the foot of this page and are deferred as of
 2026-08-03**: still owed, still unanswered, not scheduled.
@@ -21,8 +25,13 @@ thing.**
 
 ## Firing owed
 
-**One sealed baseline exists, taken 2026-08-03: 43/44 fired, 4/4 negatives
-clean, first-move, one repeat, `claude-opus-5`, CLI 2.1.220, win32, $19.14.**
+**Two sealed baselines exist, both taken 2026-08-03, both `claude-opus-5`, CLI
+2.1.220, win32, one repeat per case: first-move 43/44 ($19.14 over 45 sessions),
+and explore 43/44 with 0 late ($31.92 over 44). Negatives clean in both.**
+**The explore run is the delivery measurement** — it allows the read and edit
+tools and scores whether the skill arrived before the code — and zero late means
+that when a skill loads, it loads in time. Both are in
+[docs/history/firing-harness.md](docs/history/firing-harness.md).
 **Every rate taken before that evening is void**, including the ones this page
 used to carry. The
 sandbox was not sealed: `--allowed-tools` auto-approves rather than restricts,
@@ -38,8 +47,8 @@ this class fails loudly instead of reporting a rate.
 
 | Owed | Why it is owed | Watch |
 | ---- | -------------- | ----- |
-| **The sealed explore-mode run** | First-move is done — 43/44, 4/4 negatives clean, 2026-08-03, `claude-opus-5`, CLI 2.1.220, win32, $19.14 ([firing-harness.md](docs/history/firing-harness.md)) — but it is an upper bound: `Skill` was the only tool a session had. Explore mode is the one whose number means delivery, and it has never run against sealed sessions or the fixtures that contain their referents | 44 cases ≈ $28 at one repeat. Watch the `late` verdict, which first-move cannot produce at all |
-| **Repeats on the one miss** | `enforceable-rules-1` — *write a CLAUDE.md for this repo* — loaded `ai-maintainer-principles` and the CLI's built-in `init` skill instead. One session; the boundary is plausible enough to be real and thin enough to be noise | 5 repeats ≈ $2.50. It is the only description-shaped question the sealed baseline raised |
+| **A second repeat of either sealed baseline** | Both stand at one repeat per case, which ranks rather than proves. Their two disagreements are closed: `enforceable-rules-1` went 4/5 first-move, losing once to the CLI's built-in `init`, and `llm-default-traps-2` was a corpus defect — rewritten onto the subject the skill governs, in a new `ci` fixture, it fires 5/5 | ≈ $19 first-move, ≈ $32 explore. Nothing else on this page waits on it |
+| **A corpus audit against the two rules the corpus states** | One case tested a subject no skill owns, in a fixture holding none of what it named — and it read as a description miss for a day. Both rules were already written at the top of `firing-cases.json`; nothing checks any case against them | 44 cases, reading not spending. Cheapest guard: for each case, name the directive it expects to be loaded for, and the fixture file its prompt points at |
 | **The Opus/Sonnet gap is dissolved, not open** | 19/44 against 31/44 was read as a model or platform difference for two days. The linux run had `Bash` denied and was near-sealed; the win32 run had a working shell. Two experiments, not two rates | Nothing owed unless a sealed Sonnet run is wanted for its own sake |
 | **Fixture bias, unmeasured** | The fixtures now contain the referents their prompts name, written as ordinary naive code — doubles for money, a plain string 400 body, a lookup per request. A fixture exhibiting the defect a skill bans may cue that skill by itself, which would inflate a rate rather than deflate it | No cheap check known. At minimum, treat a rate as belonging to this fixture, and start a new baseline whenever the fixture files change |
 | **A second corpus author** | Every prompt in `firing-cases.json` was written by the same pass that read the descriptions, which is the harness's own version of the panel-of-one problem `guardrails-toolchain` owes a fix for. A prompt written by someone who has not read a description is worth several written by someone who has — and the repeats run adds a shape rule: for repo fixtures, question-shaped and execution-shaped prompts measure different things (5/5 against 0/5 on the same skills) | Cheap. Anyone can add cases; the corpus rule is stated at the top of the file |

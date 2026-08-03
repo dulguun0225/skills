@@ -6,6 +6,11 @@
 > at the foot of this file for what was actually running and what was fixed.
 > The findings sections are kept unedited because the reasoning in them is the
 > record of how the defect stayed hidden — read them as history, not as rates.
+>
+> **The two rates that stand are both at the foot of this file** — *The first
+> sealed baseline* (first-move, 43/44) and *The sealed explore run* (43/44,
+> 0 late), both `claude-opus-5` / CLI 2.1.220 / win32 / 2026-08-03. Read those
+> two sections and treat everything between here and them as method.
 
 Built 2026-08-02, in answer to the one thing `docs/history/context-budget.md` said
 it could not decide: **whether a shortened description still fires its skill.**
@@ -497,6 +502,143 @@ defect that produced the void numbers, and the reason explore mode still owes
 its own sealed run. And it belongs to these fixtures: they now contain the
 defects the skills ban, which may cue firing by itself and is unmeasured.
 
+### The sealed explore run, 2026-08-03 — the delivery number
+
+`claude-opus-5`, CLI 2.1.220, win32, **explore mode**, 8 turns, Skill plus Read,
+Glob, Grep, Write and Edit, one repeat per case, `--concurrency 2`, **$31.92
+over 44 sessions** — $0.73 each. No `rate_limit` casualties at that concurrency
+and no timeouts; 0 errors.
+
+**43/44 fired as expected. 0 late. 0 forbidden. 4/4 negatives clean.**
+
+This is the number the first-move baseline could not produce. First-move scores
+whether a skill is the model's opening move with no other tool available, which
+is an upper bound on delivery; explore mode lets the model do what it actually
+does — read the repo first — and scores **late**, the skill loading only after
+the first Write or Edit, because rules that arrive after the code did not govern
+it.
+
+**Zero late over 44 sealed sessions is the finding.** It reproduces the one
+result the damaged explore run got right, now on sessions that were the sessions
+they claimed to be: when Opus loads one of these skills at all, it loads it
+before writing code. The delivery question therefore collapses to *does it
+load*, and on this corpus, at this stamp, it loads 43 times in 44.
+
+What it reverses, and what it costs to say so:
+
+- **The parent-without-sibling defect did not appear.** It was called "the first
+  description-shaped defect this harness has isolated cleanly" on the damaged
+  run, where `caching-java-2` loaded `caching` alone and `async-handoff-java-1`
+  loaded `async-handoff` plus `java-backend-rules`, then wrote code without the
+  `-java` sibling that carries the build gates. Sealed, all six `-java` cases
+  pulled parent and sibling together — `money-java-1` reached four money skills,
+  `caching-java-1` both caching skills, `async-handoff-java-2` both handoff
+  skills. **The "alongside" clause needs no work on this evidence, and the
+  defect it was supposed to answer was an artifact of unsealed sessions.**
+- **The six cases "dead in both modes" all fired**, as they had in the sealed
+  first-move run. That backlog row stays withdrawn on a second, independent
+  measurement.
+- **`enforceable-rules-1` fired here** — *write a CLAUDE.md for this repo*,
+  loading `enforceable-rules` and `ai-maintainer-principles`. It is the single
+  first-move miss, so the two sealed runs disagree about exactly one case in
+  each direction.
+- **The single explore miss is `llm-default-traps-2`** — *write the Dockerfile,
+  pick a sensible base image* — which fired in first-move. One session either
+  way; both went to repeats before anything was called a defect.
+
+**Three things this number is not.** One repeat per case, so it ranks rather
+than proves. It belongs to these fixtures, which now contain the defects the
+skills ban and may cue firing by themselves — unmeasured, and the reason a
+fixture edit starts a new baseline. And an 8-turn sandbox with no `CLAUDE.md`
+and no user is not a working session; what it removes is the specific artifact
+that made the old numbers meaningless, not the distance to production.
+
+**One case in this 44 no longer exists as measured.** `llm-default-traps-2` was
+rewritten later the same day, off *pick a sensible base image* and onto build
+reproducibility over a Dockerfile and a workflow, running in a new `ci` fixture
+— see *Repeats on the two sealed misses* below. The other 43 cases and both
+other fixtures are untouched, so this rate stands for them; a re-run of the full
+corpus is a 43-case comparison plus one new case, not a like-for-like 44.
+
+### Repeats on the two sealed misses, 2026-08-03
+
+Both misses went to five repeats the same day, each in the mode that produced
+it. `claude-opus-5`, CLI 2.1.220, win32.
+
+- **`enforceable-rules-1`, first-move, 4/5, $2.30.** *Write a CLAUDE.md for this
+  repo.* The one miss loaded the CLI's own built-in `init` skill, which is a
+  defensible answer to that prompt rather than a relevance failure. With the
+  baseline miss and the explore hit, 5/7 across every sealed session it has had.
+  **No description work owed**; the competitor is a built-in with a strong claim
+  to the same prompt.
+- **`llm-default-traps-2`, explore, 3/5, $2.52** — 3/6 with the baseline miss.
+  Not noise, and the cause is in the description rather than in the model.
+
+**The Dockerfile case had a cause, and it is a shape worth naming.** The
+description's trigger clause read *…before choosing a container base image…*
+while **none of the skill's nine directives is about choosing one**. Its only
+image material is two layer-check notes recording that the lockfile gate does
+not see a base image's packages and the pin lint does not read a `FROM` line.
+So on half the sessions the model read the description against a Dockerfile
+prompt and correctly found nothing on offer.
+
+**The same shape is legitimate one skill over, which is what makes it a
+distinction rather than a rule.** `caching` triggers on *putting a cache behind
+a proxy or a content-delivery network* and its body states outright that no
+directive reaches a response cache in a proxy or CDN, naming the lint that
+would — decided 2026-08-02, so that the gap is read rather than left silent.
+The discriminator:
+
+- **Legitimate** — the body names the subject and states what it does not carry.
+- **Defect** — the description advertises the subject as a choice the skill
+  guides, and the body never addresses it.
+
+**The edit, owner-chosen: narrow the trigger to what the skill governs.** The
+clause now reads *…pinning a tool, a CI action or a container image
+reference…*. Word-diff against `HEAD`, run rather than asserted: `choosing` and
+`base` are the only words lost, `container` and `image` survive, `a CI action
+or` and `reference` are added. The skill owns *an image referenced by tag rather
+than digest*; it does not own *which base image to pick*, and the description
+now says only the first.
+
+**The corpus case was rewritten with it**, because a prompt asking which base
+image to pick tests a subject nothing in this set owns. It now asks for
+reproducible builds over a Dockerfile and a workflow that reference moving tags
+— squarely inside the SHA-pinning directive.
+
+**The first A/B of that edit was invalid, and the reason is this file's own
+second corpus rule.** The rewritten prompt named a Dockerfile and a workflow;
+the `java` fixture it ran in holds neither, so sessions went looking, found
+nothing and stopped — the exact failure the rule was added to prevent, in a pass
+that had read the rule an hour earlier. The numbers it produced (worktree 1/5,
+`HEAD` 2/5) measure fixture absence and are void.
+
+**A `ci` fixture exists now** — a Dockerfile on `FROM eclipse-temurin:21-jre`
+and a workflow on `actions/checkout@v4`, `setup-java@v4`,
+`docker/build-push-action@v5` — as a new fixture rather than files added to
+`java`, because editing `java` restarts the baseline for all sixteen java cases
+and a new fixture restarts nothing.
+
+**The valid A/B, `ci` fixture, five repeats an arm, $10.44: 5/5 narrowed, 5/5
+`HEAD`, 0 late either way, 0 cases changed.** Three things follow, and only the
+first is about the edit:
+
+- **The narrowing is free.** It is kept on the honesty argument — the
+  description no longer advertises guidance the body does not carry — with a
+  measurement saying it costs no firing, not one saying it gained any.
+- **The miss was the case, not the skill.** *Pick a sensible base image* asked
+  for a subject nothing in this set owns, in a fixture holding no Dockerfile.
+  Put on a subject the skill governs, in a fixture that holds it, the same
+  description fires 5/5. **So the sealed explore baseline's single miss is
+  attributed to the corpus.** That does not retroactively make the run 44/44 —
+  a rate is what was measured — but no description defect is open against this
+  set.
+- **A miss has at least three causes and this harness cannot tell them apart.**
+  The description not earning the load, the prompt naming what the fixture
+  lacks, and the prompt asking for something the skill was never about, all
+  print as `MISS`. Two of the three are corpus defects, and both were live in
+  this one case at once.
+
 ### The shape worth remembering
 
 **A configuration flag was believed rather than checked, for the whole life of
@@ -513,13 +655,15 @@ evidence that the run happened.**
 
 ## What this file does not decide
 
-- **Whether the 70% baseline is good.** There is nothing to compare it against —
-  no prior measurement of this set, and no published rate for any other. It is a
-  first reading, and its value is as a baseline for the next one.
+- **Whether 43/44 is good.** There is nothing to compare it against — no prior
+  sealed measurement of this set, and no published rate for any other. Both
+  sealed runs landed there, first-move and explore, which makes it a baseline
+  rather than a reading; the two disagree on exactly one case each way.
 - **Whether the three remaining long descriptions should be trimmed.** The A/B
   says one trim was free on two skills; it says nothing about
-  `primary-keys` 358, `business-numbering` 306 or `guardrails-toolchain` 300, and
-  all three fired 2/2 in the baseline as they stand.
+  `primary-keys`, `business-numbering` or `guardrails-toolchain`, which hold the
+  three largest description slots and fired in both sealed runs as they stand.
+  A trim is an unforced edit to the only text that makes a skill fire.
 - **What the model does.** A miss is a model's relevance judgement, not a parse
   failure, and this harness observes the outcome without any access to the reason.
 - **Whether Opus actually fires less than Sonnet on this set.** The 2026-08-03
