@@ -83,6 +83,8 @@ Rules every skill here is held to. They came from the deleted corpus; **publishe
 
 **Markers, per claim and per rule.** Confidence: *confirmed* (survived three independent refutation votes against primary sources) / *primary-source verified* (one researcher, no panel) / *convention* / *uncertain*. Enforcement: *off-the-shelf* / *bespoke* / *convention*. Status tier: *production-confirmed* / *decided, not yet validated* (= researched and decided, **no production use yet**) / *deferred — evidence-driven*. **Lapse rule**: past `review-by`, every *confirmed* marker reads as *convention* until a new pass re-dates it — no maintainer action needed.
 
+**Owner decision, 2026-08-03 — the delivery problem is solved in two places only: frontmatter, or hooks.** No solution that asks a consumer to copy or paste anything into their `CLAUDE.md`. A generated always-loaded rules digest ("seed text", after `../packs/seed/`) was proposed and rejected the same day under this rule. Firing-rate work is description wording measured by `npm run firing`, or deterministic hook mechanisms — nothing else.
+
 **Shared premise** every skill states: code written by LLM agents, and no human reads it line by line. Rules are conditioned on it; verdicts are portable exactly as far as their premises.
 
 **Two invariants narrowed by the method-skill conversion:**
@@ -131,7 +133,7 @@ Per-skill records: what each authoring pass decided, its sweeps, its adversarial
 - [evidence-owed-longform](docs/history/evidence-owed-longform.md) — the prose the backlog's owed-evidence table was compressed from
 - [context-budget](docs/history/context-budget.md) — measured per-firing and per-session cost, and the five reductions owed against it. Nothing done; the rows are in `BACKLOG.md`
 - [whole-project-review](docs/history/whole-project-review.md) — 2026-07-31, first review whose unit was the repo
-- [premise-review](docs/history/premise-review.md) — 2026-08-03, the owner's two questions: skills versus a knowledge-base tool, and per-skill necessity; verdicts, the inverted cost/evidence finding, and the two firing mitigations — applied and first-measured the same day, results in [firing-harness](docs/history/firing-harness.md)
+- [premise-review](docs/history/premise-review.md) — 2026-08-03, the owner's two questions: skills versus a knowledge-base tool, and per-skill necessity; verdicts, the inverted cost/evidence finding, and the two firing mitigations — the description edit applied and first-measured the same day ([firing-harness](docs/history/firing-harness.md)); the consumer pointer block shipped and withdrawn the same day under the frontmatter-or-hooks rule
 
 Live owed work is in [BACKLOG.md](BACKLOG.md), not in these files: a history file records what a pass closed, the backlog carries what is still owed.
 

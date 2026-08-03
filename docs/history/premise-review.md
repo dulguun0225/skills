@@ -162,7 +162,10 @@ it independently:
    false firing. The same run's pre-edit arm is the Opus re-baseline the backlog
    owed, and it landed below Sonnet, not above — see
    [firing-harness.md](firing-harness.md) for the platform confound on that
-   comparison.)*
+   comparison. Later the same day the owner withdrew the pointer block: delivery
+   work on this set is frontmatter or hooks only, and nothing may require a
+   consumer to copy text into their `CLAUDE.md` — the rule is in the repo
+   `CLAUDE.md`. The pointer-block lever was never measured here.)*
 2. **The frontmatter tier has the same growth law as the disease it cured** —
    linear in skill count, paid unconditionally, no ceiling — only with a slower
    onset (4,383 tokens at twenty skills, against a corpus that had grown past
