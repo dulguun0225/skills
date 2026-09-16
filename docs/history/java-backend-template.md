@@ -177,6 +177,25 @@ file is the constitution, since that is the one file where *kept existing* means
 not land. PR #7 was squash-merged to `main` the same day as `4c02812`, carrying the port and these edits together, and
 `DEFAULT_REF` moved to it; the pin-move item recorded above is closed.
 
+## `new-java-backend` — 2026-09-16
+
+The owner, told to invoke `java-backend-rules` to scaffold: *"Or do we create a new skill? That only prepares the
+constitution."* Yes. The scaffold instruction sat at the foot of a body that is the ban lists — thousands of
+tokens an agent does not need while scaffolding — and behind every one of them, where an agent that has begun a
+`pom.xml` reads it too late. `new-java-backend` is the procedure alone: run the script with the three inputs
+the user supplies, do the one printed next step that stays inside the directory (`specify init --here`), hand the
+rest to the user by name, and stop where `/speckit.constitution` begins with Article VII. `new-backend.mjs`
+moved into it, because a skill dir is the whole world its consumer has; `java-backend-rules` now points at the
+sibling by name. Marked *decided, not yet validated*: the template has run green and the procedure has been
+run by hand, no project has yet been created by an agent invoking it.
+
+Per-session cost, `npm run tokens:frontmatter`, 2026-09-16, o200k_base: `new-java-backend` 147 tokens
+(name plus description), set total 4,581 across twenty-one skills, up from 4,434 across twenty. It is an
+inception-cadence skill, the class this repo's own rule calls the worst trade; accepted because the alternative
+was loading `java-backend-rules` whole at a moment none of its directives bind. Firing: meant to be invoked by
+name; unprompted firing on "create a new Java backend here" unmeasured, and the bare-fixture case on the backlog
+now has a second candidate skill to point at.
+
 ## What is still open
 
 - The firing case above.
