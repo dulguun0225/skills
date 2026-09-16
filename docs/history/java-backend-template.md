@@ -116,7 +116,7 @@ tooling the scripts assumed (`mapfile`, `mktemp`, `sha256sum`, `python3`, the li
 be present, which is the surface the template exists to remove. The zero-dependency rule mirrors this repo's
 own *the two gates stay dependency-free*.
 
-What changed in the template (branch `port/node-scripts`, commit `6a7eb02`, not yet merged): the ten
+What changed in the template (squash-merged to `main` as `4c02812`, PR #7): the ten
 `.sh` files under `scripts/` and `project-root/scripts/` are `.mjs`, sharing one `scripts/_lib.mjs` (run,
 capture, fail with a status; `mvn`, `npm` and `npx` are `.cmd` files on Windows and are spawned through a
 shell there, everything else directly). `wall.mjs` runs the four checks as child `node` processes so each
@@ -134,10 +134,9 @@ rather than *pinned by checksum*, because the checksum is no longer in a file th
 
 In the skill: `new-backend.sh` is `new-backend.mjs`, same flags, same cleanup contract, calling the
 template's `init.mjs`; it carries its own twenty lines of spawn helpers rather than importing the
-template's, because it runs before the template exists on disk. **The pin moved to `6a7eb02`**, the
-port commit, and that is the one open item: the template repo merges by squash, so the sha on `main` after
-the PR will differ, and `DEFAULT_REF` must be re-pointed at it in a commit that says so. Until then the
-default fails its reachable-from-`main` check, by design, and `--ref port/node-scripts` is the override.
+template's, because it runs before the template exists on disk. **`DEFAULT_REF` is `4c02812`**, the squash
+commit on `main` after PR #7 merged, so the default passes its reachable-from-`main` check without an
+override.
 
 Verified, 2026-09-16, Java 25 / Maven 3.9.16 / Node 24.21.0 (template) and 26.5.1 (skill script, the
 machine's own) / osv-scanner 2.6.0 / Docker: `node scripts/wall.mjs` green at the template root, every
@@ -147,11 +146,36 @@ script: rejected inputs, a non-empty target, an unknown ref and an unreachable s
 remove what the run created; vendored and standalone `--skip-verify` runs give the expected tree, lifted
 `project-root/`, renamed package directory and three-commit history; the pinned-sha path was exercised
 against a clone whose `main` holds the pin; a full vendored run with codegen and `mvn verify` ended in a
-clean tree and *init: some_service_1 from java-backend-template 6a7eb02b37ce (mvn verify green)*. **Not
+clean tree and *init: some_service_1 from java-backend-template 6a7eb02b37ce (mvn verify green)* — that
+verification ran against the pre-squash `port/node-scripts` commit, before `DEFAULT_REF` moved to the
+post-merge `4c02812`. `git diff 6a7eb02 4c02812` is the four spec-kit-ordering files (`README.md`,
+`project-root/CLAUDE.md`, the constitution header, the `init.mjs` warning branch) and nothing `mvn verify`
+or codegen reads, so the verification stands for the build; the scaffold's warning path is not re-run.
+**Not
 verified: a run on Windows or macOS.** The port removes the Linux assumptions that were visible; the claim
 that it runs there is the standard library's, not a measurement, until someone runs it.
 
 Per-session cost: still nothing; no `description` changed. Firing: unchanged, not measured.
+
+## Where the scaffold sits in the spec-kit sequence — 2026-09-16
+
+The owner asked what to do with `/speckit.constitution`, then caught the ordering the first answer had
+assumed: *"Backend-template will only run when I hit the implement stage right? Spec-kit has constitution ->
+specify -> plan -> tasks -> implement."* If the scaffold ran at implement, the pre-filled constitution would
+never reach a project: `init.mjs` lifts `project-root/` without overwriting, so the file `/speckit.constitution`
+had already written would be kept and the platform articles dropped with a one-line *kept existing*. The two
+consistent orderings were scaffold-then-spec-kit, or spec-kit-first with the platform articles restated as
+input to `/speckit.constitution` — which is the paste-into-a-consumer-file mechanism the delivery rule bans.
+
+**Owner decision: scaffold first.** The sequence is `new-backend.mjs`, `specify init --here`,
+`/speckit.constitution`, `/speckit.specify`, `/speckit.plan`, `/speckit.tasks`, `/speckit.implement`.
+`/speckit.constitution` amends Article VII, the project's own decisions, and leaves I–VI alone; implement is
+feature code inside an already-scaffolded `backend/`. Recorded in the template's README, its project
+`CLAUDE.md` and the constitution's own header comment, and `new-backend.mjs` now prints `/speckit.constitution`
+as the step after `specify init`. `init.mjs` was also changed to warn, rather than merely note, when the kept
+file is the constitution, since that is the one file where *kept existing* means the scaffold's decisions did
+not land. PR #7 was squash-merged to `main` the same day as `4c02812`, carrying the port and these edits together, and
+`DEFAULT_REF` moved to it; the pin-move item recorded above is closed.
 
 ## What is still open
 

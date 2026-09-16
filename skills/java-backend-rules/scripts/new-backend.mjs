@@ -30,8 +30,9 @@ import { parseArgs } from 'node:util';
 
 const TEMPLATE_URL = process.env.TEMPLATE_URL || 'https://github.com/dulguun0225/java-backend-template.git';
 // The pinned template commit. Move it deliberately, in a commit that says which gate change it brings in.
-// Recorded 2026-09-16: "build: scripts are Node, not bash; toolchain is what mise.toml pins".
-const DEFAULT_REF = '6a7eb02b37cecbbc76a5636f069fed121cc37f69';
+// Recorded 2026-09-16: "build: scripts are Node, not bash; toolchain is what mise.toml pins (#7)", the squash
+// commit on main; it also carries the scaffold-before-spec-kit ordering and the constitution warning in init.mjs.
+const DEFAULT_REF = '4c028121e57d74a3cacd61de2b1f922669c04ea7';
 
 const [major] = process.versions.node.split('.').map(Number);
 if (major < 22) die(`node ${process.versions.node} is too old; this script needs 22 or newer`);
@@ -144,7 +145,10 @@ try {
   const next = [`gh repo create <org>/${name} --private --source=. --push`];
   if (mode === 'vendored') next.push('node scripts/apply-ruleset.mjs     # PR + backend + frontend checks required on main');
   next.push('npx skills add dulguun0225/skills -a claude-code -y');
-  if (mode === 'vendored') next.push('specify init --here               # optional; .specify/memory/constitution.md is pre-filled');
+  if (mode === 'vendored') {
+    next.push('specify init --here               # optional; .specify/memory/constitution.md is pre-filled and survives it');
+    next.push('/speckit.constitution            # amends Article VII only; I–VI restate what backend/ enforces, not re-planned');
+  }
   if (!verify) next.push(`(cd ${service} && mvn -Pcodegen generate-sources && mvn verify)   # skipped above; run before the first push`);
   console.log(`created ${dir} (${mode}): package ${pkg}, artifact ${name}, template ${sha} — ${verified}`);
   console.log("next, each outside this directory's control and so not done here:");
