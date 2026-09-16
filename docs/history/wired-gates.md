@@ -135,6 +135,10 @@ warns when a `review-by` date passes, and the lapse rule remains self-executing
 on the reader. **Decided the same day not to write it, which is why it sits here
 and not on `BACKLOG.md`**: it is cheaper than either gate above, but unlike them
 it is worthless unless something runs it on a schedule, and the paragraph above
-says what this repository has for that. Reopens the day this repo gains CI. As of
+says what this repository has for that. Reopens the day this repo gains CI —
+**which it did on 2026-09-16**, when `.github/workflows/skills-checks.yml` was
+ported from the abandoned `../asdlc` monorepo and both gates plus the discovery
+check started running on every push; the freshness step is back on
+`BACKLOG.md` from that date. As of
 2026-08-02 no `review-by` date in the set has passed — the earliest is
 2027-01-21 — so nothing is mis-marked today by the absence.

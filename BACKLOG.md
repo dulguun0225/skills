@@ -51,6 +51,7 @@ this class fails loudly instead of reporting a rate.
 | **A corpus audit against the two rules the corpus states** | One case tested a subject no skill owns, in a fixture holding none of what it named — and it read as a description miss for a day. Both rules were already written at the top of `firing-cases.json`; nothing checks any case against them | 44 cases, reading not spending. Cheapest guard: for each case, name the directive it expects to be loaded for, and the fixture file its prompt points at |
 | **The Opus/Sonnet gap is dissolved, not open** | 19/44 against 31/44 was read as a model or platform difference for two days. The linux run had `Bash` denied and was near-sealed; the win32 run had a working shell. Two experiments, not two rates | Nothing owed unless a sealed Sonnet run is wanted for its own sake |
 | **Fixture bias, unmeasured** | The fixtures now contain the referents their prompts name, written as ordinary naive code — doubles for money, a plain string 400 body, a lookup per request. A fixture exhibiting the defect a skill bans may cue that skill by itself, which would inflate a rate rather than deflate it | No cheap check known. At minimum, treat a rate as belonging to this fixture, and start a new baseline whenever the fixture files change |
+| **A bare-fixture firing case for the scaffolding moment** | `java-backend-rules` gained a trigger on 2026-09-01 — *before creating a build file or pinning the Java or Spring Boot version for a new repo* — because an agent scaffolding a greenfield backend pinned a superseded LTS. Both existing cases for that skill use an existing-repo fixture, which is exactly the hole; the description edit is unmeasured | One case, `"fixture": "bare"`; ≈ $0.50 a session at the sealed rate |
 | **A second corpus author** | Every prompt in `firing-cases.json` was written by the same pass that read the descriptions, which is the harness's own version of the panel-of-one problem `guardrails-toolchain` owes a fix for. A prompt written by someone who has not read a description is worth several written by someone who has — and the repeats run adds a shape rule: for repo fixtures, question-shaped and execution-shaped prompts measure different things (5/5 against 0/5 on the same skills) | Cheap. Anyone can add cases; the corpus rule is stated at the top of the file |
 
 ## Researched, unwritten
@@ -87,6 +88,12 @@ yet worth a row.
 **Not a new topic**: more throughput, multi-tenancy, a different broker or cloud,
 stricter thresholds. Those are edits to an existing skill or plan-time decisions.
 A persistence preference is a variant of an existing rule set, not a new one.
+
+## Gate owed — reopened 2026-09-16
+
+| Owed | Why it is owed | Watch |
+| ---- | -------------- | ----- |
+| **The `review-by` freshness step** | Decided 2026-08-02 not to write it because nothing here ran on a schedule, and recorded as *reopens the day this repo gains CI* ([wired-gates](docs/history/wired-gates.md)). CI arrived 2026-09-16. A script that fails when any `review-by` date has passed is cheaper than either wired gate; what it needs is a scheduled run, and `guardrails-toolchain` records that GitHub disables a scheduled workflow after repository inactivity — so its artifact has to carry its own run timestamp, per that skill's layer clause | Earliest `review-by` in the set is 2027-01-21; nothing is mis-marked by its absence today |
 
 ## Shelved
 
@@ -132,6 +139,7 @@ Everything below is what each skill owes **beyond** that.
 | `primary-keys` | **A re-open trigger per loser**, and **cost measured at the volume where the recorded trigger fires** | The pass set two triggers, both on the winner. **`backend-stack` owes the trigger row identically and `business-numbering` makes three** — one habit failing three times. The measurement is defined and simply untaken: the winner's trigger is measured against a committed baseline for the losing candidate |
 | `business-numbering` | **A re-open trigger per rejected alternative** | Same habit, third instance. Nothing states what would make engine sequences or gapless-everywhere worth re-examining |
 | `business-numbering` | **A measured contention ceiling** | The recorded ceiling is the pass's own estimate of a serialized window against a projected workload, with no run behind it — and the relief ladder it gates has never fired |
+| `java-backend-rules` | **Verify the `CrudRepository.save()` insert-versus-update claim** against the pinned Spring Data line | Shipped **uncertain** on 2026-09-01 in both `SKILL.md` and the evidence ledger; nothing rests on it, and it stays a claim nobody may cite until verified. The whole Spring Data JDBC ban and the pin-creation directive are *convention* with no research pass behind them — written from one observed failure |
 | `business-numbering` | **A statutory check outside one jurisdiction** | Its gaplessness ground rests on a **negative search result**: one jurisdiction, one statute, one regulator's instruction, one date. Any repo elsewhere must run its own, and a positive finding anywhere changes the ground from insurance to compliance |
 
 **Nothing here is a research project.** The sources are a recovery of material that

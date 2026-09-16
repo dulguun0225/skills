@@ -30,7 +30,7 @@ Ranking, for repo with no measured latency problem:
 2. **An in-process cache with a short expiry.** Second cheapest. No new service. Limit is per-instance scope — `C-9`'s stated condition.
 3. **A shared cache server.** Only when number says so.
 
-Add cache when measurement says so, not when design looks like it wants one. **Which engine to run, where needed, is not directive here** — per-stack pick with deployment-shaped and ecosystem-shaped gates, stated in stack skill. Nine-candidate survey of engine landscape, with licences, release cadence and ground each candidate lost on, is in [evidence.md](evidence.md); evidence for that pick, not rule here.
+Add cache when measurement says so, not when design looks like it wants one. **Probe-scoped ground (2026-08-11, bare sonnet + opus):** handed a slow endpoint with a findable root cause, 4/4 sessions fixed the cause and added no cache — never cite "the first answer is a cache" as self-evident; unprobed shape: no visible fix. The org fact above, not agent instinct, is this section's ground. **Which engine to run, where needed, is not directive here** — per-stack pick with deployment-shaped and ecosystem-shaped gates, stated in stack skill. Nine-candidate survey of engine landscape, with licences, release cadence and ground each candidate lost on, is in [evidence.md](evidence.md); evidence for that pick, not rule here.
 
 ## What is here and what is elsewhere
 
@@ -186,9 +186,9 @@ Nothing in differential gate verifies its own configurations. Test-scoped bindin
 
 ## Composite shapes a repo assembles out of these primitives
 
-**Added 2026-08-02 by `enforceable-rules`' composite-shape check, conversion-dated. This section is owed to a defect in a neighbouring rule set and this one had the same defect** — sixteen directives each naming its own honest limit, reading as thorough, and **silent about every shape a repo build out of two of them.** Naming a gap inside a directive surface nothing about a shape nobody wrote a rule about. Every entry below is marked; **silence about a shape is a defect in this section, not the reader's problem.**
+**`enforceable-rules`' composite-shape check, run 2026-08-02, conversion-dated. This section is owed to a defect in a neighbouring rule set and this one had the same defect** — sixteen directives each naming its own honest limit, reading as thorough, and **silent about every shape a repo build out of two of them.** Naming a gap inside a directive surface nothing about a shape nobody wrote a rule about. Every entry below is marked; **silence about a shape is a defect in this section, not the reader's problem.**
 
-**This table promote no marker.** Most entries are a verdict a published directive already imply and nobody stated as a shape. **One ban is new**, and it carry its ground, the organisation fact it rest on, the absence of a panel, and the condition that reopen it.
+**This table promote no marker.** Most entries are a verdict a published directive already imply and nobody stated as a shape. **One entry is a ban no directive implies**, and it carry its ground, the organisation fact it rest on, the absence of a panel, and the condition that reopen it.
 
 | Shape | Verdict |
 | ----- | ------- |

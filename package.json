@@ -13,6 +13,7 @@
     "tokens:frontmatter": "node scripts/frontmatter-tokens.mjs",
     "tokens:sections": "node scripts/token-sections.mjs",
     "firing": "node scripts/firing-harness.mjs",
+    "probes": "node scripts/redundancy-probes.mjs",
     "gates": "npm run check:evidence-order && npm run check:pointers",
     "try": "skills use ./ --agent claude-code --skill"
   },

@@ -12,3 +12,9 @@ mise.local.toml
 
 .DS_Store
 Thumbs.db
+
+# Redundancy-probe session outputs: stochastic, paid, per-machine; the graded
+# record is docs/history/skill-redundancy-audit.md.
+probe-results*/
+results-sonnet*/
+results-opus*/

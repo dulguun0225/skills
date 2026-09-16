@@ -96,3 +96,44 @@ Rest, no generalise: `java-backend-rules` called fan-out context capture "the on
 Its central artefact is **generated from code and diffed**, not checked against code — so a route cannot exist that the document misses. Its temporal rules name **the pinned serialization time module** as the mechanism rather than the document as the check, which is exactly the crossing that bit `caching` `C-10` and the wire-string rule in `primary-keys`. Its cursor rule already rejects a cursor whose sort spec no longer matches.
 
 **That clear narrowed a finding from an earlier run the same day.** `primary-keys`' layer check had left open that the enumerable-key contract lint reads a committed document while a route declared only in framework annotations binds an id the document never mentions. **A stack that generates the document from the routes has that for free**, so the gap is real for a hand-written or separately-specified document and closed otherwise. Narrowed in `primary-keys` by opening this skill rather than assuming — **the sweep obligation running in the direction that removes a finding rather than adds one.**
+
+## The Spring Data JDBC ban and the pin-creation directive, 2026-09-01
+
+Written in the sibling `../asdlc` repository while it held these skills, ported
+here 2026-09-16 ([asdlc-port](asdlc-port.md)). **No research pass behind either;
+both are convention, written from one observed failure**: an agent told *JPA
+banned* scaffolded a greenfield service on Spring Data JDBC, a superseded Java
+LTS and a superseded Spring Boot major — because the recorded ground for the JPA
+ban, dirty checking, does not carry to Spring Data JDBC, and because *Java at
+version pinned in build* resolves to nothing where no build file exists yet.
+
+- **Spring Data JDBC and the `JdbcTemplate` family are banned on their own
+  grounds** — query derivation from repository method names, reflective row
+  mapping, a second persistence idiom beside jOOQ — and the ban is scoped: Spring
+  Data JDBC stays the named exit if jOOQ stewardship risk fires, and taking the
+  exit replaces jOOQ repo-wide rather than running beside it. That scoping moved
+  into `SKILL.md` because consumers vendor the skill with `evidence.md` stripped.
+  Two hosts, per what each reads soundly: artifact bans for the Spring Data
+  starters, a type ban on the ArchUnit ban-list class for `JdbcTemplate`,
+  `NamedParameterJdbcTemplate`, `JdbcClient` and `SimpleJdbcInsert`, since
+  `spring-jdbc` arrives transitively under the jOOQ starter and an artifact ban
+  would break the build. A review the same day found wiring item 2 delegating to
+  a ban-list entry item 1 never named — the *rule described as enforced that is
+  not* shape — and item 1 now names the type ban.
+- **The pin is created at the newest supported LTS.** Greenfield pins the newest
+  Java LTS and newest Boot GA, verified against the vendor's release page and
+  dated in the repo; an existing pin wins over every version fact in this skill
+  set; no floating versions; one LTS back where a named enforcement host cannot
+  gate the newest, host recorded. Maven Enforcer (`requireJavaVersion`,
+  `banDynamicVersions`) is wiring item 11 and pins what was chosen; **named gap
+  11: nothing distinguishes a pin that was newest at adoption from one already
+  stale when written**, the same class as `llm-default-traps`' registry check.
+- **One claim ships uncertain in both files**: that `CrudRepository.save()` picks
+  INSERT-versus-UPDATE from in-memory id state. Nothing rests on it; the
+  evidence ledger carries it as *verify before citing*, and `BACKLOG.md` owes
+  the verification.
+- **The description grew** by *before creating a build file or pinning the Java
+  or Spring Boot version for a new repo*. Unmeasured: both firing cases for this
+  skill use an existing-repo fixture, which is exactly the hole — owed on
+  `BACKLOG.md` under *Firing owed*.
+

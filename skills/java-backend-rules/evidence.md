@@ -29,17 +29,16 @@ That is the whole reason the pass table distinguishes it from evidence: a
 reference implementation showing the same call is not a second source for the
 claim.
 
-**Narrowed 2026-08-01, and the narrowing is partial.** That research's
-consolidated output — the tool map, its selection criteria and the four whole
-concerns its completeness critic found — **is now restated in
-`guardrails-toolchain`**, so a reader can see what it concluded. The research
-itself is still unpublished: no transcript, no per-claim marker, no primary
-source. So the sentence above holds for weight and no longer holds for content,
-and the skill restating it marks everything **convention** for exactly the reason
-this table gives.
+**One partial exception.** That research's consolidated output — the tool map,
+its selection criteria and the four whole concerns its completeness critic
+found — **is restated in `guardrails-toolchain`**, so a reader can see what it
+concluded. The research itself is unpublished: no transcript, no per-claim
+marker, no primary source. Content is readable there; weight still cannot be
+checked, and the skill restating it marks everything **convention** for exactly
+the reason this table gives.
 
-**The 2026-06-11..14 platform pass's own record is restated in two skills since
-2026-08-01, and neither is this one.** `backend-stack` carries its candidate list
+**The 2026-06-11..14 platform pass's own record is restated in two skills, and
+neither is this one.** `backend-stack` carries its candidate list
 and the criteria it ranked on; `ai-maintainer-principles` carries the governing
 principle the persistence rejections were reasoned from — startup-loud magic is
 acceptable, runtime-silent magic is banned — together with the context-locality
@@ -48,14 +47,10 @@ bans**, which is the split the write-once rule forces: the ground travels once, 
 checks stay with the stack. Weight is unchanged in both: prior art, no per-claim
 marker, no cited source.
 
-One presentation note, so provenance is not lost: the 2026-07-21 pass recorded
-several of its conventions as a single list, and they are now stated under the
-areas they govern. No claim changed and none was dropped.
-
 ## Platform
 
 The persistence decision is the 2026-06-11..14 pass. **Every note below is the
-2026-07-25 additions pass.**
+2026-07-25 additions pass**, except where a note carries its own later date.
 
 - **jOOQ codegen from the committed migrations — convention; the mechanism is
   primary-sourced, the mandate is this rule set's synthesis (verified
@@ -147,6 +142,35 @@ The persistence decision is the 2026-06-11..14 pass. **Every note below is the
   alternatives — which is why the directive makes the **hazard class** the rule
   and names the tool only as the enforcement host. Sources: the PostgreSQL
   `ALTER TABLE` and `CREATE INDEX` pages; `squawkhq.com` rules.
+
+- **The Spring Data JDBC and `JdbcTemplate`-family ban — convention, added
+  2026-09-01, no research pass behind it.** Written from an observed failure: an
+  agent told "JPA banned" scaffolded a service on Spring Data JDBC as the
+  compliant alternative, because the recorded ground for the JPA ban — dirty
+  checking — does not apply to it. The grounds stated in the directive are query
+  derivation from repository method names, reflective row mapping over column
+  names, and a second persistence idiom beside jOOQ; none was verified against
+  primary Spring Data documentation in that session. In particular the claim
+  that `CrudRepository.save()` picks INSERT-versus-UPDATE from in-memory id
+  state is marked **uncertain** and must be verified against the pinned Spring
+  Data line before anything cites it; the aggregate-write behaviours beyond it
+  were deliberately left out rather than shipped unverified. The
+  artifact-ban-versus-type-ban split exists because `spring-jdbc` arrives
+  transitively under the jOOQ starter — that transitive shape is also to be
+  verified against the pinned Boot line at adoption.
+
+- **The pin-creation directive — convention, added 2026-09-01, no research pass
+  behind it.** Written from the same observed failure: an agent scaffolding a
+  greenfield backend pinned a superseded Java LTS and a superseded Spring Boot
+  major, because every version fact in this skill set is a dated record of a
+  past pass, no directive stated a floor, and "Java at version pinned in build"
+  resolves to nothing where no build file exists yet. The directive's
+  enforcement is honestly split: Maven Enforcer owns the floor and the
+  no-floating-versions half; "was newest at adoption" is an agent assertion
+  against the vendor's release page, dated in the repo — the same shape as
+  `llm-default-traps`' registry verification, with the same weakness. Named gap
+  11 states that nothing distinguishes a pin that was newest at adoption from a
+  pin already stale when written.
 
 ### The three Platform directives with no evidence note
 
@@ -259,13 +283,11 @@ a concurrency rule.
   does not rest on it. Source:
   `docs.oracle.com/en/java/javase/25/migrate/significant-changes-jdk-25.html`.
 
-- **Correction to an existing rule (2026-07-27).** The per-request-context
-  directive previously preferred a Scoped Value over a `ThreadLocal` without
-  qualification. **The preference stands on the bounded lifetime and the
-  write-once binding, but not on child-thread sharing**: that property is
-  reachable only through `StructuredTaskScope`, which the preview ban forbids.
-  The directive now says so, and nothing else about it changed. The inheritance
-  facts behind the correction are confirmed by the fan-out context panel — see
+- **The Scoped-Value preference is qualified (2026-07-27).** It stands on the
+  bounded lifetime and the write-once binding, **not on child-thread sharing**:
+  that property is reachable only through `StructuredTaskScope`, which the
+  preview ban forbids — an unqualified preference cites a property this stack
+  cannot use. The inheritance facts are confirmed by the fan-out context panel — see
   the `java-backend-observability` skill, which owns that rule.
 
 ### The fan-out helper's ground is thinner than the rule around it
@@ -380,8 +402,10 @@ appears to.
 
 - **jOOQ stewardship or vendor risk fires.** The named exit is Spring Data
   JDBC — explicit persistence with no dirty checking and no lazy loading, so the
-  property that chose jOOQ still holds — **not JPA or Hibernate.** Absent that
-  trigger, the persistence choice is not re-litigated.
+  property that chose jOOQ still holds — **not JPA or Hibernate.** Taking that
+  exit **replaces jOOQ repo-wide** as a platform decision; the directive's ban
+  on Spring Data JDBC is on running the two beside each other, not on the exit
+  itself. Absent that trigger, the persistence choice is not re-litigated.
 - **jOOQ API or tooling drift.** If the pinned jOOQ version renames or adds
   record-mutation or fetch methods, changes its dirty-tracking defaults (the
   `changed()`-to-`touched()` rename and the record-dirty-tracking settings landed
@@ -421,6 +445,10 @@ appears to.
   affordable across the portfolio.
 - **The JDK pin moves past 25.** Re-verify the pinning residuals, the enablement
   flags, and the structured-concurrency status at the new version.
+- **A named enforcement host gains or loses support for the newest LTS** —
+  JaCoCo, Error Prone, NullAway or pitest starts or stops supporting the LTS a
+  greenfield repo would pin today. Re-open which LTS the next repo pins; the
+  pin-creation directive's one-LTS-back escape exists for exactly this state.
 - **The WebFlux ban is examined.** Not a trigger the passes wrote down — it is
   added here, because no pass examined the alternative it bans. A repo with a
   genuine requirement for a reactive stack should raise it as a platform decision
@@ -462,4 +490,7 @@ claim is, what marker it carries, and the date it was taken.
 | Ban list defect-source claim | convention, no citation | 2026-07-21 |
 | Real PostgreSQL over in-memory substitute | convention, no citation | 2026-07-21 |
 | Choice of jOOQ over JPA | convention (no per-claim marker recorded) | 2026-06-11..14 |
+| Spring Data JDBC grounds — query derivation, reflective mapping, second idiom | convention, no research pass | 2026-09-01 |
+| `CrudRepository.save()` picks INSERT-versus-UPDATE from in-memory id state | **uncertain** — verify before citing | 2026-09-01 |
+| Pin created at newest supported LTS and newest Boot GA at adoption | convention, no research pass | 2026-09-01 |
 | WebFlux paradigm ban, Flyway rule, Jackson pick | convention, no evidence note | 2026-06-11..14 (inferred) |

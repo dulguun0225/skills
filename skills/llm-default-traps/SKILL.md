@@ -103,9 +103,9 @@ These five bind only JVM repo; non-JVM repo ignore this section entirely. **Four
 
 ### JSR-385 for units of measure
 
-**Units-of-measure work uses JSR-385 — `unit-api` plus Indriya — never the withdrawn JSR-275 or JScience**, both of which corpus still suggest. Two withdrawn or abandoned API outnumber live one in training data, so agent get this pick wrong by default, not by carelessness.
+**Units-of-measure work uses JSR-385 — `unit-api` plus Indriya — never the withdrawn JSR-275 or JScience.**
 
-*Banned-dependency rule — off-the-shelf. **Confirmed 2026-07-22.***
+*Banned-dependency rule — off-the-shelf. **Confirmed 2026-07-22** for the API status facts. Demoted 2026-08-12: probed pro-default at N=2 per tier (bare sonnet + opus, 2026-08-11 — no JSR-275/JScience appeared); the corpus-outnumbering claim be refuted, do not reintroduce it. Held by the cheap gate.*
 
 ### The `char[]` credential myth
 
@@ -117,7 +117,7 @@ This be one directive here that ban **claim**, not pick. It matter under premise
 
 ## Composite shapes a repo assembles out of these primitives
 
-**Added 2026-08-02 by `enforceable-rules`' composite-shape check, conversion-dated.**
+**`enforceable-rules`' composite-shape check, run 2026-08-02, conversion-dated.**
 Directives above govern a pin, a version ceiling, a lockfile, a banned dependency, a
 channel and a claim. **A repo build things out of two of them and this skill decided
 none of those.** Every entry marked; **silence about a shape is a defect in this

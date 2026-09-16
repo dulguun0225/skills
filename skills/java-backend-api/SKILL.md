@@ -89,7 +89,7 @@ Three things reader will look for here and not find.
 
 **This is general home of contract-conformance fuzz gate.** Money rules extend it and **add no second tool**: `M-26` in `money` is money-side obligation that gate exists, `M-19` in `money-api` is money edge-case input set it must cover. One gate, one tool, two input sets.
 
-**Why gate exists is reasoning step, not tool fact, and marked convention:** one model wrote both specification and implementation, so self-authored tests share blind spot; generator deriving cases from document does not. **Zero-retry rule is this rule set's own governance choice**, not tool precondition — and since 2026-08-01 it published as general rule in `ai-maintainer-principles`, with quarantine shape that go with it. Still no tool precondition; Schemathesis require nothing of the kind.
+**Why gate exists is reasoning step, not tool fact, and marked convention:** one model wrote both specification and implementation, so self-authored tests share blind spot; generator deriving cases from document does not. **Zero-retry rule is this rule set's own governance choice**, not tool precondition — published as general rule in `ai-maintainer-principles`, with quarantine shape that go with it. Still no tool precondition; Schemathesis require nothing of the kind.
 
 ## Errors
 
@@ -161,7 +161,7 @@ Three things reader will look for here and not find.
 
 *Convention — **dormant where no such ban exists**; exemption scoped to the one pager class by ArchUnit. 2026-07-25.*
 
-**Where that ban is published, since 2026-08-01: `primary-keys`**, as *A time-ordered key is not an ordering* — a time-ordered key be monotonic per generator and not across a pool, so `ORDER BY id` be right in single-connection test and wrong under pool. That skill carry this carve-out from other side with **four constraints, and this directive state two of them**: business sort column precede tiebreak ("never leading sort", above) and exemption scoped to pager class alone. **Two are stated nowhere in this skill** — that id never appear in the declared `sort` vocabulary, and that **relative order of ties be an explicit non-promise in the contract text.** Repo wiring the pager off this skill alone get the ArchUnit half and neither contract half. **Condition above stay real** — repo install this skill without that one still have no ban, and this directive still dormant for it.
+**Where that ban is published: `primary-keys`**, as *A time-ordered key is not an ordering* — a time-ordered key be monotonic per generator and not across a pool, so `ORDER BY id` be right in single-connection test and wrong under pool. That skill carry this carve-out from other side with **four constraints, and this directive state two of them**: business sort column precede tiebreak ("never leading sort", above) and exemption scoped to pager class alone. **Two are stated nowhere in this skill** — that id never appear in the declared `sort` vocabulary, and that **relative order of ties be an explicit non-promise in the contract text.** Repo wiring the pager off this skill alone get the ArchUnit half and neither contract half. **Condition above stay real** — repo install this skill without that one still have no ban, and this directive still dormant for it.
 
 ## Wire temporals
 
@@ -169,13 +169,13 @@ Three things reader will look for here and not find.
 
 **Instants on wire are RFC 3339 date-time, serialized in UTC with `Z` designator, field names end `At`.** Wire type is `java.time.Instant` through **one pinned time module**, so non-UTC offset and epoch-number timestamp both **unwritable**. Numeric or epoch time never appears.
 
-*Bespoke — pinned serialization time module + serialization test. **Confirmed** 2026-07-25: RFC 3339 date-time carries mandatory offset, `Z` means UTC, interoperability best with UTC. Reason number banned also confirmed — **JSON numbers have no guaranteed precision**, binary64 the interoperability baseline, integers exact only within roughly ±2^53.*
+*Bespoke — pinned serialization time module + serialization test. **Confirmed** 2026-07-25: RFC 3339 date-time carries mandatory offset, `Z` means UTC; JSON numbers exact only within roughly ±2^53. Probed pro-default at N=2 (bare sonnet, effort high, 2026-08-11); kept for the unwritability mechanics.*
 
 ### Business dates on the wire
 
 **Business dates on wire are strict `uuuu-MM-dd`, field names end `Date`.** Wire type is `java.time.LocalDate` parsed strictly, so **value carrying time component fails to parse, returns 400** — datetime never silently narrowed to date across time zones.
 
-*Off-the-shelf — strict `ISO_LOCAL_DATE` on `LocalDate` field rejects trailing text, stack maps parse failure to 400; deserialization test pins it. **Confirmed** 2026-07-25 for rejection; **400 comes from Spring and Jackson stack, not from `java.time` itself.** `uuuu`-versus-`yyyy` era rationale **uncertain** — strict parsing holds either way, so re-verify only if exact pattern pinned in repo.*
+*Off-the-shelf — strict `ISO_LOCAL_DATE` on `LocalDate` field rejects trailing text, stack maps parse failure to 400; deserialization test pins it. **Confirmed** 2026-07-25 for rejection; **400 comes from Spring and Jackson stack, not from `java.time` itself.** `uuuu`-versus-`yyyy` era rationale **uncertain**. Probed pro-default at N=2 (bare sonnet, effort high, 2026-08-11); the strict-parse gate stays.*
 
 ### Temporal naming and declared format agree both ways
 
@@ -189,7 +189,7 @@ Three things reader will look for here and not find.
 
 **API version is URL path segment (`/v1`), one OpenAPI file committed per major version.** Version is **diffable committed file, never runtime pipeline**: request or response transformation selecting or rewriting applied contract per request from header, date or account setting is **banned.**
 
-*Convention plus CI file check — one committed file per major; transformation-pipeline ban is spec and review. 2026-07-25. Mechanism behind ban **confirmed** from Stripe's own engineering write-up — rejected scheme really does select contract from ambient input and rewrite responses through runtime version-change modules.*
+*Convention plus CI file check — one committed file per major; transformation-pipeline ban is spec and review. 2026-07-25. Mechanism behind ban **confirmed** from Stripe's own engineering write-up. URL-path half probed pro-default at N=2 (bare sonnet, effort high, 2026-08-11); the transformation-pipeline ban is the half that earn the tokens.*
 
 ### `PATCH` is banned on every endpoint
 

@@ -41,7 +41,7 @@ whole purpose; everything else here is in service of it.
 | `async-handoff` | move work out of the caller's control flow — one outbox row plus one broker and no second mechanism, one messaging-adapter seam, no annotation-bound consumers, deterministic message identity, manual acknowledgement, a failure policy with no silent drop, a generated subscription catalog, and two architectures banned outright. Any language |
 | `async-handoff-shapes` | build a saga, a compensation path, a business timer, a webhook in either direction, or a claim check — the shapes assembled *out of* handoffs. Install it **with** `async-handoff` |
 | `async-handoff-java` | do either of those on the Java stack — the tool per rule, the transport pick, and the gate wiring |
-| `llm-default-traps` | add or bump a dependency, pin a tool, choose a container base image, wire CI, pick a property-test, holiday or units library, or store a deadline — the picks an LLM makes by training-data default, banned by name. Any language, plus a JVM-only group. **Owns the jqwik version pin** the three Java stack skills defer to |
+| `llm-default-traps` | add or bump a dependency, pin a tool, pin a CI action or a container image reference, wire CI, pick a property-test, holiday or units library, or store a deadline — the picks an LLM makes by training-data default, banned by name. Any language, plus a JVM-only group. **Owns the jqwik version pin** the three Java stack skills defer to |
 | `backend-stack` | pick the language, runtime, framework, persistence library or database for a new backend, add a second language to a repository or an organisation, or argue an existing stack should change — rank candidates by what their build can refuse to ship, count the independent enforcement hosts rather than type-system features, and price corpus gravity as a cost the winner carries. Carries the Java verdict as its worked case. **The one skill here that argues a stack choice**; every other stack skill assumes it |
 | `guardrails-toolchain` | adopt a static analyser, scanner, coverage or mutation tool, wire or remove a CI gate, add a suppression or baseline file, change branch protection or a shared workflow, or claim a defect class is covered — which tool may occupy a gate at all, what disqualifies one, how gates compose, the verdict on every shape a repo assembles out of two gates, and the four whole concerns a tool-by-tool comparison never surfaces. Carries one repo's whole tool map as its worked case. Any stack |
 | `ai-maintainer-principles` | draw or move a module boundary, choose a runtime topology, decide what a build gate may be relaxed for, adopt a database, managed service or vendor API, write a retry or a subtle piece, introduce a second way to do something, migrate from an existing system, or write a repo constitution — the decisions that change answer because the maintainer is an agent: startup-loud magic allowed and runtime-silent banned, requirements needing whole-program reasoning designed out, a module sized to one session, topology by the number of independent wills, one idiom imposed mechanically, and the review substitute that stands in for a human reader. Any stack |
@@ -97,6 +97,7 @@ behaviour decides what counts as a skill in this repo.
 | `npm run tokens:frontmatter` | Size of every skill's `name` and `description` — the cost paid every session whether the skill fires or not. |
 | `npm run tokens:sections` | Size of each `##` section of each `SKILL.md` — where a body's cost sits (`--skill <name>` for one, `--repeated` to roll up by section name across skills, `--min 0` to fold nothing). |
 | `npm run firing` | Runs headless sessions against an isolated sandbox holding only this repo's skills, and reports which skills actually fired (`--skill <name>`, `--case <id>`, `--repeats N`, `--against <git-ref>` to A/B a frontmatter edit, `--model <name>` to pin one, `--dry-run` to price it first). Two modes: the default scores whether a skill fires as the model's first action; `--explore` allows the read and edit tools and scores whether it fires before the first code edit, which is the delivery question — the two rates are different measurements. A report, not a gate — it is stochastic and it spends money. |
+| `npm run probes` | Runs headless sessions with **no skills installed** and records what a bare agent writes for a task a directive governs — the opposite question from `firing`: not *does the skill load* but *does it need to exist* (`--model <name>`, `--case <id>`, `--repeats N`, `--budget N` USD stop, `--dry-run`). Grading is manual, against each case's written criterion. A report, not a gate — stochastic, and it spends money. |
 | `npm run try -- <name>` | Runs one skill straight from the working tree, without installing it. |
 
 `npm run check` should list every directory under `skills/` — compare its output
@@ -105,7 +106,9 @@ discovery and frontmatter, nothing else: it does not see a skill's resource file
 (`evidence.md`, `api.md`, `storage.md`, `shapes.md`, `gates.md`).
 
 The two gates are the pair `enforceable-rules` says are the only machine-checkable
-part of it, wired here on 2026-08-02. **Each prints what it does not decide on
+part of it, wired here on 2026-08-02 and run by CI on every push touching
+`skills/` or `scripts/` since 2026-09-16 (`.github/workflows/skills-checks.yml`,
+which also fails on a `SKILL.md` the discovery check skips). **Each prints what it does not decide on
 every run** — a check that is trusted past its reach is the false assurance that
 skill's first principle bans. Everything else in this repo, including all five
 incompleteness checks, is still reading.
@@ -156,6 +159,16 @@ and the environment passed to a session is an allowlist rather than whatever
 the operator's shell happened to hold. Full account in
 [docs/history/firing-harness.md](docs/history/firing-harness.md).
 The preflight session says so before spending anything.
+
+`npm run probes` asks the question the firing harness cannot: whether a bare
+agent already does what a directive says, from training data alone. Every case
+in `scripts/redundancy-cases.json` poses a task a directive governs to a session
+with no skills installed; grading is manual against the case's criterion. It
+was run once, 2026-08-11 and 2026-08-12, on `claude-sonnet-5` and `claude-opus-5`:
+no skill was deletable, most probed directives were violated by the bare agent,
+and compliance was strongly tier-dependent — so a redundancy verdict belongs to
+the deployed model, not to the skill. The record, with what it does not decide,
+is [docs/history/skill-redundancy-audit.md](docs/history/skill-redundancy-audit.md).
 
 ## Installing from this repo
 
