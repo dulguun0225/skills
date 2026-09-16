@@ -203,5 +203,10 @@ list, the migration lint, the contract snapshots, the CI — so an agent's first
 session goes to domain code rather than to scaffolding it would otherwise
 regenerate, differently, every time. The template's `docs/GATES.md` maps each
 wired gate to the directive it implements and names what it does not reach.
+`java-backend-rules` ships `scripts/new-backend.mjs`, which instantiates the
+template at a pinned commit in one command and stops before anything that
+touches the forge; an agent runs it rather than retyping the template's README.
+It is Node on the standard library, the runtime `npx skills add` already needs,
+so it runs the same on Linux, macOS and Windows.
 Created 2026-09-16; record in
 [docs/history/java-backend-template.md](docs/history/java-backend-template.md).

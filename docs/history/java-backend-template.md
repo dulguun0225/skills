@@ -56,6 +56,103 @@ Three things the gates caught while the template was being built, each a real de
 
 `mvn verify` green locally on Java 25 / Maven 3.9.16 / Docker 29.8: 19 platform tests, 33 app unit tests, 9 integration tests, both coverage checks met, licence gate passed, osv-scanner clean after the Tomcat move. Every shell step in the workflow was run locally first: action pins, forbidden flags, squawk (which found two missing timeouts in the first migration and they were added), the regenerate-twice drift check, the scan. The main-branch ruleset was applied and demonstrated by blocking a direct push of the second commit, which went through a pull request instead. The first CI run on GitHub (run 35057682788, `ubuntu-latest`, 2026-09-16) passed every step, including the required-checks assertion against the live ruleset and the second OpenAPI run under the other timezone and locale.
 
+## 2026-09-16, later: the scaffold is a script in the skill
+
+The owner observed that instantiating the template is a fully deterministic process and asked whether the
+scripts belong in the skill. The answer split on who executes a script. The template's `scripts/` —
+`wall` and the four checks it runs, `init`, and the four under `project-root/scripts/` — are run by
+CI or by the forge, and CI has no skill installed; a gate that lives only under `~/.claude/skills/` is a
+gate the build cannot run, which is the *unwired gate is a rule described as enforced that is not* defect
+`java-backend-rules` names. `init` also rewrites strings that only the template's own files contain, so
+the write-once rule makes the template its owner. **What the skill was missing was the one script the agent
+runs before a repo exists**, and that is what was added.
+
+`skills/java-backend-rules/scripts/new-backend.mjs` (written as `new-backend.sh` first; see the next section) is the README's four-command sequence as one command:
+project root with an empty commit, fetch the template, `git subtree add` it into `backend/` (or
+`--standalone`), the template's own `init` script, codegen, `mvn verify`, one commit whose message records the
+template sha and whether the wall was run. It stops before `gh repo create`, the ruleset, the skills install
+and `specify init`, and prints them, because each has side effects outside the directory. The template is
+pinned to a recorded commit (`7ea886b`, the vendoring refactor, at first writing) with `--ref` to override; `main` is what the
+README fetched, and two projects scaffolded a week apart from `main` start from different templates.
+
+**Writing it found a defect in the template's README.** Its vendored sequence runs `git subtree add`
+directly after `git init -b main`, and `git subtree add` refuses a repository with no `HEAD`
+(*working tree has modifications. Cannot add.*, which is not the real reason). Reproduced 2026-09-16; the
+script makes an empty commit first and the template README now says so. *A claim to have verified is itself
+a claim to check*: the template record above says every shell step was run locally, and it was — inside a
+repository that already had commits.
+
+Verified: both modes run against a local clone with `--skip-verify`, producing the expected tree, package
+directory and three-commit history; the vendored mode was then run in full, codegen and `mvn verify`
+included, green on Java 25 / Maven 3.9.16 with Docker, ending in a clean tree and the commit *init:
+some_service_1 from java-backend-template 7ea886bc94bf (mvn verify green)*. Run again against GitHub with the default
+ref and no flags (`--package com.acme.orders --name orders`): green, and its tree is file-for-file the local
+run's tree with the name substituted. Rejected inputs, a non-empty target, an unreachable sha and an unknown
+ref each fail before the template is fetched and remove what the run created; a failure after that leaves
+the tree for inspection and says so. `npm run gates` green with the new relative
+link; `npm run check` still lists the skill.
+
+**What it costs every session: nothing.** No `description` changed, so `npm run tokens:frontmatter` is
+unchanged. The script is not a `.md` file, so `npm run tokens` does not count it and no agent loads it into
+context; it is executed, not read. The body grew by one sentence naming it. **Firing: not measured**; the
+firing case this record already leaves open is unchanged by a body edit, and is where the script's value
+would show — a session that fires the skill on a bare fixture and runs the script writes nothing of its own.
+
+## 2026-09-16, later still: the scripts are Node, not bash
+
+The owner, the same day: *"I don't like shell scripts in the java-backend-template and in the skill. I need
+something more cross platform. spec-kit uses uv to distribute already, our skills our distributed via npx."*
+The scaffold script is run by an agent on whatever machine the developer has, and this repo's own firing
+records are stamped win32; a `.sh` there was a Linux assumption in the one file that most needed not to make
+one. The template's `osv-scan.sh` had already made it explicitly: it downloaded `osv-scanner_linux_amd64`
+with one checksum.
+
+**Decision: Node, standard library only, no `package.json`, in both repos.** Node is on every machine that
+matters by construction: a consumer got the skill through `npx skills add`, and the template's frontend gate
+already shelled out to `node -e`. Python via uv was the alternative, rejected because it adds a third runtime
+to a Java repo for the sake of eleven helper scripts; spec-kit chose uv because spec-kit is a Python project.
+Keeping bash under Git for Windows was the cheaper option, rejected because it works only where the Linux
+tooling the scripts assumed (`mapfile`, `mktemp`, `sha256sum`, `python3`, the linux-only binary) happens to
+be present, which is the surface the template exists to remove. The zero-dependency rule mirrors this repo's
+own *the two gates stay dependency-free*.
+
+What changed in the template (branch `port/node-scripts`, commit `6a7eb02`, not yet merged): the ten
+`.sh` files under `scripts/` and `project-root/scripts/` are `.mjs`, sharing one `scripts/_lib.mjs` (run,
+capture, fail with a status; `mvn`, `npm` and `npx` are `.cmd` files on Windows and are spawned through a
+shell there, everything else directly). `wall.mjs` runs the four checks as child `node` processes so each
+stays runnable alone. `init.mjs` applies the same substitutions in the same order, line-wise where sed was
+line-wise, and skips a file holding a NUL byte; its output was diffed byte-for-byte against `init.sh` on
+identical input and matched on every file outside `scripts/`. `mise.toml` pins `node = "24.21.0"` and
+`osv-scanner = "2.6.0"` beside Java and Maven; the scan script requires the binary on `PATH` and names
+`mise install` when it is missing, so one pin serves every platform and mise's aqua backend verifies the
+release checksum where the script used to. Both workflows install the toolchain with `jdx/mise-action`
+(SHA-pinned, mise version pinned) from the same file, replacing `setup-java`, with `~/.m2` under
+`actions/cache`; the `frontend` job installs only `node`. `apply-ruleset` no longer needs `python3`. Every
+`.sh` mention in the template's `README.md`, both `CLAUDE.md`s, `docs/GATES.md`, `pom.xml`, `.squawk.toml`
+and the frontend README was rewritten; the GATES row for the scanner now says *pinned in `mise.toml`*
+rather than *pinned by checksum*, because the checksum is no longer in a file this repo owns.
+
+In the skill: `new-backend.sh` is `new-backend.mjs`, same flags, same cleanup contract, calling the
+template's `init.mjs`; it carries its own twenty lines of spawn helpers rather than importing the
+template's, because it runs before the template exists on disk. **The pin moved to `6a7eb02`**, the
+port commit, and that is the one open item: the template repo merges by squash, so the sha on `main` after
+the PR will differ, and `DEFAULT_REF` must be re-pointed at it in a commit that says so. Until then the
+default fails its reachable-from-`main` check, by design, and `--ref port/node-scripts` is the override.
+
+Verified, 2026-09-16, Java 25 / Maven 3.9.16 / Node 24.21.0 (template) and 26.5.1 (skill script, the
+machine's own) / osv-scanner 2.6.0 / Docker: `node scripts/wall.mjs` green at the template root, every
+step. Forbidden-flag, action-pin and frontend gates each fail on a planted violation, the first also on a
+`-javaagent` planted in the lifted `compose.yaml` one level above a vendored `backend/`. The scaffold
+script: rejected inputs, a non-empty target, an unknown ref and an unreachable sha fail before the fetch and
+remove what the run created; vendored and standalone `--skip-verify` runs give the expected tree, lifted
+`project-root/`, renamed package directory and three-commit history; the pinned-sha path was exercised
+against a clone whose `main` holds the pin; a full vendored run with codegen and `mvn verify` ended in a
+clean tree and *init: some_service_1 from java-backend-template 6a7eb02b37ce (mvn verify green)*. **Not
+verified: a run on Windows or macOS.** The port removes the Linux assumptions that were visible; the claim
+that it runs there is the standard library's, not a measurement, until someone runs it.
+
+Per-session cost: still nothing; no `description` changed. Firing: unchanged, not measured.
+
 ## What is still open
 
 - The firing case above.
