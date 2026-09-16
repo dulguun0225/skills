@@ -32,7 +32,7 @@ const TEMPLATE_URL = process.env.TEMPLATE_URL || 'https://github.com/dulguun0225
 // The pinned template commit. Move it deliberately, in a commit that says which gate change it brings in.
 // Recorded 2026-09-16: "build: scripts are Node, not bash; toolchain is what mise.toml pins (#7)", the squash
 // commit on main; it also carries the scaffold-before-spec-kit ordering and the constitution warning in init.mjs.
-const DEFAULT_REF = '4c028121e57d74a3cacd61de2b1f922669c04ea7';
+const DEFAULT_REF = '2ee1d16052f6f94f150a3ab5ec67a8c545d1b546';
 
 const [major] = process.versions.node.split('.').map(Number);
 if (major < 22) die(`node ${process.versions.node} is too old; this script needs 22 or newer`);
