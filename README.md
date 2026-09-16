@@ -191,3 +191,17 @@ with the largest activation gain; the check that measures this set is
 `npm run firing`. Delivery work on this set happens in exactly two places —
 the frontmatter, or hooks — by owner decision, 2026-08-03: installing these
 skills never requires copying anything into the consuming repo.
+
+**A greenfield Java repo on the stack `java-backend-rules` binds does not start
+from these skills; it starts from
+[`dulguun0225/java-backend-template`](https://github.com/dulguun0225/java-backend-template)**,
+a GitHub template where every gate the Java skills name as build-enforceable is
+already wired and green (`gh repo create <org>/<name> --template
+dulguun0225/java-backend-template`). The skills carry the decisions and their
+checks; the template carries the consequences — the poms, the executable ban
+list, the migration lint, the contract snapshots, the CI — so an agent's first
+session goes to domain code rather than to scaffolding it would otherwise
+regenerate, differently, every time. The template's `docs/GATES.md` maps each
+wired gate to the directive it implements and names what it does not reach.
+Created 2026-09-16; record in
+[docs/history/java-backend-template.md](docs/history/java-backend-template.md).

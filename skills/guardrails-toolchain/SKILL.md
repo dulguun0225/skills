@@ -534,6 +534,15 @@ with no record become skipped item nobody remember choosing.
 9. **Record what stayed advisory**, and for each, which defect class is therefore
    uncovered. This list is the honest half of steps above.
 
+**A Java repo on the stack `java-backend-rules` binds starts from
+`dulguun0225/java-backend-template`** rather than from this list. Steps 3 and 4
+are wired there, step 5 for its two generated artifacts (the jOOQ tree and the
+OpenAPI document), and the mechanical half of step 2 — tool, gate, host, and the
+directive each implements — is its `docs/GATES.md`. Steps 1, 6, 7 and 8 and the
+licence-and-caveat half of step 2 stay the repo's to write, and that file says so
+by name. (Check: the template's named-gaps table carries a row per unwired step
+here; a step absent from both tables is the finding — *convention*, 2026-09-16.)
+
 ## Composite shapes a repo assembles out of gates
 
 **`enforceable-rules`' composite-shape check, run 2026-08-02, conversion-dated.
