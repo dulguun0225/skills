@@ -212,3 +212,23 @@ It is Node on the standard library, the runtime `npx skills add` already needs,
 so it runs the same on Linux, macOS and Windows.
 Created 2026-09-16; record in
 [docs/history/java-backend-template.md](docs/history/java-backend-template.md).
+
+## Starting a new Java project
+
+The order is fixed, decided 2026-09-16, and the skill comes before spec-kit:
+
+1. In an empty project directory, invoke `/new-java-backend`. It asks for the
+   package, artifact name and group, lands the template in `backend/` at its
+   pinned commit, runs codegen and `mvn verify`, commits, and runs
+   `specify init --here`. It prints the forge and ruleset steps and does not run
+   them.
+2. `/speckit.constitution`, with only the product's own decisions as input. It
+   fills Article VII; Articles I–VI arrive pre-filled from the template and are
+   not re-planned.
+3. `/speckit.specify`, `/speckit.plan`, `/speckit.tasks`, `/speckit.implement`
+   as spec-kit documents them. The plan's Technical Context inherits the
+   platform from the constitution.
+
+Run spec-kit first and the constitution it writes is the one that stays: the
+scaffold never overwrites a file, so the platform articles are dropped with a
+warning and the plan re-decides the stack the template has already decided.
