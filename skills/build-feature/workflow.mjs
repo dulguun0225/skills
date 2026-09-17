@@ -92,6 +92,11 @@ if (STAGES.indexOf(cfg.from) > STAGES.indexOf(cfg.until)) throw new Error('args.
 if (STAGES.indexOf(cfg.from) > STAGES.indexOf('specify') && !cfg.featureDir) {
   throw new Error(`args.featureDir is required when starting from "${cfg.from}"`)
 }
+// Preflight is the only stage that resolves the definition-of-done command. A run that
+// starts after it would hand every later prompt the literal string "null" as the command.
+if (STAGES.indexOf(cfg.from) > STAGES.indexOf('preflight') && !cfg.wall) {
+  throw new Error(`args.wall is required when starting from "${cfg.from}": preflight resolves it and is skipped`)
+}
 
 const runs = stage => {
   const i = STAGES.indexOf(stage)
