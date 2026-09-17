@@ -36,13 +36,13 @@ The default an agent reaches for is to run `/speckit-specify` itself, read the r
 |---|---|---|
 | preflight, phases, finish | Sonnet low | shell commands and parsing; the return value is a list of facts |
 | specify, clarify, fix-spec | Opus medium | transcribes a written source into the template and records decisions; the review behind it catches what it misses |
-| review-spec, review-plan, converge | Fable high | the refutation that stands in for the human; it reads far more than it writes, so its cost is bounded by reading |
-| plan | Fable xhigh | the one decision-heavy pass; every later stage inherits its errors |
-| fix-plan, remediate (critical) | Fable medium | edits that may reach the constitution |
+| review-spec, review-plan, converge | Opus high | the refutation that stands in for the human; it reads far more than it writes, so its cost is bounded by reading |
+| plan | Opus xhigh | the one decision-heavy pass; every later stage inherits its errors |
+| fix-plan, remediate (critical) | Opus medium | edits that may reach the constitution |
 | tasks, analyze, remediate | Opus medium | decomposition and cross-checking of artifacts a stronger tier already reviewed |
-| implement, one agent per phase | Fable medium | a bounded context per phase; the wall is the check, and effort here buys fewer red-wall retries |
+| implement, one agent per phase | Opus medium | a bounded context per phase; the wall is the check, and effort here buys fewer red-wall retries |
 
-The default is one model for the whole run — the session's. Rejected because the run is dominated by reading and shell output, where the tier changes the price and not the result, while the three stages that decide (plan and the two reviews) are a small share of the tokens and the whole of the quality.
+Opus is the ceiling: the first end-to-end run (2026-09-17) put the review and plan tiers on Fable and spent 2.1M subagent tokens reaching review-spec twice; the refutation's value is the fresh context and the reading, not the tier, so the ceiling came down to Opus with effort unchanged. The default is one model for the whole run — the session's. Rejected because the run is dominated by reading and shell output, where the tier changes the price and not the result, while the three stages that decide (plan and the two reviews) are a small share of the tokens and the whole of the quality.
 
 (Check: the run's progress tree labels every agent `<stage> (<model> <effort>)`; an agent whose label carries the session default is the finding — *convention*, 2026-09-17.)
 

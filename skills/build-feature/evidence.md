@@ -34,3 +34,5 @@ The skill is inception-cadence for a feature — it fires once per feature, and 
 ## 2026-09-17 — first end-to-end run, product-catalog 003-product-version
 
 Run `wf_cc1aa65d-148`: preflight, specify, clarify (5 questions self-answered), three review-spec rounds (6 → 3 → 1 blocking) in 71 min, 8 agents, 1.19M subagent tokens; exit `needs-human` at review-spec. The remaining blocker was a constitution decision (three Article VII articles written by 002 about tables 003 owns). Consequence: the admission test in the plan, review-plan and fix-plan prompts, and in the project's constitution Governance.
+
+**2026-09-17, tier ceiling lowered to Opus.** Runs `wf_cc1aa65d-148` and `wf_e460bffc-289` (Fable high on the reviews, xhigh on plan) cost 1.19M and 0.91M subagent tokens for eight and five agents without leaving review-spec. The user's verdict: the tier eats too many tokens for what it adds; every `fable` row in `TIERS` is now `opus`, efforts unchanged.
