@@ -30,21 +30,22 @@ The default an agent reaches for is to run `/speckit-specify` itself, read the r
 
 ## Each stage runs on the tier it earns
 
-**Take the model and effort of every stage from the `TIERS` table in `workflow.mjs`; change a row for one run with `args.tiers`, never by editing the table.** The aliases resolve to the newest model of each line; effort is one of `low`, `medium`, `high`, `xhigh`, `max`.
+**Take the model and effort of every stage from the `TIERS` table in `workflow.mjs`, and take every row from the roster of six: Haiku, Sonnet 5 low, Sonnet 5 medium, Opus 5 low, Opus 5 medium, Fable 5.1 low. Change a row for one run with `args.tiers`, never by editing the table.** The aliases resolve to the newest model of each line. No other pair exists for this script: a row on `high`, `xhigh` or `max`, or on Fable above low, fails the run before its first agent starts, whether it came from the table or from `args.tiers`.
 
 | Stage | Tier | Why this tier |
 |---|---|---|
 | preflight, phases, finish | Sonnet low | shell commands and parsing; the return value is a list of facts |
 | specify, clarify, fix-spec | Opus medium | transcribes a written source into the template and records decisions; the review behind it catches what it misses |
-| review-spec, review-plan, converge | Opus high | the refutation that stands in for the human; it reads far more than it writes, so its cost is bounded by reading |
-| plan | Opus xhigh | the one decision-heavy pass; every later stage inherits its errors |
+| review-spec, review-plan | Fable low | the refutation that stands in for the human; the roster's tier for an adversarial review, at the one effort the roster admits it on |
+| plan | Fable low | the one decision-heavy pass; every later stage inherits its errors |
 | fix-plan, remediate (critical) | Opus medium | edits that may reach the constitution |
 | tasks, analyze, remediate | Opus medium | decomposition and cross-checking of artifacts a stronger tier already reviewed |
 | implement, one agent per phase | Opus medium | a bounded context per phase; the wall is the check, and effort here buys fewer red-wall retries |
+| converge | Opus medium | reads the whole implementation, up to three rounds, and what it appends is implemented and then wall-checked; the row to raise with `args.tiers` when a converge reports converged over a gap a person can see |
 
-Opus is the ceiling: the first end-to-end run (2026-09-17) put the review and plan tiers on Fable and spent 2.1M subagent tokens reaching review-spec twice; the refutation's value is the fresh context and the reading, not the tier, so the ceiling came down to Opus with effort unchanged. The default is one model for the whole run — the session's. Rejected because the run is dominated by reading and shell output, where the tier changes the price and not the result, while the three stages that decide (plan and the two reviews) are a small share of the tokens and the whole of the quality.
+Three roster tiers go unused. Haiku, because no stage is locate-and-quote: preflight, phases and finish each parse and refuse. Sonnet medium and Opus low, because every writing stage is priced at Opus medium and reviewed by a stronger tier, and lowering one is a measurement this skill has not taken. The default is one model for the whole run — the session's. Rejected because the run is dominated by reading and shell output, where the tier changes the price and not the result, while the three stages that decide (plan and the two artifact reviews) are the whole of the quality. Fable at high and xhigh effort on those three stages was also rejected, 2026-09-17: two runs spent 1.19M and 0.91M subagent tokens without leaving review-spec. The roster admits Fable at low effort only; whether low effort brings that spend down is the next run's measurement, not a claim here.
 
-(Check: the run's progress tree labels every agent `<stage> (<model> <effort>)`; an agent whose label carries the session default is the finding — *convention*, 2026-09-17.)
+(Check: `tier()` in `workflow.mjs` refuses any row whose model and effort are not a roster pair, from the table or from `args.tiers`, before the first agent starts, and the run's progress tree labels every agent `<stage> (<model> <effort>)` — *bespoke*, `workflow.mjs`, 2026-09-18.)
 
 ## A gate is a fresh-context refutation, not a human
 

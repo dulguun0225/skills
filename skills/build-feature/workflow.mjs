@@ -34,18 +34,22 @@ export const meta = {
 }
 
 // ---------------------------------------------------------------------------
-// Tiers. Model aliases resolve to the latest model of each line ('sonnet',
-// 'opus', 'fable'); effort is one of low | medium | high | xhigh | max.
-// The rationale per row is in SKILL.md; override any row with args.tiers.
+// Tiers. The roster is six (model, effort) pairs — Haiku, Sonnet low, Sonnet
+// medium, Opus low, Opus medium, Fable low — and every row, from this table or
+// from args.tiers, must be one of them; tier() refuses any other before the
+// first agent starts. Model aliases resolve to the latest model of each line.
+// Haiku is in the roster with no effort named; a row on it passes low. The
+// rationale per row is in SKILL.md.
 // ---------------------------------------------------------------------------
+const ROSTER = { haiku: ['low'], sonnet: ['low', 'medium'], opus: ['low', 'medium'], fable: ['low'] }
 const TIERS = {
   preflight: { model: 'sonnet', effort: 'low' },
   specify: { model: 'opus', effort: 'medium' },
   clarify: { model: 'opus', effort: 'medium' },
-  reviewSpec: { model: 'opus', effort: 'high' },
+  reviewSpec: { model: 'fable', effort: 'low' },
   fixSpec: { model: 'opus', effort: 'medium' },
-  plan: { model: 'opus', effort: 'xhigh' },
-  reviewPlan: { model: 'opus', effort: 'high' },
+  plan: { model: 'fable', effort: 'low' },
+  reviewPlan: { model: 'fable', effort: 'low' },
   fixPlan: { model: 'opus', effort: 'medium' },
   tasks: { model: 'opus', effort: 'medium' },
   analyze: { model: 'opus', effort: 'medium' },
@@ -53,7 +57,7 @@ const TIERS = {
   remediateCritical: { model: 'opus', effort: 'medium' },
   phases: { model: 'sonnet', effort: 'low' },
   implement: { model: 'opus', effort: 'medium' },
-  converge: { model: 'opus', effort: 'high' },
+  converge: { model: 'opus', effort: 'medium' },
   finish: { model: 'sonnet', effort: 'low' },
 }
 
@@ -102,11 +106,18 @@ const runs = stage => {
   const i = STAGES.indexOf(stage)
   return i >= STAGES.indexOf(cfg.from) && i <= STAGES.indexOf(cfg.until)
 }
+const rosterText = Object.entries(ROSTER).map(([m, es]) => es.map(e => `${m} ${e}`).join(', ')).join(', ')
 const tier = name => {
   const t = cfg.tiers[name]
   if (!t || !t.model || !t.effort) throw new Error(`tiers.${name} must be {model, effort}`)
+  if (!(ROSTER[t.model] || []).includes(t.effort)) {
+    throw new Error(`tiers.${name} is "${t.model} ${t.effort}", outside the roster: ${rosterText}`)
+  }
   return { model: t.model, effort: t.effort }
 }
+// Every row is checked here, not when its stage runs, so a row outside the roster
+// fails the run before the first agent starts rather than hours in.
+for (const name of Object.keys(cfg.tiers)) tier(name)
 
 // ---------------------------------------------------------------------------
 // Schemas — every stage returns data, never prose.
