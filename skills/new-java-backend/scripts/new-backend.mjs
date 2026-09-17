@@ -30,10 +30,11 @@ import { parseArgs } from 'node:util';
 
 const TEMPLATE_URL = process.env.TEMPLATE_URL || 'https://github.com/dulguun0225/java-backend-template.git';
 // The pinned template commit. Move it deliberately, in a commit that says which gate change it brings in.
-// Recorded 2026-09-16: "constitution: Article VI names no package; CLAUDE.md holds the pointer (#8)", the squash
-// commit on main; it carries #7 (Node scripts, mise-pinned toolchain, scaffold-before-spec-kit ordering, the
-// constitution warning in init.mjs) plus Article VI no longer naming the worked-shape package.
-const DEFAULT_REF = '2ee1d16052f6f94f150a3ab5ec67a8c545d1b546';
+// Recorded 2026-09-17: "scaffold: project-level .claude/settings.json pins worktree.baseRef=head" on main. It
+// brings in the lifted `.claude/settings.json` (an agent worktree starts from the session's HEAD, not main) and
+// the `.claude/worktrees/` ignore, on top of #9 (guarded version update, ORDER BY id ban, table ownership,
+// vacuum ruleset, migration lint additions) and #8 (Article VI names no package; CLAUDE.md holds the pointer).
+const DEFAULT_REF = '5a3af3e9cd54716dc9a32c860e703c12b243ecbb';
 
 const [major] = process.versions.node.split('.').map(Number);
 if (major < 22) die(`node ${process.versions.node} is too old; this script needs 22 or newer`);
