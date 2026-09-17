@@ -29,3 +29,8 @@ The interactive points in the installed skills, read 2026-09-17: `/speckit-speci
 ## What this skill does not do
 
 The skill is inception-cadence for a feature — it fires once per feature, and its frontmatter is paid every session; it exists because the alternative was a person at two gates and a night of attention per feature. The sequential shape is a decision: spec, plan, tasks and code are one dependency chain, and the one place work could fan out — implement phases — is kept sequential because each phase's wall run touches the same tree.
+
+
+## 2026-09-17 — first end-to-end run, product-catalog 003-product-version
+
+Run `wf_cc1aa65d-148`: preflight, specify, clarify (5 questions self-answered), three review-spec rounds (6 → 3 → 1 blocking) in 71 min, 8 agents, 1.19M subagent tokens; exit `needs-human` at review-spec. The remaining blocker was a constitution decision (three Article VII articles written by 002 about tables 003 owns). Consequence: the admission test in the plan, review-plan and fix-plan prompts, and in the project's constitution Governance.

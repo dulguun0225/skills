@@ -444,7 +444,7 @@ if (runs('plan')) {
     SKILL_HOW('speckit-plan'),
     `The feature is ${state.featureDir}; the spec is ${P.spec}; the constitution is ${CONSTITUTION}.`,
     cfg.planGuidance ? `Arguments for the skill (planning guidance): ${cfg.planGuidance}` : 'Arguments for the skill: none.',
-    'Rules: read the constitution first and treat every article as binding; read the existing code the feature touches before deciding on a design; leave no "[NEEDS CLARIFICATION]" — decide from the spec, the constitution and the code, and record the decision in research.md. Run the before_plan and after_plan hooks.',
+    'Rules: read the constitution first and treat every article as binding; read the existing code the feature touches before deciding on a design; leave no "[NEEDS CLARIFICATION]" — decide from the spec, the constitution and the code, and record the decision in research.md. An "Article VII candidate" is admissible only under the constitution\'s Governance admission test: it binds two or more feature packages, or a table or package this feature does not own; a rule about this feature\'s own tables, columns, endpoints or error codes is a plan decision recorded in plan.md and docs/GATES.md, never a candidate; a pre-positioned or placeholder structure is never the subject of one. Run the before_plan and after_plan hooks.',
     'Return done=true with a one-paragraph summary of the design and the artifacts written.',
   ].join('\n'), S.done, 'Plan')
 
@@ -460,7 +460,7 @@ if (runs('plan')) {
       'Read the spec, every plan artifact, the constitution, the project CLAUDE.md files, and the existing code and schema the plan touches or depends on.',
       'Report a finding for each of these, with the severity given:',
       '- a functional requirement, success criterion, state, transition or error case in the spec that no plan element realises — blocking',
-      '- a plan decision that violates a constitution article or a build gate the project documents — blocking, naming the article or gate and the amendment the constitution would need if the decision is right',
+      '- a plan decision that violates a constitution article or a build gate the project documents — blocking, naming the article or gate; propose a constitution amendment only when the rule passes the constitution\'s Governance admission test (it binds two or more features, or a table the feature does not own), otherwise the finding is against the plan',
       '- a contract, data model or migration that contradicts the existing schema, an existing endpoint, or another plan artifact — blocking',
       '- a decision that contradicts what the existing code already does without saying so and migrating it — major',
       '- a "[NEEDS CLARIFICATION]", a template placeholder, or a research question left open — major',
@@ -472,7 +472,7 @@ if (runs('plan')) {
     ].filter(Boolean).join('\n'),
     fixPrompt: (findings, round, minorsOnly) => [
       UNATTENDED,
-      `Apply the following review findings to the plan artifacts under ${state.featureDir}. Edit in place; do not regenerate a file. When a finding says the constitution needs an amendment, amend ${CONSTITUTION} following the constitution's own amendment and versioning rules and only in the articles it marks as the project's own, and record the amendment in ${P.research}.`,
+      `Apply the following review findings to the plan artifacts under ${state.featureDir}. Edit in place; do not regenerate a file. When a finding says the constitution needs an amendment, amend ${CONSTITUTION} only if the amendment passes the constitution's Governance admission test (it binds two or more features, or a table the feature does not own — otherwise change the plan instead and say so under skipped), following the constitution's own amendment and versioning rules and only in the articles it marks as the project's own, and record the amendment in ${P.research}.`,
       minorsOnly ? 'These are minor findings; apply each unless it would change meaning.' : 'Apply every finding. If a finding is wrong against the spec or the code, do not apply it and list it under skipped with the reason.',
       findingsBlock(findings),
       `Then commit with the message "plan: review round ${round}". Return done=true with the short sha.`,
