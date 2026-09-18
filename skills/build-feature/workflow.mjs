@@ -14,9 +14,13 @@
 //   → tasks → analyze ⇄ remediate → implement (one agent per phase) → converge ⇄ implement
 //   → finish
 //
-// Loops terminate on a clean verdict or on their round cap; a cap reached with
-// blocking findings still open ends the run with status "needs-human" and the
-// findings, never with a silent approval.
+// Review and analyze loops terminate on a clean verdict or on their round cap; a
+// cap reached with blocking findings still open ends the run with status
+// "needs-human" and the findings, never with a silent approval. The converge loop
+// is different: it has no fixed point (evidence.md, 2026-09-18), so it stops at a
+// severity floor — when the round reports converged, or when nothing it found is
+// above LOW — and reaching its round cap is a reported outcome the run carries to
+// finish, not a human question; the wall is still the gate.
 
 export const meta = {
   name: 'build-feature',
@@ -28,7 +32,7 @@ export const meta = {
     { title: 'Plan', detail: 'plan, fresh-context review, fix' },
     { title: 'Tasks', detail: 'tasks, analyze, remediate' },
     { title: 'Implement', detail: 'one agent per phase, wall green after each' },
-    { title: 'Converge', detail: 'converge, implement appended phase, repeat' },
+    { title: 'Converge', detail: 'converge, implement appended phase, repeat until nothing above LOW is left' },
     { title: 'Finish', detail: 'wall, push, optional fast-forward merge' },
   ],
 }
@@ -85,7 +89,7 @@ const cfg = {
   until: a.until || 'finish',
   maxReviewRounds: a.maxReviewRounds ?? 2,
   maxAnalyzeRounds: a.maxAnalyzeRounds ?? 2,
-  maxConvergeRounds: a.maxConvergeRounds ?? 3,
+  maxConvergeRounds: a.maxConvergeRounds ?? 6,
   maxWallAttempts: a.maxWallAttempts ?? 3,
   tiers: Object.assign({}, TIERS, a.tiers || {}),
 }
@@ -235,11 +239,26 @@ const S = {
   },
   converged: {
     type: 'object',
-    required: ['outcome', 'summary'],
+    required: ['outcome', 'findings', 'summary'],
     properties: {
       outcome: { type: 'string', enum: ['converged', 'tasks_appended'] },
       phase: { type: 'integer', description: 'the appended phase number when outcome is tasks_appended' },
       taskIds: { type: 'array', items: { type: 'string' } },
+      findings: {
+        type: 'array',
+        description: 'every gap the assessment found, appended or not; empty when outcome is converged',
+        items: {
+          type: 'object',
+          required: ['severity', 'location', 'summary'],
+          properties: {
+            // The same scale the analyze schema uses; a second vocabulary is not admitted.
+            severity: { type: 'string', enum: ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] },
+            location: { type: 'string', description: 'the requirement id, plan section or file the gap is against' },
+            summary: { type: 'string' },
+            taskId: { type: 'string', description: 'the appended task that closes it, empty if none was appended' },
+          },
+        },
+      },
       summary: { type: 'string' },
     },
   },
@@ -296,6 +315,7 @@ const state = {
   branch: cfg.branch,
   wall: cfg.wall,
   rounds: { reviewSpec: 0, reviewPlan: 0, analyze: 0, converge: 0 },
+  converge: null, // { ended, rounds, findings } once the converge stage has run
   implemented: [],
   open: [],
   stagesRun: [],
@@ -599,7 +619,13 @@ if (runs('implement')) {
 if (runs('converge')) {
   phase('Converge')
   state.stagesRun.push('converge')
-  let converged = false
+  // Converge has no fixed point: on the hand-driven 001-product-hierarchy run
+  // (2026-09-18) it took five passes, and the fifth appended nothing only because
+  // the operator stopped applying findings below the floor. So the loop ends on
+  // either of two conditions — the round reports converged, or nothing it found
+  // is above LOW — and reaching the cap is reported, not escalated.
+  const SEVERITY_FLOOR = 'LOW'
+  let ended = null
   let last = null
   for (let round = 1; round <= cfg.maxConvergeRounds; round++) {
     last = await run('converge', `converge ${round}`, [
@@ -607,17 +633,36 @@ if (runs('converge')) {
       SKILL_HOW('speckit-converge'),
       `The feature is ${state.featureDir}.`,
       `Run the assessment in full. Return the outcome exactly as the skill defines it: "converged" when nothing was appended, "tasks_appended" with the new phase number and the appended task ids otherwise. When tasks were appended, commit tasks.md with the message "tasks: convergence round ${round}".`,
+      'Also return every gap the assessment found as findings, each graded CRITICAL, HIGH, MEDIUM or LOW on the same scale /speckit-analyze uses: CRITICAL for a requirement or constitution article the code violates or does not realise, HIGH for a gate, contract or test the plan names and the code lacks, MEDIUM for a documented decision the code departs from without breaking a requirement, LOW for wording, naming, ordering or a gap a person would not notice. Grade the gap, not the size of the fix. Name the task id that closes each appended one.',
     ].join('\n'), S.converged, 'Converge')
     state.rounds.converge = round
-    if (last.outcome === 'converged') { converged = true; log(`converged after ${round} round(s)`); break }
-    log(`converge round ${round}: ${last.taskIds ? last.taskIds.length : '?'} tasks appended as phase ${last.phase}`)
+    const findings = Array.isArray(last.findings) ? last.findings : []
+    const aboveFloor = findings.filter(f => f.severity !== SEVERITY_FLOOR)
+    const grade = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map(sev => `${findings.filter(f => f.severity === sev).length} ${sev.toLowerCase()}`).join(', ')
+    if (last.outcome === 'converged') {
+      ended = 'converged'
+      log(`converge round ${round}: converged — nothing appended (${grade})`)
+      break
+    }
+    log(`converge round ${round}: ${last.taskIds ? last.taskIds.length : '?'} tasks appended as phase ${last.phase} (${grade})`)
+    // What was appended is implemented even when the loop is about to stop at the
+    // floor: the tasks are already in tasks.md, and finish reports them unchecked otherwise.
     const phases = await readPhases(`phases after converge ${round}`, 'Converge')
     const ph = phases.find(p => p.number === last.phase) || phases[phases.length - 1]
     const r = await implementPhase(ph, 'Converge')
     if (!r.wallGreen) return needsHuman('converge', `the wall is red after implementing convergence phase ${ph.number}`, { unchecked: r.unchecked, wallOutput: r.wallOutput || '' })
     if (r.unchecked.length) return needsHuman('converge', `convergence tasks stay unchecked`, r.unchecked)
+    if (aboveFloor.length === 0) {
+      ended = 'severity-floor'
+      log(`converge round ${round}: nothing above ${SEVERITY_FLOOR} — stopped at the severity floor after implementing phase ${ph.number}`)
+      break
+    }
   }
-  if (!converged) return needsHuman('converge', `not converged after ${cfg.maxConvergeRounds} rounds`, last)
+  if (!ended) {
+    ended = 'round-cap'
+    log(`converge round cap ${cfg.maxConvergeRounds} reached with findings above ${SEVERITY_FLOOR} still reported — carried to finish; the wall is the gate`)
+  }
+  state.converge = { ended, rounds: state.rounds.converge, floor: SEVERITY_FLOOR, findings: last ? last.findings || [] : [] }
 }
 
 // ---------------------------------------------------------------------------
@@ -649,6 +694,7 @@ return {
   branch: state.branch,
   wall: state.wall,
   rounds: state.rounds,
+  converge: state.converge,
   implemented: state.implemented,
   finish: finished,
   stagesRun: state.stagesRun,

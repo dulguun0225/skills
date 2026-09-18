@@ -196,6 +196,12 @@ was loading `java-backend-rules` whole at a moment none of its directives bind. 
 name; unprompted firing on "create a new Java backend here" unmeasured, and the bare-fixture case on the backlog
 now has a second candidate skill to point at.
 
+## `converge-feature`, and the severity floor in `build-feature` — 2026-09-18
+
+Ground: the product-catalog repo's `001-product-hierarchy`, converged by hand on `main` (head `f2b5f1f`): five converge ⇄ implement passes, no fixed point, the fifth appending nothing only because the operator had stopped applying LOW findings. `build-feature`'s converge loop now carries every gap graded on the analyze scale, stops on `converged` or on a round with nothing above LOW, logs which, defaults to six rounds, and reports reaching the cap as `converge.ended: "round-cap"` on a `done` return — the wall stays the gate, red wall and unchecked appended tasks stay `needs-human`. `converge-feature` is a named entry point to that loop from `converge` to `finish` through the sibling's script, no script of its own; the rejected alternative is `/loop` with a retyped sentence, on the three grounds its SKILL.md states. Both marked *decided, not yet validated*: no scripted run has yet reached the converge stage on this table.
+
+Per-session cost, `npm run tokens:frontmatter`, 2026-09-18, o200k_base: `converge-feature` 114 tokens (name plus description; 119 with framing), set total 4,851 across twenty-three skills, up from 4,581 across twenty-one on 2026-09-16, with `build-feature`'s description edit inside that delta. A per-feature-cadence skill like its sibling; accepted because the alternative was a sentence retyped per feature and per project with no written stop rule. Firing: meant to be invoked by name; unprompted firing on "finish this feature" unmeasured.
+
 ## What is still open
 
 - The firing case above.
