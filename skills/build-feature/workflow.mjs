@@ -31,6 +31,21 @@
 // the review and analyze loops, converge runs one pass more than its cap — an
 // assess-only round that appends nothing — so the findings the run reports are the
 // ones no implement pass has closed.
+//
+// Every needs-human exit writes a handoff file first — HANDOFF.md in the feature
+// directory — carrying the stage, the reason, the full findings rendered legibly,
+// the branch, the round counts, the stages run, the run's date and the path of the
+// machine-local run journal, committed on the feature branch and pushed when
+// args.push is true. Gap observed 2026-09-18 on run wf_7e4e8726-4b5 (converge, three
+// findings): the payload existed only in the invoking session's tool result, a /tmp
+// file and the run journal under ~/.claude/projects/, so no colleague could reach it.
+// The sandbox has no filesystem, so the write is one agent (the `handoff` tier row,
+// sonnet low) dispatched on the way out; it is wrapped so that a handoff which fails,
+// errors or returns nothing still yields the full needs-human payload, with the
+// outcome recorded under `handoff` on the return. An exit before a feature directory
+// exists — every preflight exit — writes nothing and says so there instead: there is
+// no feature branch to carry the file, and a dirty tree is one of the states
+// preflight refuses on, so a commit at the repo root would sweep it up.
 
 export const meta = {
   name: 'build-feature',
@@ -44,6 +59,7 @@ export const meta = {
     { title: 'Implement', detail: 'one agent per phase, wall green after each' },
     { title: 'Converge', detail: 'converge, implement appended phase, repeat until nothing above the severity floor is left' },
     { title: 'Finish', detail: 'wall, push, optional fast-forward merge' },
+    { title: 'Handoff', detail: 'on a needs-human exit: write, commit and push HANDOFF.md in the feature directory' },
   ],
 }
 
@@ -85,6 +101,11 @@ const TIERS = {
   implement: { model: 'opus', effort: 'medium' },
   converge: { model: 'opus', effort: 'medium' },
   finish: { model: 'sonnet', effort: 'low' },
+  // Writes one file whose whole text this script hands it, commits it, pushes it.
+  // Nothing here is a judgment, so it is priced at the cheapest tier that runs a
+  // shell and a write; the document is rendered in the script precisely so a tier
+  // this low cannot paraphrase a finding or drop one.
+  handoff: { model: 'sonnet', effort: 'low' },
 }
 
 const STAGES = ['preflight', 'specify', 'clarify', 'review-spec', 'plan', 'review-plan', 'tasks', 'analyze', 'implement', 'converge', 'finish']
@@ -291,6 +312,17 @@ const S = {
       summary: { type: 'string' },
     },
   },
+  handoff: {
+    type: 'object',
+    required: ['written', 'path'],
+    properties: {
+      written: { type: 'boolean', description: 'true only when the whole document is on disk at path' },
+      path: { type: 'string', description: 'repo-relative path written, empty when written is false' },
+      commit: { type: 'string', description: 'short sha of the commit that holds it, empty if nothing was committed' },
+      pushed: { type: 'boolean' },
+      note: { type: 'string', description: 'when written is false, why; otherwise anything the writer had to decide' },
+    },
+  },
   finished: {
     type: 'object',
     required: ['wallGreen', 'clean', 'allTasksChecked', 'pushed', 'merged', 'head', 'summary'],
@@ -350,16 +382,171 @@ const state = {
   stagesRun: [],
 }
 
-const needsHuman = (stage, why, detail) => ({
-  status: 'needs-human',
-  stage,
-  why,
-  detail: detail === undefined ? null : detail,
-  featureDir: state.featureDir,
-  branch: state.branch,
-  rounds: state.rounds,
-  stagesRun: state.stagesRun,
-})
+// ---------------------------------------------------------------------------
+// The handoff artifact.
+//
+// A needs-human exit is a decision handed back to a person, and until 2026-09-18 it
+// was handed back only to the session that started the run: the payload lived in
+// that session's tool result, in a file under /tmp, and in the run journal under
+// ~/.claude/projects/ — three machine-local places, none of them in the repository.
+// Run wf_7e4e8726-4b5 stopped at converge with three findings no colleague could
+// read. So every needs-human exit now leaves one committed file behind.
+//
+// The document is rendered here rather than described to the agent. The sandbox has
+// no filesystem, so an agent must do the write; making that agent compose the report
+// would let the cheapest tier in the table paraphrase a finding, reorder it or drop
+// it. It gets finished Markdown and two placeholders it can only substitute, because
+// the script has no Date and does not know its own run id.
+// ---------------------------------------------------------------------------
+const HANDOFF_FILE = 'HANDOFF.md'
+
+const scalar = v => (typeof v === 'string' ? v : JSON.stringify(v))
+
+// One renderer for every detail payload the eleven call sites pass: a list of
+// strings (problems, unchecked task ids), a list of finding objects on any of the
+// three finding shapes this script carries, or a plain object ({unchecked, wallOutput}).
+// Unknown keys are printed rather than skipped — a reader who was not in the session
+// is owed everything the stage returned, not the fields this function knew about.
+const renderFinding = (f, i) => {
+  const head = [f.severity ? `[${f.severity}]` : '', f.id || '', f.artifact || '', f.location || '']
+    .filter(Boolean).join(' — ')
+  const seen = { severity: 1, id: 1, artifact: 1, location: 1 }
+  const body = []
+  for (const key of ['summary', 'problem', 'recommendation', 'fix', 'taskId']) {
+    seen[key] = 1
+    if (f[key] !== undefined && f[key] !== null && f[key] !== '') body.push(`   - ${key}: ${scalar(f[key])}`)
+  }
+  for (const key of Object.keys(f)) {
+    if (!seen[key] && f[key] !== undefined && f[key] !== null && f[key] !== '') body.push(`   - ${key}: ${scalar(f[key])}`)
+  }
+  return [`${i + 1}. ${head || '(no location given)'}`].concat(body).join('\n')
+}
+
+const detailBlock = detail => {
+  if (detail === null || detail === undefined) return '_The stage returned no detail payload._'
+  if (Array.isArray(detail)) {
+    if (!detail.length) return '_The stage returned an empty list._'
+    return detail.map((d, i) => (d && typeof d === 'object' ? renderFinding(d, i) : `${i + 1}. ${scalar(d)}`)).join('\n')
+  }
+  if (typeof detail === 'object') {
+    return Object.keys(detail).map(key => {
+      const v = detail[key]
+      if (Array.isArray(v)) return `- ${key}: ${v.length ? v.map(scalar).join(', ') : '(none)'}`
+      if (v === '' || v === null || v === undefined) return `- ${key}: (empty)`
+      if (typeof v === 'object') return `- ${key}:\n\n\`\`\`json\n${JSON.stringify(v, null, 2)}\n\`\`\`\n`
+      if (typeof v === 'string' && v.indexOf('\n') !== -1) return `- ${key}:\n\n\`\`\`\n${v}\n\`\`\`\n`
+      return `- ${key}: ${scalar(v)}`
+    }).join('\n')
+  }
+  return scalar(detail)
+}
+
+const handoffDoc = (stage, why, detail) => [
+  `# Handoff — the unattended build of ${state.featureDir} stopped at ${stage}`,
+  '',
+  `**This run has stopped and is waiting on a person.** \`build-feature\` runs the spec-kit cycle with no human gate: it reached the \`${stage}\` stage, found something no rule it carries can decide, and ended there. Nothing reported below was fixed.`,
+  '',
+  `**The decision being asked of you:** read each item under *What the stage reported*, decide whether it is real, and either apply the fix or record why it is not a defect. Then restart the run (below). It will not resume by itself, and outside this file the report exists only on the machine that ran it.`,
+  '',
+  '| | |',
+  '|---|---|',
+  `| Stopped at stage | \`${stage}\` |`,
+  `| Reason | ${why} |`,
+  `| Feature directory | \`${state.featureDir}\` |`,
+  `| Branch | \`${state.branch || '(unknown)'}\` |`,
+  `| Stages run | ${state.stagesRun.length ? state.stagesRun.join(' → ') : '(none)'} |`,
+  `| Rounds | ${Object.keys(state.rounds).map(k => `${k} ${state.rounds[k]}`).join(', ')} |`,
+  `| Definition of done | \`${state.wall || '(not resolved)'}\` |`,
+  `| Converge severity floor | \`${cfg.severityFloor}\` |`,
+  '| Run date | {{RUN_DATE}} |',
+  '',
+  '## What the stage reported',
+  '',
+  detailBlock(detail),
+  '',
+  '## Restarting the run',
+  '',
+  `Once the decision is applied, restart at this stage through the \`build-feature\` skill with \`from: "${stage}"\`, \`featureDir: "${state.featureDir}"\`, \`branch: "${state.branch || ''}"\` and \`wall: "${state.wall || ''}"\`. \`wall\` is required on any start after preflight. To replay this run instead of restarting it, pass \`resumeFromRunId\` with the run id in the journal path below.`,
+  '',
+  '## Run journal',
+  '',
+  '{{RUN_JOURNAL}}',
+  '',
+  'The journal holds every agent prompt and every agent return value of this run. It is machine-local and is not in this repository: if you are reading this anywhere else, this file is the whole of what the run reported.',
+  '',
+  `_Written by \`build-feature\`'s handoff stage. The next needs-human exit on this feature overwrites it; \`git log -p -- ${state.featureDir}/${HANDOFF_FILE}\` holds the earlier ones._`,
+].join('\n')
+
+// Returns the handoff record for the return value and never throws: a handoff that
+// fails must not cost the caller the verdict, because losing the findings because the
+// write failed is strictly worse than the behaviour this replaced. Every failure path
+// — no feature directory, a thrown dispatch, a skipped or dead agent, an agent that
+// reports it could not write — ends in a record saying so, and the caller returns its
+// full payload regardless.
+const writeHandoff = async (stage, why, detail) => {
+  // Every preflight exit lands here: no feature has been created, so there is no
+  // feature directory and no feature branch to carry the file. The write is skipped
+  // rather than aimed at the repo root. A preflight refusal is a repo-state fact the
+  // next person reproduces in one command — a dirty tree, the wrong branch, a missing
+  // speckit skill, no definition-of-done command — not a finding that exists nowhere
+  // else; and a dirty tree is one of the things preflight refuses on, so a commit at
+  // the root would sweep somebody's uncommitted work into a handoff commit.
+  if (!state.featureDir) {
+    log(`no handoff file: the run stopped at ${stage} before a feature directory existed; the detail on the return value is the whole report`)
+    return { written: false, path: null, note: 'no feature directory yet — the run stopped before specify, so there is nowhere in the repo the file belongs. The detail on this return value is the whole report.' }
+  }
+  const path = `${state.featureDir}/${HANDOFF_FILE}`
+  let r = null
+  try {
+    const t = tier('handoff')
+    r = await agent([
+      UNATTENDED,
+      `The unattended feature build has stopped at the "${stage}" stage and needs a person. Your only job is to leave a durable handoff file in the repository, so that somebody who was not in this session can pick the decision up. Fix nothing, run no build, and change no file other than the one named here.`,
+      '1. Get today\'s date: run `date -I`.',
+      '2. Find this run\'s journal — the newest `wf_*.json` under this project\'s Claude directory: `ls -t ~/.claude/projects/$(pwd | sed \'s#/#-#g\')/*/workflows/wf_*.json 2>/dev/null | head -1`. If it finds nothing, use the literal text `(not found on this machine)`.',
+      `3. Write the document between the BEGIN and END markers below to \`${path}\`, byte for byte, replacing exactly two placeholders and nothing else: \`{{RUN_DATE}}\` with the date from step 1, and \`{{RUN_JOURNAL}}\` with the absolute journal path from step 2 wrapped in single backticks. Do not summarise it, re-word it, reorder it, shorten it or add to it — it is the report, not a draft of one. Do not write the BEGIN and END marker lines themselves. Overwrite the file if it already exists.`,
+      `4. Commit that one file and nothing else: \`git add -- ${path} && git commit -m "handoff: the ${stage} stage stopped and needs a person" -- ${path}\`. The pathspec matters: the working tree may hold the run's unfinished or failing work, and none of it belongs in this commit.`,
+      cfg.push
+        ? '5. Push it: `git push -u origin HEAD`. Set pushed=true only if the push succeeded; a push that fails is not a failed handoff, so report it in note and leave written=true.'
+        : '5. Do not push; return pushed=false. This run was started with pushing disabled.',
+      'Return written=true only when the whole document is on disk at that path. If any step fails, return written=false with the reason in note; never return written=true for a partial or paraphrased file.',
+      '--- BEGIN DOCUMENT ---',
+      handoffDoc(stage, why, detail),
+      '--- END DOCUMENT ---',
+    ].join('\n'), { label: `handoff (${t.model} ${t.effort})`, phase: 'Handoff', schema: S.handoff, model: t.model, effort: t.effort })
+  } catch (e) {
+    r = null
+    log(`the handoff agent threw: ${e && e.message ? e.message : String(e)}`)
+  }
+  if (r && r.written && r.path) {
+    log(`handoff written to ${r.path}${r.commit ? ` (${r.commit})` : ''}${r.pushed ? ', pushed' : ''}`)
+    return { written: true, path: r.path, commit: r.commit || '', pushed: !!r.pushed, note: r.note || '' }
+  }
+  log(`NO handoff file was written: the findings of this run exist only on its return value and in its journal`)
+  return {
+    written: false,
+    path: null,
+    note: (r && r.note) || 'the handoff agent failed, was skipped, or returned nothing. The detail on this return value is the whole report.',
+  }
+}
+
+// Keeps the shape every caller and reader already relies on — status, stage, why,
+// detail, featureDir, branch, rounds, stagesRun — and adds `handoff`, which is the
+// record of the artifact, never a condition on the verdict.
+const needsHuman = async (stage, why, detail) => {
+  const handoff = await writeHandoff(stage, why, detail)
+  return {
+    status: 'needs-human',
+    stage,
+    why,
+    detail: detail === undefined ? null : detail,
+    featureDir: state.featureDir,
+    branch: state.branch,
+    rounds: state.rounds,
+    stagesRun: state.stagesRun,
+    handoff,
+  }
+}
 
 const must = (result, stage) => {
   if (result === null || result === undefined) {
@@ -418,8 +605,8 @@ if (runs('preflight')) {
   ].filter(Boolean).join('\n'), S.preflight)
   state.branch = state.branch || p.branch
   state.wall = p.wall || state.wall
-  if (!p.ok) return needsHuman('preflight', 'the repository is not ready', p.problems)
-  if (!state.wall) return needsHuman('preflight', 'no definition-of-done command: pass args.wall', p.problems)
+  if (!p.ok) return await needsHuman('preflight', 'the repository is not ready', p.problems)
+  if (!state.wall) return await needsHuman('preflight', 'no definition-of-done command: pass args.wall', p.problems)
   log(`preflight ok on ${p.branch}, wall = ${state.wall}`)
 }
 
@@ -494,7 +681,7 @@ if (runs('review-spec')) {
       `Then commit with the message "spec: review round ${round}" (git add the feature directory only). Return done=true with the short sha.`,
     ].join('\n'),
   })
-  if (!r.approved) return needsHuman('review-spec', `blocking findings remain after ${cfg.maxReviewRounds} fix rounds`, r.findings)
+  if (!r.approved) return await needsHuman('review-spec', `blocking findings remain after ${cfg.maxReviewRounds} fix rounds`, r.findings)
 }
 
 // ---------------------------------------------------------------------------
@@ -543,7 +730,7 @@ if (runs('plan')) {
       `Then commit with the message "plan: review round ${round}". Return done=true with the short sha.`,
     ].join('\n'),
   })
-  if (!r.approved) return needsHuman('review-plan', `blocking findings remain after ${cfg.maxReviewRounds} fix rounds`, r.findings)
+  if (!r.approved) return await needsHuman('review-plan', `blocking findings remain after ${cfg.maxReviewRounds} fix rounds`, r.findings)
 }
 
 // ---------------------------------------------------------------------------
@@ -591,7 +778,7 @@ if (runs('analyze')) {
       `Then commit with the message "tasks: analysis round ${round}". Return done=true with the short sha and the findings you left unapplied under skipped.`,
     ].join('\n'), S.done, 'Tasks')
   }
-  if (!approved) return needsHuman('analyze', `CRITICAL or HIGH analysis findings remain after ${cfg.maxAnalyzeRounds} remediation rounds`, analysis.findings)
+  if (!approved) return await needsHuman('analyze', `CRITICAL or HIGH analysis findings remain after ${cfg.maxAnalyzeRounds} remediation rounds`, analysis.findings)
 }
 
 // ---------------------------------------------------------------------------
@@ -633,11 +820,11 @@ if (runs('implement')) {
   for (const ph of phases) {
     if (ph.unchecked === 0) { log(`phase ${ph.number} already complete, skipped`); continue }
     const r = await implementPhase(ph, 'Implement')
-    if (!r.wallGreen) return needsHuman('implement', `the wall is red after phase ${ph.number} (${ph.title})`, { unchecked: r.unchecked, wallOutput: r.wallOutput || '' })
+    if (!r.wallGreen) return await needsHuman('implement', `the wall is red after phase ${ph.number} (${ph.title})`, { unchecked: r.unchecked, wallOutput: r.wallOutput || '' })
     if (r.unchecked.length) {
       const again = await implementPhase({ ...ph, taskIds: r.unchecked }, 'Implement')
-      if (!again.wallGreen) return needsHuman('implement', `the wall is red after the second pass over phase ${ph.number}`, { unchecked: again.unchecked, wallOutput: again.wallOutput || '' })
-      if (again.unchecked.length) return needsHuman('implement', `tasks of phase ${ph.number} stay unchecked after two passes`, again.unchecked)
+      if (!again.wallGreen) return await needsHuman('implement', `the wall is red after the second pass over phase ${ph.number}`, { unchecked: again.unchecked, wallOutput: again.wallOutput || '' })
+      if (again.unchecked.length) return await needsHuman('implement', `tasks of phase ${ph.number} stay unchecked after two passes`, again.unchecked)
     }
   }
 }
@@ -706,7 +893,7 @@ if (runs('converge')) {
       // "converged" round ends: converge judging a gap non-actionable is exactly
       // the judgment this floor refuses to make on its behalf.
       if (aboveFloor.length) {
-        return needsHuman('converge', noneFloor
+        return await needsHuman('converge', noneFloor
           ? 'converge reported converged while still grading findings, and the severity floor NONE tolerates none of them'
           : `converge reported converged while grading findings above ${SEVERITY_FLOOR}`, aboveFloor)
       }
@@ -721,8 +908,8 @@ if (runs('converge')) {
     const phases = await readPhases(`phases after converge ${round}`, 'Converge')
     const ph = phases.find(p => p.number === last.phase) || phases[phases.length - 1]
     const r = await implementPhase(ph, 'Converge')
-    if (!r.wallGreen) return needsHuman('converge', `the wall is red after implementing convergence phase ${ph.number}`, { unchecked: r.unchecked, wallOutput: r.wallOutput || '' })
-    if (r.unchecked.length) return needsHuman('converge', `convergence tasks stay unchecked`, r.unchecked)
+    if (!r.wallGreen) return await needsHuman('converge', `the wall is red after implementing convergence phase ${ph.number}`, { unchecked: r.unchecked, wallOutput: r.wallOutput || '' })
+    if (r.unchecked.length) return await needsHuman('converge', `convergence tasks stay unchecked`, r.unchecked)
     // A round that appends tasks and grades nothing has not shown the floor was
     // reached; it has shown nothing. Counted as above the floor, so the loop goes on.
     if (findings.length === 0) {
@@ -789,8 +976,27 @@ if (runs('finish')) {
   log(`finish: wall ${finished.wallGreen ? 'green' : 'RED'}, ${finished.pushed ? 'pushed' : 'not pushed'}${finished.merged ? `, merged into ${cfg.mergeInto}` : ''}`)
 }
 
+// The twelfth needs-human exit, and the one that does not go through needsHuman():
+// finish ran and its wall is red. It gets the same artifact for the same reason — a
+// red wall at finish is the whole verdict of the run and it must not live only in the
+// invoking session — while this return keeps its own shape, with `handoff` added
+// beside the rest. On a `done` return there is nothing to hand off and no agent runs.
+const finishNeedsHuman = !!(finished && !finished.wallGreen)
+const finishHandoff = finishNeedsHuman
+  ? await writeHandoff('finish', `the definition of done is red at finish: \`${state.wall}\``, {
+    summary: finished.summary,
+    allTasksChecked: finished.allTasksChecked,
+    clean: finished.clean,
+    pushed: finished.pushed,
+    merged: finished.merged,
+    head: finished.head,
+    convergeEnded: state.converge ? state.converge.ended : null,
+    convergeFindings: state.converge ? state.converge.findings : null,
+  })
+  : null
+
 return {
-  status: finished && !finished.wallGreen ? 'needs-human' : 'done',
+  status: finishNeedsHuman ? 'needs-human' : 'done',
   featureDir: state.featureDir,
   branch: state.branch,
   wall: state.wall,
@@ -798,5 +1004,6 @@ return {
   converge: state.converge,
   implemented: state.implemented,
   finish: finished,
+  handoff: finishHandoff,
   stagesRun: state.stagesRun,
 }
