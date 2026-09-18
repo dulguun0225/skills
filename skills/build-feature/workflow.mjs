@@ -121,6 +121,18 @@ const TIERS = {
   // closes on something else, and nothing downstream would notice. (The roster's
   // fable row is unavailable on billing as of 2026-09-18 and is not considered.)
   forceAppend: { model: 'opus', effort: 'medium' },
+  // Runs only when a forced append reports it failed, and answers one question about
+  // tasks.md: is the forced phase wholly absent, wholly present, or neither. Git is
+  // the oracle — at that instant the only uncommitted change to tasks.md is the failed
+  // agent's own partial write — so the evidence is deterministic, but the two things
+  // this row must get right are not cheap. It may delete lines from tasks.md (only a
+  // partial forced phase, only this round's), where a wrong deletion removes real
+  // tasks and nothing downstream would notice; and it must return "unsure" rather
+  // than a guess, which is a calibration judgment the cheap tiers are worst at. Priced
+  // with every other row in this table that writes: opus medium. Its verdict is not
+  // taken on its own word — the parse-only `phases` row re-reads the file afterwards
+  // and the loop escalates where the two disagree.
+  reconcileTasks: { model: 'opus', effort: 'medium' },
   finish: { model: 'sonnet', effort: 'low' },
   // Writes one file whose whole text this script hands it, commits it, pushes it.
   // Nothing here is a judgment, so it is priced at the cheapest tier that runs a
@@ -373,6 +385,23 @@ const S = {
       note: { type: 'string', description: 'when appended is false, why; otherwise anything the writer had to decide' },
     },
   },
+  reconciled: {
+    type: 'object',
+    required: ['state', 'evidence', 'summary'],
+    properties: {
+      state: {
+        type: 'string',
+        enum: ['absent', 'present', 'unsure'],
+        description: 'the state tasks.md is in when you finish: "absent" — it holds no part of the forced phase for this round and is well-formed; "present" — it holds the whole forced phase, well-formed, one task per finding, none of them ticked; "unsure" — you could not establish either with confidence, including any case where you cannot tell a line of the partial phase from work that was already there. "unsure" is a correct answer and the run handles it; a guess is not recoverable.',
+      },
+      phase: { type: 'integer', description: 'the forced phase number when state is present, 0 otherwise' },
+      taskIds: { type: 'array', items: { type: 'string' }, description: 'the forced phase task ids when state is present, empty otherwise' },
+      removed: { type: 'boolean', description: 'true when you removed a partial forced phase to reach the absent state, false when the file already held none' },
+      commit: { type: 'string', description: 'short sha of the commit that holds a removal, empty when nothing was committed' },
+      evidence: { type: 'string', description: 'what the verdict rests on, quoted: the git status, diff and log lines you read and the tasks.md lines you saw. A person reading a handoff gets this instead of being sent to look at the file.' },
+      summary: { type: 'string' },
+    },
+  },
   handoff: {
     type: 'object',
     required: ['written', 'path'],
@@ -464,7 +493,7 @@ const HANDOFF_FILE = 'HANDOFF.md'
 
 const scalar = v => (typeof v === 'string' ? v : JSON.stringify(v))
 
-// One renderer for every detail payload the ten call sites pass: a list of
+// One renderer for every detail payload the twelve call sites pass: a list of
 // strings (problems, unchecked task ids), a list of finding objects on any of the
 // three finding shapes this script carries, or a plain object ({unchecked, wallOutput}).
 // Unknown keys are printed rather than skipped — a reader who was not in the session
@@ -1056,6 +1085,13 @@ if (runs('converge')) {
     f.taskId ? `   the assessment named this existing task against it: ${f.taskId}` : '   the assessment named no task against it',
   ].join('\n')).join('\n')
 
+  // The forced phase's title is fixed here rather than left to the agent, because three
+  // separate things key off it: the append writes it, the reconcile looks for it, and
+  // the parse-only reader certifies the verdict by finding it or not finding it.
+  const forcedTitle = round => `Convergence (forced round ${round})`
+  const holdsForcedPhase = (phases, round) =>
+    phases.filter(p => String(p.title || '').toLowerCase().indexOf(`forced round ${round}`) !== -1)
+
   const forceAppendPrompt = (round, fs) => [
     UNATTENDED,
     `The feature is ${state.featureDir}; its tasks file is ${P.tasks}.`,
@@ -1064,7 +1100,7 @@ if (runs('converge')) {
     forcedFindingsBlock(fs),
     `Append to the end of ${P.tasks}, following /speckit-converge's own append contract and nothing else: append only, rewrite nothing, renumber nothing, touch no existing task and no earlier convergence phase, and change no file but ${P.tasks}.`,
     `1. Scan every existing task id; let M be the maximum, and let N be the highest existing phase number plus one.`,
-    `2. Write one new section header: \`## Phase N: Convergence (forced round ${round})\`.`,
+    `2. Write one new section header: \`## Phase N: ${forcedTitle(round)}\`. Write that title exactly: the rest of this run finds this phase by it.`,
     '3. Emit one checklist item per finding, in the order above, with zero-padded ids T{M+1:03d}, T{M+2:03d}, …, on this template:',
     '',
     '   ```markdown',
@@ -1075,6 +1111,33 @@ if (runs('converge')) {
     '4. **Both closure routes go in every task\'s own text, in those words.** A forced task is closable two ways: fix the defect, or record in this feature\'s own artifacts why it is not a defect. Not every finding is a code change — a requirement about an *absence* ("this capability contains no approval gate", "no user-permission check lives here") has no code to cite, and a task demanding a citation for it invites a fabricated one, which is worse than the open finding. Where a finding is of that kind, lead the task with the rationale route and say plainly that the expected close is the written reason, not an edit. Where it names work to do, lead with the work. Either way the task text states both, and it states that the rationale must end up written in the file — a claim in an implementer\'s summary, its commit message or its return value does not close the task. The rationale file may not exist yet; where a task names it, that task also says to create it with a `# Convergence rationale` heading if it is not there. Do not create it yourself: your only write is to tasks.md.',
     `5. Commit ${P.tasks} and nothing else: \`git add -- ${P.tasks} && git commit -m "tasks: forced convergence round ${round}" -- ${P.tasks}\`. The pathspec matters: the tree may hold this run's other work.`,
     `Return appended=true only when the phase header and one task per finding are in ${P.tasks} on disk and committed, with the phase number, every task id paired with the location of the finding it was written from, and which route each task leads with. If any step fails, return appended=false with the reason in note; never return appended=true for a partial append.`,
+  ].join('\n')
+
+  // Reconcile, 2026-09-19. A forced append that reports it failed used to end the run:
+  // the reasoning was that the agent may have written part of the phase first, so a
+  // blind retry would duplicate it. That is an argument against a *blind* retry and
+  // not against a retry — and "somebody needs to look at tasks.md" is not a human-only
+  // act, which is the owner's rule (2026-09-18) applied to the one site that had
+  // survived it. Git is the oracle: at this instant nothing else in the run has
+  // touched tasks.md since the last round's implement committed, so an uncommitted
+  // change to it is the failed agent's own partial write and `git checkout` restores
+  // the known-absent state exactly, with nothing judged by eye.
+  const reconcilePrompt = (round, fs, fa) => [
+    UNATTENDED,
+    `The feature is ${state.featureDir}; its tasks file is ${P.tasks}.`,
+    `An agent was asked to append a phase titled \`${forcedTitle(round)}\` to ${P.tasks}, holding ${fs.length} task(s) — one per finding — and to commit it. It reported that it failed: ${fa.note || '(it gave no reason)'}. ${fa.tasks && fa.tasks.length ? `Before failing it said it had written these ids: ${fa.tasks.map(t => t.taskId).filter(Boolean).join(', ') || '(none)'}.` : 'It named no task ids.'}`,
+    `Your only job is to establish what state ${P.tasks} is actually in, bring it to one of two known states, and report which. You do not author a task, you do not decide anything about the findings, and you do not implement anything.`,
+    'Read the evidence before you touch anything. Git is the record and your eye is not:',
+    `1. \`git status --porcelain -- ${P.tasks}\` — an uncommitted change here is that agent's partial write. Nothing else in this run has touched the file since the previous round's work was committed.`,
+    `2. \`git diff -- ${P.tasks}\` and \`git diff --staged -- ${P.tasks}\` — exactly what it wrote and did not commit.`,
+    `3. \`git log -3 --oneline -- ${P.tasks}\` — whether it committed anything after all, for instance a commit named "tasks: forced convergence round ${round}".`,
+    `4. Then read the end of ${P.tasks} itself, and look for a \`## Phase N: ${forcedTitle(round)}\` heading.`,
+    'Bring the file to exactly one of two states, and nothing in between:',
+    `- **absent** — no part of that phase is in ${P.tasks} and the file is well-formed. Where the partial write is uncommitted, reach this with \`git checkout -- ${P.tasks}\`, which restores the committed file byte for byte and is the whole of the repair: prefer it to editing. Where the partial phase was committed, remove exactly that phase — its heading and the task lines under it, nothing above it, nothing after it — and commit with the message "tasks: remove a partial forced convergence round ${round}".`,
+    `- **present** — that phase is wholly there and well-formed: the heading, ${fs.length} task line(s) under it, each "- [ ] T###", none of them ticked, and no earlier phase or task altered. If it is committed, leave it; if it is only in the working tree, commit it with the message "tasks: forced convergence round ${round}". Report the phase number and the task ids.`,
+    '**If you cannot establish either state with confidence, return state="unsure" and change nothing.** That is a correct answer, and the run has a path for it. In particular: if you cannot tell a line of the partial phase from work that was already in the file, if the diff touches anything outside the new phase, or if the git evidence and the file disagree, it is unsure. A guess here either deletes real tasks or leaves a duplicate phase behind, and nothing downstream can undo either.',
+    `Hard limits. You may write to ${P.tasks} and to no other file: not spec.md, not plan.md, not the constitution, not any code. You never tick or untick a task ("- [ ]" stays "- [ ]", "- [x]" stays "- [x]"). You never renumber, reorder or reword an existing task, and you never touch a phase other than this round's forced one. You run no build and no hook.`,
+    'Return the state, the phase number and task ids when it is present, whether you removed anything, the commit sha if you committed, and — in `evidence` — the git and file lines your verdict rests on, quoted. Somebody may read that instead of opening the file.',
   ].join('\n')
 
   let ended = null
@@ -1106,11 +1169,68 @@ if (runs('converge')) {
             survivors.concat(aboveFloor.filter(f => !forcedIds[findingId(f)])))
         }
         log(`converge round ${round}: converged with nothing appended and ${aboveFloor.length} finding(s) above the floor (${grade}) — appending them as a forced convergence round; ${floorPhrase}, so converge's non-actionable judgment is not this loop's`)
-        const fa = await run('forceAppend', `force-append converge ${round}`, forceAppendPrompt(round, aboveFloor), S.forceAppended, 'Converge')
+        let fa = await run('forceAppend', `force-append converge ${round}`, forceAppendPrompt(round, aboveFloor), S.forceAppended, 'Converge')
+        // A failed append is reconciled and retried once, never escalated blind. The
+        // sequence is: one reconcile agent brings tasks.md to a known state, the
+        // parse-only `phases` reader certifies that state independently — the same
+        // separation the finish wall repair uses, because the agent that cleans up is
+        // not the one that may certify the result — and then the loop either
+        // implements a phase that turned out to be wholly there, or appends once more
+        // against a file that is wholly clean. Exactly one reconcile and one retry;
+        // there is no retry of a retry, and the forced-once identity rule still
+        // governs which findings may be forced at all.
+        const failedAppend = fa.appended ? null : fa
+        let recon = null
+        // Set only where the certification read has already established the phase, so
+        // the loop does not pay a second parse of a file nothing has touched since.
+        let certifiedPhase = null
         if (!fa.appended) {
-          return await needsHuman('converge',
-            `converge reported converged while still grading ${aboveFloor.length} finding(s) the floor ${SEVERITY_FLOOR} does not tolerate, and the forced convergence round could not append them to tasks.md: ${fa.note || 'the forced append reported no reason'}. It is attempted once and not retried: an agent that reports a failed append may have written part of the phase first, and a second attempt against that file would duplicate it — the open findings are below, and tasks.md needs a look before the run restarts`,
-            aboveFloor)
+          log(`converge round ${round}: the forced append reported failure (${fa.note || 'no reason given'}) — reconciling ${P.tasks} against git before anything else touches it`)
+          recon = await run('reconcileTasks', `reconcile tasks.md after forced append ${round}`, reconcilePrompt(round, aboveFloor, fa), S.reconciled, 'Converge')
+          log(`reconcile after forced append ${round}: ${recon.state}${recon.removed ? ', a partial phase was removed' : ''}${recon.commit ? ` (${recon.commit})` : ''}`)
+          if (recon.state === 'unsure') {
+            // The legitimate escalation on this path, and the only one the reconcile
+            // itself can produce: acting on a guess about this file either deletes
+            // real tasks or leaves a duplicate phase, and neither is recoverable.
+            return await needsHuman('converge',
+              `the forced convergence round could not append its ${aboveFloor.length} finding(s) to tasks.md (${fa.note || 'the forced append reported no reason'}), and the reconcile that read tasks.md against git could not establish whether the forced phase is wholly absent or wholly present: ${recon.summary || 'it gave no summary'}. It changed nothing, deliberately — a guess here deletes real tasks or leaves a duplicate phase. What it saw is below, so tasks.md does not need to be worked out from scratch`,
+              { state: recon.state, evidence: recon.evidence, summary: recon.summary, appendNote: fa.note || '', findings: aboveFloor })
+          }
+          // The certification is a different agent, and a parse-only one: the reconcile
+          // does not get to be the witness to its own repair.
+          const certPhases = await readPhases(`phases after reconciling tasks.md ${round}`, 'Converge')
+          const seen = holdsForcedPhase(certPhases, round)
+          const disagreement = recon.state === 'present'
+            ? (seen.length !== 1
+              ? `it reported the phase wholly present, and the reader finds ${seen.length} phase(s) titled for this forced round`
+              : (seen[0].taskIds.length !== aboveFloor.length
+                ? `it reported the phase wholly present with ${aboveFloor.length} task(s), and the reader finds ${seen[0].taskIds.length}`
+                : (seen[0].unchecked !== seen[0].taskIds.length
+                  ? `it reported the phase wholly present and unticked, and the reader finds ${seen[0].taskIds.length - seen[0].unchecked} of its ${seen[0].taskIds.length} task(s) already ticked`
+                  : '')))
+            : (seen.length ? `it reported the phase wholly absent, and the reader still finds ${seen.length} phase(s) titled for this forced round` : '')
+          if (disagreement) {
+            return await needsHuman('converge',
+              `the forced convergence round could not append its ${aboveFloor.length} finding(s) to tasks.md, and the reconcile and the parse-only reader disagree about what is in the file afterwards: ${disagreement}. The loop stops rather than act on either account, because appending over a phase that is there duplicates it and implementing a phase that is not there does nothing. The reconcile's evidence is below`,
+              { reconcileState: recon.state, evidence: recon.evidence, summary: recon.summary, appendNote: fa.note || '', findings: aboveFloor })
+          }
+          if (recon.state === 'present') {
+            // The work is in the file and well-formed: the first agent wrote the phase
+            // and then failed to say so. Re-appending would be exactly the duplication
+            // this path exists to prevent, so the loop proceeds as if it had succeeded.
+            log(`reconcile after forced append ${round}: the phase is wholly present as phase ${seen[0].number} with ${seen[0].taskIds.length} unticked task(s) — proceeding to implement it rather than appending it twice`)
+            certifiedPhase = seen[0]
+            fa = { appended: true, phase: seen[0].number, tasks: recon.taskIds && recon.taskIds.length ? recon.taskIds.map(id => ({ taskId: id, location: '', closure: 'either' })) : [], commit: recon.commit || '' }
+          } else {
+            log(`reconcile after forced append ${round}: tasks.md holds no part of the forced phase${recon.removed ? ' (a partial one was removed)' : ''} — one retry of the forced append, and the loop escalates if that fails too`)
+            const retry = await run('forceAppend', `force-append converge ${round} (retry)`, forceAppendPrompt(round, aboveFloor), S.forceAppended, 'Converge')
+            if (!retry.appended) {
+              return await needsHuman('converge',
+                `the forced convergence round could not append its ${aboveFloor.length} finding(s) to tasks.md, and the loop has tried twice: the first append failed (${failedAppend.note || 'no reason given'}), a reconcile read tasks.md against git and left it with no part of the forced phase in it${recon.removed ? ', having removed a partial one' : ''}, and a second append against that clean file failed as well (${retry.note || 'no reason given'}). tasks.md is in the known state the reconcile reports below — it does not need to be worked out`,
+                { reconcileState: recon.state, removed: !!recon.removed, evidence: recon.evidence, firstAppendNote: failedAppend.note || '', retryNote: retry.note || '', findings: aboveFloor })
+            }
+            fa = retry
+          }
         }
         // Forced once, whatever the implement pass then does with it: every finding
         // handed to that agent is marked, so a second pass at the same finding is a
@@ -1123,8 +1243,11 @@ if (runs('converge')) {
           }
         }
         log(`converge round ${round}: forced ${fa.tasks ? fa.tasks.length : '?'} task(s) as phase ${fa.phase} (${(fa.tasks || []).map(t => `${t.taskId} ${t.closure}`).join(', ')}) — each closable by the fix or by a written rationale in ${RATIONALE_FILE}`)
-        const forcedPhases = await readPhases(`phases after forced append ${round}`, 'Converge')
-        const fph = forcedPhases.find(p => p.number === fa.phase) || forcedPhases[forcedPhases.length - 1]
+        let fph = certifiedPhase
+        if (!fph) {
+          const forcedPhases = await readPhases(`phases after forced append ${round}`, 'Converge')
+          fph = forcedPhases.find(p => p.number === fa.phase) || forcedPhases[forcedPhases.length - 1]
+        }
         const fdone = await runPhaseToDone(fph, 'Converge', `forced convergence phase ${fph.number}`)
         if (!fdone.ok) return await needsHuman('converge', fdone.why, fdone.detail)
         // The forced round used this round's slot; the next round re-assesses, exactly
@@ -1244,7 +1367,7 @@ if (runs('finish')) {
   }
 }
 
-// The eleventh needs-human exit, and the one that does not go through needsHuman():
+// The thirteenth needs-human exit, and the one that does not go through needsHuman():
 // finish ran and its wall is red. It gets the same artifact for the same reason — a
 // red wall at finish is the whole verdict of the run and it must not live only in the
 // invoking session — while this return keeps its own shape, with `handoff` added
