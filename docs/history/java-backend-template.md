@@ -202,6 +202,46 @@ Ground: the product-catalog repo's `001-product-hierarchy`, converged by hand on
 
 Per-session cost, `npm run tokens:frontmatter`, 2026-09-18, o200k_base: `converge-feature` 114 tokens (name plus description; 119 with framing), set total 4,851 across twenty-three skills, up from 4,581 across twenty-one on 2026-09-16, with `build-feature`'s description edit inside that delta. A per-feature-cadence skill like its sibling; accepted because the alternative was a sentence retyped per feature and per project with no written stop rule. Firing: meant to be invoked by name; unprompted firing on "finish this feature" unmeasured.
 
+## The severity-floor commit reviewed — 2026-09-18
+
+An adversarial review of `cc903d0`, the commit recorded directly above, read against `/speckit-converge`'s own
+Steps 4, 5 and 7 rather than against a run. **No run: nothing in that commit or this one has been executed
+against the Workflow tool, and both skills stay *decided, not yet validated*.** Eight defects, corrected in one
+commit.
+
+Three were in the loop's stop logic, and each would have ended a run early or reported something untrue. The
+loop read `outcome` before the floor, and `/speckit-converge` Step 7 defines `converged` as *no **actionable**
+findings* while Step 4 surfaces `unrequested` gaps for awareness only — so a HIGH gap graded non-actionable
+arrived as `converged` and broke the loop before the floor was consulted; the floor is now the only stop test,
+and a `converged` return carrying a finding above it ends the run `needs-human`, because nothing was appended
+and the next round would repeat it to the cap. The prompt had written a third severity vocabulary beside Step 5
+and the analyze schema's, whose LOW clause — *a gap a person would not notice* — graded exactly the class the
+hand-driven 001 run kept finding; the ad-hoc clauses are gone and the prompt names Step 5 as the scale. And the
+findings carried at the cap were the ones that round had just implemented, so the log line was false: the cap is
+now followed by one assess-only round, the `max + 1` shape the review and analyze loops already use, and its
+findings are what the run reports.
+
+Three more were smaller and of the classes this repo already records. `findings: []` satisfied the schema's
+`required`, so a round that appended tasks and graded nothing stopped at the floor claiming nothing was above
+it — unknown is not below the floor, and that shape now continues the loop. `SEVERITY_FLOOR` was compared with
+`!==`, a constant named like a knob that would break silently the day the floor is raised; the comparison is by
+rank against the declared order. And the `status: "done"` check in `build-feature`'s SKILL.md claimed the finish
+wall is green where an `until` before finish returns `done` with `finish: null`, and claimed *no third exit*
+about every way the script can stop, where a throw from `must()` or the argument checks is neither return —
+**a check line is directive text and overclaims like any other sentence**, which is the class the repo has
+recorded under *follow the pointer*.
+
+The last two were in `converge-feature` and are the *evidence.md fixed, SKILL.md missed* shape in a new
+direction — a sibling stating a precondition its neighbour drops. `build-feature` states that a user-level
+install under `~/.claude/skills/` needs `/add-dir` or a `Read` allow rule before the Workflow tool will accept
+its `scriptPath`; `converge-feature` omitted it and diagnosed the same "cannot read" refusal as a missing
+sibling, prescribing `npx skills add`, which does nothing for that cause. And `push` and `mergeInto` were named
+without their defaults beside an example running on `branch: "main"`, so following the example pushes `main`
+directly with nothing on the page saying so. Both corrected; the missing-sibling sentence stays for its own case.
+
+Per-session cost: no `description` changed, so the frontmatter total is unchanged from the line recorded above.
+Firing: unchanged, and still unmeasured for both skills.
+
 ## What is still open
 
 - The firing case above.

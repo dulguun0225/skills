@@ -17,10 +17,15 @@
 // Review and analyze loops terminate on a clean verdict or on their round cap; a
 // cap reached with blocking findings still open ends the run with status
 // "needs-human" and the findings, never with a silent approval. The converge loop
-// is different: it has no fixed point (evidence.md, 2026-09-18), so it stops at a
-// severity floor — when the round reports converged, or when nothing it found is
+// is different: it has no fixed point (evidence.md, 2026-09-18), so its only stop
+// test is a severity floor — the loop ends when the round's findings hold nothing
 // above LOW — and reaching its round cap is a reported outcome the run carries to
-// finish, not a human question; the wall is still the gate.
+// finish, not a human question; the wall is still the gate. A round that reports
+// "converged" while grading findings above the floor is a contradiction rather
+// than a work state, and ends the run needs-human: nothing was appended, so every
+// further round would repeat it. Like the review and analyze loops, converge runs
+// one pass more than its cap — an assess-only round that appends nothing — so the
+// findings the run reports are the ones no implement pass has closed.
 
 export const meta = {
   name: 'build-feature',
@@ -246,12 +251,13 @@ const S = {
       taskIds: { type: 'array', items: { type: 'string' } },
       findings: {
         type: 'array',
-        description: 'every gap the assessment found, appended or not; empty when outcome is converged',
+        description: 'every gap the assessment found, appended or not, including the ones it judged non-actionable',
         items: {
           type: 'object',
           required: ['severity', 'location', 'summary'],
           properties: {
-            // The same scale the analyze schema uses; a second vocabulary is not admitted.
+            // /speckit-converge's own Step 5 scale, which is also the four values the
+            // analyze schema carries; a third vocabulary is not admitted.
             severity: { type: 'string', enum: ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] },
             location: { type: 'string', description: 'the requirement id, plan section or file the gap is against' },
             summary: { type: 'string' },
@@ -621,27 +627,52 @@ if (runs('converge')) {
   state.stagesRun.push('converge')
   // Converge has no fixed point: on the hand-driven 001-product-hierarchy run
   // (2026-09-18) it took five passes, and the fifth appended nothing only because
-  // the operator stopped applying findings below the floor. So the loop ends on
-  // either of two conditions — the round reports converged, or nothing it found
-  // is above LOW — and reaching the cap is reported, not escalated.
+  // the operator stopped applying findings below the floor. So the severity floor
+  // is the loop's only stop test, and reaching the cap is reported, not escalated.
+  const SEVERITY_ORDER = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
   const SEVERITY_FLOOR = 'LOW'
+  const floorRank = SEVERITY_ORDER.indexOf(SEVERITY_FLOOR)
+  // Rank-based against the declared order, so the constant means what its name says:
+  // raising the floor to MEDIUM raises it. A severity off the scale ranks above the
+  // floor — an ungradeable finding is not a finding below it.
+  const aboveFloorSev = f => {
+    const rank = SEVERITY_ORDER.indexOf(f.severity)
+    return rank === -1 || rank < floorRank
+  }
+  const gradeOf = findings => SEVERITY_ORDER.map(sev => `${findings.filter(f => f.severity === sev).length} ${sev.toLowerCase()}`).join(', ')
+  // One prompt for both kinds of round. assessOnly is the extra round after the cap:
+  // same assessment, no append, no commit, so its findings are open work rather than
+  // work the round that found it has already closed.
+  const convergePrompt = (round, assessOnly) => [
+    UNATTENDED,
+    SKILL_HOW('speckit-converge'),
+    `The feature is ${state.featureDir}.`,
+    assessOnly
+      ? 'ASSESS ONLY. Run the skill\'s assessment through its findings summary and stop there. Append nothing: tasks.md and every other file must be byte-for-byte unchanged when you finish, nothing is committed, and you run no hook that writes or commits. Return the outcome "converged", because nothing was appended; the findings below are the whole value of this round.'
+      : `Run the assessment in full. Return the outcome exactly as the skill defines it: "converged" when nothing was appended, "tasks_appended" with the new phase number and the appended task ids otherwise. When tasks were appended, commit tasks.md with the message "tasks: convergence round ${round}".`,
+    'Also return every gap the assessment found as findings — appended or not, actionable or not, including every gap it surfaced only for awareness — each graded by the severity rule in the skill\'s own Step 5 and by no other scale: CRITICAL, HIGH, MEDIUM or LOW exactly as that step defines them. For each appended one, name the task id that closes it; leave the task id empty for a gap no task closes.',
+  ].join('\n')
+
   let ended = null
-  let last = null
+  let endingFindings = []
   for (let round = 1; round <= cfg.maxConvergeRounds; round++) {
-    last = await run('converge', `converge ${round}`, [
-      UNATTENDED,
-      SKILL_HOW('speckit-converge'),
-      `The feature is ${state.featureDir}.`,
-      `Run the assessment in full. Return the outcome exactly as the skill defines it: "converged" when nothing was appended, "tasks_appended" with the new phase number and the appended task ids otherwise. When tasks were appended, commit tasks.md with the message "tasks: convergence round ${round}".`,
-      'Also return every gap the assessment found as findings, each graded CRITICAL, HIGH, MEDIUM or LOW on the same scale /speckit-analyze uses: CRITICAL for a requirement or constitution article the code violates or does not realise, HIGH for a gate, contract or test the plan names and the code lacks, MEDIUM for a documented decision the code departs from without breaking a requirement, LOW for wording, naming, ordering or a gap a person would not notice. Grade the gap, not the size of the fix. Name the task id that closes each appended one.',
-    ].join('\n'), S.converged, 'Converge')
+    const last = await run('converge', `converge ${round}`, convergePrompt(round, false), S.converged, 'Converge')
     state.rounds.converge = round
     const findings = Array.isArray(last.findings) ? last.findings : []
-    const aboveFloor = findings.filter(f => f.severity !== SEVERITY_FLOOR)
-    const grade = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map(sev => `${findings.filter(f => f.severity === sev).length} ${sev.toLowerCase()}`).join(', ')
+    const aboveFloor = findings.filter(aboveFloorSev)
+    const grade = gradeOf(findings)
     if (last.outcome === 'converged') {
+      // The floor is consulted before the outcome. /speckit-converge Step 7 calls a
+      // round converged when it judges its findings non-actionable, and Step 4
+      // surfaces `unrequested` gaps for awareness, so a HIGH finding can arrive on a
+      // "converged" return. Nothing was appended, so continuing would repeat this
+      // round identically to the cap, so the contradiction goes to a human.
+      if (aboveFloor.length) {
+        return needsHuman('converge', 'converge reported converged while grading findings above LOW', aboveFloor)
+      }
       ended = 'converged'
-      log(`converge round ${round}: converged — nothing appended (${grade})`)
+      endingFindings = findings
+      log(`converge round ${round}: converged — nothing appended and nothing above ${SEVERITY_FLOOR} (${grade})`)
       break
     }
     log(`converge round ${round}: ${last.taskIds ? last.taskIds.length : '?'} tasks appended as phase ${last.phase} (${grade})`)
@@ -652,17 +683,39 @@ if (runs('converge')) {
     const r = await implementPhase(ph, 'Converge')
     if (!r.wallGreen) return needsHuman('converge', `the wall is red after implementing convergence phase ${ph.number}`, { unchecked: r.unchecked, wallOutput: r.wallOutput || '' })
     if (r.unchecked.length) return needsHuman('converge', `convergence tasks stay unchecked`, r.unchecked)
+    // A round that appends tasks and grades nothing has not shown the floor was
+    // reached; it has shown nothing. Counted as above the floor, so the loop goes on.
+    if (findings.length === 0) {
+      log(`converge round ${round}: appended tasks as phase ${ph.number} and graded nothing — what is left is unknown, not below the floor, so the loop continues`)
+      continue
+    }
     if (aboveFloor.length === 0) {
       ended = 'severity-floor'
-      log(`converge round ${round}: nothing above ${SEVERITY_FLOOR} — stopped at the severity floor after implementing phase ${ph.number}`)
+      endingFindings = findings
+      log(`converge round ${round}: nothing above ${SEVERITY_FLOOR} (${grade}) — every gap this round graded was appended as phase ${ph.number} and implemented, so the loop stops at the severity floor`)
       break
     }
   }
   if (!ended) {
-    ended = 'round-cap'
-    log(`converge round cap ${cfg.maxConvergeRounds} reached with findings above ${SEVERITY_FLOOR} still reported — carried to finish; the wall is the gate`)
+    // Every round above implemented its appended phase before the loop re-checked, so
+    // that round's findings are closed work and cannot say what the cap leaves open.
+    // One assess-only round — the shape the review and analyze loops already run as
+    // max + 1 — reports what no implement pass has closed.
+    const assessRound = state.rounds.converge + 1
+    const assess = await run('converge', `converge ${assessRound} (assess only)`, convergePrompt(assessRound, true), S.converged, 'Converge')
+    const findings = Array.isArray(assess.findings) ? assess.findings : []
+    const aboveFloor = findings.filter(aboveFloorSev)
+    endingFindings = findings
+    if (aboveFloor.length === 0) {
+      ended = 'severity-floor'
+      log(`converge: ${cfg.maxConvergeRounds} rounds implemented, and the assess-only round after them graded nothing above ${SEVERITY_FLOOR} (${gradeOf(findings)}) — stopped at the severity floor`)
+    } else {
+      ended = 'round-cap'
+      log(`converge round cap ${cfg.maxConvergeRounds} reached: the assess-only round after the last implemented phase graded ${aboveFloor.length} finding(s) above ${SEVERITY_FLOOR} (${gradeOf(findings)}), open and unimplemented — carried to finish; the wall is the gate`)
+    }
   }
-  state.converge = { ended, rounds: state.rounds.converge, floor: SEVERITY_FLOOR, findings: last ? last.findings || [] : [] }
+  // The findings of whichever assessment ended the loop, never of an earlier one.
+  state.converge = { ended, rounds: state.rounds.converge, floor: SEVERITY_FLOOR, findings: endingFindings }
 }
 
 // ---------------------------------------------------------------------------
