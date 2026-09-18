@@ -279,3 +279,21 @@ claim about `/speckit-converge`'s text was written without opening `/speckit-con
 Per-session cost unchanged in kind: `build-feature`'s description and `converge-feature`'s are
 untouched by this change, deliberately, because both still describe the default truthfully and a description
 edit invalidates the firing baseline neither skill has yet measured.
+
+## The example args carried a real feature — 2026-09-18
+
+The owner read `converge-feature`'s `Workflow({…})` block and asked why it names
+`specs/001-product-hierarchy`. Because the skill was harvested from that run and the example was copied from
+it rather than written. In prose that is provenance and stays — the dated ground for the severity-floor claim,
+in this file, in both `evidence.md` files and in the `/loop` rejection. In a fenced call a reader copies it is
+a defect: the path resolves in no other repo, and it sat beside `branch: "main"` while `push` defaults to
+true, so the copy-paste path pushes the reader's `main`. Now `specs/<nnn>-<feature>` and `<feature-branch>`,
+with the sentence below the block rewritten to say finish pushes whatever `branch` names instead of pointing
+at the example's `main`. `wall: "node backend/scripts/wall.mjs"` is left real: it is the sibling template's
+own path and resolves for the reader this skill is written for.
+
+**The class is the inverse of de-naming.** De-naming strips a real name where the reader needs it; this
+leaves a real name where the reader needs a hole. Both are born the same way — writing from the run in front
+of you — and the discriminator is whether the text is a claim or a template. A swept grep over `skills/` for
+`specs/0`, `featureDir:` and `branch: "main"` found this the only instance. `npm run check` and
+`npm run gates` green after; neither reaches the inside of a fenced block, and no gate here ever will.
