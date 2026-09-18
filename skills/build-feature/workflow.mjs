@@ -25,12 +25,20 @@
 // stop is a round that appends nothing and grades nothing, and a long run ends at
 // maxConvergeRounds rather than at the floor (owner's decision 2026-09-18,
 // reversing the LOW default of the same day; evidence.md). A round that reports
-// "converged" while grading findings above the floor is a contradiction rather
-// than a work state, and ends the run needs-human: nothing was appended, so every
-// further round would repeat it — which under NONE is any finding at all. Like
-// the review and analyze loops, converge runs one pass more than its cap — an
-// assess-only round that appends nothing — so the findings the run reports are the
-// ones no implement pass has closed.
+// "converged" while grading findings above the floor appended nothing, so every
+// further round would repeat it identically — which under NONE is any finding at
+// all. Until 2026-09-18 that was a needs-human exit, and it dead-ended the loop on
+// cosmetic findings it could have closed itself (feature specs/002-product exited
+// on four LOW findings — FR traceability citations, an under-described GATES.md
+// table row, two test and naming wordings — every one of them mechanical). The
+// loop now has a third move: it appends those findings itself as a forced
+// convergence phase and implements them (the `forceAppend` tier row), because a
+// floor that refuses converge's non-actionability judgment must also supply the
+// work that judgment withheld. Each finding is forced at most once; a finding that
+// comes back above the floor after its forced round did go to a human, and the
+// handoff says the loop already tried. Like the review and analyze loops, converge
+// runs one pass more than its cap — an assess-only round that appends nothing — so
+// the findings the run reports are the ones no implement pass has closed.
 //
 // Every needs-human exit writes a handoff file first — HANDOFF.md in the feature
 // directory — carrying the stage, the reason, the full findings rendered legibly,
@@ -57,7 +65,7 @@ export const meta = {
     { title: 'Plan', detail: 'plan, fresh-context review, fix' },
     { title: 'Tasks', detail: 'tasks, analyze, remediate' },
     { title: 'Implement', detail: 'one agent per phase, wall green after each' },
-    { title: 'Converge', detail: 'converge, implement appended phase, repeat until nothing above the severity floor is left' },
+    { title: 'Converge', detail: 'converge, implement appended phase — or append the findings the round graded but did not append, once each — repeat until nothing above the severity floor is left' },
     { title: 'Finish', detail: 'wall, push, optional fast-forward merge' },
     { title: 'Handoff', detail: 'on a needs-human exit: write, commit and push HANDOFF.md in the feature directory' },
   ],
@@ -100,6 +108,19 @@ const TIERS = {
   phases: { model: 'sonnet', effort: 'low' },
   implement: { model: 'opus', effort: 'medium' },
   converge: { model: 'opus', effort: 'medium' },
+  // Writes the tasks a converge round graded and declined to append. Unlike the
+  // `handoff` row below, the document is not rendered for it: it is handed findings
+  // and must author one task per finding — the imperative work, its trace back to the
+  // finding's location, and both closure routes (fix the defect, or record in the
+  // feature's artifacts why it is not one) — and must judge per finding which route
+  // the task should lead with, because a finding about an absence ("no approval gate
+  // lives here") closes on a rationale where a demand for a code citation invites a
+  // fabricated one. That is authorship and judgment over text the implement stage
+  // then executes, so it is priced with converge and implement rather than with
+  // handoff: opus medium. A cheaper row would paraphrase a finding into a task that
+  // closes on something else, and nothing downstream would notice. (The roster's
+  // fable row is unavailable on billing as of 2026-09-18 and is not considered.)
+  forceAppend: { model: 'opus', effort: 'medium' },
   finish: { model: 'sonnet', effort: 'low' },
   // Writes one file whose whole text this script hands it, commits it, pushes it.
   // Nothing here is a judgment, so it is priced at the cheapest tier that runs a
@@ -130,8 +151,18 @@ const cfg = {
   mergeInto: a.mergeInto || null,
   from: a.from || 'preflight',
   until: a.until || 'finish',
-  maxReviewRounds: a.maxReviewRounds ?? 2,
-  maxAnalyzeRounds: a.maxAnalyzeRounds ?? 2,
+  // 3, not 2, since 2026-09-18. The 2026-09-17 record (evidence.md) is five launches
+  // out of seven ending needs-human at a review or analyze round cap, and the operator's
+  // resolution every time was to run one more fix agent over the open findings — the
+  // exact round the cap had refused. A cap that escalates work one more round would have
+  // finished is the loop declining work it could do. 3 is the smallest increment the
+  // evidence supports and the largest it supports: that record also says most of the
+  // findings at the cap were holes opened by the previous round's fix, so these loops
+  // have no fixed point either and a bigger cap buys rounds rather than closure — and
+  // review-spec is where both early runs spent their tokens (1.19M and 0.91M). Not
+  // measured: no run has taken the third round.
+  maxReviewRounds: a.maxReviewRounds ?? 3,
+  maxAnalyzeRounds: a.maxAnalyzeRounds ?? 3,
   maxConvergeRounds: a.maxConvergeRounds ?? 6,
   severityFloor: String(a.severityFloor ?? 'NONE').toUpperCase(),
   maxWallAttempts: a.maxWallAttempts ?? 3,
@@ -312,6 +343,36 @@ const S = {
       summary: { type: 'string' },
     },
   },
+  forceAppended: {
+    type: 'object',
+    required: ['appended', 'phase', 'tasks'],
+    properties: {
+      appended: {
+        type: 'boolean',
+        description: 'true only when the new phase and one task per finding are in tasks.md on disk and committed',
+      },
+      phase: { type: 'integer', description: 'the appended phase number' },
+      tasks: {
+        type: 'array',
+        description: 'one entry per finding this prompt handed you, in the order it gave them — a finding with no task is a failed append, not an omission to report here',
+        items: {
+          type: 'object',
+          required: ['taskId', 'location', 'closure'],
+          properties: {
+            taskId: { type: 'string', description: 'the appended task id, e.g. T104' },
+            location: { type: 'string', description: "the finding's location, copied from the prompt, so the task is traceable to the finding it was written from" },
+            closure: {
+              type: 'string',
+              enum: ['fix', 'rationale', 'either'],
+              description: 'which closure route the task text leads with: "fix" where the finding names work to do, "rationale" where the finding is about an absence and a code citation would have to be invented, "either" where the task leaves both open with no preference. Both routes are stated in every task regardless; this is which one the task says to try first.',
+            },
+          },
+        },
+      },
+      commit: { type: 'string', description: 'short sha of the commit that holds tasks.md, empty if nothing was committed' },
+      note: { type: 'string', description: 'when appended is false, why; otherwise anything the writer had to decide' },
+    },
+  },
   handoff: {
     type: 'object',
     required: ['written', 'path'],
@@ -378,6 +439,7 @@ const state = {
   rounds: { reviewSpec: 0, reviewPlan: 0, analyze: 0, converge: 0 },
   converge: null, // { ended, rounds, findings } once the converge stage has run
   implemented: [],
+  finishRepaired: false, // true once the finish wall was red and the one repair pass ran
   open: [],
   stagesRun: [],
 }
@@ -402,7 +464,7 @@ const HANDOFF_FILE = 'HANDOFF.md'
 
 const scalar = v => (typeof v === 'string' ? v : JSON.stringify(v))
 
-// One renderer for every detail payload the eleven call sites pass: a list of
+// One renderer for every detail payload the ten call sites pass: a list of
 // strings (problems, unchecked task ids), a list of finding objects on any of the
 // three finding shapes this script carries, or a plain object ({unchecked, wallOutput}).
 // Unknown keys are printed rather than skipped — a reader who was not in the session
@@ -681,7 +743,7 @@ if (runs('review-spec')) {
       `Then commit with the message "spec: review round ${round}" (git add the feature directory only). Return done=true with the short sha.`,
     ].join('\n'),
   })
-  if (!r.approved) return await needsHuman('review-spec', `blocking findings remain after ${cfg.maxReviewRounds} fix rounds`, r.findings)
+  if (!r.approved) return await needsHuman('review-spec', `blocking or major findings remain after ${cfg.maxReviewRounds} fix rounds and ${cfg.maxReviewRounds + 1} fresh-context refutation reviews: the loop applied every finding of every round and the review after the last fix still reports these. Raising args.maxReviewRounds buys more rounds of the same shape; the 2026-09-17 record is that most findings at a cap are holes the previous fix opened, so what is left is a judgment and not another round`, r.findings)
 }
 
 // ---------------------------------------------------------------------------
@@ -730,7 +792,7 @@ if (runs('plan')) {
       `Then commit with the message "plan: review round ${round}". Return done=true with the short sha.`,
     ].join('\n'),
   })
-  if (!r.approved) return await needsHuman('review-plan', `blocking findings remain after ${cfg.maxReviewRounds} fix rounds`, r.findings)
+  if (!r.approved) return await needsHuman('review-plan', `blocking or major findings remain after ${cfg.maxReviewRounds} fix rounds and ${cfg.maxReviewRounds + 1} fresh-context refutation reviews: the loop applied every finding of every round and the review after the last fix still reports these. A plan finding that survives that is usually a decision the run is not authorised to take — a constitution amendment that fails its admission test, or a design the spec and the code disagree about`, r.findings)
 }
 
 // ---------------------------------------------------------------------------
@@ -778,16 +840,23 @@ if (runs('analyze')) {
       `Then commit with the message "tasks: analysis round ${round}". Return done=true with the short sha and the findings you left unapplied under skipped.`,
     ].join('\n'), S.done, 'Tasks')
   }
-  if (!approved) return await needsHuman('analyze', `CRITICAL or HIGH analysis findings remain after ${cfg.maxAnalyzeRounds} remediation rounds`, analysis.findings)
+  if (!approved) return await needsHuman('analyze', `CRITICAL or HIGH analysis findings remain after ${cfg.maxAnalyzeRounds} remediation rounds and ${cfg.maxAnalyzeRounds + 1} analyses: the loop ran a remediation agent over every finding of every round — the critical-tier one where a CRITICAL was open — and the analysis after the last one still grades these CRITICAL or HIGH`, analysis.findings)
 }
 
 // ---------------------------------------------------------------------------
 // Stage: implement, one agent per phase
 // ---------------------------------------------------------------------------
-const implementPhase = async (ph, phaseLabel) => {
+// NO GATE IS EVER WEAKENED TO MAKE A WALL GREEN. The prohibition is in the ordinary
+// prompt and enumerated in the repair prompt below, because the repair pass is where
+// the temptation lives: an agent told to turn a red wall green, with no task list
+// left to do it through, can always delete the test instead. A green wall bought that
+// way is strictly worse than the needs-human exit it replaced, so the repair prompt
+// names every move it may not make and tells the agent to return wallGreen=false and
+// leave the tree alone when the only route it can see is one of them.
+const implementPhase = async (ph, phaseLabel, repair) => {
   const P = featurePaths(state.featureDir)
   const ids = ph.taskIds.length ? `${ph.taskIds[0]}–${ph.taskIds[ph.taskIds.length - 1]}` : 'none'
-  const r = await run('implement', `implement phase ${ph.number}`, [
+  const r = await run('implement', `implement phase ${ph.number}${repair ? ' (wall repair)' : ''}`, [
     UNATTENDED,
     SKILL_HOW('speckit-implement'),
     `The feature is ${state.featureDir}. Arguments for the skill: "Execute only Phase ${ph.number}: ${ph.title} (tasks ${ids}). Every other phase is out of scope: do not start it, do not tick it."`,
@@ -796,11 +865,69 @@ const implementPhase = async (ph, phaseLabel) => {
     `- Definition of done for this phase: after its tasks, run \`${state.wall}\` and fix what it reports until it passes. Fix root causes in the code, never by weakening a gate, deleting a test or adding a suppression. Give up only after ${cfg.maxWallAttempts} full attempts, and then return wallGreen=false with the failing output.`,
     `- Tick each finished task in ${P.tasks} ("- [ ]" → "- [x]"). Wait for the wall to finish before you return; never leave it running in the background.`,
     '- Run the before_implement and after_implement hooks; if nothing committed the work, commit it yourself with a message naming the phase.',
+    repair ? [
+      `WALL REPAIR PASS. A previous agent ran this phase and left \`${state.wall}\` RED after ${cfg.maxWallAttempts} attempts. You are a fresh context on the same phase and the same tree: read what it reported below, find the root cause in the code, fix that, and run the wall until it passes. Whatever of the phase's work is already done and committed stays done — do not redo it.`,
+      `What the previous agent reported: ${repair.summary || '(no summary)'}`,
+      'The failing wall output it returned:',
+      '```',
+      repair.wallOutput || '(the previous agent returned no output)',
+      '```',
+      'How you may NOT make it pass, in any circumstances: skipping, ignoring, disabling, quarantining or deleting a test; adding a suppression, an exclusion, a baseline entry, a waiver or an ignore comment; lowering a threshold or a coverage figure; relaxing, reordering or removing a gate; editing the wall script, the build file or any gate configuration to stop it reporting; or passing a force flag. A green wall bought any of those ways is a worse outcome than the red wall you were given, and it is the one result this run cannot accept. If the only route you can see is one of them, change nothing, leave the tree as you found it, and return wallGreen=false naming the gate and why.',
+    ].join('\n') : '',
     'Return wallGreen, the task ids of this phase still unchecked, the commit sha and a short summary.',
-  ].join('\n'), S.implemented, phaseLabel)
+  ].filter(Boolean).join('\n'), S.implemented, phaseLabel)
   state.implemented.push({ phase: ph.number, title: ph.title, wallGreen: r.wallGreen, unchecked: r.unchecked, commit: r.commit || '' })
-  log(`phase ${ph.number} ${ph.title}: wall ${r.wallGreen ? 'green' : 'RED'}, ${r.unchecked.length} unchecked`)
+  log(`phase ${ph.number} ${ph.title}${repair ? ' (wall repair)' : ''}: wall ${r.wallGreen ? 'green' : 'RED'}, ${r.unchecked.length} unchecked`)
   return r
+}
+
+// One phase run to a green wall and a fully ticked task list, with the two bounded
+// retries the loop is allowed and no third. Both exist because the alternative was a
+// needs-human exit on work the loop had the agents to finish (owner's rule,
+// 2026-09-18: a run must not hand back what it could have fixed itself).
+//   - A red wall gets ONE fresh-context repair pass carrying the failing output. The
+//     first agent had already run the wall maxWallAttempts times inside its own
+//     context, so a second attempt by that context is not what is missing; a second
+//     context reading the same failure is, and that is this skill's own premise for
+//     every review gate. Nothing in the pass may weaken a gate — see implementPhase.
+//   - Tasks left unchecked get ONE second pass over exactly those ids: the shape the
+//     implement stage already ran, which the convergence phases did not have.
+// Ceiling: three implement agents per phase, no recursion, no retry of a retry. The
+// loop escalates rather than inventing a fourth shape, and the `why` it returns says
+// what was attempted and how often, so a person reading HANDOFF.md can tell "nobody
+// tried" from "tried three ways". `what` names the phase for those messages.
+const runPhaseToDone = async (ph, phaseLabel, what) => {
+  let r = await implementPhase(ph, phaseLabel)
+  if (!r.wallGreen) {
+    log(`${what}: the wall is RED after ${cfg.maxWallAttempts} attempts inside one agent — one fresh-context repair pass, and the loop escalates if that fails too`)
+    const repaired = await implementPhase(ph, phaseLabel, { wallOutput: r.wallOutput || '', summary: r.summary || '' })
+    if (!repaired.wallGreen) {
+      return {
+        ok: false,
+        why: `the wall is red at ${what}, and the loop has tried twice: the implementing agent ran \`${state.wall}\` up to ${cfg.maxWallAttempts} times and failed, then a second agent with a fresh context and that failing output fixed and re-ran it and failed as well. Neither was permitted to make it pass by weakening a gate`,
+        detail: { unchecked: repaired.unchecked, wallOutput: repaired.wallOutput || r.wallOutput || '' },
+      }
+    }
+    r = repaired
+  }
+  if (r.unchecked.length) {
+    const again = await implementPhase({ ...ph, taskIds: r.unchecked }, phaseLabel)
+    if (!again.wallGreen) {
+      return {
+        ok: false,
+        why: `the wall is red at ${what} after a second implement pass over the ${r.unchecked.length} task(s) the first one left unchecked`,
+        detail: { unchecked: again.unchecked, wallOutput: again.wallOutput || '' },
+      }
+    }
+    if (again.unchecked.length) {
+      return {
+        ok: false,
+        why: `tasks of ${what} stay unchecked after two implement passes over them, both with the wall green: the loop ran the phase, then ran a second agent over exactly the ids left, and these are still "- [ ]". A task that two passes decline to tick is one the agents will not claim done`,
+        detail: again.unchecked,
+      }
+    }
+  }
+  return { ok: true }
 }
 
 const readPhases = async (label, group) => {
@@ -819,13 +946,8 @@ if (runs('implement')) {
   log(`${phases.length} phases, ${phases.reduce((n, p) => n + p.unchecked, 0)} unchecked tasks`)
   for (const ph of phases) {
     if (ph.unchecked === 0) { log(`phase ${ph.number} already complete, skipped`); continue }
-    const r = await implementPhase(ph, 'Implement')
-    if (!r.wallGreen) return await needsHuman('implement', `the wall is red after phase ${ph.number} (${ph.title})`, { unchecked: r.unchecked, wallOutput: r.wallOutput || '' })
-    if (r.unchecked.length) {
-      const again = await implementPhase({ ...ph, taskIds: r.unchecked }, 'Implement')
-      if (!again.wallGreen) return await needsHuman('implement', `the wall is red after the second pass over phase ${ph.number}`, { unchecked: again.unchecked, wallOutput: again.wallOutput || '' })
-      if (again.unchecked.length) return await needsHuman('implement', `tasks of phase ${ph.number} stay unchecked after two passes`, again.unchecked)
-    }
+    const done = await runPhaseToDone(ph, 'Implement', `phase ${ph.number} (${ph.title})`)
+    if (!done.ok) return await needsHuman('implement', done.why, done.detail)
   }
 }
 
@@ -875,6 +997,86 @@ if (runs('converge')) {
     'Also return every gap the assessment found as findings — appended or not, actionable or not, including every gap it surfaced only for awareness — each graded by the severity rule in the skill\'s own Step 5 and by no other scale: CRITICAL, HIGH, MEDIUM or LOW exactly as that step defines them. For each appended one, name the task id that closes it; leave the task id empty for a gap no task closes.',
   ].join('\n')
 
+  // -------------------------------------------------------------------------
+  // The forced convergence round (2026-09-18).
+  //
+  // /speckit-converge Step 7 appends tasks only for the findings it judges
+  // *actionable*, and Step 4 surfaces `unrequested` gaps for awareness alone, so a
+  // "converged" return routinely carries graded findings that nothing in the
+  // repository closes. Until today the loop escalated that to a person, and the
+  // comment beside the escalation admitted the trap: the floor exists precisely to
+  // refuse converge's non-actionability judgment, and under the NONE default the
+  // branch fired on any finding at all. Observed on feature specs/002-product: the
+  // run stopped on four LOW findings — FR traceability citations, one GATES.md table
+  // row described too thinly, two test and naming wordings — and every one of them
+  // was a mechanical edit the loop had the agents to make.
+  //
+  // So the loop gets the move it was missing. A floor that declines converge's
+  // judgment must supply the work that judgment withheld: the script appends those
+  // findings itself, one task per finding, and implements the phase through the same
+  // implementPhase the appended rounds use, with the same wall gate.
+  //
+  // Round accounting: a forced round is done inside the slot of the round that
+  // discovered it, and the loop then continues to its next round, exactly as a
+  // `tasks_appended` round does. So maxConvergeRounds stays the single bound on the
+  // stage — at most that many converge agents and at most that many
+  // append-and-implement cycles, forced or not — and no pathological run can spin.
+  // The extra cost of a forced round over an appended one is one forceAppend agent.
+  // -------------------------------------------------------------------------
+  const P = featurePaths(state.featureDir)
+  const RATIONALE_FILE = `${state.featureDir}/convergence-rationale.md`
+
+  // A finding's identity, so the loop can tell a finding it already forced from a new
+  // one. Severity, location and summary, lowercased with whitespace collapsed and a
+  // trailing full stop dropped, because those three are the whole of what the schema
+  // makes a converge round return about a finding and the wording arrives re-typed by
+  // a fresh agent each round. This is exact-match identity: a finding whose summary
+  // the next round re-words is a new identity and can be forced again. That is not
+  // the bound — maxConvergeRounds is — and it is the honest reading of "already
+  // tried": the loop claims a survivor only where it can show the same finding twice.
+  const findingId = f => [
+    String(f.severity || '').toUpperCase(),
+    String(f.location || '').toLowerCase().replace(/\s+/g, ' ').trim().replace(/\.$/, ''),
+    String(f.summary || '').toLowerCase().replace(/\s+/g, ' ').trim().replace(/\.$/, ''),
+  ].join(' | ')
+  // The set already forced in this run, keyed by that identity and valued with the
+  // round that forced it; forcedList is the same record in order, for the return value
+  // and for the handoff a survivor writes.
+  const forcedIds = {}
+  const forcedList = []
+  const survivorsOf = findings => findings.filter(f => forcedIds[findingId(f)])
+
+  // The findings are rendered here and never described, for the reason the handoff
+  // document is rendered here: the agent downstream must not be able to paraphrase a
+  // finding, reorder them or drop one. It is told nothing about the severity floor —
+  // it receives what the script already filtered, and re-grading is not its job.
+  const forcedFindingsBlock = fs => fs.map((f, i) => [
+    `${i + 1}. [${f.severity}] ${f.location || '(no location given)'}`,
+    `   summary: ${f.summary}`,
+    f.taskId ? `   the assessment named this existing task against it: ${f.taskId}` : '   the assessment named no task against it',
+  ].join('\n')).join('\n')
+
+  const forceAppendPrompt = (round, fs) => [
+    UNATTENDED,
+    `The feature is ${state.featureDir}; its tasks file is ${P.tasks}.`,
+    `A convergence assessment of this feature has just reported that it appended no tasks, and reported the findings below all the same. They are open work: nothing in ${P.tasks} closes them. Your only job is to append them to ${P.tasks} as one new convergence phase, one task per finding, so that the implement stage runs them. You are not assessing anything. Do not read the code to re-check a finding, do not re-grade one, do not judge one non-actionable, do not drop, merge, split or reorder them, do not add a finding of your own, and do not fix anything. Every finding below gets exactly one task, in the order given.`,
+    'The findings, exactly as the assessment returned them:',
+    forcedFindingsBlock(fs),
+    `Append to the end of ${P.tasks}, following /speckit-converge's own append contract and nothing else: append only, rewrite nothing, renumber nothing, touch no existing task and no earlier convergence phase, and change no file but ${P.tasks}.`,
+    `1. Scan every existing task id; let M be the maximum, and let N be the highest existing phase number plus one.`,
+    `2. Write one new section header: \`## Phase N: Convergence (forced round ${round})\`.`,
+    '3. Emit one checklist item per finding, in the order above, with zero-padded ids T{M+1:03d}, T{M+2:03d}, …, on this template:',
+    '',
+    '   ```markdown',
+    '   - [ ] T042 <imperative work that closes the finding> — or, if this is not a defect, close it instead by recording why: add a dated entry naming T042, the finding and the reason to `<RATIONALE>`. One of the two; the rationale route is closed only by that text being in the file. per <the finding\'s location, copied> (forced)',
+    '   ```',
+    '',
+    `   Substitute \`<RATIONALE>\` with \`${RATIONALE_FILE}\` and \`<the finding's location, copied>\` with the finding's location exactly as given above. The parenthetical is the literal word \`forced\` where an ordinary convergence task carries its gap type: the assessment gave you a severity, a location and a summary and no gap type, and inventing one would be a classification you made up.`,
+    '4. **Both closure routes go in every task\'s own text, in those words.** A forced task is closable two ways: fix the defect, or record in this feature\'s own artifacts why it is not a defect. Not every finding is a code change — a requirement about an *absence* ("this capability contains no approval gate", "no user-permission check lives here") has no code to cite, and a task demanding a citation for it invites a fabricated one, which is worse than the open finding. Where a finding is of that kind, lead the task with the rationale route and say plainly that the expected close is the written reason, not an edit. Where it names work to do, lead with the work. Either way the task text states both, and it states that the rationale must end up written in the file — a claim in an implementer\'s summary, its commit message or its return value does not close the task. The rationale file may not exist yet; where a task names it, that task also says to create it with a `# Convergence rationale` heading if it is not there. Do not create it yourself: your only write is to tasks.md.',
+    `5. Commit ${P.tasks} and nothing else: \`git add -- ${P.tasks} && git commit -m "tasks: forced convergence round ${round}" -- ${P.tasks}\`. The pathspec matters: the tree may hold this run's other work.`,
+    `Return appended=true only when the phase header and one task per finding are in ${P.tasks} on disk and committed, with the phase number, every task id paired with the location of the finding it was written from, and which route each task leads with. If any step fails, return appended=false with the reason in note; never return appended=true for a partial append.`,
+  ].join('\n')
+
   let ended = null
   let endingFindings = []
   for (let round = 1; round <= cfg.maxConvergeRounds; round++) {
@@ -887,15 +1089,47 @@ if (runs('converge')) {
       // The floor is consulted before the outcome. /speckit-converge Step 7 calls a
       // round converged when it judges its findings non-actionable, and Step 4
       // surfaces `unrequested` gaps for awareness, so a HIGH finding can arrive on a
-      // "converged" return. Nothing was appended, so continuing would repeat this
-      // round identically to the cap, so the contradiction goes to a human. Under
-      // the NONE default this is any finding at all, so it is the likely way a
-      // "converged" round ends: converge judging a gap non-actionable is exactly
-      // the judgment this floor refuses to make on its behalf.
+      // "converged" return. Nothing was appended, so another assessment would repeat
+      // this round identically — but that is an argument for the loop authoring the
+      // work, not for handing it to a person: converge judging a gap non-actionable
+      // is exactly the judgment this floor refuses to make on its behalf, so the
+      // floor owes the work that judgment withheld. The forced round supplies it.
       if (aboveFloor.length) {
-        return await needsHuman('converge', noneFloor
-          ? 'converge reported converged while still grading findings, and the severity floor NONE tolerates none of them'
-          : `converge reported converged while grading findings above ${SEVERITY_FLOOR}`, aboveFloor)
+        const survivors = survivorsOf(aboveFloor)
+        if (survivors.length) {
+          // The loop already appended and implemented a forced task against this
+          // finding and the finding came back: the attempt did not take, and the
+          // difference between "nobody tried" and "the loop tried and failed" is the
+          // whole value of this handoff. Both sets go in the detail, survivors first.
+          return await needsHuman('converge',
+            `converge reported converged while still grading ${aboveFloor.length} finding(s) the floor ${SEVERITY_FLOOR} does not tolerate, and ${survivors.length} of them survived a forced convergence round: the loop had already appended a task against each and implemented it with the wall green, and the assessment reports it again. Forced and survived: ${survivors.map(f => `[${f.severity}] ${f.location} (forced in round ${forcedIds[findingId(f)]})`).join('; ')}. A finding is forced once, so this one is a person's.`,
+            survivors.concat(aboveFloor.filter(f => !forcedIds[findingId(f)])))
+        }
+        log(`converge round ${round}: converged with nothing appended and ${aboveFloor.length} finding(s) above the floor (${grade}) — appending them as a forced convergence round; ${floorPhrase}, so converge's non-actionable judgment is not this loop's`)
+        const fa = await run('forceAppend', `force-append converge ${round}`, forceAppendPrompt(round, aboveFloor), S.forceAppended, 'Converge')
+        if (!fa.appended) {
+          return await needsHuman('converge',
+            `converge reported converged while still grading ${aboveFloor.length} finding(s) the floor ${SEVERITY_FLOOR} does not tolerate, and the forced convergence round could not append them to tasks.md: ${fa.note || 'the forced append reported no reason'}. It is attempted once and not retried: an agent that reports a failed append may have written part of the phase first, and a second attempt against that file would duplicate it — the open findings are below, and tasks.md needs a look before the run restarts`,
+            aboveFloor)
+        }
+        // Forced once, whatever the implement pass then does with it: every finding
+        // handed to that agent is marked, so a second pass at the same finding is a
+        // person's and not another round's.
+        for (const f of aboveFloor) {
+          const id = findingId(f)
+          if (!forcedIds[id]) {
+            forcedIds[id] = round
+            forcedList.push({ round, severity: f.severity, location: f.location, summary: f.summary })
+          }
+        }
+        log(`converge round ${round}: forced ${fa.tasks ? fa.tasks.length : '?'} task(s) as phase ${fa.phase} (${(fa.tasks || []).map(t => `${t.taskId} ${t.closure}`).join(', ')}) — each closable by the fix or by a written rationale in ${RATIONALE_FILE}`)
+        const forcedPhases = await readPhases(`phases after forced append ${round}`, 'Converge')
+        const fph = forcedPhases.find(p => p.number === fa.phase) || forcedPhases[forcedPhases.length - 1]
+        const fdone = await runPhaseToDone(fph, 'Converge', `forced convergence phase ${fph.number}`)
+        if (!fdone.ok) return await needsHuman('converge', fdone.why, fdone.detail)
+        // The forced round used this round's slot; the next round re-assesses, exactly
+        // as it does after an appended one, so maxConvergeRounds bounds both alike.
+        continue
       }
       ended = 'converged'
       endingFindings = findings
@@ -907,9 +1141,8 @@ if (runs('converge')) {
     // floor: the tasks are already in tasks.md, and finish reports them unchecked otherwise.
     const phases = await readPhases(`phases after converge ${round}`, 'Converge')
     const ph = phases.find(p => p.number === last.phase) || phases[phases.length - 1]
-    const r = await implementPhase(ph, 'Converge')
-    if (!r.wallGreen) return await needsHuman('converge', `the wall is red after implementing convergence phase ${ph.number}`, { unchecked: r.unchecked, wallOutput: r.wallOutput || '' })
-    if (r.unchecked.length) return await needsHuman('converge', `convergence tasks stay unchecked`, r.unchecked)
+    const cdone = await runPhaseToDone(ph, 'Converge', `convergence phase ${ph.number}`)
+    if (!cdone.ok) return await needsHuman('converge', cdone.why, cdone.detail)
     // A round that appends tasks and grades nothing has not shown the floor was
     // reached; it has shown nothing. Counted as above the floor, so the loop goes on.
     if (findings.length === 0) {
@@ -945,12 +1178,19 @@ if (runs('converge')) {
         ? `converge: ${cfg.maxConvergeRounds} rounds implemented, and the assess-only round after them graded nothing at all — converged`
         : `converge: ${cfg.maxConvergeRounds} rounds implemented, and the assess-only round after them graded nothing above ${SEVERITY_FLOOR} (${gradeOf(findings)}) — stopped at the severity floor`)
     } else {
+      // The assess-only round appends nothing by construction, so a finding it reports
+      // is never forced here — a forced round exists only inside the loop, where a
+      // later round can re-assess what it wrote. The cap stays a reported outcome
+      // rather than a human question, and the log says which of the open findings the
+      // loop had already forced and lost, because that is what a reader needs.
+      const survived = survivorsOf(aboveFloor)
       ended = 'round-cap'
-      log(`converge round cap ${cfg.maxConvergeRounds} reached (floor ${SEVERITY_FLOOR}, ${floorPhrase}): the assess-only round after the last implemented phase graded ${aboveFloor.length} open finding(s) (${gradeOf(findings)}), unimplemented — carried to finish; the wall is the gate`)
+      log(`converge round cap ${cfg.maxConvergeRounds} reached (floor ${SEVERITY_FLOOR}, ${floorPhrase}): the assess-only round after the last implemented phase graded ${aboveFloor.length} open finding(s) (${gradeOf(findings)}), unimplemented${survived.length ? `, ${survived.length} of them already forced and implemented in an earlier round and still reported` : ''} — carried to finish; the wall is the gate`)
     }
   }
-  // The findings of whichever assessment ended the loop, never of an earlier one.
-  state.converge = { ended, rounds: state.rounds.converge, floor: SEVERITY_FLOOR, findings: endingFindings }
+  // The findings of whichever assessment ended the loop, never of an earlier one;
+  // `forced` is every finding this run appended itself, with the round that did it.
+  state.converge = { ended, rounds: state.rounds.converge, floor: SEVERITY_FLOOR, forced: forcedList, findings: endingFindings }
 }
 
 // ---------------------------------------------------------------------------
@@ -961,7 +1201,7 @@ if (runs('finish')) {
   phase('Finish')
   state.stagesRun.push('finish')
   const P = featurePaths(state.featureDir)
-  finished = await run('finish', 'finish', [
+  const finishPrompt = [
     UNATTENDED,
     `Close out the feature on branch ${state.branch || '(current branch)'}:`,
     `1. Run \`${state.wall}\` and wait for it; wallGreen is whether it passed. Do not fix anything.`,
@@ -972,18 +1212,48 @@ if (runs('finish')) {
       ? `5. Fast-forward \`${cfg.mergeInto}\` onto this branch: \`git checkout ${cfg.mergeInto} && git merge --ff-only ${state.branch || 'HEAD@{1}'} && git push origin ${cfg.mergeInto}\`, then check the feature branch out again. merged=true only if every command succeeded; a non-fast-forward is merged=false with the reason in the summary.`
       : '5. Do not merge; merged=false.',
     '6. head is the short sha of the feature branch.',
-  ].join('\n'), S.finished, 'Finish')
+  ].join('\n')
+  finished = await run('finish', 'finish', finishPrompt, S.finished, 'Finish')
   log(`finish: wall ${finished.wallGreen ? 'green' : 'RED'}, ${finished.pushed ? 'pushed' : 'not pushed'}${finished.merged ? `, merged into ${cfg.mergeInto}` : ''}`)
+  // A red wall at finish is not a question for a person either: the loop turned this
+  // same wall green after every implemented phase, with the same agents, and a wall
+  // that was green at the last phase and is red here is a defect in the feature and
+  // not a decision (owner's rule, 2026-09-18). So it gets ONE bounded repair pass —
+  // and the re-check is a second finish agent rather than the repairing agent's own
+  // word, because an agent that repairs a gate is not the one that may declare it
+  // green. That separation is the whole safety of this path: the repair prompt
+  // enumerates the moves that are forbidden, and the verdict still comes from an
+  // agent that only runs the wall and reports. Exactly one repair and one re-verify;
+  // a still-red wall after them is the needs-human exit below, which now says the
+  // loop tried.
+  if (!finished.wallGreen) {
+    log('finish: the wall is RED — one fresh-context repair pass, then a second finish agent re-runs the wall to verify')
+    const repair = await run('implement', 'finish wall repair', [
+      UNATTENDED,
+      `The feature ${state.featureDir} on branch ${state.branch || '(current branch)'} is implemented and every convergence round is done, but its definition of done is red: \`${state.wall}\` failed at the close-out check. It was green after the last implemented phase, so something later broke it. Find the root cause in the code and fix it.`,
+      `1. Run \`${state.wall}\` and read what fails. What the close-out agent reported: ${finished.summary || '(no summary)'}`,
+      `2. Fix the root cause in the code, then run the wall again, up to ${cfg.maxWallAttempts} full attempts.`,
+      'How you may NOT make it pass, in any circumstances: skipping, ignoring, disabling, quarantining or deleting a test; adding a suppression, an exclusion, a baseline entry, a waiver or an ignore comment; lowering a threshold or a coverage figure; relaxing, reordering or removing a gate; editing the wall script, the build file or any gate configuration to stop it reporting; or passing a force flag. A green wall bought any of those ways is a worse outcome than the red wall you were given, and it is the one result this run cannot accept. If the only route you can see is one of them, change nothing, leave the tree as you found it, and return wallGreen=false naming the gate and why.',
+      `3. Tick nothing in ${P.tasks} and add no task: this is a repair, not a phase. Commit your fix with a message naming what was broken.`,
+      'Return wallGreen as you saw it, an empty unchecked list, the commit sha and a short summary of the root cause. Your verdict is not final — a separate agent re-runs the wall after you.',
+    ].join('\n'), S.implemented, 'Finish')
+    log(`finish wall repair: the repairing agent saw the wall ${repair.wallGreen ? 'green' : 'RED'} — re-verifying with a finish agent`)
+    finished = await run('finish', 'finish (re-verify after wall repair)', finishPrompt, S.finished, 'Finish')
+    log(`finish re-verify: wall ${finished.wallGreen ? 'green' : 'RED'}, ${finished.pushed ? 'pushed' : 'not pushed'}${finished.merged ? `, merged into ${cfg.mergeInto}` : ''}`)
+    state.finishRepaired = true
+  }
 }
 
-// The twelfth needs-human exit, and the one that does not go through needsHuman():
+// The eleventh needs-human exit, and the one that does not go through needsHuman():
 // finish ran and its wall is red. It gets the same artifact for the same reason — a
 // red wall at finish is the whole verdict of the run and it must not live only in the
 // invoking session — while this return keeps its own shape, with `handoff` added
 // beside the rest. On a `done` return there is nothing to hand off and no agent runs.
 const finishNeedsHuman = !!(finished && !finished.wallGreen)
 const finishHandoff = finishNeedsHuman
-  ? await writeHandoff('finish', `the definition of done is red at finish: \`${state.wall}\``, {
+  ? await writeHandoff('finish', state.finishRepaired
+    ? `the definition of done is red at finish and the loop has tried twice: \`${state.wall}\` failed at close-out, one fresh-context agent fixed what it could and re-ran it, and the finish agent that re-verified afterwards still reports it red. Neither was permitted to make it pass by weakening a gate`
+    : `the definition of done is red at finish: \`${state.wall}\``, {
     summary: finished.summary,
     allTasksChecked: finished.allTasksChecked,
     clean: finished.clean,
