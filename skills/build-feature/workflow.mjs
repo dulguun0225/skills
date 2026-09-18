@@ -19,7 +19,8 @@
 // "needs-human" and the findings, never with a silent approval. The converge loop
 // is different: it has no fixed point (evidence.md, 2026-09-18), so its only stop
 // test is a severity floor — the loop ends when the round's findings hold nothing
-// above LOW — and reaching its round cap is a reported outcome the run carries to
+// above args.severityFloor, LOW by default — and reaching its round cap is a
+// reported outcome the run carries to
 // finish, not a human question; the wall is still the gate. A round that reports
 // "converged" while grading findings above the floor is a contradiction rather
 // than a work state, and ends the run needs-human: nothing was appended, so every
@@ -51,6 +52,17 @@ export const meta = {
 // rationale per row is in SKILL.md.
 // ---------------------------------------------------------------------------
 const ROSTER = { haiku: ['low'], sonnet: ['low', 'medium'], opus: ['low', 'medium'], fable: ['low'] }
+
+// The severity scale is /speckit-converge's own Step 5 scale, most severe first, and
+// the same four values the analyze schema carries. args.severityFloor names the
+// highest severity the converge loop tolerates, and CRITICAL is not offerable: Step 5
+// defines it as a constitution MUST violation or a gap blocking a P1 user story, so a
+// floor there tolerates every finding the scale has, stops the loop after one round,
+// and is a foot-gun wearing the shape of a knob. The floor is checked beside the tier
+// rows, so a bad one fails the run before the first agent starts rather than hours in
+// at the converge stage.
+const SEVERITY_ORDER = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
+const SEVERITY_FLOORS = ['HIGH', 'MEDIUM', 'LOW']
 const TIERS = {
   preflight: { model: 'sonnet', effort: 'low' },
   specify: { model: 'opus', effort: 'medium' },
@@ -95,6 +107,7 @@ const cfg = {
   maxReviewRounds: a.maxReviewRounds ?? 2,
   maxAnalyzeRounds: a.maxAnalyzeRounds ?? 2,
   maxConvergeRounds: a.maxConvergeRounds ?? 6,
+  severityFloor: String(a.severityFloor ?? 'LOW').toUpperCase(),
   maxWallAttempts: a.maxWallAttempts ?? 3,
   tiers: Object.assign({}, TIERS, a.tiers || {}),
 }
@@ -102,6 +115,11 @@ for (const key of ['from', 'until']) {
   if (!STAGES.includes(cfg[key])) throw new Error(`args.${key} must be one of ${STAGES.join(', ')}`)
 }
 if (STAGES.indexOf(cfg.from) > STAGES.indexOf(cfg.until)) throw new Error('args.from is after args.until')
+if (!SEVERITY_FLOORS.includes(cfg.severityFloor)) {
+  throw new Error(cfg.severityFloor === 'CRITICAL'
+    ? 'args.severityFloor cannot be CRITICAL: a floor there tolerates every finding the scale grades, including a constitution MUST violation, and ends the loop after one round. The floor must be one of ' + SEVERITY_FLOORS.join(', ')
+    : `args.severityFloor is "${cfg.severityFloor}", not one of ${SEVERITY_FLOORS.join(', ')}`)
+}
 if (STAGES.indexOf(cfg.from) > STAGES.indexOf('specify') && !cfg.featureDir) {
   throw new Error(`args.featureDir is required when starting from "${cfg.from}"`)
 }
@@ -629,18 +647,20 @@ if (runs('converge')) {
   // (2026-09-18) it took five passes, and the fifth appended nothing only because
   // the operator stopped applying findings below the floor. So the severity floor
   // is the loop's only stop test, and reaching the cap is reported, not escalated.
-  const SEVERITY_ORDER = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
-  const SEVERITY_FLOOR = 'LOW'
+  const SEVERITY_FLOOR = cfg.severityFloor
   const floorRank = SEVERITY_ORDER.indexOf(SEVERITY_FLOOR)
-  // Rank-based against the declared order, so the constant means what its name says:
-  // raising the floor to MEDIUM raises it. A severity off the scale ranks above the
-  // floor — an ungradeable finding is not a finding below it.
+  // Rank-based against the declared order, so the floor means what its name says and
+  // args.severityFloor moves it: MEDIUM stops the loop only once nothing is above
+  // MEDIUM. A severity off the scale ranks above the floor — an ungradeable finding
+  // is not a finding below it.
   const aboveFloorSev = f => {
     const rank = SEVERITY_ORDER.indexOf(f.severity)
     return rank === -1 || rank < floorRank
   }
   const gradeOf = findings => SEVERITY_ORDER.map(sev => `${findings.filter(f => f.severity === sev).length} ${sev.toLowerCase()}`).join(', ')
-  // One prompt for both kinds of round. assessOnly is the extra round after the cap:
+  // The floor is never in the prompt: the assessment grades on Step 5's scale alone
+  // and the script filters afterwards, so moving args.severityFloor cannot move a
+  // grade. One prompt for both kinds of round. assessOnly is the extra round after the cap:
   // same assessment, no append, no commit, so its findings are open work rather than
   // work the round that found it has already closed.
   const convergePrompt = (round, assessOnly) => [
@@ -668,7 +688,7 @@ if (runs('converge')) {
       // "converged" return. Nothing was appended, so continuing would repeat this
       // round identically to the cap, so the contradiction goes to a human.
       if (aboveFloor.length) {
-        return needsHuman('converge', 'converge reported converged while grading findings above LOW', aboveFloor)
+        return needsHuman('converge', `converge reported converged while grading findings above ${SEVERITY_FLOOR}`, aboveFloor)
       }
       ended = 'converged'
       endingFindings = findings

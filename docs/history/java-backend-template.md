@@ -248,3 +248,34 @@ Firing: unchanged, and still unmeasured for both skills.
 - Schemathesis, the vacuum rulesets and oasdiff: named in the template's gap table with what would wire each; not wired because the first two need a Python or Go binary and authored rulesets, the third needs a consumer.
 - Whether the template should carry authentication scaffolding. The skills say nothing about it, and the template says so.
 - Renovate is configured but the app is not installed on the repository; until it is, the "named path for moving a pin" is a file, not a process.
+
+## The severity floor became an argument — 2026-09-18
+
+The owner asked for the converge stop level to be chosen per run, `LOW` by default, from both entry points.
+**No run: nothing here was executed, and both skills stay *decided, not yet validated*.** `args.severityFloor`
+joins `build-feature`'s configuration, uppercased, defaulting to `LOW`, and is checked against the four-value
+scale beside the tier rows — before the first agent starts, on the roster's own reasoning: a bad floor must not
+cost a run its specify-through-implement spend before it is caught. `converge-feature` carries it in its example
+call and names it as the one setting that moves where the loop stops, which is the per-feature call that skill
+exists for; it owns no rule about it, and the check stays in the script.
+
+Two things made this a small change rather than a rewrite, and both came from the adversarial review recorded
+above. The floor comparison was already by rank against the declared order — written for *the day the floor is
+raised to MEDIUM*, which is this one — so the constant became a configuration read and nothing else moved. And
+the floor is filtered in the script and never appears in the converge prompt, so moving it cannot move a grade;
+that property was not designed for this change but is what makes the argument honest, and it is now stated in
+the check line. `converge.floor` on the return already carried the value, so a run's stop level is readable
+from its result.
+
+`CRITICAL` was accepted for one edit and refused the same day, when the owner asked whether
+`/speckit-converge` has that severity at all. It does: Step 5 grades a constitution MUST violation, or a
+`missing`/`contradicts` gap blocking a P1 user story's baseline functionality, as CRITICAL. So a floor there
+tolerates every finding the scale has and ends the loop after one round, and it is refused with a message
+saying so; the legal floors are `HIGH`, `MEDIUM`, `LOW`. **The first version accepted it because the scale was
+read off this script's own schema enum rather than off the skill that grades against it** — *follow the
+pointer*, the class this repo has recorded most often after counting, and the second time in two days that a
+claim about `/speckit-converge`'s text was written without opening `/speckit-converge`. The other was defect
+(2) of the adversarial review above, where a third severity vocabulary was invented beside Step 5's.
+Per-session cost unchanged in kind: `build-feature`'s description and `converge-feature`'s are
+untouched by this change, deliberately, because both still describe the default truthfully and a description
+edit invalidates the firing baseline neither skill has yet measured.
