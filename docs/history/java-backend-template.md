@@ -198,6 +198,8 @@ now has a second candidate skill to point at.
 
 ## `converge-feature`, and the severity floor in `build-feature` — 2026-09-18
 
+*Superseded in its default by "The default severity floor is `NONE`" at the foot of this file: the floor stayed the only stop test, but `LOW` is no longer the default. The ground below stands as the record of why `LOW` was chosen.*
+
 Ground: the product-catalog repo's `001-product-hierarchy`, converged by hand on `main` (head `f2b5f1f`): five converge ⇄ implement passes, no fixed point, the fifth appending nothing only because the operator had stopped applying LOW findings. `build-feature`'s converge loop now carries every gap graded on the analyze scale, stops on `converged` or on a round with nothing above LOW, logs which, defaults to six rounds, and reports reaching the cap as `converge.ended: "round-cap"` on a `done` return — the wall stays the gate, red wall and unchecked appended tasks stay `needs-human`. `converge-feature` is a named entry point to that loop from `converge` to `finish` through the sibling's script, no script of its own; the rejected alternative is `/loop` with a retyped sentence, on the three grounds its SKILL.md states. Both marked *decided, not yet validated*: no scripted run has yet reached the converge stage on this table.
 
 Per-session cost, `npm run tokens:frontmatter`, 2026-09-18, o200k_base: `converge-feature` 114 tokens (name plus description; 119 with framing), set total 4,851 across twenty-three skills, up from 4,581 across twenty-one on 2026-09-16, with `build-feature`'s description edit inside that delta. A per-feature-cadence skill like its sibling; accepted because the alternative was a sentence retyped per feature and per project with no written stop rule. Firing: meant to be invoked by name; unprompted firing on "finish this feature" unmeasured.
@@ -251,6 +253,8 @@ Firing: unchanged, and still unmeasured for both skills.
 
 ## The severity floor became an argument — 2026-09-18
 
+*Superseded in its default by the last entry of this file. Everything else here holds.*
+
 The owner asked for the converge stop level to be chosen per run, `LOW` by default, from both entry points.
 **No run: nothing here was executed, and both skills stay *decided, not yet validated*.** `args.severityFloor`
 joins `build-feature`'s configuration, uppercased, defaulting to `LOW`, and is checked against the four-value
@@ -297,3 +301,49 @@ leaves a real name where the reader needs a hole. Both are born the same way —
 of you — and the discriminator is whether the text is a claim or a template. A swept grep over `skills/` for
 `specs/0`, `featureDir:` and `branch: "main"` found this the only instance. `npm run check` and
 `npm run gates` green after; neither reaches the inside of a fenced block, and no gate here ever will.
+
+## The default severity floor is `NONE` — 2026-09-18
+
+The owner reversed the default converge stop level from `LOW` to `NONE` — tolerating nothing — for
+`build-feature` and therefore for `converge-feature`, which passes it. The reversal was taken after the
+counter-argument was put: the `001-product-hierarchy` run recorded twice above shows converge has no fixed
+point, and that is why `LOW` was chosen the same morning. The owner reaffirmed. **The ground it was reversed
+on: a tolerated finding is a finding left open, and a stop test that tolerates a class of finding has written
+that class out of the definition of done. What the no-fixed-point run shows is that the loop will not
+terminate on its own, not that a tolerated finding is closed.** Both earlier entries stand as dated records
+and are marked superseded in their default where a reader would otherwise act on them. **No run: nothing here
+was executed, and both skills stay *decided, not yet validated*.**
+
+In the script, `NONE` joins `HIGH`, `MEDIUM`, `LOW` as a legal floor and becomes the default; it ranks below
+every graded severity (`floorRank = SEVERITY_ORDER.length`), so every graded finding is above it. `CRITICAL`
+is still refused on the same Step 5 reading. Nothing about the comparison moved: it was already by rank, and
+a severity off the scale (`rank === -1`) still ranks above the floor. Two exits changed meaning rather than
+code, and both are now stated where a reader will look. The in-loop `severity-floor` exit is unreachable
+under `NONE` — a round that grades nothing already continues as *shown nothing*, and a round that grades
+anything has graded above the floor — so it belongs to a run that raised the floor. On the post-cap
+assess-only path a zero-finding assessment used to end `severity-floor`; under `NONE` it is labelled
+`converged`, because the round found nothing and the other label names a floor that tolerates nothing. Every
+log line and the contradiction message that named the floor are floor-aware, so no run prints *nothing above
+NONE*.
+
+**The cost is stated rather than argued away.** Under `NONE` the clean `converged` exit needs a round that
+appends nothing *and* grades nothing, so a real feature will usually end at `maxConvergeRounds` — unchanged
+at 6, and a caller who wants more passes raises the cap, not the floor — with its open findings reported on a
+`done` return, or at `needs-human` where converge returns `converged` while still grading a gap. That
+`needs-human` was already the contradiction branch; it is now much more likely, because `/speckit-converge`
+Step 7 calls a round converged on *no **actionable** findings* and Step 4 surfaces gaps for awareness, and
+under this floor the run declines to adopt that judgment. The wall at finish remains the gate.
+
+Per-session cost, `npm run tokens:frontmatter`, 2026-09-18, o200k_base: `build-feature` 132 tokens of name
+plus description (139 with framing), `converge-feature` 128 (133 with framing), set total 4,880 across the
+skills the script lists, up from 4,851 the same day. **Both descriptions were edited by this change** —
+`converge-feature`'s said *until nothing converge reports is above LOW severity*, which the reversal made
+false, and `build-feature`'s said the loop *ends when nothing it finds is above LOW severity*. A description
+edit invalidates any firing baseline; **neither skill has ever measured one**, so nothing was invalidated in
+fact, and the first measurement of either is still owed.
+
+Exercised, not measured: the exits were driven against a stub of the Workflow sandbox — `NONE` with a clean
+round, with one LOW on a `converged` return, with an off-scale severity, the cap with a clean and with a
+graded assess-only round, and the same cap shapes at a `LOW` floor — and each produced the `converge.ended`
+and the log line the skills claim. That is a reading of the script under stubs, not a run: no Workflow run
+has reached the converge stage at any floor. `npm run check` and `npm run gates` green after.

@@ -19,14 +19,18 @@
 // "needs-human" and the findings, never with a silent approval. The converge loop
 // is different: it has no fixed point (evidence.md, 2026-09-18), so its only stop
 // test is a severity floor — the loop ends when the round's findings hold nothing
-// above args.severityFloor, LOW by default — and reaching its round cap is a
-// reported outcome the run carries to
-// finish, not a human question; the wall is still the gate. A round that reports
+// above args.severityFloor — and reaching its round cap is a reported outcome the
+// run carries to finish, not a human question; the wall is still the gate. The
+// default floor is NONE: it tolerates no graded finding at all, so the only clean
+// stop is a round that appends nothing and grades nothing, and a long run ends at
+// maxConvergeRounds rather than at the floor (owner's decision 2026-09-18,
+// reversing the LOW default of the same day; evidence.md). A round that reports
 // "converged" while grading findings above the floor is a contradiction rather
 // than a work state, and ends the run needs-human: nothing was appended, so every
-// further round would repeat it. Like the review and analyze loops, converge runs
-// one pass more than its cap — an assess-only round that appends nothing — so the
-// findings the run reports are the ones no implement pass has closed.
+// further round would repeat it — which under NONE is any finding at all. Like
+// the review and analyze loops, converge runs one pass more than its cap — an
+// assess-only round that appends nothing — so the findings the run reports are the
+// ones no implement pass has closed.
 
 export const meta = {
   name: 'build-feature',
@@ -38,7 +42,7 @@ export const meta = {
     { title: 'Plan', detail: 'plan, fresh-context review, fix' },
     { title: 'Tasks', detail: 'tasks, analyze, remediate' },
     { title: 'Implement', detail: 'one agent per phase, wall green after each' },
-    { title: 'Converge', detail: 'converge, implement appended phase, repeat until nothing above LOW is left' },
+    { title: 'Converge', detail: 'converge, implement appended phase, repeat until nothing above the severity floor is left' },
     { title: 'Finish', detail: 'wall, push, optional fast-forward merge' },
   ],
 }
@@ -55,14 +59,15 @@ const ROSTER = { haiku: ['low'], sonnet: ['low', 'medium'], opus: ['low', 'mediu
 
 // The severity scale is /speckit-converge's own Step 5 scale, most severe first, and
 // the same four values the analyze schema carries. args.severityFloor names the
-// highest severity the converge loop tolerates, and CRITICAL is not offerable: Step 5
-// defines it as a constitution MUST violation or a gap blocking a P1 user story, so a
-// floor there tolerates every finding the scale has, stops the loop after one round,
-// and is a foot-gun wearing the shape of a knob. The floor is checked beside the tier
-// rows, so a bad one fails the run before the first agent starts rather than hours in
-// at the converge stage.
+// highest severity the converge loop tolerates. NONE is the default and tolerates
+// nothing: it ranks below every graded severity, so every finding the assessment
+// grades is above it. CRITICAL is not offerable: Step 5 defines it as a constitution
+// MUST violation or a gap blocking a P1 user story, so a floor there tolerates every
+// finding the scale has, stops the loop after one round, and is a foot-gun wearing
+// the shape of a knob. The floor is checked beside the tier rows, so a bad one fails
+// the run before the first agent starts rather than hours in at the converge stage.
 const SEVERITY_ORDER = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
-const SEVERITY_FLOORS = ['HIGH', 'MEDIUM', 'LOW']
+const SEVERITY_FLOORS = ['HIGH', 'MEDIUM', 'LOW', 'NONE']
 const TIERS = {
   preflight: { model: 'sonnet', effort: 'low' },
   specify: { model: 'opus', effort: 'medium' },
@@ -107,7 +112,7 @@ const cfg = {
   maxReviewRounds: a.maxReviewRounds ?? 2,
   maxAnalyzeRounds: a.maxAnalyzeRounds ?? 2,
   maxConvergeRounds: a.maxConvergeRounds ?? 6,
-  severityFloor: String(a.severityFloor ?? 'LOW').toUpperCase(),
+  severityFloor: String(a.severityFloor ?? 'NONE').toUpperCase(),
   maxWallAttempts: a.maxWallAttempts ?? 3,
   tiers: Object.assign({}, TIERS, a.tiers || {}),
 }
@@ -647,8 +652,13 @@ if (runs('converge')) {
   // (2026-09-18) it took five passes, and the fifth appended nothing only because
   // the operator stopped applying findings below the floor. So the severity floor
   // is the loop's only stop test, and reaching the cap is reported, not escalated.
+  // The default floor is NONE (owner's decision 2026-09-18, reversing the LOW
+  // default taken earlier the same day on that run's evidence): a tolerated finding
+  // is a finding left open, so the loop tolerates none and the cap is what ends a
+  // long run.
   const SEVERITY_FLOOR = cfg.severityFloor
-  const floorRank = SEVERITY_ORDER.indexOf(SEVERITY_FLOOR)
+  // NONE ranks below every graded severity, so every graded finding is above it.
+  const floorRank = SEVERITY_FLOOR === 'NONE' ? SEVERITY_ORDER.length : SEVERITY_ORDER.indexOf(SEVERITY_FLOOR)
   // Rank-based against the declared order, so the floor means what its name says and
   // args.severityFloor moves it: MEDIUM stops the loop only once nothing is above
   // MEDIUM. A severity off the scale ranks above the floor — an ungradeable finding
@@ -657,6 +667,11 @@ if (runs('converge')) {
     const rank = SEVERITY_ORDER.indexOf(f.severity)
     return rank === -1 || rank < floorRank
   }
+  // Every log and exit message that names the floor: under NONE "nothing above NONE"
+  // is not what the run means, and the reader is owed the rule rather than the name.
+  const noneFloor = SEVERITY_FLOOR === 'NONE'
+  const floorPhrase = noneFloor ? 'no finding is tolerated' : `nothing above ${SEVERITY_FLOOR}`
+  const nothingLeft = noneFloor ? 'nothing graded at all' : `nothing graded above ${SEVERITY_FLOOR}`
   const gradeOf = findings => SEVERITY_ORDER.map(sev => `${findings.filter(f => f.severity === sev).length} ${sev.toLowerCase()}`).join(', ')
   // The floor is never in the prompt: the assessment grades on Step 5's scale alone
   // and the script filters afterwards, so moving args.severityFloor cannot move a
@@ -686,13 +701,18 @@ if (runs('converge')) {
       // round converged when it judges its findings non-actionable, and Step 4
       // surfaces `unrequested` gaps for awareness, so a HIGH finding can arrive on a
       // "converged" return. Nothing was appended, so continuing would repeat this
-      // round identically to the cap, so the contradiction goes to a human.
+      // round identically to the cap, so the contradiction goes to a human. Under
+      // the NONE default this is any finding at all, so it is the likely way a
+      // "converged" round ends: converge judging a gap non-actionable is exactly
+      // the judgment this floor refuses to make on its behalf.
       if (aboveFloor.length) {
-        return needsHuman('converge', `converge reported converged while grading findings above ${SEVERITY_FLOOR}`, aboveFloor)
+        return needsHuman('converge', noneFloor
+          ? 'converge reported converged while still grading findings, and the severity floor NONE tolerates none of them'
+          : `converge reported converged while grading findings above ${SEVERITY_FLOOR}`, aboveFloor)
       }
       ended = 'converged'
       endingFindings = findings
-      log(`converge round ${round}: converged — nothing appended and nothing above ${SEVERITY_FLOOR} (${grade})`)
+      log(`converge round ${round}: converged — nothing appended and ${nothingLeft} (${grade})`)
       break
     }
     log(`converge round ${round}: ${last.taskIds ? last.taskIds.length : '?'} tasks appended as phase ${last.phase} (${grade})`)
@@ -709,6 +729,9 @@ if (runs('converge')) {
       log(`converge round ${round}: appended tasks as phase ${ph.number} and graded nothing — what is left is unknown, not below the floor, so the loop continues`)
       continue
     }
+    // Unreachable under the NONE default: a round that graded nothing has already
+    // continued above, and under NONE every graded finding is above the floor. It
+    // is the in-loop exit for a run that raised the floor to LOW, MEDIUM or HIGH.
     if (aboveFloor.length === 0) {
       ended = 'severity-floor'
       endingFindings = findings
@@ -727,11 +750,16 @@ if (runs('converge')) {
     const aboveFloor = findings.filter(aboveFloorSev)
     endingFindings = findings
     if (aboveFloor.length === 0) {
-      ended = 'severity-floor'
-      log(`converge: ${cfg.maxConvergeRounds} rounds implemented, and the assess-only round after them graded nothing above ${SEVERITY_FLOOR} (${gradeOf(findings)}) — stopped at the severity floor`)
+      // Under NONE this round graded nothing at all, so the run stopped because
+      // converge found nothing — not because a floor tolerated what it found. The
+      // label would otherwise name a floor that tolerates nothing.
+      ended = noneFloor ? 'converged' : 'severity-floor'
+      log(noneFloor
+        ? `converge: ${cfg.maxConvergeRounds} rounds implemented, and the assess-only round after them graded nothing at all — converged`
+        : `converge: ${cfg.maxConvergeRounds} rounds implemented, and the assess-only round after them graded nothing above ${SEVERITY_FLOOR} (${gradeOf(findings)}) — stopped at the severity floor`)
     } else {
       ended = 'round-cap'
-      log(`converge round cap ${cfg.maxConvergeRounds} reached: the assess-only round after the last implemented phase graded ${aboveFloor.length} finding(s) above ${SEVERITY_FLOOR} (${gradeOf(findings)}), open and unimplemented — carried to finish; the wall is the gate`)
+      log(`converge round cap ${cfg.maxConvergeRounds} reached (floor ${SEVERITY_FLOOR}, ${floorPhrase}): the assess-only round after the last implemented phase graded ${aboveFloor.length} open finding(s) (${gradeOf(findings)}), unimplemented — carried to finish; the wall is the gate`)
     }
   }
   // The findings of whichever assessment ended the loop, never of an earlier one.
