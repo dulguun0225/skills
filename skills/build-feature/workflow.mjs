@@ -110,16 +110,16 @@ const TIERS = {
   converge: { model: 'opus', effort: 'medium' },
   // Writes the tasks a converge round graded and declined to append. Unlike the
   // `handoff` row below, the document is not rendered for it: it is handed findings
-  // and must author one task per finding — the imperative work, its trace back to the
-  // finding's location, and both closure routes (fix the defect, or record in the
-  // feature's artifacts why it is not one) — and must judge per finding which route
-  // the task should lead with, because a finding about an absence ("no approval gate
-  // lives here") closes on a rationale where a demand for a code citation invites a
-  // fabricated one. That is authorship and judgment over text the implement stage
-  // then executes, so it is priced with converge and implement rather than with
-  // handoff: opus medium. A cheaper row would paraphrase a finding into a task that
-  // closes on something else, and nothing downstream would notice. (The roster's
-  // fable row is unavailable on billing as of 2026-09-18 and is not considered.)
+  // and must author one task per finding — the imperative work that closes it and its
+  // trace back to the finding's location. One closure route, the fix. Until 2026-09-20
+  // a task carried a second, "record why it is not a defect", and on product-catalog
+  // 004 every task of six forced rounds was closed by it while four of the findings
+  // were fixable in code the same day; see evidence.md. That is authorship over text
+  // the implement stage then executes, so it is priced with converge and implement
+  // rather than with handoff: opus medium. A cheaper row would paraphrase a finding
+  // into a task that closes on something else, and nothing downstream would notice.
+  // (The roster's fable row is unavailable on billing as of 2026-09-18 and is not
+  // considered.)
   forceAppend: { model: 'opus', effort: 'medium' },
   // Runs only when a forced append reports it failed, and answers one question about
   // tasks.md: is the forced phase wholly absent, wholly present, or neither. Git is
@@ -327,6 +327,18 @@ const S = {
       summary: { type: 'string' },
       commit: { type: 'string' },
       wallOutput: { type: 'string', description: 'the failing part of the wall output when wallGreen is false' },
+      blocked: {
+        type: 'array',
+        description: 'forced convergence phases only: one entry per task left unchecked because its fix is blocked, with the blocker quoted',
+        items: {
+          type: 'object',
+          required: ['taskId', 'blocker'],
+          properties: {
+            taskId: { type: 'string' },
+            blocker: { type: 'string', description: 'the requirement or constitution article that forbids the fix, quoted with its id, or the system outside this repository that does not exist' },
+          },
+        },
+      },
     },
   },
   converged: {
@@ -349,6 +361,7 @@ const S = {
             location: { type: 'string', description: 'the requirement id, plan section or file the gap is against' },
             summary: { type: 'string' },
             taskId: { type: 'string', description: 'the appended task that closes it, empty if none was appended' },
+            repeatOf: { type: 'integer', description: 'the number of the already-forced finding this one restates, from the numbered list in the prompt; 0 or absent when it is new or no list was given' },
           },
         },
       },
@@ -369,15 +382,10 @@ const S = {
         description: 'one entry per finding this prompt handed you, in the order it gave them — a finding with no task is a failed append, not an omission to report here',
         items: {
           type: 'object',
-          required: ['taskId', 'location', 'closure'],
+          required: ['taskId', 'location'],
           properties: {
             taskId: { type: 'string', description: 'the appended task id, e.g. T104' },
             location: { type: 'string', description: "the finding's location, copied from the prompt, so the task is traceable to the finding it was written from" },
-            closure: {
-              type: 'string',
-              enum: ['fix', 'rationale', 'either'],
-              description: 'which closure route the task text leads with: "fix" where the finding names work to do, "rationale" where the finding is about an absence and a code citation would have to be invented, "either" where the task leaves both open with no preference. Both routes are stated in every task regardless; this is which one the task says to try first.',
-            },
           },
         },
       },
@@ -882,7 +890,19 @@ if (runs('analyze')) {
 // way is strictly worse than the needs-human exit it replaced, so the repair prompt
 // names every move it may not make and tells the agent to return wallGreen=false and
 // leave the tree alone when the only route it can see is one of them.
-const implementPhase = async (ph, phaseLabel, repair) => {
+// A forced convergence task is closed by the fix (owner's rule, 2026-09-20: a severity
+// floor of NONE means a LOW finding is fixed). The two blockers admitted are the two
+// an agent cannot work past from inside the feature; everything else claimed on
+// product-catalog 004 — "this toolchain cannot express it", "a deployment decision",
+// "the artifacts already name it as a gap", "the file is append-only" — was fixed by
+// hand the same day, so none of those is a blocker and the prompt says so by name.
+const FORCED_RULE = [
+  '- FORCED CONVERGENCE PHASE. Every task in this phase is a finding the loop will not tolerate, and each is closed by the change that makes the finding untrue — code, a test, a migration, a gate, a document edit. It is never closed by writing down why it was not fixed: do not add a rationale entry anywhere, do not tick a task on the strength of one, and do not tick a task because an earlier rationale, a named gap in plan.md or a row in a gates document already describes the finding. Those describe the gap; the task is to close it.',
+  '- A fix is blocked in exactly two cases: (a) a numbered requirement in spec.md or an article of the constitution forbids the change — quote it with its id; (b) the change needs a system outside this repository that does not exist. Nothing else is a blocker. "The toolchain cannot express this check", "this is a deployment decision", "the plan already names this as a gap", "no feature has proposed it yet" and "the file is append-only" are not blockers: find another shape for the check, make the decision and wire it, close the named gap, edit the file. A finding you believe is simply wrong is not ticked either: it stays unchecked and the reason goes in `blocked`.',
+  '- A blocked task stays "- [ ]". Fix every task that is not blocked, tick those, and return the blocked ones in `blocked` with the blocker quoted. Never tick a task whose finding is still true.',
+].join('\n')
+
+const implementPhase = async (ph, phaseLabel, repair, forced) => {
   const P = featurePaths(state.featureDir)
   const ids = ph.taskIds.length ? `${ph.taskIds[0]}–${ph.taskIds[ph.taskIds.length - 1]}` : 'none'
   const r = await run('implement', `implement phase ${ph.number}${repair ? ' (wall repair)' : ''}`, [
@@ -894,6 +914,7 @@ const implementPhase = async (ph, phaseLabel, repair) => {
     `- Definition of done for this phase: after its tasks, run \`${state.wall}\` and fix what it reports until it passes. Fix root causes in the code, never by weakening a gate, deleting a test or adding a suppression. Give up only after ${cfg.maxWallAttempts} full attempts, and then return wallGreen=false with the failing output.`,
     `- Tick each finished task in ${P.tasks} ("- [ ]" → "- [x]"). Wait for the wall to finish before you return; never leave it running in the background.`,
     '- Run the before_implement and after_implement hooks; if nothing committed the work, commit it yourself with a message naming the phase.',
+    forced ? FORCED_RULE : '',
     repair ? [
       `WALL REPAIR PASS. A previous agent ran this phase and left \`${state.wall}\` RED after ${cfg.maxWallAttempts} attempts. You are a fresh context on the same phase and the same tree: read what it reported below, find the root cause in the code, fix that, and run the wall until it passes. Whatever of the phase's work is already done and committed stays done — do not redo it.`,
       `What the previous agent reported: ${repair.summary || '(no summary)'}`,
@@ -903,7 +924,7 @@ const implementPhase = async (ph, phaseLabel, repair) => {
       '```',
       'How you may NOT make it pass, in any circumstances: skipping, ignoring, disabling, quarantining or deleting a test; adding a suppression, an exclusion, a baseline entry, a waiver or an ignore comment; lowering a threshold or a coverage figure; relaxing, reordering or removing a gate; editing the wall script, the build file or any gate configuration to stop it reporting; or passing a force flag. A green wall bought any of those ways is a worse outcome than the red wall you were given, and it is the one result this run cannot accept. If the only route you can see is one of them, change nothing, leave the tree as you found it, and return wallGreen=false naming the gate and why.',
     ].join('\n') : '',
-    'Return wallGreen, the task ids of this phase still unchecked, the commit sha and a short summary.',
+    `Return wallGreen, the task ids of this phase still unchecked, the commit sha and a short summary${forced ? ', and in `blocked` one entry per task you left unchecked with its blocker quoted' : ''}.`,
   ].filter(Boolean).join('\n'), S.implemented, phaseLabel)
   state.implemented.push({ phase: ph.number, title: ph.title, wallGreen: r.wallGreen, unchecked: r.unchecked, commit: r.commit || '' })
   log(`phase ${ph.number} ${ph.title}${repair ? ' (wall repair)' : ''}: wall ${r.wallGreen ? 'green' : 'RED'}, ${r.unchecked.length} unchecked`)
@@ -925,11 +946,11 @@ const implementPhase = async (ph, phaseLabel, repair) => {
 // loop escalates rather than inventing a fourth shape, and the `why` it returns says
 // what was attempted and how often, so a person reading HANDOFF.md can tell "nobody
 // tried" from "tried three ways". `what` names the phase for those messages.
-const runPhaseToDone = async (ph, phaseLabel, what) => {
-  let r = await implementPhase(ph, phaseLabel)
+const runPhaseToDone = async (ph, phaseLabel, what, forced) => {
+  let r = await implementPhase(ph, phaseLabel, null, forced)
   if (!r.wallGreen) {
     log(`${what}: the wall is RED after ${cfg.maxWallAttempts} attempts inside one agent — one fresh-context repair pass, and the loop escalates if that fails too`)
-    const repaired = await implementPhase(ph, phaseLabel, { wallOutput: r.wallOutput || '', summary: r.summary || '' })
+    const repaired = await implementPhase(ph, phaseLabel, { wallOutput: r.wallOutput || '', summary: r.summary || '' }, forced)
     if (!repaired.wallGreen) {
       return {
         ok: false,
@@ -940,7 +961,7 @@ const runPhaseToDone = async (ph, phaseLabel, what) => {
     r = repaired
   }
   if (r.unchecked.length) {
-    const again = await implementPhase({ ...ph, taskIds: r.unchecked }, phaseLabel)
+    const again = await implementPhase({ ...ph, taskIds: r.unchecked }, phaseLabel, null, forced)
     if (!again.wallGreen) {
       return {
         ok: false,
@@ -951,8 +972,8 @@ const runPhaseToDone = async (ph, phaseLabel, what) => {
     if (again.unchecked.length) {
       return {
         ok: false,
-        why: `tasks of ${what} stay unchecked after two implement passes over them, both with the wall green: the loop ran the phase, then ran a second agent over exactly the ids left, and these are still "- [ ]". A task that two passes decline to tick is one the agents will not claim done`,
-        detail: again.unchecked,
+        why: `tasks of ${what} stay unchecked after two implement passes over them, both with the wall green: the loop ran the phase, then ran a second agent over exactly the ids left, and these are still "- [ ]". A task that two passes decline to tick is one the agents will not claim done${forced ? '. This is a forced convergence phase, where a task is closed only by the fix: each of these is a finding two agents tried to fix and returned as blocked, and the blocker each named is in the detail — a requirement that forbids the change, or a system that does not exist. Every other task of the phase was fixed and committed. What is left is a decision about the spec, not work the loop withheld' : ''}`,
+        detail: forced ? { unchecked: again.unchecked, blocked: (again.blocked && again.blocked.length ? again.blocked : r.blocked) || [] } : again.unchecked,
       }
     }
   }
@@ -1050,8 +1071,9 @@ if (runs('converge')) {
     assessOnly
       ? 'ASSESS ONLY. Run the skill\'s assessment through its findings summary and stop there. Append nothing: tasks.md and every other file must be byte-for-byte unchanged when you finish, nothing is committed, and you run no hook that writes or commits. Return the outcome "converged", because nothing was appended; the findings below are the whole value of this round.'
       : `Run the assessment in full. Return the outcome exactly as the skill defines it: "converged" when nothing was appended, "tasks_appended" with the new phase number and the appended task ids otherwise. When tasks were appended, commit tasks.md with the message "tasks: convergence round ${round}".`,
+    forcedSoFarBlock(),
     'Also return every gap the assessment found as findings — appended or not, actionable or not, including every gap it surfaced only for awareness — each graded by the severity rule in the skill\'s own Step 5 and by no other scale: CRITICAL, HIGH, MEDIUM or LOW exactly as that step defines them. For each appended one, name the task id that closes it; leave the task id empty for a gap no task closes.',
-  ].join('\n')
+  ].filter(Boolean).join('\n')
 
   // -------------------------------------------------------------------------
   // The forced convergence round (2026-09-18).
@@ -1080,7 +1102,6 @@ if (runs('converge')) {
   // The extra cost of a forced round over an appended one is one forceAppend agent.
   // -------------------------------------------------------------------------
   const P = featurePaths(state.featureDir)
-  const RATIONALE_FILE = `${state.featureDir}/convergence-rationale.md`
 
   // A finding's identity, so the loop can tell a finding it already forced from a new
   // one. Severity, location and summary, lowercased with whitespace collapsed and a
@@ -1100,7 +1121,19 @@ if (runs('converge')) {
   // and for the handoff a survivor writes.
   const forcedIds = {}
   const forcedList = []
-  const survivorsOf = findings => findings.filter(f => forcedIds[findingId(f)])
+  // Exact match alone never fired: on product-catalog 004 (2026-09-20) the same
+  // thirteen findings came back six rounds running, re-worded each time, and were
+  // forced six times. So the assessment is also handed the numbered list of what this
+  // run already forced and labels each finding it returns with the entry it restates
+  // (repeatOf). The label is asked for after the assessment and changes nothing about
+  // what is assessed or graded; it is the only reader placed to say "same gap".
+  const forcedRoundOf = f => forcedIds[findingId(f)] ||
+    (Number.isInteger(f.repeatOf) && f.repeatOf > 0 && forcedList[f.repeatOf - 1] ? forcedList[f.repeatOf - 1].round : 0)
+  const survivorsOf = findings => findings.filter(f => forcedRoundOf(f))
+  const forcedSoFarBlock = () => forcedList.length ? [
+    'This run has already appended a task against each finding below and implemented it with the wall green. Assess exactly as you would without this list. Then, for every finding you return, set `repeatOf` to the number of the entry it restates — the same gap at the same place, however either is worded — or to 0 where it is new:',
+    forcedList.map((f, i) => `${i + 1}. [${f.severity}] ${f.location} — ${f.summary}`).join('\n'),
+  ].join('\n') : ''
 
   // The findings are rendered here and never described, for the reason the handoff
   // document is rendered here: the agent downstream must not be able to paraphrase a
@@ -1131,13 +1164,13 @@ if (runs('converge')) {
     '3. Emit one checklist item per finding, in the order above, with zero-padded ids T{M+1:03d}, T{M+2:03d}, …, on this template:',
     '',
     '   ```markdown',
-    '   - [ ] T042 <imperative work that closes the finding> — or, if this is not a defect, close it instead by recording why: add a dated entry naming T042, the finding and the reason to `<RATIONALE>`. One of the two; the rationale route is closed only by that text being in the file. per <the finding\'s location, copied> (forced)',
+    '   - [ ] T042 <imperative work that closes the finding> per <the finding\'s location, copied> (forced)',
     '   ```',
     '',
-    `   Substitute \`<RATIONALE>\` with \`${RATIONALE_FILE}\` and \`<the finding's location, copied>\` with the finding's location exactly as given above. The parenthetical is the literal word \`forced\` where an ordinary convergence task carries its gap type: the assessment gave you a severity, a location and a summary and no gap type, and inventing one would be a classification you made up.`,
-    '4. **Both closure routes go in every task\'s own text, in those words.** A forced task is closable two ways: fix the defect, or record in this feature\'s own artifacts why it is not a defect. Not every finding is a code change — a requirement about an *absence* ("this capability contains no approval gate", "no user-permission check lives here") has no code to cite, and a task demanding a citation for it invites a fabricated one, which is worse than the open finding. Where a finding is of that kind, lead the task with the rationale route and say plainly that the expected close is the written reason, not an edit. Where it names work to do, lead with the work. Either way the task text states both, and it states that the rationale must end up written in the file — a claim in an implementer\'s summary, its commit message or its return value does not close the task. The rationale file may not exist yet; where a task names it, that task also says to create it with a `# Convergence rationale` heading if it is not there. Do not create it yourself: your only write is to tasks.md.',
+    "   Substitute `<the finding's location, copied>` with the finding's location exactly as given above. The parenthetical is the literal word `forced` where an ordinary convergence task carries its gap type: the assessment gave you a severity, a location and a summary and no gap type, and inventing one would be a classification you made up.",
+    '4. **One closure route: the change.** Every task names work that closes its finding — code, a test, a migration, a gate, a document edit — and is closed by that work being in the tree. Do not write a task that can be closed by recording why the finding is not a defect, by a rationale entry, or by pointing at a place that already declares the gap: a finding the artifacts already name as a gap is still a finding, and the task is to close the gap. Where the finding is about an *absence* ("no approval gate lives here"), the work is the check that fails when the absence stops being true, not a citation. Whether a fix turns out to be impossible is the implementer\'s to find by trying, not yours to predict in the task text.',
     `5. Commit ${P.tasks} and nothing else: \`git add -- ${P.tasks} && git commit -m "tasks: forced convergence round ${round}" -- ${P.tasks}\`. The pathspec matters: the tree may hold this run's other work.`,
-    `Return appended=true only when the phase header and one task per finding are in ${P.tasks} on disk and committed, with the phase number, every task id paired with the location of the finding it was written from, and which route each task leads with. If any step fails, return appended=false with the reason in note; never return appended=true for a partial append.`,
+    `Return appended=true only when the phase header and one task per finding are in ${P.tasks} on disk and committed, with the phase number and every task id paired with the location of the finding it was written from. If any step fails, return appended=false with the reason in note; never return appended=true for a partial append.`,
   ].join('\n')
 
   // Reconcile, 2026-09-19. A forced append that reports it failed used to end the run:
@@ -1192,8 +1225,8 @@ if (runs('converge')) {
           // difference between "nobody tried" and "the loop tried and failed" is the
           // whole value of this handoff. Both sets go in the detail, survivors first.
           return await needsHuman('converge',
-            `converge reported converged while still grading ${aboveFloor.length} finding(s) the floor ${SEVERITY_FLOOR} does not tolerate, and ${survivors.length} of them survived a forced convergence round: the loop had already appended a task against each and implemented it with the wall green, and the assessment reports it again. Forced and survived: ${survivors.map(f => `[${f.severity}] ${f.location} (forced in round ${forcedIds[findingId(f)]})`).join('; ')}. A finding is forced once, so this one is a person's.`,
-            survivors.concat(aboveFloor.filter(f => !forcedIds[findingId(f)])))
+            `converge reported converged while still grading ${aboveFloor.length} finding(s) the floor ${SEVERITY_FLOOR} does not tolerate, and ${survivors.length} of them survived a forced convergence round: the loop had already appended a task against each and implemented it with the wall green, and the assessment reports it again. Forced and survived: ${survivors.map(f => `[${f.severity}] ${f.location} (forced in round ${forcedRoundOf(f)})`).join('; ')}. A finding is forced once, so this one is a person's.`,
+            survivors.concat(aboveFloor.filter(f => !forcedRoundOf(f))))
         }
         log(`converge round ${round}: converged with nothing appended and ${aboveFloor.length} finding(s) above the floor (${grade}) — appending them as a forced convergence round; ${floorPhrase}, so converge's non-actionable judgment is not this loop's`)
         let fa = await run('forceAppend', `force-append converge ${round}`, forceAppendPrompt(round, aboveFloor), S.forceAppended, 'Converge')
@@ -1247,7 +1280,7 @@ if (runs('converge')) {
             // this path exists to prevent, so the loop proceeds as if it had succeeded.
             log(`reconcile after forced append ${round}: the phase is wholly present as phase ${seen[0].number} with ${seen[0].taskIds.length} unticked task(s) — proceeding to implement it rather than appending it twice`)
             certifiedPhase = seen[0]
-            fa = { appended: true, phase: seen[0].number, tasks: recon.taskIds && recon.taskIds.length ? recon.taskIds.map(id => ({ taskId: id, location: '', closure: 'either' })) : [], commit: recon.commit || '' }
+            fa = { appended: true, phase: seen[0].number, tasks: recon.taskIds && recon.taskIds.length ? recon.taskIds.map(id => ({ taskId: id, location: '' })) : [], commit: recon.commit || '' }
           } else {
             log(`reconcile after forced append ${round}: tasks.md holds no part of the forced phase${recon.removed ? ' (a partial one was removed)' : ''} — one retry of the forced append, and the loop escalates if that fails too`)
             const retry = await run('forceAppend', `force-append converge ${round} (retry)`, forceAppendPrompt(round, aboveFloor), S.forceAppended, 'Converge')
@@ -1269,7 +1302,7 @@ if (runs('converge')) {
             forcedList.push({ round, severity: f.severity, location: f.location, summary: f.summary })
           }
         }
-        log(`converge round ${round}: forced ${fa.tasks ? fa.tasks.length : '?'} task(s) as phase ${fa.phase} (${(fa.tasks || []).map(t => `${t.taskId} ${t.closure}`).join(', ')}) — each closable by the fix or by a written rationale in ${RATIONALE_FILE}`)
+        log(`converge round ${round}: forced ${fa.tasks ? fa.tasks.length : '?'} task(s) as phase ${fa.phase} (${(fa.tasks || []).map(t => t.taskId).join(', ')}) — each closable by the fix and by nothing else`)
         let fph = certifiedPhase
         if (!fph) {
           fph = await readAppendedPhase(fa.phase, `phases after forced append ${round}`, 'Converge')
@@ -1279,7 +1312,7 @@ if (runs('converge')) {
               { phase: fa.phase, tasks: fa.tasks || [], findings: aboveFloor })
           }
         }
-        const fdone = await runPhaseToDone(fph, 'Converge', `forced convergence phase ${fph.number}`)
+        const fdone = await runPhaseToDone(fph, 'Converge', `forced convergence phase ${fph.number}`, true)
         if (!fdone.ok) return await needsHuman('converge', fdone.why, fdone.detail)
         // The forced round used this round's slot; the next round re-assesses, exactly
         // as it does after an appended one, so maxConvergeRounds bounds both alike.
