@@ -463,6 +463,13 @@ const featurePaths = dir => ({
 
 const CONSTITUTION = '.specify/memory/constitution.md'
 
+// The traceability convention's qualification prefix — feature ids are per-feature
+// and collide across features, so every citation outside the feature's own specs/
+// directory is qualified NNN/FR-nnn or NNN/SC-nnn. featureDir is specs/<NNN>-<name>;
+// falling back to 'NNN' rather than throwing lets a caller with a differently-shaped
+// featureDir still get a prompt, just one that names the placeholder instead of a number.
+const featureNum = dir => (/^specs\/(\d+)-/.exec(dir || '') || [])[1] || 'NNN'
+
 const findingsBlock = findings =>
   findings.map((f, i) => `${i + 1}. [${f.severity}] ${f.artifact} — ${f.location}\n   Problem: ${f.problem}\n   Fix: ${f.fix}`).join('\n')
 
@@ -844,7 +851,7 @@ if (runs('tasks')) {
     SKILL_HOW('speckit-tasks'),
     `The feature is ${state.featureDir}.`,
     cfg.tasksGuidance ? `Arguments for the skill (task generation constraints): ${cfg.tasksGuidance}` : 'Arguments for the skill: none.',
-    `Rules: every task names the file it touches; every phase ends with a task that runs the definition of done, \`${state.wall}\`, and fixes until it is green; the phases follow the template ("## Phase N: ..."). Run the before_tasks and after_tasks hooks.`,
+    `Rules: every task names the file it touches; every phase ends with a task that runs the definition of done, \`${state.wall}\`, and fixes until it is green; the phases follow the template ("## Phase N: ..."). Every FR and SC of ${P.spec} is named, in qualified form \`${featureNum(state.featureDir)}/FR-nnn\` or \`${featureNum(state.featureDir)}/SC-nnn\`, by at least one task that writes a test citing it; a task that dictates Javadoc or comment wording also uses that qualified form, never the bare id. Run the before_tasks and after_tasks hooks.`,
     `Return done=true with the number of tasks and phases written to ${P.tasks}.`,
   ].join('\n'), S.done, 'Tasks')
 }
@@ -897,7 +904,7 @@ if (runs('analyze')) {
 // "the artifacts already name it as a gap", "the file is append-only" — was fixed by
 // hand the same day, so none of those is a blocker and the prompt says so by name.
 const FORCED_RULE = [
-  '- FORCED CONVERGENCE PHASE. Every task in this phase is a finding the loop will not tolerate, and each is closed by the change that makes the finding untrue — code, a test, a migration, a gate, a document edit. It is never closed by writing down why it was not fixed: do not add a rationale entry anywhere, do not tick a task on the strength of one, and do not tick a task because an earlier rationale, a named gap in plan.md or a row in a gates document already describes the finding. Those describe the gap; the task is to close it.',
+  '- FORCED CONVERGENCE PHASE. Every task in this phase is a finding the loop will not tolerate, and each is closed by the change that makes the finding untrue — code, a test, a migration, a gate, a document edit. It is never closed by writing down why it was not fixed: do not add a rationale entry anywhere, do not tick a task on the strength of one, and do not tick a task because an earlier rationale, a named gap in plan.md or a row in a gates document already describes the finding. Those describe the gap; the task is to close it. A finding that is an uncovered FR or SC (the wall\'s traceability gate) is closed by writing or citing the test that proves it, in qualified form; the one exception in this whole phase is a specs/trace-waivers.tsv row for a criterion that genuinely cannot be proven in-repo, which is not a rationale entry — it is the convention\'s own named closure route for that one gap type and no other.',
   '- A fix is blocked in exactly two cases: (a) a numbered requirement in spec.md or an article of the constitution forbids the change — quote it with its id; (b) the change needs a system outside this repository that does not exist. Nothing else is a blocker. "The toolchain cannot express this check", "this is a deployment decision", "the plan already names this as a gap", "no feature has proposed it yet" and "the file is append-only" are not blockers: find another shape for the check, make the decision and wire it, close the named gap, edit the file. A finding you believe is simply wrong is not ticked either: it stays unchecked and the reason goes in `blocked`.',
   '- A blocked task stays "- [ ]". Fix every task that is not blocked, tick those, and return the blocked ones in `blocked` with the blocker quoted. Never tick a task whose finding is still true.',
 ].join('\n')
@@ -912,6 +919,7 @@ const implementPhase = async (ph, phaseLabel, repair, forced) => {
     'Rules for the unattended decisions this skill would otherwise ask about:',
     '- If a checklist has unchecked items, proceed anyway (the spec and plan were already reviewed) and list the unchecked items in your summary.',
     `- Definition of done for this phase: after its tasks, run \`${state.wall}\` and fix what it reports until it passes. Fix root causes in the code, never by weakening a gate, deleting a test or adding a suppression. Give up only after ${cfg.maxWallAttempts} full attempts, and then return wallGreen=false with the failing output.`,
+    `- Requirement ids: cite an FR or SC only in qualified form \`${featureNum(state.featureDir)}/FR-nnn\` or \`${featureNum(state.featureDir)}/SC-nnn\`, never bare, outside ${state.featureDir}/specs — code, tests, SQL, OpenAPI descriptions and docs/GATES.md included. Prove an id by citing it, in qualified form, in a test under a test root. If the wall's traceability gate fails on a missing citation, fix it by writing or citing the test that proves it; add a row to specs/trace-waivers.tsv (\`${featureNum(state.featureDir)}/ID<TAB>reason\`) only for a criterion that genuinely cannot be proven in this repository, never to skip writing a test.`,
     `- Tick each finished task in ${P.tasks} ("- [ ]" → "- [x]"). Wait for the wall to finish before you return; never leave it running in the background.`,
     '- Run the before_implement and after_implement hooks; if nothing committed the work, commit it yourself with a message naming the phase.',
     forced ? FORCED_RULE : '',
@@ -1073,6 +1081,7 @@ if (runs('converge')) {
       : `Run the assessment in full. Return the outcome exactly as the skill defines it: "converged" when nothing was appended, "tasks_appended" with the new phase number and the appended task ids otherwise. When tasks were appended, commit tasks.md with the message "tasks: convergence round ${round}".`,
     forcedSoFarBlock(),
     'Also return every gap the assessment found as findings — appended or not, actionable or not, including every gap it surfaced only for awareness — each graded by the severity rule in the skill\'s own Step 5 and by no other scale: CRITICAL, HIGH, MEDIUM or LOW exactly as that step defines them. For each appended one, name the task id that closes it; leave the task id empty for a gap no task closes.',
+    'An FR or SC the wall\'s traceability gate reports as uncovered is unbuilt work, not a documentation finding: grade it like any other gap and, when it is actionable, append the task that writes the missing test — never a note explaining the absence.',
   ].filter(Boolean).join('\n')
 
   // -------------------------------------------------------------------------
