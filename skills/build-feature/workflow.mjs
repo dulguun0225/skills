@@ -968,6 +968,33 @@ const readPhases = async (label, group) => {
   return p.phases
 }
 
+// The phase an append just wrote is found by its number or not at all. The reader is a
+// parse-only agent on the cheapest tier, and on 2026-09-20 it returned 13 phases of a
+// 31-phase tasks.md; the fallback then in place — the last phase the reader returned —
+// sent implement at phase 13, already complete, which came back green, and the forced
+// phase's thirteen tasks stayed unchecked through four further rounds that each reported
+// them. So: one re-read that names the miss, then a person. A wrong phase implemented
+// green is worse than a stop. Where the append gave no number, the last phase stands in
+// only while it holds unchecked tasks, which a phase just appended always does.
+const readAppendedPhase = async (number, label, group) => {
+  const numbered = Number.isInteger(number)
+  const pick = phases => numbered
+    ? phases.find(p => p.number === number)
+    : (phases.length && phases[phases.length - 1].unchecked > 0 ? phases[phases.length - 1] : undefined)
+  const first = await readPhases(label, group)
+  const hit = pick(first)
+  if (hit) return hit
+  const P = featurePaths(state.featureDir)
+  const want = numbered ? `phase ${number}` : 'a last phase with unchecked tasks'
+  log(`${label}: the reader returned ${first.length} phase(s), highest ${first.reduce((m, p) => Math.max(m, p.number), 0)}, and not ${want} — one re-read, and the loop escalates if that misses too`)
+  const again = await run('phases', `${label} (re-read)`, [
+    UNATTENDED,
+    `Read ${P.tasks} to its last line and return its phases: each "## Phase N: title" heading with N, the title, every task id (Txxx) under it in order, and how many of them are still unchecked ("- [ ]"). Parse only; change nothing.`,
+    `An earlier read of this file returned ${first.length} phase(s) and stopped short: it did not return ${want}, which was appended to the end of the file moments ago. The file is long. Count the "## Phase" headings first (\`grep -c '^## Phase ' ${P.tasks}\`) and return exactly that many phases, the last of them included.`,
+  ].join('\n'), S.phases, group)
+  return pick(again.phases) || null
+}
+
 if (runs('implement')) {
   phase('Implement')
   state.stagesRun.push('implement')
@@ -1245,8 +1272,12 @@ if (runs('converge')) {
         log(`converge round ${round}: forced ${fa.tasks ? fa.tasks.length : '?'} task(s) as phase ${fa.phase} (${(fa.tasks || []).map(t => `${t.taskId} ${t.closure}`).join(', ')}) — each closable by the fix or by a written rationale in ${RATIONALE_FILE}`)
         let fph = certifiedPhase
         if (!fph) {
-          const forcedPhases = await readPhases(`phases after forced append ${round}`, 'Converge')
-          fph = forcedPhases.find(p => p.number === fa.phase) || forcedPhases[forcedPhases.length - 1]
+          fph = await readAppendedPhase(fa.phase, `phases after forced append ${round}`, 'Converge')
+          if (!fph) {
+            return await needsHuman('converge',
+              `the forced convergence round appended phase ${fa.phase} to tasks.md and two parse-only reads of the file did not return it, so there is no phase to hand to implement; the phase is in the file and committed (${fa.commit || 'no commit named'}) and its tasks are unimplemented`,
+              { phase: fa.phase, tasks: fa.tasks || [], findings: aboveFloor })
+          }
         }
         const fdone = await runPhaseToDone(fph, 'Converge', `forced convergence phase ${fph.number}`)
         if (!fdone.ok) return await needsHuman('converge', fdone.why, fdone.detail)
@@ -1262,8 +1293,12 @@ if (runs('converge')) {
     log(`converge round ${round}: ${last.taskIds ? last.taskIds.length : '?'} tasks appended as phase ${last.phase} (${grade})`)
     // What was appended is implemented even when the loop is about to stop at the
     // floor: the tasks are already in tasks.md, and finish reports them unchecked otherwise.
-    const phases = await readPhases(`phases after converge ${round}`, 'Converge')
-    const ph = phases.find(p => p.number === last.phase) || phases[phases.length - 1]
+    const ph = await readAppendedPhase(last.phase, `phases after converge ${round}`, 'Converge')
+    if (!ph) {
+      return await needsHuman('converge',
+        `converge appended ${last.taskIds ? last.taskIds.length : 'some'} task(s) as phase ${last.phase} and two parse-only reads of tasks.md did not return that phase, so there is no phase to hand to implement; the tasks are in the file and unimplemented`,
+        { phase: last.phase, taskIds: last.taskIds || [], findings })
+    }
     const cdone = await runPhaseToDone(ph, 'Converge', `convergence phase ${ph.number}`)
     if (!cdone.ok) return await needsHuman('converge', cdone.why, cdone.detail)
     // A round that appends tasks and grades nothing has not shown the floor was
