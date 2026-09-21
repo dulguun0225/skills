@@ -582,7 +582,7 @@ The handoff guard was re-derived rather than reasserted: `HANDOFF.md` is committ
 A converge run on a trunk-implemented feature keeps its report on the return value and gets no file — named as a
 cost, not discovered later.
 
-Needs-human reasons: fifteen across twenty-two exits, six of them preflight's. Per-session cost,
+Needs-human reasons: fifteen across twenty-one exits, seven of them preflight's. Per-session cost,
 `npm run tokens:frontmatter`, 2026-09-21, o200k_base: `build-feature` 150 tokens of name plus description (159
 with framing), set total 4,900 across twenty-three skills — a second description edit the same day, so any firing
 baseline stays unmeasured. `npm run gates` green; the script syntax-checked the wrapped way, no run.
