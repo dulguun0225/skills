@@ -608,9 +608,9 @@ const detailBlock = detail => {
 const handoffDoc = (stage, why, detail) => [
   `# Handoff — the unattended build of ${state.featureDir} stopped at ${stage}`,
   '',
-  `**This run has stopped and is waiting on a person.** \`build-feature\` runs the spec-kit cycle with no human gate: it reached the \`${stage}\` stage, found something no rule it carries can decide, and ended there. Nothing reported below was fixed.`,
+  `**This run has stopped.** \`build-feature\` runs the spec-kit cycle with no human gate: it reached the \`${stage}\` stage, found something no rule its own agents carry can decide, and ended there. Nothing reported below was fixed by the run.`,
   '',
-  `**The decision being asked of you:** read each item under *What the stage reported*, decide whether it is real, and either apply the fix or record why it is not a defect. Then restart the run (below). It will not resume by itself, and outside this file the report exists only on the machine that ran it.`,
+  `**Who resolves this.** The session that launched the run reads it first. Under \`build-feature\`'s resolution rule it forms a recommendation for each item under *What the stage reported* and acts on every one it holds with high confidence — the recommendation it would hand you expecting you to take it unchanged, resting on the spec, the constitution, the code and the evidence quoted here, never on this run's own plan or tasks, which were written from the spec. It records what it did and what the confidence rested on in \`RESOLUTIONS.md\` beside this file, and restarts the run (below). It brings an item to you only where it does not hold a recommendation with high confidence, where the item came back after its resolution was applied once, or where the only resolution is a move the skill forbids outright — weakening a gate, deleting a test, committing on the base branch, or resolving somebody else's uncommitted work or merge conflict. **If you are a person reading this, read \`RESOLUTIONS.md\` first:** what is left for you is what the session could not settle. Outside these two files the report exists only on the machine that ran it.`,
   '',
   '| | |',
   '|---|---|',

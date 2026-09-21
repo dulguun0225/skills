@@ -635,3 +635,55 @@ unformatted and `spotless:check` refused it. Checked: a full run of the script f
 `mn.netgroup.netcore.fmttest` — codegen, format, `mvn verify` green against PostgreSQL, the script's own `init:`
 commit, a clean tree — where the same package shape had stopped at `spotless:check` that morning. The skill's
 status line no longer says no agent has created a project with it.
+
+## 2026-09-22: a `needs-human` return is the launching session's to resolve, not to relay
+
+The owner's decision. Ground, one run: it stopped at analyze on three findings whose only remedy was a change to
+the spec, and the operator resolved all three by taking the session's own recommendation unchanged — a person
+relaying an answer the session already had. The rejected default is what both skills shipped until today, relaying
+every `needs-human` return to the person; it lost to the owner's rule of 2026-09-18, *a run never hands back work
+it could have done itself*, which had already produced the forced convergence round, the bounded wall repairs and
+the reconcile behind a failed append. The return value was the one place that rule stopped applying, because
+nothing said it reached past the script. **This extends it from the loop to the session that launched the run.**
+
+**It moves no exit.** `workflow.mjs` stops on exactly the fifteen reasons across twenty-one exits it stopped on
+yesterday; what changed is who reads the stop first. The session forms a recommendation per item from the spec,
+the constitution, the code and the handoff's quoted evidence, and acts on every one it holds with high
+confidence — `spec.md` included — commits it, appends what it did and what it rested on to `<featureDir>/RESOLUTIONS.md`, restarts with
+the arguments the handoff already carries, and reports decisions rather than questions. It reaches a person in
+three cases only: no recommendation held with high confidence, the same item back after one attempt, or a
+resolution that is a move the skill forbids — a weakened gate, a deleted test, a suppression or waiver row, a
+force flag, a commit on the base branch, or somebody else's uncommitted tree or merge conflict.
+
+**A first design was written and rejected before this one**, and the diagnosis is the durable part. It added a
+dedicated `amend-spec` stage to the script — its own tier row, schema, prompt, audit file and argument — to apply
+a `specChanges` finding. The owner rejected it as too specific: *"I wanted a general solution. If the session's
+main agent can make a good recommendation just follow it, don't ask for humans."* He is right on shape. The
+specific design solved one exit of twenty-one and would have had to be rebuilt per exit; the general rule solves
+all of them and touches the script twice. A rule written at the level of the mechanism that produced an instance
+ships a mechanism per instance; written at the level of who is standing there when it happens, it ships once.
+
+Three choices. **The rule lives in `SKILL.md`**, because the actor is the invoking session and not an agent the
+script dispatches. **`workflow.mjs` changed in one place** — `HANDOFF.md` opened *This run has stopped and is
+waiting on a person* and *The decision being asked of you*, false about its own addressee now that the session
+reads it first; it names who resolves it, on what test, the three cases that reach a person, and tells a person
+arriving at the file to read `RESOLUTIONS.md` first. The restart arguments the session needs were already there.
+**The trace is a file, `<featureDir>/RESOLUTIONS.md`**, append-only, not a section of `HANDOFF.md`: the script
+overwrites that file at the next exit by design, and the one-attempt-per-item test must be answerable by a session
+reading a *fresh* handoff without going through git history. Commit messages alone carry the change, not the item.
+The asymmetry the rule has to justify — the session may edit a file no agent of the run may — rests on position:
+an agent inside the loop is one the spec is the oracle for, and an artifact the run may rewrite cannot refute the
+run, while the session is outside a stopped run and its edit is followed by a restart at the stage the handoff
+names, so every gate the edit touches runs again. The restart is the safety.
+
+`converge-feature` carries the rule in its own body, not only as a pointer: a session invoking `/converge-feature`
+never loads `build-feature`'s `SKILL.md`, and a rule about what that session does when its own call returns has to
+be readable from the text the call was made from. That is the first deliberate duplication between these two
+skills, one paragraph, with `build-feature` named as owner beside it.
+
+Per-session cost unchanged: no `description` in this repo was edited, so `tokens:frontmatter` and the
+never-measured firing baselines are untouched. `npm run check` lists every skill, none skipped; `npm run gates`
+green. **Nothing was executed — no session has applied a resolution under this rule, written a `RESOLUTIONS.md`
+or reported a stop as settled.** *Decided, not yet validated.* Unmeasured and worth naming: how often a session
+will in fact hold a recommendation with high confidence. The evidence is three items of one stop, all of one kind; whether it holds
+for a red finish wall, a reconcile disagreement or a preflight refusal is the first real run's measurement.
