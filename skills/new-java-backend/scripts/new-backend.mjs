@@ -30,8 +30,13 @@ import { parseArgs } from 'node:util';
 
 const TEMPLATE_URL = process.env.TEMPLATE_URL || 'https://github.com/dulguun0225/java-backend-template.git';
 // The pinned template commit. Move it deliberately, in a commit that says which gate change it brings in.
-// Recorded 2026-09-21: "gates: an upstream citation resolves against a pinned copy of its document" on main.
-// It brings in the upstream half of the traceability gate -- a declared qualifier carries a committed,
+// Recorded 2026-09-21: "gates: a tracked file deleted from the working tree carries no citations" on main.
+// It fixes the traceability gate on exactly the tree this script produces: `git ls-files` lists the index, so
+// the `.github/` this script's `init.mjs` step removes before the first commit was listed and not on disk, and
+// the gate died with an uncaught ENOENT instead of a verdict. Such a path is now skipped -- a file that is not
+// there carries no citations -- while every other read error is a gate error naming the file. On top of
+// "gates: an upstream citation resolves against a pinned copy of its document", which brings in
+// the upstream half of the traceability gate -- a declared qualifier carries a committed,
 // pinned copy of its source document under specs/upstream/, every <QUALIFIER>/FR-nnn citation resolves
 // against it, every requirement it defines is cited or dropped with a reason, and every requirement of a
 // feature that has a tasks.md is named by a task -- plus scripts/refresh-upstream-snapshot.mjs, the only way
@@ -40,7 +45,7 @@ const TEMPLATE_URL = process.env.TEMPLATE_URL || 'https://github.com/dulguun0225
 // .claude/settings.json pins worktree.baseRef=head" (an agent worktree starts from the session's HEAD, not
 // main), #9 (guarded version update, ORDER BY id ban, table ownership, vacuum ruleset, migration lint
 // additions) and #8 (Article VI names no package; CLAUDE.md holds the pointer).
-const DEFAULT_REF = 'b21dbf9fcc1218246185fc443b9d45e9f4a3863a';
+const DEFAULT_REF = '8334581e0a9745701f142c844d32173a3f0bd67b';
 
 const [major] = process.versions.node.split('.').map(Number);
 if (major < 22) die(`node ${process.versions.node} is too old; this script needs 22 or newer`);

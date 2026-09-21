@@ -420,3 +420,40 @@ unaccounted id is a finding for that stage and never a row added later to turn a
 
 Template `main` at `b21dbf9`, `node scripts/wall.mjs` green at its root; `DEFAULT_REF` moved to it and proven
 by scaffolding a throwaway project from the pin with a non-`com.*` package.
+
+## 2026-09-21: a tracked file deleted from the working tree carries no citations
+
+The traceability gate's first defect, found by scaffolding rather than by reading: a fresh project made with
+`new-java-backend` could not run its own wall. `git ls-files` lists the *index*, and `scripts/init.mjs`
+removes the template's own `.github/` before the first commit, so those paths were listed and were not on
+disk; the gate opened each listed path unguarded and died with an uncaught `ENOENT` stack trace instead of a
+verdict. The gate had been proven on 48 committed fixture trees and none of them could exhibit this, because
+a committed tree cannot hold a file that is at once tracked and absent — and because a fixture is pointed at
+its roots by flag, and a flag-supplied root is *walked*, so no fixture case read git's listing at all.
+
+A listed path that is not on disk is now skipped: a file that is not there carries no citations, so there is
+nothing to read and nothing to claim, which is the verdict and not a leniency. Only absence is skipped, and
+only on a listed path; every other read error fails the gate as a gate error naming the file
+(`cannot read <path>: EACCES`), never a stack trace, because a file that is there and unreadable is a verdict
+the gate cannot reach. The snapshot's own refusal — a declared upstream with no committed copy — is untouched,
+and the snapshot's bytes are now hashed and parsed from one read rather than two, so the hash and the text
+cannot disagree.
+
+The canary grew the one case it could not hold as a fixture, and it builds what it needs: a throwaway git
+repository in a temp directory, laid out the way the gate discovers one, hermetic (identity inline, no global
+or system config read, nothing signed) and removed afterwards. It commits, deletes one tracked file from each
+listed root — the backend scan root and the spec tree — and asserts the gate still returns its normal verdict.
+Both deleted files carry text that would fail the gate if it were read, so the case also pins which copy is
+authoritative: the working tree, never the blob the index still holds. **The lesson is the corpus of fixtures
+mistaken for the corpus of inputs** — every fixture entered through the one door the defect did not come
+through, and the completeness check over the fixture directory could not see a case that has no directory.
+
+Two sibling gates in the template have the same latent shape and are left as found, reported to the owner
+rather than folded in: `check-forbidden-flags.mjs` and `squawk-changed-migrations.mjs` both read every path
+`git ls-files` hands them. `init.mjs`'s own `ls-files -co` listing was examined and is clean: it takes its
+listing and reads it before it removes anything.
+
+Template `main` at `8334581`, `node scripts/wall.mjs` green at its root; four files still byte-identical
+between the template and `product-catalog`, and `DEFAULT_REF` moved to the new pin and proven where the
+defect was found — a throwaway project scaffolded from it, whose `check-traceability.mjs` runs green over its
+138 scanned files after `init.mjs` has removed `backend/.github/`.
