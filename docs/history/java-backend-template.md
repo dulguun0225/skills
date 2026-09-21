@@ -457,3 +457,36 @@ Template `main` at `8334581`, `node scripts/wall.mjs` green at its root; four fi
 between the template and `product-catalog`, and `DEFAULT_REF` moved to the new pin and proven where the
 defect was found — a throwaway project scaffolded from it, whose `check-traceability.mjs` runs green over its
 138 scanned files after `init.mjs` has removed `backend/.github/`.
+
+## 2026-09-21, later: the two sibling gates, checked rather than left as found
+
+The entry above named `check-forbidden-flags.mjs` and `squawk-changed-migrations.mjs` as having the same
+latent shape and reported it rather than folding it in; this closed that report. Each was confirmed against a
+scratch git repository — commit, delete a tracked file, run — rather than assumed from reading.
+
+`check-forbidden-flags.mjs` crashed exactly the same way as the traceability gate had: `git ls-files` lists
+the index, so a build or deploy file `init.mjs` removes before the first commit is listed and not on disk, and
+the unguarded `readFileSync` died with an uncaught `ENOENT` instead of a verdict. Fixed identically — a listed
+path that is not on disk is skipped, any other read error fails the gate naming the file — in both
+`product-catalog` and the template, keeping the file byte-identical between them (confirmed by `cmp` before
+and after).
+
+`squawk-changed-migrations.mjs` does **not** crash: it hands the listed files to `squawk-cli` as arguments, and
+a missing one surfaces as squawk's own `Configuration error: No such file or directory`, a controlled non-zero
+exit rather than an uncaught exception. What the fix should be there depends on whether another gate already
+owns refusing a deleted shipped migration. `product-catalog` has one — `check-migrations-append-only.mjs`,
+built for that project's R-16, reading `readdirSync` against the manifest rather than any git listing — and it
+runs *after* squawk in the wall, so squawk's confusing error was reached first. There, the fix filters the
+absent path out of squawk's file list before invoking it, so the append-only gate produces its named refusal
+instead. This template has no such gate: nothing else here would catch a deleted shipped migration, so
+`squawk-changed-migrations.mjs` was left as it was rather than made to skip the deletion silently. **The
+pattern is not "skip every listed-but-absent path"; it is "skip only where skipping still leaves something
+that refuses."**
+
+`init.mjs`'s own `ls-files -co` listing was swept again in both repos and stays clean: it reads every listed
+file into memory before it deletes anything, so no ordering lets it observe the tree fixed here.
+
+Template `main` at `f289a52`, `node scripts/wall.mjs` green at its root; `check-forbidden-flags.mjs` stays
+byte-identical between the template and `product-catalog` (confirmed by `cmp`), and `squawk-changed-migrations.mjs`
+now diverges between them by design — the two repos own different sets of gates around a deleted migration.
+`DEFAULT_REF` moved to the new pin.

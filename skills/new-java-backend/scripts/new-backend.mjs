@@ -30,11 +30,17 @@ import { parseArgs } from 'node:util';
 
 const TEMPLATE_URL = process.env.TEMPLATE_URL || 'https://github.com/dulguun0225/java-backend-template.git';
 // The pinned template commit. Move it deliberately, in a commit that says which gate change it brings in.
-// Recorded 2026-09-21: "gates: a tracked file deleted from the working tree carries no citations" on main.
-// It fixes the traceability gate on exactly the tree this script produces: `git ls-files` lists the index, so
-// the `.github/` this script's `init.mjs` step removes before the first commit was listed and not on disk, and
-// the gate died with an uncaught ENOENT instead of a verdict. Such a path is now skipped -- a file that is not
-// there carries no citations -- while every other read error is a gate error naming the file. On top of
+// Recorded 2026-09-21: "gates: a listed-but-absent build file carries no flags to find" on main.
+// `check-forbidden-flags.mjs` had the same latent shape as the traceability gate's own fix two commits below:
+// it read every path `git ls-files` handed it unguarded, so a tracked build or deploy file this script's
+// `init.mjs` removes before the first commit -- listed by the index, absent on disk -- died with an uncaught
+// ENOENT instead of a verdict. Such a path is now skipped there too, and any other read error fails the gate
+// naming the file. `squawk-changed-migrations.mjs` has the same shape of read but does not crash the same way
+// (squawk-cli reads the files itself and a missing one is its own "Configuration error" exit); this template
+// has no gate that owns refusing a deleted shipped migration, so it was left unguarded rather than made to
+// silently skip a deletion nothing else here would catch. On top of
+// "gates: a tracked file deleted from the working tree carries no citations", which fixes the traceability
+// gate the same way on exactly the tree this script produces. On top of
 // "gates: an upstream citation resolves against a pinned copy of its document", which brings in
 // the upstream half of the traceability gate -- a declared qualifier carries a committed,
 // pinned copy of its source document under specs/upstream/, every <QUALIFIER>/FR-nnn citation resolves
@@ -45,7 +51,7 @@ const TEMPLATE_URL = process.env.TEMPLATE_URL || 'https://github.com/dulguun0225
 // .claude/settings.json pins worktree.baseRef=head" (an agent worktree starts from the session's HEAD, not
 // main), #9 (guarded version update, ORDER BY id ban, table ownership, vacuum ruleset, migration lint
 // additions) and #8 (Article VI names no package; CLAUDE.md holds the pointer).
-const DEFAULT_REF = '8334581e0a9745701f142c844d32173a3f0bd67b';
+const DEFAULT_REF = 'f289a5253d3f6cf24359d1b2b10e2b24b690dc6f';
 
 const [major] = process.versions.node.split('.').map(Number);
 if (major < 22) die(`node ${process.versions.node} is too old; this script needs 22 or newer`);
