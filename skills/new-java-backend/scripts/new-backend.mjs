@@ -30,7 +30,13 @@ import { parseArgs } from 'node:util';
 
 const TEMPLATE_URL = process.env.TEMPLATE_URL || 'https://github.com/dulguun0225/java-backend-template.git';
 // The pinned template commit. Move it deliberately, in a commit that says which gate change it brings in.
-// Recorded 2026-09-21: "gate: specs are written here, so provenance is not a layer the gate holds" on main.
+// Recorded 2026-09-21, later: "constitution: Article VII reads "None", not "Add what this product decides"" on
+// main, with "docs: /speckit.constitution is not a step; Article VII is an optional slot" under it. No gate
+// changes: the scaffolded README, project CLAUDE.md and constitution stop listing /speckit.constitution as what
+// follows the scaffold, and Article VII states that empty is complete instead of asking to be filled. Two
+// projects scaffolded from the previous pin the same day carried the old wording, which is why the pin moves
+// for a docs change. mvn verify was not re-run for this pin; the diff from 4a1c6fd touches no build input. On top of
+// "gate: specs are written here, so provenance is not a layer the gate holds".
 // A feature's spec.md is now written directly in the service repo by a domain expert with stock spec-kit and
 // build work starts at /speckit-plan, so the upstream half of the traceability gate is gone: no
 // specs/trace-upstreams.tsv, no specs/trace-upstream-dropped.tsv, no pinned copies under specs/upstream/, no
@@ -54,7 +60,7 @@ const TEMPLATE_URL = process.env.TEMPLATE_URL || 'https://github.com/dulguun0225
 // .claude/settings.json pins worktree.baseRef=head" (an agent worktree starts from the session's HEAD, not
 // main), #9 (guarded version update, ORDER BY id ban, table ownership, vacuum ruleset, migration lint
 // additions) and #8 (Article VI names no package; CLAUDE.md holds the pointer).
-const DEFAULT_REF = '4a1c6fd0b6ac1f1b1b0861f31b79549708914c38';
+const DEFAULT_REF = '5e75cf73ef6d1ac0f0575554a44b26fa7306b43b';
 
 const [major] = process.versions.node.split('.').map(Number);
 if (major < 22) die(`node ${process.versions.node} is too old; this script needs 22 or newer`);

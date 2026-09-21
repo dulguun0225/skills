@@ -614,3 +614,15 @@ runs in a directory that has none.
 Found on the same run, not fixed here: neither `new-backend.mjs` nor `init.mjs` formats after the package rename,
 so a package that sorts after `java.` fails `spotless:check` and the script stops before its `init:` commit;
 `mvn spotless:apply` in `backend/` and a hand-made commit got the run through.
+
+**The pin moved the same day, to `5e75cf7`, for a docs change.** Between the fix above and the template's commit
+reaching its remote, the owner scaffolded two more projects from the previous pin, and both carried the old
+header, the old `CLAUDE.md` sentence and the old Article VII — the prediction in the paragraph above, observed
+within the hour. The template gained a second commit first: Article VII was an empty heading over a comment that
+opened with "Add what this product decides" and listed six topics, which the owner named as the thing being read
+as "you have to add something here"; it now reads "None. Empty is a complete state for this section". The five
+projects scaffolded by then were brought to the same wording by hand, on `main` and `dev`; the one whose Article
+VII holds real articles had only its header and `CLAUDE.md` sentence changed. Checked: a `--skip-verify` scaffold
+from the new pin into a scratch directory produced the new wording in all three lifted files and printed no
+`/speckit.*` step. Not checked: `mvn verify` at the new pin — the diff from `4a1c6fd` touches `README.md`,
+`project-root/CLAUDE.md` and `project-root/.specify/memory/constitution.md` and no build input.
