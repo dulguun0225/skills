@@ -626,3 +626,12 @@ VII holds real articles had only its header and `CLAUDE.md` sentence changed. Ch
 from the new pin into a scratch directory produced the new wording in all three lifted files and printed no
 `/speckit.*` step. Not checked: `mvn verify` at the new pin — the diff from `4a1c6fd` touches `README.md`,
 `project-root/CLAUDE.md` and `project-root/.specify/memory/constitution.md` and no build input.
+
+**The formatter gap closed the same day; pin `a89bd28`.** `new-backend.mjs` now runs `mvn -q spotless:apply`
+between codegen and verify, and prints it in the deferred command under `--skip-verify`; the template's `init.mjs`
+message and README procedure say the same, and `init.mjs` itself stays pure Node. Cause: the rename changes where
+the project's own imports sort and how long lines wrap, so any package that sorts after `java.` left the tree
+unformatted and `spotless:check` refused it. Checked: a full run of the script from this pin for
+`mn.netgroup.netcore.fmttest` — codegen, format, `mvn verify` green against PostgreSQL, the script's own `init:`
+commit, a clean tree — where the same package shape had stopped at `spotless:check` that morning. The skill's
+status line no longer says no agent has created a project with it.

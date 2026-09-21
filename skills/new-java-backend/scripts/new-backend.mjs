@@ -30,7 +30,11 @@ import { parseArgs } from 'node:util';
 
 const TEMPLATE_URL = process.env.TEMPLATE_URL || 'https://github.com/dulguun0225/java-backend-template.git';
 // The pinned template commit. Move it deliberately, in a commit that says which gate change it brings in.
-// Recorded 2026-09-21, later: "constitution: Article VII reads "None", not "Add what this product decides"" on
+// Recorded 2026-09-21, last: "init: the printed procedure formats after the rename, before the wall" on main.
+// The template's init.mjs message and README procedure gain `mvn spotless:apply` between codegen and verify,
+// matching step 5 below. Verified at this pin: a full run of this script for package mn.netgroup.netcore.fmttest,
+// codegen, format and `mvn verify` green, its own init: commit made, 2026-09-21. On top of
+// "constitution: Article VII reads "None", not "Add what this product decides"" on
 // main, with "docs: /speckit.constitution is not a step; Article VII is an optional slot" under it. No gate
 // changes: the scaffolded README, project CLAUDE.md and constitution stop listing /speckit.constitution as what
 // follows the scaffold, and Article VII states that empty is complete instead of asking to be filled. Two
@@ -60,7 +64,7 @@ const TEMPLATE_URL = process.env.TEMPLATE_URL || 'https://github.com/dulguun0225
 // .claude/settings.json pins worktree.baseRef=head" (an agent worktree starts from the session's HEAD, not
 // main), #9 (guarded version update, ORDER BY id ban, table ownership, vacuum ruleset, migration lint
 // additions) and #8 (Article VI names no package; CLAUDE.md holds the pointer).
-const DEFAULT_REF = '5e75cf73ef6d1ac0f0575554a44b26fa7306b43b';
+const DEFAULT_REF = 'a89bd281953c2076194b91d7147ccade14167ec4';
 
 const [major] = process.versions.node.split('.').map(Number);
 if (major < 22) die(`node ${process.versions.node} is too old; this script needs 22 or newer`);
@@ -163,6 +167,10 @@ try {
   let verified = 'unverified: --skip-verify';
   if (verify) {
     run('mvn', ['-q', '-Pcodegen', 'generate-sources'], { cwd: service });
+    // The rename changes where the project's own imports sort (a package after `java.` moves below it) and how
+    // long lines wrap, so the renamed tree is not formatted until the formatter has run; without this,
+    // spotless:check inside verify refused every scaffold whose package sorts after `java.`, 2026-09-21.
+    run('mvn', ['-q', 'spotless:apply'], { cwd: service });
     run('mvn', ['-q', 'verify'], { cwd: service });
     verified = 'mvn verify green';
   }
@@ -175,7 +183,7 @@ try {
   next.push('npx skills add dulguun0225/skills -a claude-code -y');
   // No /speckit.* line here: a printed step is read as owed, and at scaffold time Article VII has nothing to hold.
   if (mode === 'vendored') next.push('specify init --here               # optional; .specify/memory/constitution.md is pre-filled and survives it');
-  if (!verify) next.push(`(cd ${service} && mvn -Pcodegen generate-sources && mvn verify)   # skipped above; run before the first push`);
+  if (!verify) next.push(`(cd ${service} && mvn -Pcodegen generate-sources && mvn spotless:apply && mvn verify)   # skipped above; run before the first push`);
   console.log(`created ${dir} (${mode}): package ${pkg}, artifact ${name}, template ${sha} — ${verified}`);
   console.log("next, each outside this directory's control and so not done here:");
   for (const n of next) console.log(`  ${n}`);
