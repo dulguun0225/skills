@@ -30,9 +30,15 @@ import { parseArgs } from 'node:util';
 
 const TEMPLATE_URL = process.env.TEMPLATE_URL || 'https://github.com/dulguun0225/java-backend-template.git';
 // The pinned template commit. Move it deliberately, in a commit that says which gate change it brings in.
-// Recorded 2026-09-21: "gates: a listed-but-absent build file carries no flags to find" on main.
-// `check-forbidden-flags.mjs` had the same latent shape as the traceability gate's own fix two commits below:
-// it read every path `git ls-files` handed it unguarded, so a tracked build or deploy file this script's
+// Recorded 2026-09-21: "gate: specs are written here, so provenance is not a layer the gate holds" on main.
+// A feature's spec.md is now written directly in the service repo by a domain expert with stock spec-kit and
+// build work starts at /speckit-plan, so the upstream half of the traceability gate is gone: no
+// specs/trace-upstreams.tsv, no specs/trace-upstream-dropped.tsv, no pinned copies under specs/upstream/, no
+// scripts/refresh-upstream-snapshot.mjs. The gate keeps only the shape: a <QUALIFIER>/FR-nnn token whose
+// qualifier is not a feature number is prose -- it resolves nothing, covers nothing and is not the bare id it
+// wraps. The scaffolded CLAUDE.md says who owns spec.md. On top of
+// "gates: a listed-but-absent build file carries no flags to find": `check-forbidden-flags.mjs` had the same
+// latent shape as the traceability gate's own fix two commits below: it read every path `git ls-files` handed it unguarded, so a tracked build or deploy file this script's
 // `init.mjs` removes before the first commit -- listed by the index, absent on disk -- died with an uncaught
 // ENOENT instead of a verdict. Such a path is now skipped there too, and any other read error fails the gate
 // naming the file. `squawk-changed-migrations.mjs` has the same shape of read but does not crash the same way
@@ -41,17 +47,14 @@ const TEMPLATE_URL = process.env.TEMPLATE_URL || 'https://github.com/dulguun0225
 // silently skip a deletion nothing else here would catch. On top of
 // "gates: a tracked file deleted from the working tree carries no citations", which fixes the traceability
 // gate the same way on exactly the tree this script produces. On top of
-// "gates: an upstream citation resolves against a pinned copy of its document", which brings in
-// the upstream half of the traceability gate -- a declared qualifier carries a committed,
-// pinned copy of its source document under specs/upstream/, every <QUALIFIER>/FR-nnn citation resolves
-// against it, every requirement it defines is cited or dropped with a reason, and every requirement of a
-// feature that has a tasks.md is named by a task -- plus scripts/refresh-upstream-snapshot.mjs, the only way
-// a pin moves; on top of "gates: spec<->code traceability, with the canary that proves it" (a project
+// "gates: an upstream citation resolves against a pinned copy of its document", of which what survives is
+// that every requirement of a feature that has a tasks.md is named by a task; on top of
+// "gates: spec<->code traceability, with the canary that proves it" (a project
 // scaffolded from this pin refuses a bare requirement id from its first commit), "scaffold: project-level
 // .claude/settings.json pins worktree.baseRef=head" (an agent worktree starts from the session's HEAD, not
 // main), #9 (guarded version update, ORDER BY id ban, table ownership, vacuum ruleset, migration lint
 // additions) and #8 (Article VI names no package; CLAUDE.md holds the pointer).
-const DEFAULT_REF = 'f289a5253d3f6cf24359d1b2b10e2b24b690dc6f';
+const DEFAULT_REF = '4a1c6fd0b6ac1f1b1b0861f31b79549708914c38';
 
 const [major] = process.versions.node.split('.').map(Number);
 if (major < 22) die(`node ${process.versions.node} is too old; this script needs 22 or newer`);
