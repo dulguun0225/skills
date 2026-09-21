@@ -728,8 +728,9 @@ if (runs('specify')) {
     `Arguments for the skill: ${cfg.source} Use the short name '${cfg.shortName}'.`,
     'Rules for the unattended decisions this skill would otherwise ask about:',
     '- When the skill reaches its [NEEDS CLARIFICATION] step, do not present questions. Resolve every marker yourself: take the answer the source states; where the source is silent, take the most conservative option (the smallest scope, the strictest validation, the behaviour the existing code already has) and record each such decision as a bullet under an "## Assumptions" section of the spec (create the section after the overview if the template has none).',
+    `- If the source carries its own FR-/SC- ids (an upstream spec document), never write one bare — inside the new spec.md included. Cite it \`<QUALIFIER>/FR-nnn\`, where QUALIFIER is the upstream's own stable name for the block being implemented (a capability id where one exists; uppercase letters, digits and hyphens; never three digits alone), and declare it in specs/trace-upstreams.tsv (\`QUALIFIER<TAB>location\`, e.g. \`CAP-NC02-04\\tnetos-spec:specs/nc-02/04-product-gl-config/spec.md\`) in the same change that first cites it, unless the row is already there. A bare FR-/SC- id inside the new spec.md means the feature's own requirement, defined there.`,
     '- The before_specify hook creates the feature branch; run it. Run every after_specify hook.',
-    '- Do not touch any file outside the feature directory except what the hooks commit.',
+    '- Do not touch any file outside the feature directory except what the hooks commit, and specs/trace-upstreams.tsv when it needs the new row above.',
     'Return the feature directory (from .specify/feature.json), the branch, and the list of assumptions you made.',
   ].join('\n'), S.specified, 'Specify')
   state.featureDir = s.featureDir
@@ -748,6 +749,7 @@ if (runs('clarify')) {
     '- Generate the question queue exactly as the skill says (up to 5, highest impact first).',
     '- Answer each question yourself, in this order of authority: what the source document states; what the constitution requires; what the existing code already does; otherwise the option the skill itself recommends.',
     '- Record every question and answer under "## Clarifications" and integrate each answer into the spec sections, exactly as the skill specifies. Never ask, never wait.',
+    '- An upstream FR-/SC- id from the source is cited qualified, never bare, specify\'s own way; do not introduce a bare one while integrating an answer.',
     '- Run the before_clarify and after_clarify hooks.',
     'Return how many questions you asked and the recorded "Q → A" lines.',
   ].join('\n'), S.clarified, 'Specify')
@@ -771,6 +773,7 @@ if (runs('review-spec')) {
       '- a requirement, scenario, acceptance criterion, state, transition, error case, limit or field in the source that has no counterpart in the spec — blocking',
       '- a spec statement the source contradicts — blocking',
       '- a "[NEEDS CLARIFICATION]" or template placeholder left in the spec — blocking',
+      '- an upstream id written bare, or a bare id the feature\'s spec.md does not define — blocking',
       '- a requirement that violates a constitution article — blocking, and say which article',
       '- a requirement invented beyond the source and the recorded Clarifications and Assumptions — major (blocking if it widens scope)',
       '- a requirement not testable as written, or a success criterion with no measure — major',
@@ -802,7 +805,7 @@ if (runs('plan')) {
     SKILL_HOW('speckit-plan'),
     `The feature is ${state.featureDir}; the spec is ${P.spec}; the constitution is ${CONSTITUTION}.`,
     cfg.planGuidance ? `Arguments for the skill (planning guidance): ${cfg.planGuidance}` : 'Arguments for the skill: none.',
-    'Rules: read the constitution first and treat every article as binding; read the existing code the feature touches before deciding on a design; leave no "[NEEDS CLARIFICATION]" — decide from the spec, the constitution and the code, and record the decision in research.md. An "Article VII candidate" is admissible only under the constitution\'s Governance admission test: it binds two or more feature packages, or a table or package this feature does not own; a rule about this feature\'s own tables, columns, endpoints or error codes is a plan decision recorded in plan.md and docs/GATES.md, never a candidate; a pre-positioned or placeholder structure is never the subject of one. Run the before_plan and after_plan hooks.',
+    'Rules: read the constitution first and treat every article as binding; read the existing code the feature touches before deciding on a design; leave no "[NEEDS CLARIFICATION]" — decide from the spec, the constitution and the code, and record the decision in research.md. An "Article VII candidate" is admissible only under the constitution\'s Governance admission test: it binds two or more feature packages, or a table or package this feature does not own; a rule about this feature\'s own tables, columns, endpoints or error codes is a plan decision recorded in plan.md and docs/GATES.md, never a candidate; a pre-positioned or placeholder structure is never the subject of one. Cite an upstream FR-/SC- id qualified, never bare, wherever plan.md or research.md names one. A requirement the plan puts out of this feature\'s scope names that boundary in plan.md — the tasks stage waives it as `deferred` from exactly that sentence. Run the before_plan and after_plan hooks.',
     'Return done=true with a one-paragraph summary of the design and the artifacts written.',
   ].join('\n'), S.done, 'Plan')
 
@@ -851,7 +854,7 @@ if (runs('tasks')) {
     SKILL_HOW('speckit-tasks'),
     `The feature is ${state.featureDir}.`,
     cfg.tasksGuidance ? `Arguments for the skill (task generation constraints): ${cfg.tasksGuidance}` : 'Arguments for the skill: none.',
-    `Rules: every task names the file it touches; every phase ends with a task that runs the definition of done, \`${state.wall}\`, and fixes until it is green; the phases follow the template ("## Phase N: ..."). Every FR and SC of ${P.spec} is named, in qualified form \`${featureNum(state.featureDir)}/FR-nnn\` or \`${featureNum(state.featureDir)}/SC-nnn\`, by at least one task that writes a test citing it — or, only where the criterion cannot be proven inside this repository at all (a production latency figure, an operator procedure), by a task that adds its row to specs/trace-waivers.tsv (\`${featureNum(state.featureDir)}/ID<TAB>reason\`, rows sorted) with that reason. This tasks stage is the only place a waiver task may originate: no later stage adds one. A task that dictates Javadoc or comment wording also uses the qualified form, never the bare id. Run the before_tasks and after_tasks hooks.`,
+    `Rules: every task names the file it touches; every phase ends with a task that runs the definition of done, \`${state.wall}\`, and fixes until it is green; the phases follow the template ("## Phase N: ..."). Every FR and SC of ${P.spec} is named, in qualified form \`${featureNum(state.featureDir)}/FR-nnn\` or \`${featureNum(state.featureDir)}/SC-nnn\`, by at least one task that writes a test citing it — or, by a task that adds its row to specs/trace-waivers.tsv (\`${featureNum(state.featureDir)}/ID<TAB>kind<TAB>reason\`, rows sorted), where kind is exactly \`external\` (the criterion cannot be witnessed from inside this repository at all — a production latency figure, an operator procedure) or \`deferred\` (specified but deliberately not built in this feature; the reason names where that deferral is recorded — a plan.md scope boundary, a GATES.md named-gap row, the owning capability). A requirement that is merely untested is neither: it gets a test, not a waiver row. This tasks stage is the only place a waiver task may originate: no later stage adds one. A task that dictates Javadoc or comment wording also uses the qualified form, never the bare id. Run the before_tasks and after_tasks hooks.`,
     `Return done=true with the number of tasks and phases written to ${P.tasks}.`,
   ].join('\n'), S.done, 'Tasks')
 }
