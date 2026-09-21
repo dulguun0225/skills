@@ -21,12 +21,22 @@
 //   → implement (one agent per phase) → converge ⇄ implement → finish
 //
 // Preflight is also discovery, and it runs on every entry, restarts included: the
-// feature directory comes from args.featureDir, else from .specify/feature.json —
-// which is where stock spec-kit's own scripts read the current feature from — else
-// from the branch name, and the branch from args.branch else `git rev-parse`. A run
-// that starts at a later stage still gets state.branch and state.featureDir that way
-// (before 2026-09-21 a `from: "plan"` restart left the branch null, and the handoff
-// and finish prompts degraded to "(unknown)" and HEAD@{1}).
+// feature directory comes from args.featureDir, else from the checked-out branch name,
+// else — on the base branch — from the one directory under specs/ with a written spec
+// and no plan, and only then from .specify/feature.json, which is git-ignored local
+// state and is the one thing here that can be stale. A run that starts at a later stage
+// still gets state.branch and state.featureDir that way (before 2026-09-21 a
+// `from: "plan"` restart left the branch null, and the handoff and finish prompts
+// degraded to "(unknown)" and HEAD@{1}).
+//
+// Preflight also puts the repository where the build belongs. The feature's author works
+// on the base branch, so a full preflight started there checks out the feature branch —
+// making it when it does not exist — and then merges the base into it; so does every
+// later entry that finds itself on a feature branch. Without that merge the run plans
+// against a spec the author has since moved and fails its final `merge --ff-only` after
+// the whole run is paid for. It writes .specify/feature.json to match, because spec-kit's
+// own scripts resolve the feature from that file (or SPECIFY_FEATURE_DIRECTORY) and
+// never from the branch name.
 //
 // Review and analyze loops terminate on a clean verdict or on their round cap; a
 // cap reached with blocking findings still open ends the run with status
@@ -228,17 +238,34 @@ for (const name of Object.keys(cfg.tiers)) tier(name)
 const S = {
   preflight: {
     type: 'object',
-    required: ['ok', 'branch', 'featureDir', 'wall', 'onBaseBranch', 'clarifications', 'problems'],
+    required: ['ok', 'branch', 'baseBranch', 'featureDir', 'wall', 'onBaseBranch', 'synced', 'clarifications', 'problems'],
     properties: {
       ok: { type: 'boolean' },
-      branch: { type: 'string', description: 'the checked-out branch' },
+      branch: { type: 'string', description: 'the branch checked out when you finish, which is the feature branch whenever you checked one out or made one' },
+      baseBranch: { type: 'string', description: 'the base branch you worked against, empty when none could be determined' },
+      onBaseBranch: { type: 'boolean', description: 'true when the branch you finish on is the base branch' },
       featureDir: {
         type: 'string',
         description: 'repo-relative feature directory holding spec.md, e.g. specs/003-product-version; empty when it could not be resolved or holds no readable spec.md',
       },
-      onBaseBranch: {
-        type: 'boolean',
-        description: 'true when the checked-out branch is the base branch the feature would merge into, which is never a branch this run may work on',
+      candidates: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'when the feature had to be resolved by looking under specs/ and the answer was not exactly one directory: every directory you considered, with what made it a candidate or not. Empty otherwise.',
+      },
+      createdBranch: { type: 'boolean', description: 'true only when you created the feature branch in this run' },
+      checkedOut: { type: 'string', description: 'the branch you checked out, empty when you checked nothing out' },
+      synced: {
+        type: 'string',
+        enum: ['none', 'fast-forward', 'merge', 'conflict', 'not-applicable'],
+        description: '"not-applicable" when the branch you finish on is the base branch or no base branch is known; "none" when the base was already an ancestor; otherwise what you did, or "conflict" when the merge was aborted',
+      },
+      specChanged: { type: 'boolean', description: 'true only when the sync brought a change to the feature\'s spec.md' },
+      conflicts: { type: 'array', items: { type: 'string' }, description: 'the conflicted paths when synced is "conflict", empty otherwise' },
+      featureJson: {
+        type: 'string',
+        enum: ['written', 'unchanged', 'tracked', 'unknown'],
+        description: 'what you did with .specify/feature.json: "written" when you pointed it at the resolved feature, "unchanged" when it already named it, "tracked" when the repository tracks the file so you left it alone',
       },
       wall: { type: 'string', description: 'the definition-of-done command, empty when none was found' },
       clarifications: {
@@ -464,6 +491,17 @@ const UNATTENDED = [
 const SPEC_IS_NOT_OURS = spec =>
   `THE SPEC IS NOT YOURS TO EDIT. \`${spec}\` was written by the feature's domain expert and is the fixed input to this run: never edit it, never regenerate it, never "align" it with anything, and never add, reword, renumber or delete a requirement, a success criterion, a clarification or an assumption in it. Every other artifact under the feature directory is yours to fix.`
 
+// Stock spec-kit resolves the feature from SPECIFY_FEATURE_DIRECTORY, then from
+// .specify/feature.json, and never from the branch name (its own common.sh:
+// get_current_branch() returns $SPECIFY_FEATURE or nothing and reads no git). Preflight
+// normally points that file at the resolved feature, which is the whole fix — the file
+// is git-ignored state. Where a repository tracks it instead, preflight leaves it alone
+// and every stage that invokes a speckit skill carries the variable instead, because
+// rewriting a tracked file would dirty a tree the run is about to commit from.
+const FEATURE_CONTEXT = () => state.featureJsonTracked
+  ? `This repository tracks \`.specify/feature.json\`, so it was not rewritten and may name another feature. Spec-kit resolves the feature from \`SPECIFY_FEATURE_DIRECTORY\` before it reads that file, so export \`SPECIFY_FEATURE_DIRECTORY=${state.featureDir}\` in every shell you run a spec-kit script or hook in, in the same command. Never work in a feature directory other than ${state.featureDir}, whatever a script resolves.`
+  : ''
+
 const SKILL_HOW = name =>
   `Invoke the skill \`${name}\` with the Skill tool. If the Skill tool is not available to you, read \`.claude/skills/${name}/SKILL.md\` and follow it exactly as that skill, hooks included.`
 
@@ -496,6 +534,9 @@ const findingsBlock = findings =>
 const state = {
   featureDir: cfg.featureDir,
   branch: cfg.branch,
+  baseBranch: cfg.baseBranch,
+  onBaseBranch: false, // set by preflight; no handoff is committed while it is true
+  featureJsonTracked: false, // set by preflight; true means the stages carry the env var instead
   wall: cfg.wall,
   rounds: { reviewPlan: 0, analyze: 0, converge: 0 },
   converge: null, // { ended, rounds, findings } once the converge stage has run
@@ -577,6 +618,7 @@ const handoffDoc = (stage, why, detail) => [
   `| Reason | ${why} |`,
   `| Feature directory | \`${state.featureDir}\` |`,
   `| Branch | \`${state.branch || '(unknown)'}\` |`,
+  `| Base branch | \`${state.baseBranch || '(unknown)'}\` |`,
   `| Stages run | ${state.stagesRun.length ? state.stagesRun.join(' → ') : '(none)'} |`,
   `| Rounds | ${Object.keys(state.rounds).map(k => `${k} ${state.rounds[k]}`).join(', ')} |`,
   `| Definition of done | \`${state.wall || '(not resolved)'}\` |`,
@@ -615,8 +657,17 @@ const writeHandoff = async (stage, why, detail) => {
   // else; and a dirty tree is one of the things preflight refuses on, so a commit at
   // the root would sweep somebody's uncommitted work into a handoff commit.
   if (!state.featureDir) {
-    log(`no handoff file: the run stopped at ${stage} before a feature directory existed; the detail on the return value is the whole report`)
-    return { written: false, path: null, note: 'no feature directory yet — the run stopped before specify, so there is nowhere in the repo the file belongs. The detail on this return value is the whole report.' }
+    log(`no handoff file: the run stopped at ${stage} before a feature directory was resolved; the detail on the return value is the whole report`)
+    return { written: false, path: null, note: 'no feature directory — the run stopped before discovery resolved one, so there is nowhere in the repo the file belongs. The detail on this return value is the whole report.' }
+  }
+  // The file is committed on whatever branch the run is standing on, so a run that
+  // never left the base branch — a later-stage start on a feature implemented on the
+  // trunk, and every failure before preflight checked a feature branch out — gets no
+  // handoff. A commit on the trunk is not this script's to make, and a dirty tree is
+  // one of the states preflight refuses on.
+  if (state.onBaseBranch) {
+    log(`no handoff file: the run is standing on the base branch (${state.baseBranch || 'unknown'}), where this script commits nothing; the detail on the return value is the whole report`)
+    return { written: false, path: null, note: `the run is on the base branch (${state.baseBranch || 'unknown'}), and a handoff is committed on the branch the run is on — this script does not commit to the trunk. The detail on this return value is the whole report.` }
   }
   const path = `${state.featureDir}/${HANDOFF_FILE}`
   let r = null
@@ -720,78 +771,136 @@ async function reviewLoop({ kind, group, reviewer, fixer, reviewPrompt, fixPromp
 }
 
 // ---------------------------------------------------------------------------
-// Stage: preflight — and discovery, which runs on every entry.
+// Stage: preflight — discovery, the feature branch, and the sync, on every entry.
 //
 // The feature this run builds already exists when the run starts: its domain expert
-// created the branch and the feature directory with /speckit-specify and wrote
-// spec.md. So preflight establishes what the run is working on instead of taking it
-// as an argument — the feature directory from args.featureDir, else .specify/feature.json
-// (where stock spec-kit's own scripts read the current feature from), else the branch
-// name; the branch from args.branch, else git — and that discovery half runs even on a
-// start at a later stage. Before 2026-09-21 a `from: "plan"` restart left state.branch
-// null, and the handoff table said "(unknown)" while finish merged from HEAD@{1}.
-// args.wall is still required on a start after preflight, because only the full check
-// reads CLAUDE.md for it.
+// wrote specs/<NNN>-<name>/spec.md with /speckit-specify and /speckit-clarify. What he
+// does NOT necessarily do is leave the repository on a feature branch — he works on the
+// base branch (owner's statement of how the team works, 2026-09-21) — so preflight
+// establishes the feature, puts the repository on the feature branch, making it when it
+// does not exist, and brings that branch in step with the base.
+//
+// Resolution order, and why it is not spec-kit's own: `.specify/feature.json` is
+// git-ignored machine-local state (`.specify/.gitignore` ships the rule), rewritten
+// whenever a machine runs /speckit-specify. Ours is whatever OUR last local run left —
+// on a fresh pull it names the previous feature — so trusting it first would build the
+// wrong feature from a file no commit ever touched. The branch name is the authority
+// where there is one; on the base branch the answer is the one specified-but-unplanned
+// feature under specs/, which is a rule and not a guess, and ambiguity stops the run.
+// feature.json is consulted last and never overrides.
+//
+// Then the run makes spec-kit agree, because resolving it here is not enough. Stock
+// spec-kit 1.0.8's `.specify/scripts/bash/common.sh` resolves the feature from
+// SPECIFY_FEATURE_DIRECTORY, then from .specify/feature.json, and from NOTHING else:
+// `get_current_branch()` returns $SPECIFY_FEATURE or the empty string and never reads
+// git, so the branch name reaches no speckit skill and no branch name is refused. A
+// stale feature.json therefore sends /speckit-plan into the previous feature's directory
+// however well this script resolved the new one. Writing that one git-ignored file is
+// the single write preflight is allowed. Where a repository tracks it instead, it is
+// left alone and every stage prompt carries SPECIFY_FEATURE_DIRECTORY, which common.sh
+// honours first — and which it then persists into feature.json itself unless the caller
+// passed --no-persist, a write this script cannot prevent and does not pretend to.
+//
+// The sync runs on every entry: the expert keeps editing spec.md on the base branch
+// while the build's commits pile up on the feature branch, so without it a run plans
+// against a spec that has moved and ends in a failed `git merge --ff-only` at finish,
+// after the whole run has been paid for. It is a merge and never a rebase, because the
+// branch may already be pushed. It is conflict-free by construction for the spec — the
+// build never writes spec.md — and a conflict anywhere else stops the run with the
+// paths. A spec that changed under an already-written plan is a needs-human exit whose
+// restart is `from: "plan"`.
+//
+// The discovery half runs even on a start at a later stage: before 2026-09-21 a
+// `from: "plan"` restart left state.branch null, the handoff table said "(unknown)" and
+// finish merged from HEAD@{1}. A later-stage run standing on the base branch — which is
+// converge-feature closing out a feature implemented on the trunk, as 001 was — is
+// reported and not refused, and gets no branch creation and no sync: it is resuming work
+// that already lives there. args.wall is still required on a start after preflight,
+// because only the full check reads CLAUDE.md for it.
 // ---------------------------------------------------------------------------
 {
   const full = runs('preflight')
   phase('Preflight')
   if (full) state.stagesRun.push('preflight')
-  const p = await run('preflight', full ? 'preflight' : 'preflight (discovery only)', [
+  const dirName = '<the last path segment of the feature directory, e.g. 004-product-gl-config>'
+  const p = await run('preflight', full ? 'preflight' : 'preflight (discovery and sync)', [
     UNATTENDED,
     full
-      ? 'Establish which spec-kit feature this unattended build is for, and check that the repository is ready to build it. Run the commands; change nothing at all, and never write to spec.md — it is the feature author\'s.'
-      : 'Establish which spec-kit feature this unattended build is for. The run starts at a later stage, so the readiness checks belong to the start it is resuming: run only the steps below, change nothing at all, and never write to spec.md — it is the feature author\'s.',
-    `1. \`git rev-parse --abbrev-ref HEAD\` is the current branch${cfg.branch ? `; this run names \`${cfg.branch}\`, and any other checked-out branch is a problem` : ''}. Return it as \`branch\`.`,
-    `2. Decide whether that branch is the base branch — the trunk a feature merges into. ${cfg.baseBranch ? `This run names it: \`${cfg.baseBranch}\`.` : 'This run names none, so take it from `git symbolic-ref --short refs/remotes/origin/HEAD` with the remote prefix stripped, falling back to whichever of `main` or `master` the repository has.'} Return \`onBaseBranch\` true if the checked-out branch is it${full ? ', and add a problem saying so: a build works on the feature branch, which exists before it starts, and it never creates one' : '. This run starts at a later stage, on work that may already live on that branch, so report the fact and do not make it a problem'}.`,
+      ? 'Establish which spec-kit feature this unattended build is for, put the repository on that feature\'s branch, bring the branch in step with the base, and check that the repository is ready to build. Everything you may write is named in the steps below — one branch checkout, one merge, one machine-local state file — and nothing else. Never write to spec.md or to anything else in the feature directory: the spec is its author\'s.'
+      : 'Establish which spec-kit feature this unattended build is for and bring its branch in step with the base. This run starts at a later stage, so the readiness checks belong to the start it is resuming, and you create no branch and check nothing out. Everything you may write is named in the steps below — one merge and one machine-local state file — and nothing else. Never write to spec.md or to anything else in the feature directory: the spec is its author\'s.',
+    `1. \`git rev-parse --abbrev-ref HEAD\` is the branch you start on${cfg.branch ? `. This run names \`${cfg.branch}\` as the feature branch, so that is where you must end up` : ''}.`,
+    `2. The base branch — the trunk a feature merges into, and the branch the feature's author works on. ${cfg.baseBranch ? `This run names it: \`${cfg.baseBranch}\`.` : 'This run names none, so take it from `git symbolic-ref --short refs/remotes/origin/HEAD` with the remote prefix stripped, falling back to whichever of `main` or `master` the repository has. If none of those resolves, return `baseBranch` empty and carry on: steps 5 and 6 then do nothing.'} Return it as \`baseBranch\`.`,
+    full ? '3. `git status --porcelain` must be empty (untracked files under .specify/workflows/runs/ and .claude/worktrees/ do not count). A dirty tree is a problem and you stop there: check nothing out, merge nothing, write nothing, and return what you have. Every step after this one moves the tree, and somebody\'s uncommitted work is not this run\'s to carry onto another branch.' : '',
+    '4. Resolve the feature directory and return it as `featureDir`, in this order, taking the first that answers:',
     cfg.featureDir
-      ? `3. The feature directory is \`${cfg.featureDir}\`: return it as \`featureDir\`, and check it as the next sentence says.`
-      : '3. Resolve the feature directory and return it as `featureDir`, in this order: (a) the `feature_directory` value in `.specify/feature.json`, which is where spec-kit\'s own scripts read the current feature from; (b) failing that, the branch name — `feature/<NNN>-<name>` or a bare `<NNN>-<name>` becomes `specs/<NNN>-<name>`. Guess nothing: where neither route names a directory, return `featureDir` empty with a problem saying what you tried.',
-    `   That directory must exist and hold a \`spec.md\` that is present and not empty (\`wc -c\`). A missing directory, a missing spec.md or an empty one is a problem, and \`featureDir\` comes back empty — this run builds a spec somebody has already written, and it writes no spec of its own.`,
-    full ? '4. `grep -n "\\[NEEDS CLARIFICATION" <the feature directory>/spec.md` — return every hit in `clarifications`, quoted with its line number. Those markers are the spec author\'s to resolve with `/speckit-clarify`, and this run never answers one.' : '',
-    full ? '5. `git status --porcelain` must be empty (untracked files under .specify/workflows/runs/ and .claude/worktrees/ do not count). A dirty tree is a problem.' : '',
-    full ? '6. `.specify/` must exist with `.specify/memory/constitution.md`, and `.claude/skills/speckit-plan/SKILL.md`, `speckit-tasks`, `speckit-analyze`, `speckit-implement`, `speckit-converge` must all be installed. Any missing one is a problem.' : '',
+      ? `   (a) this run names it: \`${cfg.featureDir}\`. If the branch you started on names a different feature by the rule in (b), that disagreement is a problem — say which two — and you stop rather than choose.`
+      : '   (a) — this run names no feature directory, so start at (b).',
+    '   (b) the branch you started on, when it is not the base branch: `feature/<NNN>-<name>` or a bare `<NNN>-<name>` becomes `specs/<NNN>-<name>`.',
+    '   (c) only when you started on the base branch: the one directory under `specs/` that holds a non-empty `spec.md` and no `plan.md` — the feature that has been specified and not yet planned, which is what this run exists to build. List them (`ls -d specs/*/`) and test each. Exactly one is the answer. Zero or more than one is a problem: return every directory you considered in `candidates` with what made it a candidate or not, leave `featureDir` empty, and stop. Never pick one of several, and never take the newest or the highest-numbered — a person passes `args.featureDir` instead.',
+    '   (d) only when nothing above resolved: the `feature_directory` value in `.specify/feature.json`. It is machine-local, git-ignored state written by whichever machine last ran /speckit-specify, so it is the last resort and never overrides (a), (b) or (c).',
+    '   The resolved directory must exist and hold a `spec.md` that is present and not empty (`wc -c`). A missing directory, a missing spec.md or an empty one is a problem, and `featureDir` comes back empty — this run builds a spec somebody has already written, and it writes no spec of its own.',
+    full
+      ? `5. When the branch you started on IS the base branch, put the repository on the feature branch. Let DIR be the last path segment of the feature directory (${dirName}). The target branch is${cfg.branch ? ` \`${cfg.branch}\`, which this run names` : ': an existing branch named `feature/DIR` or `DIR` — look for both locally (`git branch --list`) and on the remote (`git branch -r --list \'origin/*\'`) — and otherwise a new `feature/DIR`'}. Then: a branch that exists locally, \`git checkout <target>\`; one that exists only on the remote, \`git checkout --track origin/<target>\`; one that does not exist, \`git checkout -b <target>\` from where you are standing, and return \`createdBranch\` true. Return the branch you end on as \`branch\` and the one you checked out as \`checkedOut\`. When you did not start on the base branch, check nothing out: you are already on the feature branch.`
+      : '5. Check nothing out and create nothing: this run starts at a later stage, on the branch it was given. Return `branch` as the branch you are on, `createdBranch` false and `checkedOut` empty.',
+    '6. Sync with the base branch, whenever the branch you are now on is not the base branch and a base branch is known. Do not fetch; the local base branch is what this run merges. Note `git rev-parse HEAD` first, then:',
+    '   - `git merge-base --is-ancestor <base> HEAD` succeeds — the base is already in this branch. Do nothing; `synced` is "none".',
+    '   - otherwise `git merge-base --is-ancestor HEAD <base>` succeeds — this branch is strictly behind. `git merge --ff-only <base>`; `synced` is "fast-forward".',
+    '   - otherwise the two have diverged. `git merge --no-edit <base>`; `synced` is "merge". If it conflicts, `git merge --abort` immediately, set `synced` to "conflict", return the conflicted paths in `conflicts` and add a problem. Never resolve a conflict yourself, and never rebase: this branch may already be pushed.',
+    '   Then `git diff --name-only <the sha you noted> HEAD -- <featureDir>/spec.md`: a non-empty result means the sync brought a change to the spec, and `specChanged` is true. Where you finish on the base branch, or no base branch is known, `synced` is "not-applicable".',
+    '7. Make spec-kit agree with the feature you resolved. Its own scripts resolve the feature from the `SPECIFY_FEATURE_DIRECTORY` environment variable, then from `.specify/feature.json`, and from nothing else — never from the branch name — so a stale file sends every later stage into another feature\'s directory. Run `git check-ignore -q .specify/feature.json`. Exit 0 (the file is git-ignored, which is how spec-kit ships it): if its `feature_directory` is not the directory you resolved, write the file as exactly `{"feature_directory":"<the resolved directory>"}` and return `featureJson` "written"; if it already names it, write nothing and return "unchanged". A non-zero exit means the repository tracks the file: leave it untouched, return "tracked", and add no problem — the run carries the environment variable to its stages instead.',
+    full ? '8. `grep -n "\\[NEEDS CLARIFICATION" <featureDir>/spec.md` — return every hit in `clarifications`, quoted with its line number. Those markers are the spec author\'s to resolve with `/speckit-clarify`, and this run never answers one.' : '',
+    full ? '9. `.specify/` must exist with `.specify/memory/constitution.md`, and `.claude/skills/speckit-plan/SKILL.md`, `speckit-tasks`, `speckit-analyze`, `speckit-implement`, `speckit-converge` must all be installed. Any missing one is a problem.' : '',
     full
       ? (cfg.wall
-        ? `7. The definition-of-done command is \`${cfg.wall}\`. Check that its executable and script exist; do not run it. Return it as \`wall\`.`
-        : `7. Find the project's definition-of-done command: read CLAUDE.md at the repo root (and the backend's CLAUDE.md if there is one) for the command it names as the definition of done or as "exactly what CI runs" — for example \`node backend/scripts/wall.mjs\`. Return it as \`wall\`. If no such command is named, return an empty string and add a problem saying so.`)
-      : `4. Return \`wall\` as \`${cfg.wall || ''}\` and \`clarifications\` empty: the checks this run skipped are not yours to redo.`,
+        ? `10. The definition-of-done command is \`${cfg.wall}\`. Check that its executable and script exist; do not run it. Return it as \`wall\`.`
+        : `10. Find the project's definition-of-done command: read CLAUDE.md at the repo root (and the backend's CLAUDE.md if there is one) for the command it names as the definition of done or as "exactly what CI runs" — for example \`node backend/scripts/wall.mjs\`. Return it as \`wall\`. If no such command is named, return an empty string and add a problem saying so.`)
+      : `8. Return \`wall\` as \`${cfg.wall || ''}\` and \`clarifications\` empty: the checks this run skipped are not yours to redo.`,
     'Return ok=true only when there are no problems.',
   ].filter(Boolean).join('\n'), S.preflight, 'Preflight')
   state.branch = p.branch || state.branch
-  state.wall = p.wall || state.wall
-  // The feature directory is adopted only where a handoff committed into it would be
-  // safe: an empty one is a path nothing may be written to, and on the branch a full
-  // preflight refuses there is no feature branch to carry the file. Both exits below
-  // therefore write no handoff and say so on the return, which is what every preflight
-  // exit did before discovery existed.
-  //
-  // The base branch is a refusal of the full preflight and not of discovery. A build
-  // starts on the feature branch its author made, so standing on the trunk means the
-  // run was launched in the wrong place; but a run that starts later — converge-feature
-  // closing out a feature that was implemented on the trunk, which is how 001 was
-  // converged — is resuming work that already lives there, and refusing it would be
-  // this script deciding a branching question the caller already answered.
-  state.featureDir = p.featureDir && !(full && p.onBaseBranch) ? p.featureDir : null
-  if (full && p.onBaseBranch) {
+  state.baseBranch = p.baseBranch || cfg.baseBranch || null
+  // Where the run finishes preflight standing on the base branch — a later-stage start
+  // on a trunk-implemented feature — no handoff file is written, whatever else goes
+  // wrong afterwards: HANDOFF.md is committed on the branch the run is on, and a commit
+  // on the trunk is not this script's to make. The report then lives on the return value,
+  // which is what every preflight exit did before there was a feature directory to write
+  // into at all.
+  state.onBaseBranch = !!p.onBaseBranch
+  state.featureJsonTracked = p.featureJson === 'tracked'
+  state.featureDir = p.featureDir || null
+  if (!p.featureDir && Array.isArray(p.candidates) && p.candidates.length) {
     return await needsHuman('preflight',
-      `the checked-out branch \`${p.branch || '(none reported)'}\` is the base branch, and this run works only on a feature branch: the branch, the feature directory and spec.md are made by the feature's author with /speckit-specify before the build starts. Check the feature branch out, or pass args.branch and args.featureDir`,
-      p.problems)
+      `the run was started on the base branch and the feature could not be resolved from it: exactly one directory under specs/ should hold a written spec.md and no plan.md — the feature specified and not yet planned — and ${p.candidates.length} were considered. The loop will not pick one of several, because building the wrong feature is not something a later stage would notice. Pass args.featureDir, or check the feature branch out`,
+      p.candidates)
   }
+  if (p.synced === 'conflict') {
+    return await needsHuman('preflight',
+      `merging \`${state.baseBranch || 'the base branch'}\` into \`${state.branch || 'the feature branch'}\` conflicted, and the merge was aborted, so the tree is as it was. The build never edits spec.md, so a conflict here is between the base branch and this feature's own committed work in the files below — a person's to resolve, on the branch, before the run restarts`,
+      { conflicts: p.conflicts || [], problems: p.problems })
+  }
+  if (!p.ok) return await needsHuman('preflight', full ? 'the repository is not ready' : 'the repository does not match what this restart was given', p.problems)
   if (!p.featureDir) {
     return await needsHuman('preflight', cfg.featureDir
       ? `\`${cfg.featureDir}\` is not a feature directory this run can build: it does not exist, or it holds no readable, non-empty spec.md. A feature is specified before this run starts — /speckit-specify and /speckit-clarify are the author's, not this script's`
-      : `no feature directory could be resolved, so there is no spec to build: .specify/feature.json did not resolve to a directory holding a readable, non-empty spec.md, and the branch \`${p.branch || '(none reported)'}\` does not name one either. Check the feature branch out, or pass args.featureDir; a feature is specified before this run starts — /speckit-specify and /speckit-clarify are the author's, not this script's`,
+      : `no feature directory could be resolved, so there is no spec to build: the branch \`${p.branch || '(none reported)'}\` does not name one, no single specified-but-unplanned directory under specs/ answered for it, and .specify/feature.json — machine-local state, and the last thing this run trusts — named nothing usable either. Pass args.featureDir, or check the feature branch out`,
       p.problems)
   }
-  if (!p.ok) return await needsHuman('preflight', full ? 'the repository is not ready' : 'the repository does not match what this restart was given', p.problems)
   if (!state.wall) return await needsHuman('preflight', 'no definition-of-done command: pass args.wall', p.problems)
   if (Array.isArray(p.clarifications) && p.clarifications.length) {
     return await needsHuman('preflight',
       `${p.clarifications.length} "[NEEDS CLARIFICATION]" marker(s) are still in ${state.featureDir}/spec.md. They are the spec author's to resolve, with \`/speckit-clarify\` in the project, and this run answers none: it does not edit the spec, and planning against an unresolved marker decides by accident what the marker exists to decide. Restart the build once the spec is clarified`,
       p.clarifications)
   }
-  log(`${full ? 'preflight ok' : 'discovery'}: feature ${state.featureDir} on ${state.branch}, wall = ${state.wall}`)
+  // A spec that moved under artifacts already written is not something a later stage
+  // reconciles: plan.md, tasks.md and the code were all derived from the old text, and
+  // the analyze stage would report it as a dozen findings against the wrong artifact.
+  // A run that starts at plan is about to read the new text anyway, so it carries on.
+  if (p.specChanged && STAGES.indexOf(cfg.from) > STAGES.indexOf('plan')) {
+    return await needsHuman('preflight',
+      `the sync with \`${state.baseBranch || 'the base branch'}\` brought a change to ${state.featureDir}/spec.md, and this run was told to start at "${cfg.from}" — after the plan that was written from the old text. Every artifact from plan.md onwards is now derived from a spec that has moved. The merge is done and committed on \`${state.branch}\`, so nothing is lost: restart with \`from: "plan"\``,
+      [`${state.featureDir}/spec.md changed in the merge from ${state.baseBranch || 'the base branch'}`])
+  }
+  log(`${full ? 'preflight ok' : 'discovery'}: feature ${state.featureDir} on ${state.branch}${p.createdBranch ? ' (branch created)' : p.checkedOut ? ' (checked out)' : ''}, base ${state.baseBranch || '(none)'}, sync ${p.synced}${p.specChanged ? ' and the spec changed' : ''}, feature.json ${p.featureJson || 'unknown'}, wall = ${state.wall}`)
 }
 
 // ---------------------------------------------------------------------------
@@ -804,12 +913,13 @@ if (runs('plan')) {
   await run('plan', 'plan', [
     UNATTENDED,
     SKILL_HOW('speckit-plan'),
+    FEATURE_CONTEXT(),
     `The feature is ${state.featureDir}; the spec is ${P.spec}; the constitution is ${CONSTITUTION}.`,
     SPEC_IS_NOT_OURS(P.spec),
     cfg.planGuidance ? `Arguments for the skill (planning guidance): ${cfg.planGuidance}` : 'Arguments for the skill: none.',
     `Rules: read the constitution first and treat every article as binding; read the existing code the feature touches before deciding on a design; leave no "[NEEDS CLARIFICATION]" in the plan artifacts — decide from the spec, the constitution and the code, and record the decision in research.md. An "Article VII candidate" is admissible only under the constitution's Governance admission test: it binds two or more feature packages, or a table or package this feature does not own; a rule about this feature's own tables, columns, endpoints or error codes is a plan decision recorded in plan.md and docs/GATES.md, never a candidate; a pre-positioned or placeholder structure is never the subject of one. Cite an FR or SC id of the spec qualified \`${featureNum(state.featureDir)}/FR-nnn\` or \`${featureNum(state.featureDir)}/SC-nnn\`, never bare, wherever plan.md or research.md names one. A requirement the plan puts out of this feature's scope names that boundary in plan.md — the tasks stage waives it as \`deferred\` from exactly that sentence. Run the before_plan and after_plan hooks.`,
     'Return done=true with a one-paragraph summary of the design and the artifacts written.',
-  ].join('\n'), S.done, 'Plan')
+  ].filter(Boolean).join('\n'), S.done, 'Plan')
 
   const r = await reviewLoop({
     kind: 'plan',
@@ -862,12 +972,13 @@ if (runs('tasks')) {
   await run('tasks', 'tasks', [
     UNATTENDED,
     SKILL_HOW('speckit-tasks'),
+    FEATURE_CONTEXT(),
     `The feature is ${state.featureDir}.`,
     `${SPEC_IS_NOT_OURS(P.spec)} No task you write edits it either: a gap that could only be closed by changing the spec is not a task, and a task that would reword a requirement to match the plan is the same edit at one remove.`,
     cfg.tasksGuidance ? `Arguments for the skill (task generation constraints): ${cfg.tasksGuidance}` : 'Arguments for the skill: none.',
     `Rules: every task names the file it touches; every phase ends with a task that runs the definition of done, \`${state.wall}\`, and fixes until it is green; the phases follow the template ("## Phase N: ..."). Every FR and SC of ${P.spec} is named by at least one task in this file — the gate refuses an id no task names — in qualified form \`${featureNum(state.featureDir)}/FR-nnn\` or \`${featureNum(state.featureDir)}/SC-nnn\`, and that task writes a test citing it — or, it is named by a task that adds its row to specs/trace-waivers.tsv (\`${featureNum(state.featureDir)}/ID<TAB>kind<TAB>reason\`, rows sorted), where kind is exactly \`external\` (the criterion cannot be witnessed from inside this repository at all — a production latency figure, an operator procedure) or \`deferred\` (specified but deliberately not built in this feature; the reason names where that deferral is recorded — a plan.md scope boundary, a GATES.md named-gap row, the owning capability). A requirement that is merely untested is neither: it gets a test, not a waiver row. This tasks stage is the only place a waiver task may originate: no later stage adds one. A task that dictates Javadoc or comment wording also uses the qualified form, never the bare id. Run the before_tasks and after_tasks hooks.`,
     `Return done=true with the number of tasks and phases written to ${P.tasks}.`,
-  ].join('\n'), S.done, 'Tasks')
+  ].filter(Boolean).join('\n'), S.done, 'Tasks')
 }
 
 if (runs('analyze')) {
@@ -879,9 +990,10 @@ if (runs('analyze')) {
     analysis = await run('analyze', `analyze ${round}`, [
       UNATTENDED,
       SKILL_HOW('speckit-analyze'),
+      FEATURE_CONTEXT(),
       `The feature is ${state.featureDir}. Read-only: change nothing.`,
       'Run the analysis in full and produce its report, then instead of offering remediation return every finding as data: id, severity as the skill grades it, the artifact it lives in (spec, plan, tasks, constitution, other), the location, a one-sentence summary and the concrete recommendation. Include the coverage figure.',
-    ].join('\n'), S.analysis, 'Tasks')
+    ].filter(Boolean).join('\n'), S.analysis, 'Tasks')
     state.rounds.analyze = round
     const critical = analysis.findings.filter(f => f.severity === 'CRITICAL')
     const high = analysis.findings.filter(f => f.severity === 'HIGH')
@@ -938,6 +1050,7 @@ const implementPhase = async (ph, phaseLabel, repair, forced) => {
   const r = await run('implement', `implement phase ${ph.number}${repair ? ' (wall repair)' : ''}`, [
     UNATTENDED,
     SKILL_HOW('speckit-implement'),
+    FEATURE_CONTEXT(),
     `The feature is ${state.featureDir}. Arguments for the skill: "Execute only Phase ${ph.number}: ${ph.title} (tasks ${ids}). Every other phase is out of scope: do not start it, do not tick it."`,
     'Rules for the unattended decisions this skill would otherwise ask about:',
     `- ${SPEC_IS_NOT_OURS(P.spec)} Where the only way you can see to finish a task is an edit to the spec, the task is not done: leave it "- [ ]" and say so, quoting the requirement. A run that reshapes the spec to fit the code has deleted its own definition of done.`,
@@ -1099,6 +1212,7 @@ if (runs('converge')) {
   const convergePrompt = (round, assessOnly) => [
     UNATTENDED,
     SKILL_HOW('speckit-converge'),
+    FEATURE_CONTEXT(),
     `The feature is ${state.featureDir}.`,
     SPEC_IS_NOT_OURS(P.spec),
     assessOnly
@@ -1495,6 +1609,7 @@ return {
   status: finishNeedsHuman ? 'needs-human' : 'done',
   featureDir: state.featureDir,
   branch: state.branch,
+  baseBranch: state.baseBranch,
   wall: state.wall,
   rounds: state.rounds,
   converge: state.converge,

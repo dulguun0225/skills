@@ -541,3 +541,48 @@ ever had one measured. `npm run gates` green. The script is exercised by syntax 
 itself has to be stated honestly: `node --check` rejects this file in both module modes, because the sandbox
 evaluates the body inside an async function where its top-level `await` and `return` are legal, so the check
 wraps it that way first. **No Workflow run has started from this shape.**
+
+## 2026-09-21, last of the day: the build makes its own branch, syncs it, and distrusts spec-kit's local pointer
+
+The entry above left one assumption in place — that the feature branch exists when the run starts, because its
+author made it. The owner's correction: the domain expert may work **only on the base branch** (`dev`), writes
+`spec.md` there, and keeps editing it while a build runs. His expectation of the skill, in his words: started on
+the base branch, the run ends up on the feature branch, creating it when it does not exist.
+
+Two things were read out of `product-catalog` before anything was written, and the first invalidates part of the
+previous entry. `.specify/feature.json` is **git-ignored** (`.specify/.gitignore:6`, spec-kit's own comment
+calling it per-checkout state), so it is not a record of the current feature at all — it is whatever this machine
+last ran `/speckit-specify` on, which today is `004-product-gl-config` on a repo whose next feature is `005`.
+Discovery had put it first. It is now last and never overrides: `args.featureDir`, then the branch name, then —
+only on the base branch — the one directory under `specs/` with a non-empty `spec.md` and no `plan.md`, the
+feature specified and not yet planned, with zero or several candidates being a `needs-human` exit that lists them
+rather than a pick.
+
+The second is that resolving it here was never sufficient. In spec-kit 1.0.8's `.specify/scripts/bash/common.sh`,
+`get_feature_paths()` reads `SPECIFY_FEATURE_DIRECTORY`, then `.specify/feature.json`, and nothing else;
+`get_current_branch()` returns `$SPECIFY_FEATURE` or the empty string and **never reads git**. So no speckit skill
+sees the branch name, no branch name is refused — `feature/005-x` and a bare `005-x` are equally fine, which
+settles the naming question the design raised — and a stale pointer sends `/speckit-plan` into the previous
+feature's directory however well this script resolved the new one. Preflight therefore writes that one
+git-ignored file to match, which is the single write it is allowed. A repository that tracks the file instead gets
+the env-var route in the stage prompts, with the caveat stated: `get_feature_paths()` persists the variable into
+the file itself unless the caller passed `--no-persist`, which this script cannot prevent.
+
+The base-branch refusal added hours earlier is replaced by the work it was refusing to do. A full preflight on
+the base branch checks out `args.branch`, else an existing `feature/<dir>` or `<dir>` local or remote, else a new
+`feature/<dir>` — after the dirty-tree check, since all of it moves the tree — and then every entry whose branch
+is not the base merges the base in: nothing when it is already an ancestor, `--ff-only` when behind,
+`merge --no-edit` when diverged, `merge --abort` plus a `needs-human` with the paths on conflict. Never a rebase;
+the branch may be pushed. The merge is conflict-free for the spec by construction, because no stage of the build
+writes `spec.md` — and it is what lets the author keep editing on the trunk. A spec that moves under a run
+starting later than `plan` is its own exit, restarting `from: "plan"`.
+
+The handoff guard was re-derived rather than reasserted: `HANDOFF.md` is committed on the branch the run is on, so
+`writeHandoff` now declines while `state.onBaseBranch` is true as well as when no feature directory is resolved.
+A converge run on a trunk-implemented feature keeps its report on the return value and gets no file — named as a
+cost, not discovered later.
+
+Needs-human reasons: fifteen across twenty-two exits, six of them preflight's. Per-session cost,
+`npm run tokens:frontmatter`, 2026-09-21, o200k_base: `build-feature` 150 tokens of name plus description (159
+with framing), set total 4,900 across twenty-three skills — a second description edit the same day, so any firing
+baseline stays unmeasured. `npm run gates` green; the script syntax-checked the wrapped way, no run.
