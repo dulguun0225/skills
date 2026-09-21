@@ -347,3 +347,42 @@ round, with one LOW on a `converged` return, with an off-scale severity, the cap
 graded assess-only round, and the same cap shapes at a `LOW` floor — and each produced the `converge.ended`
 and the log line the skills claim. That is a reading of the script under stubs, not a run: no Workflow run
 has reached the converge stage at any floor. `npm run check` and `npm run gates` green after.
+
+## 2026-09-21: the spec↔code traceability gate is born with the template
+
+Built in `product-catalog` over 2026-09-18 to 09-21 and ported up, so a project scaffolded from
+`new-java-backend` refuses a bare requirement id from its first commit rather than at whatever point someone
+notices that nothing reads the specs. The gate is `scripts/check-traceability.mjs`: no bare `FR`/`SC` id in
+the tree, every `NNN/FR-nnn` citation resolving to a feature directory **and** to an id that feature's
+`spec.md` defines, a bare id inside a feature's own directory resolving in that feature's spec, every id of a
+feature whose `tasks.md` has no open box cited from a file under a test root or waived with a kind
+(`external` or `deferred`) and a reason, and every `<QUALIFIER>/FR-nnn` citation of the source document a
+feature was specified from naming a qualifier declared in `specs/trace-upstreams.tsv`. The canary
+`scripts/check-traceability.selftest.mjs` runs first, over 35 committed fixture trees, and asserts the exit
+status *and* that the offending token is named — a gate that cannot fail proves nothing, which is why the
+wall runs the two in that order.
+
+Three files — the gate, the canary and `scripts/fixtures/traceability/` — are byte-identical between the
+template and `product-catalog`, so the next port in either direction is a copy and a `cmp`. That is what the
+layout discovery buys: the backend root is the script's parent, the project root is the git toplevel, and the
+specs tree is `<project root>/specs`. In the template the backend *is* the repository and there is no specs
+tree at all, so zero ids are defined, every citation dangles, every bare id still fails, and the gate says on
+every run which of those it found. It ran unchanged on the first try.
+
+One change the port forced, made in `product-catalog` first so byte-identity held: the gate's header comment
+spelled its example citation with real digits, and that file sits inside the gate's own scan root — a live
+citation, resolving downstream and dangling in a repo with no specs tree. Every id in that file is a
+placeholder now.
+
+None of the three lists the gate reads — `specs/trace-waivers.tsv`, `specs/trace-legacy-files.tsv`,
+`specs/trace-upstreams.tsv` — ships in the template. Each is optional to the gate and the first feature that
+needs a row is what creates it; the template's `CLAUDE.md`, `project-root/CLAUDE.md` and `docs/GATES.md` each
+say so where the rule is stated. Verified end to end on a throwaway repo shaped like a new project (the
+template as `backend/`, one `specs/001-demo/` with two ids and no open tasks): the gate fails on the two
+uncovered ids, passes once one is cited from `backend/src/test/` in qualified form and the other carries an
+`external` waiver row, and fails again on a bare id planted under `backend/src/main/`.
+
+Template `main` at `e6cba05`, `node scripts/wall.mjs` green at its root; `DEFAULT_REF` in
+`new-java-backend/scripts/new-backend.mjs` moved to it. No text in this repo enumerates the wall's steps in a
+way the new steps falsify — the skills point at the template's `docs/GATES.md` rather than restating it,
+which is the property that made this port a one-repo change here.
