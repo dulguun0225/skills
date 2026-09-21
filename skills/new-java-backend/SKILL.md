@@ -1,6 +1,6 @@
 ---
 name: new-java-backend
-description: Take an empty directory to the point where spec-kit's first command can run, for a Java backend on Spring Boot Web MVC, jOOQ and PostgreSQL — one pinned script that instantiates dulguun0225/java-backend-template with every build gate already wired, then specify init, then a hand-off to /speckit.constitution for the project's own articles only. Nothing here is a decision and nothing here is written by hand. ALWAYS load before creating a new Java backend repository or project directory, before writing a pom.xml or any build file for one, and before running /speckit.constitution in a project that has no backend/ yet.
+description: Take an empty directory to spec-kit's first command for a Java backend, from the pinned dulguun0225/java-backend-template. ALWAYS load before creating a new Java backend repository or project directory, writing a pom.xml or any build file for one, or running /speckit.constitution in a project that has no backend/ yet.
 ---
 # New Java backend — from an empty directory to spec-kit's first command
 

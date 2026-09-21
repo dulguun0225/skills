@@ -142,3 +142,35 @@ check started running on every push; the freshness step is back on
 `BACKLOG.md` from that date. As of
 2026-08-02 no `review-by` date in the set has passed — the earliest is
 2027-01-21 — so nothing is mis-marked today by the absence.
+
+## A third gate, 2026-09-21 — the description budget
+
+`scripts/description-budget.mjs`, `npm run check:descriptions`, chained into
+`npm run gates` and so into CI. It is not an `enforceable-rules` check and the title
+of this file still names the pair that is. Why it exists — the harness drops a
+description past its listing budget, measured — is in
+[context-budget.md](context-budget.md), item 6.
+
+**What it fails on:** a frontmatter it cannot parse, a missing `name` or
+`description`, a `name` that is not its directory's, a description over 400 chars,
+a set over 8,000. Chars, not tokens, because the harness's budget is in chars and
+the gate stays dependency-free.
+
+**It parses a strict YAML subset and refuses the rest, by design.** Node ships no
+YAML parser. One `key: value` per line, plain or quoted; a plain scalar holding
+`: ` or ` #`, or opening on a YAML indicator, is a parse error — the first is the
+2026-07-30 `llm-default-traps` defect, which until now only the distribution CLI
+caught, and only by omission from a list. A block scalar is valid YAML and fails
+here; that is the price of not guessing.
+
+**Proven to fail, on every run rather than once.** Two committed fixtures under
+`scripts/fixtures/description-budget/` — a 401-char description and an unquoted
+`: ` — are checked before the real skills, the first asserted to be exactly 401 so
+an edited fixture cannot pass quietly; if either is not refused the gate reports
+itself blind and exits 1. They sit outside `skills/` so the CLI never discovers
+them; `npm run check` was re-run to confirm it lists the same directories as
+`ls skills/`.
+
+**What it does not decide** is printed on every run: whether a short description
+still fires, whether a rewrite lost a trigger, the harness's real budget, and what
+other repos' skills add to the same listing.

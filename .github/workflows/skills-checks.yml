@@ -1,6 +1,6 @@
 # CI for the skills/ tree and the scripts that check it.
 #
-# Runs the discovery check and the two wired gates. It does NOT run the firing
+# Runs the discovery check and the wired gates. It does NOT run the firing
 # harness or the redundancy probes (both need a logged-in `claude` CLI, spend
 # real money, and are stochastic — CLAUDE.md rules them out of gates) and does
 # not run the token reports (reports, not gates).
@@ -58,5 +58,5 @@ jobs:
             echo "a SKILL.md was skipped by discovery - it is invisible to every consumer"; exit 1
           fi
 
-      - name: Gates — evidence order and dangling pointers
+      - name: Gates — evidence order, dangling pointers and description budget
         run: npm run gates

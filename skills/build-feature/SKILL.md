@@ -1,6 +1,6 @@
 ---
 name: build-feature
-description: Build one spec-kit feature from a finished spec with no human gate — one Workflow script finds the feature from the checkout, makes and syncs its branch, then runs plan, tasks, analyze, implement and converge as fresh subagents, each on the model and effort its stage earns, with a fresh-context refutation review in place of every human gate, the feature's spec.md read and never edited, and a converge loop whose severity floor tolerates nothing by default, so it ends only when converge finds nothing at all, or at its round cap. ALWAYS load when asked to build, implement or ship a feature whose spec is written, or to run the spec-kit cycle from plan through implement and converge; invoke it by name (/build-feature).
+description: Build one spec-kit feature from a finished spec with no human gate. ALWAYS load when asked to build, implement or ship a feature whose spec is written, or to run the spec-kit cycle from plan through implement and converge; invoke it by name (/build-feature).
 ---
 # Build a feature — the spec-kit cycle from a finished spec, with no human gate
 

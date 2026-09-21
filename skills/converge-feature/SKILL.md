@@ -1,6 +1,6 @@
 ---
 name: converge-feature
-description: Run the converge ⇄ implement loop alone against a spec-kit feature that already has its artifacts and is already implemented, until converge reports nothing at all or the loop hits its round cap — the severity floor tolerates nothing by default — one Workflow call into build-feature's script from converge to finish, with no loop of its own and no /loop. ALWAYS load when asked to converge, finish, close out or wrap up an already-implemented feature, to loop converge and implement until nothing is left, or to run /speckit-converge more than once; invoke it by name (/converge-feature).
+description: Run the converge and implement loop alone on an already-implemented spec-kit feature. ALWAYS load when asked to converge, finish, close out or wrap up an already-implemented feature, to loop converge and implement until nothing is left, or to run /speckit-converge more than once; invoke it by name (/converge-feature).
 ---
 # Converge a feature — the loop alone, against work that already exists
 

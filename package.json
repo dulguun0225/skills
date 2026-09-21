@@ -9,12 +9,13 @@
     "check": "skills add . --list",
     "check:evidence-order": "node scripts/evidence-order.mjs",
     "check:pointers": "node scripts/dangling-pointer.mjs",
+    "check:descriptions": "node scripts/description-budget.mjs",
     "tokens": "node scripts/token-count.mjs",
     "tokens:frontmatter": "node scripts/frontmatter-tokens.mjs",
     "tokens:sections": "node scripts/token-sections.mjs",
     "firing": "node scripts/firing-harness.mjs",
     "probes": "node scripts/redundancy-probes.mjs",
-    "gates": "npm run check:evidence-order && npm run check:pointers",
+    "gates": "npm run check:evidence-order && npm run check:pointers && npm run check:descriptions",
     "try": "skills use ./ --agent claude-code --skill"
   },
   "devDependencies": {

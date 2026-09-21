@@ -1,6 +1,6 @@
 ---
 name: money
-description: Money-grade rules for code that holds or computes an amount of money, in any language — one money type, exact-decimal arithmetic, rounding named at every call site, fail-loud money paths, the telemetry a money effect emits, and the evidence gates money code carries. ALWAYS load before adding or changing a field, a payload, a computation, a rounding step, or a test that carries an amount of money, before setting a fee, price, limit or threshold in configuration, before adding a rate, factor or percentage, before deciding whether a quantity that is not called money — points, credits, allowances — is governed by these rules, and before picking a money library. States the kind of check each rule needs; the tool is named in the matching stack skill (money-java).
+description: Rules for code that holds or computes money, any language. ALWAYS load before adding or changing a field, payload, computation, rounding step or test that carries money, setting a fee, price, limit or threshold in configuration, adding a rate, factor or percentage, deciding whether a quantity not called money (points, credits, allowances) falls under these rules, or picking a money library.
 ---
 # Money-grade rules
 

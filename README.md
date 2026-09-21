@@ -93,9 +93,10 @@ behaviour decides what counts as a skill in this repo.
 | Command | What it does |
 | ------- | ------------ |
 | `npm run check` | Lists the skills the CLI discovers here. Anything it does not list is invisible to every consumer. |
-| `npm run gates` | Runs both wired gates below. Fails the build; neither is advisory. |
+| `npm run gates` | Runs every wired gate below. Fails the build; none is advisory. |
 | `npm run check:evidence-order` | Every evidence heading that names a directive section runs in the directive text's order (`--orphans` lists the headings that name none). |
 | `npm run check:pointers` | No skill text cites a rule id, or links to a file, that its own installed dir does not carry (`--pairs` lists the cross-skill id citations). |
+| `npm run check:descriptions` | Every `SKILL.md` frontmatter parses, carries `name` and `description`, keeps the description at 400 chars or less and the set at 8,000 or less — past the harness's listing budget a description is dropped and its skill can never auto-load (`--report` prints the per-skill table). Refuses its committed canaries on every run. |
 | `npm run tokens` | Size of every skill's directive text, `evidence.md` excluded — the cost paid each time a skill fires (`--files` breaks it down per file). A report, not a gate. |
 | `npm run tokens:frontmatter` | Size of every skill's `name` and `description` — the cost paid every session whether the skill fires or not. |
 | `npm run tokens:sections` | Size of each `##` section of each `SKILL.md` — where a body's cost sits (`--skill <name>` for one, `--repeated` to roll up by section name across skills, `--min 0` to fold nothing). |
@@ -108,8 +109,9 @@ against `ls skills/` rather than against a number written here. It checks
 discovery and frontmatter, nothing else: it does not see a skill's resource files
 (`evidence.md`, `api.md`, `storage.md`, `shapes.md`, `gates.md`).
 
-The two gates are the pair `enforceable-rules` says are the only machine-checkable
-part of it, wired here on 2026-08-02 and run by CI on every push touching
+The first two gates are the pair `enforceable-rules` says are the only machine-checkable
+part of it; the third, added 2026-09-21, guards the listing budget every installed
+description shares. The pair was wired here on 2026-08-02 and run by CI on every push touching
 `skills/` or `scripts/` since 2026-09-16 (`.github/workflows/skills-checks.yml`,
 which also fails on a `SKILL.md` the discovery check skips). **Each prints what it does not decide on
 every run** — a check that is trusted past its reach is the false assurance that

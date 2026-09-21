@@ -549,6 +549,89 @@ never 8,692 tokens; it is the few hundred this attempt failed to save.
 `Markers, dates, and what they mean` section stays the size it is, and the way to
 shrink it is item 1's remaining six claim tables, not the definitions.
 
+## 6. Every description cut to the harness's listing budget — 2026-09-21
+
+**Item 3 weighed a description's token price against its firing rate. This item is
+a different failure and it outranks both: past a budget, the harness does not
+deliver the description at all.** Claude Code keeps every installed skill's name
+and description in a listing budgeted at roughly 1% of the context window.
+Measured 2026-09-21 in a consumer session with this set installed at user scope
+beside that project's own skills: the descriptions here came to about 24.7k chars
+with five skills from other repos counted in; `money`, `money-api`, `money-java`,
+`money-storage` and `tech-decision-research` were **listed with no description**,
+so no `ALWAYS load before …` clause of theirs could fire, and each had a lifetime
+usage count of zero; `business-numbering` (1,601 chars with its name) and
+`primary-keys` (1,758) were cut mid-word, which puts a per-entry cap near 1.5k
+chars. **The 2026-08-03 withdrawal of item 3's remaining trims was conditioned on
+the descriptions being delivered as written. They were not.**
+
+**What changed.** Every description is now trigger-first: one clause saying what
+the skill is, then the trigger list, then a cross-reference only where a session
+needs it before the skill loads — `Install alongside async-handoff`, the
+`alongside` clauses of the three Java stack skills, the jqwik pin's owner, the two
+method skills' marker-vocabulary sentences, `invoke it by name`. The inventory —
+named bans, rejected alternatives, composite shapes, worked cases — left the
+frontmatter. **This reverses item 3's compression method**, which kept every
+identifier-shaped token in the enumeration and cut the explanation; at a 400-char
+cap the enumeration cannot stay, and the trigger list is what routes.
+
+| | before | after |
+| --- | --- | --- |
+| description chars, set total, `npm run check:descriptions -- --report` | 22,783 | 7,285 |
+| largest description | 1,746 (`primary-keys`) | 396 (`ai-maintainer-principles`) |
+| frontmatter tokens, `npm run tokens:frontmatter`, block total | 4,900 | 1,755 |
+
+Twenty-three skills on both sides, o200k_base, so an approximation for Claude.
+
+**Nothing was deleted that the body did not already say — read, not grepped.** Two
+read-only passes opened every `SKILL.md` body and checked each non-trigger item of
+its old description against it, named tools and named losers included. One gap:
+`async-handoff-shapes` never named `async-handoff-java` in its body and never said
+its rules state a kind of check and name no tool, which both sibling neutral skills
+say. That sentence was added beside *Install skill `async-handoff` first* before
+the description lost it. Soft spot left alone: the old `primary-keys` description
+said pure-child tables get *their parent's key plus a sequence* where the body says
+*ordinal* and bans sequences by name; the description's word is gone, the body's
+stands.
+
+**No trigger was dropped. The old and new `ALWAYS load` sentences were diffed per
+skill.** Most edits only drop the repeated *before*. Merges and rewordings:
+
+- `ai-maintainer-principles` — *writing a retry or an error handler*, *writing a
+  piece of code subtle enough to need a safety argument* and *writing a repo
+  constitution* share one *writing*; *deciding what a build gate may be relaxed
+  for* became *relaxing a build gate*; *introducing a second way to do something*
+  became *adding a second way to do what*; *migrating from* became *migrating off*.
+- `primary-keys` — *writing an object-storage key template or a log field set*
+  merged into the *putting an id in a URL, a log line, a payload or an export* list.
+- `money` — *carries an amount of money* became *carries money*; *is governed by
+  these rules* became *falls under these rules*.
+- `business-numbering` — *any number gapless* became *a number gapless*.
+
+Two quoted clauses in other files were kept byte-for-byte on purpose, because
+`BACKLOG.md` and three history files quote them: `java-backend-rules`' *before
+creating a build file or pinning the Java or Spring Boot version for a new repo*,
+and `llm-default-traps`' *pinning a tool, a CI action or a container image
+reference*.
+
+**What this does not decide, and it is the expensive half.** **Firing was not
+re-measured.** The sealed 2026-08-03 baselines in [firing-harness.md](firing-harness.md)
+were taken on the long descriptions and say nothing about these. Named bans were
+hook words — `@Transactional`, JPA, Redpanda, offset pagination — and every one of
+them is gone from the frontmatter; whether a session about to write one still loads
+the skill from the trigger list alone is exactly what
+`npm run firing --against <ref> --repeats N` reads, at about $0.47 a session
+first-move. The trade made here is not *short fires as well as long*; it is that
+**a long description the harness drops fires at zero, and that was measured.**
+`README.md`'s *What is published* table was left richer than the descriptions by
+decision: it is for a person choosing what to install, and it paraphrases rather
+than quotes.
+
+**The gate.** `npm run check:descriptions`, part of `npm run gates` and therefore
+of CI: 400 chars a description, 8,000 the set, both the owner's figures — sized so
+built-in and project skills fit the same listing, and about five times tighter than
+a 1M-context session needs. Record of the gate itself: [wired-gates.md](wired-gates.md).
+
 ## Checked negatives — 2026-08-02
 
 - **No verbatim duplication between a neutral skill and its Java sibling.** Zero

@@ -1,10 +1,12 @@
 ---
 name: async-handoff-shapes
-description: The six rules for shapes assembled out of asynchronous handoffs rather than out of one publish and one subscription, in any language — a committed flow definition with at most one irreversible step and it is last, a compensating destination per reversible step that tolerates the forward effect never having happened, a bounded timeout on every waiting step carried on its own timer destination, an outbound webhook as a signed consumer with an allowlisted host and no redirects, an inbound webhook that writes to the outbox and does no work in the request, and a claim check whose object outlives the message. ALWAYS load before writing a saga, a process manager, an orchestration across services, a compensation or undo path, a business timer or timeout, an outbound or inbound webhook, or a payload too large for the transport. Install alongside async-handoff, whose thirty directives every rule here builds on; states the kind of check each rule needs, with the tool named in the matching stack skill (async-handoff-java).
+description: Rules for shapes built from several asynchronous handoffs, any language. ALWAYS load before writing a saga, a process manager, an orchestration across services, a compensation or undo path, a business timer or timeout, an outbound or inbound webhook, or a payload too large for the transport. Install alongside async-handoff.
 ---
 # Asynchronous handoff: the composite shapes
 
 **Install skill `async-handoff` first.** Every rule here sit on top of that skill thirty directives, cite them by id — `E-1` … `E-28`, `E-32`, `E-33` — and **none of those ids defined here**. Six directives defined here: `E-29`, `E-30`, `E-31`, `E-34`, `E-35`, `E-36`.
+
+**Each rule state *kind* of check it need. No tool named here.** Same reason as core skill: near none of these checks portable across stacks. Stack skill name tool — on Java that `async-handoff-java`, which key its composite-shape checks to these six ids.
 
 **Each of three groups sleep until own condition true.** That why separate skill, not more sections in core one:
 
