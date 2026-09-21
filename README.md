@@ -47,7 +47,7 @@ whole purpose; everything else here is in service of it.
 | `ai-maintainer-principles` | draw or move a module boundary, choose a runtime topology, decide what a build gate may be relaxed for, adopt a database, managed service or vendor API, write a retry or a subtle piece, introduce a second way to do something, migrate from an existing system, or write a repo constitution — the decisions that change answer because the maintainer is an agent: startup-loud magic allowed and runtime-silent banned, requirements needing whole-program reasoning designed out, a module sized to one session, topology by the number of independent wills, one idiom imposed mechanically, and the review substitute that stands in for a human reader. Any stack |
 | `primary-keys` | create a table, choose or change a primary key, generate an id in application code, design a human-facing number format, write an object-storage key template or a log field set, put an id in a URL, a log line, a payload or an export, write an `ORDER BY` over an id column in any language, or move tenant data between databases — rank key candidates by the surfaces the id lands on rather than by index size, the enumerable-key disclosure, the replication cost of a sequence, the computed table classification, the cost folklore that belongs to a different key and a different engine, the `ORDER BY`-on-id ban and its one pagination carve-out, and the split between the opaque key and the human-facing business number. Carries one repo's UUIDv7-everywhere verdict as its worked case, with its losers. Any engine |
 | `business-numbering` | issue a number a person reads out, quotes or types — an account, loan, voucher or document number — or write an issuer, a counter, a format or a check digit, import legacy numbers, or make any number gapless — the class catalog with a decision per class, counter rows inside the caller's transaction rather than engine sequences, gapless as a transactional property only where it earns its keep, periods from the business calendar, typed format parts against the pattern-string engine it names as the anti-pattern, Damm check digits validated at every ingress, and exhaustion that hard-fails rather than widening silently. Carries one repo's seven-class catalog as its worked case, with its rejected alternatives. Any store |
-| `new-java-backend` | create a Java backend project from nothing — one pinned script lands `dulguun0225/java-backend-template` with every gate wired, then `specify init`, then a hand-off to `/speckit.constitution` for the project's own articles. Nothing in it is a decision; invoke it by name |
+| `new-java-backend` | create a Java backend project from nothing — one pinned script lands `dulguun0225/java-backend-template` with every gate wired, then `specify init`, and it stops there: no spec-kit command is part of it or handed on as a next step. Nothing in it is a decision; invoke it by name |
 | `build-feature` | build one feature from a spec its domain expert already wrote, with no human gate — one Workflow script finds the feature from the checkout, makes and syncs its branch, then runs plan, tasks, analyze, implement and converge as fresh subagents on the model and effort each stage earns, reads `spec.md` and never edits it, puts a fresh-context refutation review where spec-kit's human gate was, and loops converge and implement until nothing converge finds is above the severity floor, `args.severityFloor`, `NONE` by default — tolerating nothing, so a long run ends at its round cap with the open findings reported; invoke it by name |
 | `converge-feature` | converge, finish or close out a feature that is already implemented — the converge ⇄ implement loop of `build-feature` alone, from `converge` to `finish`, through that skill's script, with the severity floor the loop stops at chosen per run and `NONE` by default, tolerating nothing; no script of its own, so install it **with** `build-feature`; invoke it by name |
 | `java-backend-rules` | write a query, a transaction, an in-request fan-out, a migration, a scheduled task or a test on Java, Spring Boot MVC, jOOQ and PostgreSQL — the platform, concurrency, time and nullness rules, and the banned dependencies and annotations |
@@ -211,7 +211,7 @@ wired gate to the directive it implements and names what it does not reach.
 `new-java-backend` ships `scripts/new-backend.mjs`, which instantiates the
 template at a pinned commit in one command and stops before anything that
 touches the forge; an agent runs it rather than retyping the template's README,
-and the skill ends where spec-kit's `/speckit.constitution` begins.
+and the skill ends at the `specify init --here` commit.
 It is Node on the standard library, the runtime `npx skills add` already needs,
 so it runs the same on Linux, macOS and Windows.
 Created 2026-09-16; record in
@@ -226,9 +226,11 @@ The order is fixed, decided 2026-09-16, and the skill comes before spec-kit:
    pinned commit, runs codegen and `mvn verify`, commits, and runs
    `specify init --here`. It prints the forge and ruleset steps and does not run
    them.
-2. `/speckit.constitution`, with only the product's own decisions as input. It
-   fills Article VII; Articles I–VI arrive pre-filled from the template and are
-   not re-planned.
+2. Nothing for the constitution. Articles I–VI arrive pre-filled from the
+   template and are not re-planned; Article VII is an optional slot that starts
+   empty, nothing reads whether it is filled, and it is amended later, as a
+   commit with its reason, from the candidates a feature's plan produces.
+   `/speckit.constitution` is not a step of starting a project.
 3. `/speckit.specify` and `/speckit.clarify`, written by the feature's domain
    expert, then `/speckit.plan`, `/speckit.tasks`, `/speckit.implement` as
    spec-kit documents them — or `/build-feature`, which runs everything from

@@ -586,3 +586,31 @@ Needs-human reasons: fifteen across twenty-one exits, seven of them preflight's.
 `npm run tokens:frontmatter`, 2026-09-21, o200k_base: `build-feature` 150 tokens of name plus description (159
 with framing), set total 4,900 across twenty-three skills — a second description edit the same day, so any firing
 baseline stays unmeasured. `npm run gates` green; the script syntax-checked the wrapped way, no run.
+
+## 2026-09-21, after the day's last: `new-java-backend` stops handing off to `/speckit.constitution`
+
+An agent invoking the skill scaffolded a project, then closed with "Next step: run `/speckit-constitution`", and
+on the owner's objection began running it. The owner reported it as the second occurrence and asked for the root
+cause rather than another correction. The cause was this repo's own text, read correctly: the skill's third
+section was headed *Hand off to /speckit.constitution, Article VII only* and listed the command as the step after
+`specify init --here`; `new-backend.mjs` printed it under its next steps; the template's `README.md`, project
+`CLAUDE.md` and constitution header comment repeated it. The 2026-09-16 decision above was about which of scaffold
+and spec-kit runs first, and the prose built on it turned an ordering into a step.
+
+The step is not needed. Article VII is an optional slot; nothing in the template, in spec-kit 1.0.8 or in
+`build-feature` reads whether it is filled. In the projects scaffolded by this date, one's constitution is
+unchanged since its `init:` commit, and the other's Article VII was first written from a feature's plan
+candidates, after that feature's spec existed — the route `build-feature`'s plan stage already names.
+
+Changed: the section is now *Scaffold before anything writes a constitution; run no spec-kit command*, its
+directive ends the skill at the `specify init --here` commit and names the rejected default; its check gained a
+second half, *convention*, since nothing reads a session's closing text. The printed line is gone from
+`new-backend.mjs`. `README.md` here no longer lists the command as step 2 of starting a project. The description
+is untouched, so the frontmatter cost and any firing baseline stand. The template's three sentences change in its
+own repo, and `DEFAULT_REF` moves only once that commit is on the template's remote, because the script fetches
+the pin from there. A per-project memory note was tried first and does not reach the failure: the next scaffold
+runs in a directory that has none.
+
+Found on the same run, not fixed here: neither `new-backend.mjs` nor `init.mjs` formats after the package rename,
+so a package that sorts after `java.` fails `spotless:check` and the script stops before its `init:` commit;
+`mvn spotless:apply` in `backend/` and a hand-made commit got the run through.

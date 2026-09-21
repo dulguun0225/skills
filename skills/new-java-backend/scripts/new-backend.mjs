@@ -167,10 +167,8 @@ try {
   const next = [`gh repo create <org>/${name} --private --source=. --push`];
   if (mode === 'vendored') next.push('node scripts/apply-ruleset.mjs     # PR + backend + frontend checks required on main');
   next.push('npx skills add dulguun0225/skills -a claude-code -y');
-  if (mode === 'vendored') {
-    next.push('specify init --here               # optional; .specify/memory/constitution.md is pre-filled and survives it');
-    next.push('/speckit.constitution            # amends Article VII only; I–VI restate what backend/ enforces, not re-planned');
-  }
+  // No /speckit.* line here: a printed step is read as owed, and at scaffold time Article VII has nothing to hold.
+  if (mode === 'vendored') next.push('specify init --here               # optional; .specify/memory/constitution.md is pre-filled and survives it');
   if (!verify) next.push(`(cd ${service} && mvn -Pcodegen generate-sources && mvn verify)   # skipped above; run before the first push`);
   console.log(`created ${dir} (${mode}): package ${pkg}, artifact ${name}, template ${sha} — ${verified}`);
   console.log("next, each outside this directory's control and so not done here:");

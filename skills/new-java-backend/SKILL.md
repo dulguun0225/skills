@@ -4,7 +4,7 @@ description: Take an empty directory to spec-kit's first command for a Java back
 ---
 # New Java backend — from an empty directory to spec-kit's first command
 
-**Premise, shared with every skill in this set:** the code is written by LLM agents and no human reads it line by line. The consequence for the first session of a project is specific: **scaffolding is not a decision, so nothing an agent writes during it is wanted.** The stack is decided in `backend-stack`, the rules that bind every line are in `java-backend-rules`, and the template `dulguun0225/java-backend-template` is those rules' consequence with every build-enforceable gate wired and green. This skill is the procedure that lands it, and it ends exactly where spec-kit's own sequence begins.
+**Premise, shared with every skill in this set:** the code is written by LLM agents and no human reads it line by line. The consequence for the first session of a project is specific: **scaffolding is not a decision, so nothing an agent writes during it is wanted.** The stack is decided in `backend-stack`, the rules that bind every line are in `java-backend-rules`, and the template `dulguun0225/java-backend-template` is those rules' consequence with every build-enforceable gate wired and green. This skill is the procedure that lands it, and it ends at the commit that follows `specify init --here`; no spec-kit command is part of it.
 
 ## Run the script; write nothing
 
@@ -28,13 +28,15 @@ The pinned commit is `DEFAULT_REF` inside the script, recorded with its source a
 
 (Check: the session's tool calls contain no `gh repo create` and no `apply-ruleset` the user did not ask for by name — *convention*.)
 
-## Hand off to /speckit.constitution, Article VII only
+## Scaffold before anything writes a constitution; run no spec-kit command
 
-**The order is scaffold, `specify init --here`, `/speckit.constitution`, then `/speckit.specify`, `/speckit.plan`, `/speckit.tasks`, `/speckit.implement`; and `/speckit.constitution` amends Article VII alone.** The constitution the template lifts to `.specify/memory/constitution.md` already carries Articles I–VI — the platform, the gates as the review, explicit over silent, the committed contract, the repo shape, features as packages — each restating what `mvn verify` in `backend/` already enforces. They are not re-planned per feature; a plan's Technical Context inherits them. Article VII is empty and is the project's: domain invariants, the coverage floor and why, the money precision, the idempotency replay status, tenancy, authentication — each naming the test or gate that holds it. That is the input to `/speckit.constitution`, and this skill does not write it: the product's decisions are the user's, and `enforceable-rules` governs how each is stated. Once Article VII is in, `build-feature` runs the four feature commands unattended, one feature at a time.
+**The skill ends at the `specify init --here` commit: run no `/speckit.*` command after it, and name none as a next step in the closing report.** The default an agent reaches for is to close with "Next step: run `/speckit.constitution`", or to start it, because spec-kit's own banner lists it as step one and Article VII of the lifted constitution sits empty — rejected because at scaffold time nothing exists to put there, and the user is handed a step nobody needs. Article VII is an optional slot for rules the project turns out to need: no gate, test or spec-kit command reads whether it is filled, and an empty one blocks nothing, `build-feature` included. It is amended later, as a commit with its reason, from the candidates a feature's plan produces. The closing report says what was run, what failed, and which forge steps were left to the user, and stops there.
 
-The opposite order is the trap. Run `/speckit.constitution` first and it writes the file from spec-kit's generic template; the scaffold's `init.mjs` never overwrites, so the platform articles are dropped with a warning and `/speckit.plan` re-decides the stack the template has already decided. **Scaffold first, decided 2026-09-16.**
+The constitution the template lifts to `.specify/memory/constitution.md` already carries Articles I–VI — the platform, the gates as the review, explicit over silent, the committed contract, the repo shape, features as packages — each restating what `mvn verify` in `backend/` already enforces. They are not re-planned per feature; a plan's Technical Context inherits them.
 
-(Check: `.specify/memory/constitution.md` in the project holds the six platform articles verbatim and `init.mjs` printed no constitution warning; either failing is the finding — *convention*, 2026-09-16.)
+The ordering that is decided is the other one, and it is the trap this skill's description fires on. Run `/speckit.constitution` before the scaffold and it writes the file from spec-kit's generic template; the scaffold's `init.mjs` never overwrites, so the platform articles are dropped with a warning and `/speckit.plan` re-decides the stack the template has already decided. **Scaffold first, decided 2026-09-16.**
+
+(Check: `.specify/memory/constitution.md` in the project holds the six platform articles verbatim and `init.mjs` printed no constitution warning — *convention*, 2026-09-16. And the session's tool calls hold no `speckit` skill invocation and its closing report names no `/speckit.*` command — *convention*, 2026-09-21; nothing reads a session's closing text, so this is kept as the named default-override alone.)
 
 ## What this skill does not do
 
