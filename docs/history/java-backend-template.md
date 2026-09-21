@@ -490,3 +490,54 @@ Template `main` at `f289a52`, `node scripts/wall.mjs` green at its root; `check-
 byte-identical between the template and `product-catalog` (confirmed by `cmp`), and `squawk-changed-migrations.mjs`
 now diverges between them by design — the two repos own different sets of gates around a deleted migration.
 `DEFAULT_REF` moved to the new pin.
+
+## 2026-09-21, later still: `build-feature` starts at plan, and the spec is an input it may not write
+
+The owner's decision, settled before the work started: features are no longer specified from a document in
+another repository. A domain expert writes `specs/<NNN>-<name>/spec.md` in the service project with stock
+`/speckit-specify` and `/speckit-clarify`, so the feature branch, the feature directory and
+`.specify/feature.json` exist before any unattended run begins, and the run starts at `/speckit-plan`. The
+same day the service repos dropped the upstream-provenance layer of their traceability gate — the pinned
+snapshots, the two provenance tables and the refresh script — so everything `build-feature`'s prompts said
+about pinning, accounting for and citing an upstream document now names files that do not exist.
+
+`skills/build-feature/workflow.mjs` loses three stages (specify, clarify, and the review that refuted the
+spec against its source), their fix agents, their tier rows, their round counter, two schemas, and the
+`source` and `shortName` arguments; `STAGES` is `preflight, plan, review-plan, tasks, analyze, implement,
+converge, finish`, so `from: "specify"` throws the same way any other unknown stage does. Nothing is kept
+behind an argument nobody passes: a stage no run enters is a second way to build a feature that no gate
+exercises. The provenance sentences come out of the plan, tasks and implement prompts, and the **waiver**
+sentences they were interleaved with stay word for word — a waiver row still originates at the tasks stage
+and nowhere else.
+
+Two things replaced them. **Preflight became discovery**, and the discovery half runs on every entry: the
+feature directory from `args.featureDir`, else `.specify/feature.json`'s `feature_directory` — which is
+where stock spec-kit 1.0.8's `common.sh` reads the current feature from, the branch being a fallback for the
+branch name only — else the branch name; the branch from `args.branch` else `git rev-parse`. It refuses when
+nothing resolves, when the resolved directory has no readable `spec.md`, when a clarification marker is still
+in the spec, and — for a run that actually starts at preflight — when the checkout is on the base branch. A
+run that starts later is resuming work that may live on that branch, so it is not refused for it; that is how
+`001-product-hierarchy` was converged. The restart defect this closes is old and quiet: `from: "plan"` left
+`state.branch` null, the handoff table printed `(unknown)`, and the finish agent was told to fast-forward from
+`HEAD@{1}`.
+
+**And the spec is an input the run reads and never writes.** One rendered ban goes into every stage prompt
+that can reach the file; the plan-review fixer and the analyze remediator return a finding they cannot resolve
+otherwise under `specChanges`, which ends the run addressed to the spec's author; the implement prompt admits
+it as the third blocker of a forced convergence task; the wall-repair prompts list a spec edit beside deleting
+a test. The rejected alternative is to let the fix agents keep editing it as they always did. It loses on what
+the artifact is now for: `spec.md` is the only thing in the feature directory no agent of the run authored,
+and an artifact the run may rewrite cannot refute the run.
+
+Needs-human reasons are now thirteen across nineteen exits, five of them preflight's, and `SKILL.md` lists
+them; the earlier text said eight across thirteen and had been stale since 2026-09-20. `converge-feature`
+passes the same script and needed only its example call and two sentences changed — `featureDir` and `branch`
+are now the override rather than the requirement, and its blocked-task sentence gained the third blocker.
+
+Per-session cost, `npm run tokens:frontmatter`, 2026-09-21, o200k_base: `build-feature` 135 tokens of name
+plus description (144 with framing), `converge-feature` 124 (133 with framing), set total 4,885 across
+twenty-three skills. Both descriptions changed, which invalidates any firing baseline either had — neither has
+ever had one measured. `npm run gates` green. The script is exercised by syntax check only, and the check
+itself has to be stated honestly: `node --check` rejects this file in both module modes, because the sandbox
+evaluates the body inside an async function where its top-level `await` and `return` are legal, so the check
+wraps it that way first. **No Workflow run has started from this shape.**

@@ -48,7 +48,7 @@ whole purpose; everything else here is in service of it.
 | `primary-keys` | create a table, choose or change a primary key, generate an id in application code, design a human-facing number format, write an object-storage key template or a log field set, put an id in a URL, a log line, a payload or an export, write an `ORDER BY` over an id column in any language, or move tenant data between databases — rank key candidates by the surfaces the id lands on rather than by index size, the enumerable-key disclosure, the replication cost of a sequence, the computed table classification, the cost folklore that belongs to a different key and a different engine, the `ORDER BY`-on-id ban and its one pagination carve-out, and the split between the opaque key and the human-facing business number. Carries one repo's UUIDv7-everywhere verdict as its worked case, with its losers. Any engine |
 | `business-numbering` | issue a number a person reads out, quotes or types — an account, loan, voucher or document number — or write an issuer, a counter, a format or a check digit, import legacy numbers, or make any number gapless — the class catalog with a decision per class, counter rows inside the caller's transaction rather than engine sequences, gapless as a transactional property only where it earns its keep, periods from the business calendar, typed format parts against the pattern-string engine it names as the anti-pattern, Damm check digits validated at every ingress, and exhaustion that hard-fails rather than widening silently. Carries one repo's seven-class catalog as its worked case, with its rejected alternatives. Any store |
 | `new-java-backend` | create a Java backend project from nothing — one pinned script lands `dulguun0225/java-backend-template` with every gate wired, then `specify init`, then a hand-off to `/speckit.constitution` for the project's own articles. Nothing in it is a decision; invoke it by name |
-| `build-feature` | build one feature from a written source with no human gate — one Workflow script runs specify, clarify, plan, tasks, analyze, implement and converge as fresh subagents on the model and effort each stage earns, puts a fresh-context refutation review where each of spec-kit's human gates was, and loops converge and implement until nothing converge finds is above the severity floor, `args.severityFloor`, `NONE` by default — tolerating nothing, so a long run ends at its round cap with the open findings reported; invoke it by name |
+| `build-feature` | build one feature from a spec its domain expert already wrote, with no human gate — one Workflow script runs plan, tasks, analyze, implement and converge as fresh subagents on the model and effort each stage earns, discovers the feature from the checkout, reads `spec.md` and never edits it, puts a fresh-context refutation review where spec-kit's human gate was, and loops converge and implement until nothing converge finds is above the severity floor, `args.severityFloor`, `NONE` by default — tolerating nothing, so a long run ends at its round cap with the open findings reported; invoke it by name |
 | `converge-feature` | converge, finish or close out a feature that is already implemented — the converge ⇄ implement loop of `build-feature` alone, from `converge` to `finish`, through that skill's script, with the severity floor the loop stops at chosen per run and `NONE` by default, tolerating nothing; no script of its own, so install it **with** `build-feature`; invoke it by name |
 | `java-backend-rules` | write a query, a transaction, an in-request fan-out, a migration, a scheduled task or a test on Java, Spring Boot MVC, jOOQ and PostgreSQL — the platform, concurrency, time and nullness rules, and the banned dependencies and annotations |
 | `java-backend-api` | add or change an endpoint on that stack — the committed OpenAPI document as the single conformance oracle, error contract, pagination, versioning, temporal wire format and concurrency headers |
@@ -227,11 +227,12 @@ The order is fixed, decided 2026-09-16, and the skill comes before spec-kit:
 2. `/speckit.constitution`, with only the product's own decisions as input. It
    fills Article VII; Articles I–VI arrive pre-filled from the template and are
    not re-planned.
-3. `/speckit.specify`, `/speckit.plan`, `/speckit.tasks`, `/speckit.implement`
-   as spec-kit documents them, or `/build-feature`, which runs them (plus
-   clarify, analyze and converge) unattended with a fresh-context review where
-   each human gate was. The plan's Technical Context inherits the platform from
-   the constitution.
+3. `/speckit.specify` and `/speckit.clarify`, written by the feature's domain
+   expert, then `/speckit.plan`, `/speckit.tasks`, `/speckit.implement` as
+   spec-kit documents them — or `/build-feature`, which runs everything from
+   plan onwards (plus analyze and converge) unattended, with a fresh-context
+   review where the human gate was and the spec read but never edited. The
+   plan's Technical Context inherits the platform from the constitution.
 
 Run spec-kit first and the constitution it writes is the one that stays: the
 scaffold never overwrites a file, so the platform articles are dropped with a

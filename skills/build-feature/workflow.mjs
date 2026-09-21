@@ -1,8 +1,15 @@
-// build-feature — one spec-kit feature from a source description to a converged,
+// build-feature — one spec-kit feature from a finished spec to a converged,
 // wall-green, pushed feature branch, with no human gate.
 //
 // Run through Claude Code's Workflow tool:
-//   Workflow({ scriptPath: "<this skill dir>/workflow.mjs", args: { source, shortName, ... } })
+//   Workflow({ scriptPath: "<this skill dir>/workflow.mjs", args: { baseBranch, ... } })
+//
+// THE SPEC IS NOT THIS RUN'S. A domain expert writes specs/<NNN>-<name>/spec.md in
+// the project with /speckit-specify and /speckit-clarify, on the feature branch those
+// commands created, and hands the finished spec over; this script starts at plan. No
+// stage, review fix or repair pass edits spec.md, and a finding whose only remedy is
+// a change to the spec is a needs-human exit naming it, addressed to its author — the
+// one artifact in the feature directory this run reads and never writes.
 //
 // Every stage is a fresh subagent with its own model and effort (the TIERS table
 // below; args.tiers overrides any entry). The script is plain JavaScript in the
@@ -10,9 +17,16 @@
 // read and write, and the script only decides what runs next.
 //
 // Stages, in order:
-//   preflight → specify → clarify → review-spec ⇄ fix-spec → plan → review-plan ⇄ fix-plan
-//   → tasks → analyze ⇄ remediate → implement (one agent per phase) → converge ⇄ implement
-//   → finish
+//   preflight → plan → review-plan ⇄ fix-plan → tasks → analyze ⇄ remediate
+//   → implement (one agent per phase) → converge ⇄ implement → finish
+//
+// Preflight is also discovery, and it runs on every entry, restarts included: the
+// feature directory comes from args.featureDir, else from .specify/feature.json —
+// which is where stock spec-kit's own scripts read the current feature from — else
+// from the branch name, and the branch from args.branch else `git rev-parse`. A run
+// that starts at a later stage still gets state.branch and state.featureDir that way
+// (before 2026-09-21 a `from: "plan"` restart left the branch null, and the handoff
+// and finish prompts degraded to "(unknown)" and HEAD@{1}).
 //
 // Review and analyze loops terminate on a clean verdict or on their round cap; a
 // cap reached with blocking findings still open ends the run with status
@@ -50,18 +64,18 @@
 // The sandbox has no filesystem, so the write is one agent (the `handoff` tier row,
 // sonnet low) dispatched on the way out; it is wrapped so that a handoff which fails,
 // errors or returns nothing still yields the full needs-human payload, with the
-// outcome recorded under `handoff` on the return. An exit before a feature directory
-// exists — every preflight exit — writes nothing and says so there instead: there is
-// no feature branch to carry the file, and a dirty tree is one of the states
-// preflight refuses on, so a commit at the repo root would sweep it up.
+// outcome recorded under `handoff` on the return. An exit before discovery has
+// resolved a feature directory, or one taken on the base branch, writes nothing and
+// says so there instead: there is no feature branch to carry the file, and a dirty
+// tree is one of the states preflight refuses on, so a commit at the repo root — or
+// on the base branch — would sweep it up.
 
 export const meta = {
   name: 'build-feature',
-  description: 'Build one spec-kit feature end to end with no human gate: specify, clarify, review, plan, review, tasks, analyze, implement per phase, converge until clean, push',
-  whenToUse: 'When a feature has a written source (an upstream spec or a description) and the project is a spec-kit project whose definition of done is one command',
+  description: 'Build one spec-kit feature from a finished spec with no human gate: plan, review, tasks, analyze, implement per phase, converge until clean, push',
+  whenToUse: 'When a feature directory already holds the spec its domain expert wrote, and the project is a spec-kit project whose definition of done is one command',
   phases: [
-    { title: 'Preflight', detail: 'repo state, branch, definition of done' },
-    { title: 'Specify', detail: 'specify, clarify, fresh-context review, fix' },
+    { title: 'Preflight', detail: 'feature directory, branch, repo state, definition of done' },
     { title: 'Plan', detail: 'plan, fresh-context review, fix' },
     { title: 'Tasks', detail: 'tasks, analyze, remediate' },
     { title: 'Implement', detail: 'one agent per phase, wall green after each' },
@@ -94,10 +108,6 @@ const SEVERITY_ORDER = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
 const SEVERITY_FLOORS = ['HIGH', 'MEDIUM', 'LOW', 'NONE']
 const TIERS = {
   preflight: { model: 'sonnet', effort: 'low' },
-  specify: { model: 'opus', effort: 'medium' },
-  clarify: { model: 'opus', effort: 'medium' },
-  reviewSpec: { model: 'fable', effort: 'low' },
-  fixSpec: { model: 'opus', effort: 'medium' },
   plan: { model: 'fable', effort: 'low' },
   reviewPlan: { model: 'fable', effort: 'low' },
   fixPlan: { model: 'opus', effort: 'medium' },
@@ -141,20 +151,19 @@ const TIERS = {
   handoff: { model: 'sonnet', effort: 'low' },
 }
 
-const STAGES = ['preflight', 'specify', 'clarify', 'review-spec', 'plan', 'review-plan', 'tasks', 'analyze', 'implement', 'converge', 'finish']
+const STAGES = ['preflight', 'plan', 'review-plan', 'tasks', 'analyze', 'implement', 'converge', 'finish']
 
 // ---------------------------------------------------------------------------
-// Args
+// Args. Nothing is required: preflight discovers the feature directory, the branch
+// and the definition-of-done command, and every argument below overrides what it
+// would have found. A run on a checked-out feature branch whose spec.md is written
+// takes no arguments at all.
 // ---------------------------------------------------------------------------
 const a = args && typeof args === 'object' ? args : {}
-if (!a.source && !a.featureDir) throw new Error('args.source is required: the feature description, usually "Create a feature spec from <path to the upstream spec>"')
-if (!a.shortName && !a.featureDir) throw new Error('args.shortName is required: the spec-kit short name, e.g. "product-version"')
 
 const cfg = {
-  source: a.source || '',
-  shortName: a.shortName || '',
-  featureDir: a.featureDir || null, // set to skip specify and start from an existing feature
-  branch: a.branch || null, // the feature branch when featureDir is given
+  featureDir: a.featureDir || null, // discovered by preflight when absent
+  branch: a.branch || null, // discovered by preflight when absent
   baseBranch: a.baseBranch || null, // preflight refuses to start elsewhere when set
   wall: a.wall || null, // definition-of-done command; preflight finds it in CLAUDE.md when null
   planGuidance: a.planGuidance || '',
@@ -171,8 +180,8 @@ const cfg = {
   // evidence supports and the largest it supports: that record also says most of the
   // findings at the cap were holes opened by the previous round's fix, so these loops
   // have no fixed point either and a bigger cap buys rounds rather than closure — and
-  // review-spec is where both early runs spent their tokens (1.19M and 0.91M). Not
-  // measured: no run has taken the third round.
+  // the artifact reviews are where both early runs spent their tokens (1.19M and
+  // 0.91M). Not measured: no run has taken the third round.
   maxReviewRounds: a.maxReviewRounds ?? 3,
   maxAnalyzeRounds: a.maxAnalyzeRounds ?? 3,
   maxConvergeRounds: a.maxConvergeRounds ?? 6,
@@ -189,10 +198,8 @@ if (!SEVERITY_FLOORS.includes(cfg.severityFloor)) {
     ? 'args.severityFloor cannot be CRITICAL: a floor there tolerates every finding the scale grades, including a constitution MUST violation, and ends the loop after one round. The floor must be one of ' + SEVERITY_FLOORS.join(', ')
     : `args.severityFloor is "${cfg.severityFloor}", not one of ${SEVERITY_FLOORS.join(', ')}`)
 }
-if (STAGES.indexOf(cfg.from) > STAGES.indexOf('specify') && !cfg.featureDir) {
-  throw new Error(`args.featureDir is required when starting from "${cfg.from}"`)
-}
-// Preflight is the only stage that resolves the definition-of-done command. A run that
+// Preflight's checks are the only stage that resolves the definition-of-done command
+// (its discovery half runs on every entry and reads CLAUDE.md only there). A run that
 // starts after it would hand every later prompt the literal string "null" as the command.
 if (STAGES.indexOf(cfg.from) > STAGES.indexOf('preflight') && !cfg.wall) {
   throw new Error(`args.wall is required when starting from "${cfg.from}": preflight resolves it and is skipped`)
@@ -221,29 +228,25 @@ for (const name of Object.keys(cfg.tiers)) tier(name)
 const S = {
   preflight: {
     type: 'object',
-    required: ['ok', 'branch', 'wall', 'problems'],
+    required: ['ok', 'branch', 'featureDir', 'wall', 'onBaseBranch', 'clarifications', 'problems'],
     properties: {
       ok: { type: 'boolean' },
-      branch: { type: 'string' },
+      branch: { type: 'string', description: 'the checked-out branch' },
+      featureDir: {
+        type: 'string',
+        description: 'repo-relative feature directory holding spec.md, e.g. specs/003-product-version; empty when it could not be resolved or holds no readable spec.md',
+      },
+      onBaseBranch: {
+        type: 'boolean',
+        description: 'true when the checked-out branch is the base branch the feature would merge into, which is never a branch this run may work on',
+      },
       wall: { type: 'string', description: 'the definition-of-done command, empty when none was found' },
+      clarifications: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'every "[NEEDS CLARIFICATION]" marker still in spec.md, quoted with its line number; empty when there are none',
+      },
       problems: { type: 'array', items: { type: 'string' } },
-    },
-  },
-  specified: {
-    type: 'object',
-    required: ['featureDir', 'branch', 'assumptions'],
-    properties: {
-      featureDir: { type: 'string', description: 'repo-relative feature directory, e.g. specs/003-product-version' },
-      branch: { type: 'string' },
-      assumptions: { type: 'array', items: { type: 'string' }, description: 'every [NEEDS CLARIFICATION] the agent resolved itself' },
-    },
-  },
-  clarified: {
-    type: 'object',
-    required: ['asked', 'answers'],
-    properties: {
-      asked: { type: 'integer' },
-      answers: { type: 'array', items: { type: 'string' }, description: 'each "Q → A" line as recorded in the spec' },
     },
   },
   review: {
@@ -275,6 +278,11 @@ const S = {
       summary: { type: 'string' },
       commit: { type: 'string', description: 'short sha of the commit that holds the work, empty if nothing was committed' },
       skipped: { type: 'array', items: { type: 'string' }, description: 'findings not applied, each with the reason' },
+      specChanges: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'findings whose only remedy is an edit to the feature\'s spec.md, which no stage of this run may make: one entry per finding, naming the requirement or section and the change the spec needs. Each one stops the run and goes to the spec\'s author, so put here only what cannot be resolved in the artifacts you may write.',
+      },
     },
   },
   analysis: {
@@ -335,7 +343,7 @@ const S = {
           required: ['taskId', 'blocker'],
           properties: {
             taskId: { type: 'string' },
-            blocker: { type: 'string', description: 'the requirement or constitution article that forbids the fix, quoted with its id, or the system outside this repository that does not exist' },
+            blocker: { type: 'string', description: 'the requirement or constitution article that forbids the fix, quoted with its id; the system outside this repository that does not exist; or the change the feature\'s spec.md would need, which no stage of this run makes' },
           },
         },
       },
@@ -447,6 +455,15 @@ const UNATTENDED = [
   'Your final message is not read by a person: it is the return value, and it must match the schema you were given.',
 ].join(' ')
 
+// The spec belongs to the domain expert who wrote it, and this run reads it and never
+// writes it (owner's decision, 2026-09-21: features are specified by a person in the
+// project with stock spec-kit, and the unattended build starts at plan). Every stage
+// that could reach the file is handed this, in these words, so the ban reads the same
+// wherever an agent meets it; the stages that can return a finding carry `specChanges`
+// beside it, which is the route out — the run stops and the finding goes to the author.
+const SPEC_IS_NOT_OURS = spec =>
+  `THE SPEC IS NOT YOURS TO EDIT. \`${spec}\` was written by the feature's domain expert and is the fixed input to this run: never edit it, never regenerate it, never "align" it with anything, and never add, reword, renumber or delete a requirement, a success criterion, a clarification or an assumption in it. Every other artifact under the feature directory is yours to fix.`
+
 const SKILL_HOW = name =>
   `Invoke the skill \`${name}\` with the Skill tool. If the Skill tool is not available to you, read \`.claude/skills/${name}/SKILL.md\` and follow it exactly as that skill, hooks included.`
 
@@ -480,7 +497,7 @@ const state = {
   featureDir: cfg.featureDir,
   branch: cfg.branch,
   wall: cfg.wall,
-  rounds: { reviewSpec: 0, reviewPlan: 0, analyze: 0, converge: 0 },
+  rounds: { reviewPlan: 0, analyze: 0, converge: 0 },
   converge: null, // { ended, rounds, findings } once the converge stage has run
   implemented: [],
   finishRepaired: false, // true once the finish wall was red and the one repair pass ran
@@ -572,7 +589,7 @@ const handoffDoc = (stage, why, detail) => [
   '',
   '## Restarting the run',
   '',
-  `Once the decision is applied, restart at this stage through the \`build-feature\` skill with \`from: "${stage}"\`, \`featureDir: "${state.featureDir}"\`, \`branch: "${state.branch || ''}"\` and \`wall: "${state.wall || ''}"\`. \`wall\` is required on any start after preflight. To replay this run instead of restarting it, pass \`resumeFromRunId\` with the run id in the journal path below.`,
+  `Once the decision is applied, check out \`${state.branch || 'the feature branch'}\` and restart at this stage through the \`build-feature\` skill with \`from: "${stage}"\` and \`wall: "${state.wall || ''}"\`; \`wall\` is required on any start after preflight, and the feature directory and branch are discovered from the checkout unless you pass \`featureDir: "${state.featureDir}"\` and \`branch: "${state.branch || ''}"\`. A decision that was a change to \`${state.featureDir}/spec.md\` restarts at \`from: "plan"\`, because every later artifact was planned from the old text. To replay this run instead of restarting it, pass \`resumeFromRunId\` with the run id in the journal path below.`,
   '',
   '## Run journal',
   '',
@@ -671,6 +688,13 @@ const run = async (name, stage, prompt, schema, group) => {
 // or major finding, the fixer applies every finding and the review runs again.
 // The cap counts fix rounds; the review after the last fix still runs, so the
 // run never continues on an unreviewed fix.
+//
+// A fix round that reports `specChanges` ends the loop with them: the only remedy the
+// fixer could see for those findings is an edit to spec.md, which this run does not
+// make, so the caller takes them to the spec's author rather than running another
+// round that would find the same thing.
+const specChangesOf = r => (r && Array.isArray(r.specChanges) ? r.specChanges.filter(Boolean) : [])
+
 async function reviewLoop({ kind, group, reviewer, fixer, reviewPrompt, fixPrompt, max }) {
   let review = null
   for (let round = 1; round <= max + 1; round++) {
@@ -681,120 +705,93 @@ async function reviewLoop({ kind, group, reviewer, fixer, reviewPrompt, fixPromp
     log(`review-${kind} round ${round}: ${review.verdict}, ${blocking.length} blocking, ${serious.length - blocking.length} major, ${review.findings.length - serious.length} minor`)
     if (review.verdict === 'approve' && serious.length === 0) {
       if (review.findings.length) {
-        await run(fixer, `fix-${kind} minors`, fixPrompt(review.findings, round, true), S.done, group)
+        const fixed = await run(fixer, `fix-${kind} minors`, fixPrompt(review.findings, round, true), S.done, group)
+        const specChanges = specChangesOf(fixed)
+        if (specChanges.length) return { approved: false, rounds: round, findings: review.findings, specChanges }
       }
-      return { approved: true, rounds: round, findings: review.findings }
+      return { approved: true, rounds: round, findings: review.findings, specChanges: [] }
     }
     if (round > max) break
-    await run(fixer, `fix-${kind} ${round}`, fixPrompt(review.findings, round, false), S.done, group)
+    const fixed = await run(fixer, `fix-${kind} ${round}`, fixPrompt(review.findings, round, false), S.done, group)
+    const specChanges = specChangesOf(fixed)
+    if (specChanges.length) return { approved: false, rounds: round, findings: review.findings, specChanges }
   }
-  return { approved: false, rounds: max + 1, findings: review ? review.findings : [] }
+  return { approved: false, rounds: max + 1, findings: review ? review.findings : [], specChanges: [] }
 }
 
 // ---------------------------------------------------------------------------
-// Stage: preflight
+// Stage: preflight — and discovery, which runs on every entry.
+//
+// The feature this run builds already exists when the run starts: its domain expert
+// created the branch and the feature directory with /speckit-specify and wrote
+// spec.md. So preflight establishes what the run is working on instead of taking it
+// as an argument — the feature directory from args.featureDir, else .specify/feature.json
+// (where stock spec-kit's own scripts read the current feature from), else the branch
+// name; the branch from args.branch, else git — and that discovery half runs even on a
+// start at a later stage. Before 2026-09-21 a `from: "plan"` restart left state.branch
+// null, and the handoff table said "(unknown)" while finish merged from HEAD@{1}.
+// args.wall is still required on a start after preflight, because only the full check
+// reads CLAUDE.md for it.
 // ---------------------------------------------------------------------------
-if (runs('preflight')) {
+{
+  const full = runs('preflight')
   phase('Preflight')
-  state.stagesRun.push('preflight')
-  const p = await run('preflight', 'preflight', [
+  if (full) state.stagesRun.push('preflight')
+  const p = await run('preflight', full ? 'preflight' : 'preflight (discovery only)', [
     UNATTENDED,
-    'Check that this repository is ready for an unattended spec-kit feature build. Run the commands; do not change anything.',
-    `1. \`git status --porcelain\` must be empty (untracked files under .specify/workflows/runs/ and .claude/worktrees/ do not count). A dirty tree is a problem.`,
-    `2. \`git rev-parse --abbrev-ref HEAD\` is the current branch.${cfg.baseBranch ? ` It must be \`${cfg.baseBranch}\`; anything else is a problem.` : ''}${state.featureDir ? ` When a feature is being resumed it must be the feature branch${state.branch ? ` \`${state.branch}\`` : ''}.` : ''}`,
-    `3. \`.specify/\` must exist with \`.specify/memory/constitution.md\`, and \`.claude/skills/speckit-specify/SKILL.md\`, \`speckit-clarify\`, \`speckit-plan\`, \`speckit-tasks\`, \`speckit-analyze\`, \`speckit-implement\`, \`speckit-converge\` must all be installed. Any missing one is a problem.`,
-    cfg.wall
-      ? `4. The definition-of-done command is \`${cfg.wall}\`. Check that its executable and script exist; do not run it. Return it as \`wall\`.`
-      : `4. Find the project's definition-of-done command: read CLAUDE.md at the repo root (and the backend's CLAUDE.md if there is one) for the command it names as the definition of done or as "exactly what CI runs" — for example \`node backend/scripts/wall.mjs\`. Return it as \`wall\`. If no such command is named, return an empty string and add a problem saying so.`,
-    cfg.source ? `5. The source of the feature is: ${cfg.source}. If it names a path, that path must exist and be readable; otherwise it is a problem.` : '',
+    full
+      ? 'Establish which spec-kit feature this unattended build is for, and check that the repository is ready to build it. Run the commands; change nothing at all, and never write to spec.md — it is the feature author\'s.'
+      : 'Establish which spec-kit feature this unattended build is for. The run starts at a later stage, so the readiness checks belong to the start it is resuming: run only the steps below, change nothing at all, and never write to spec.md — it is the feature author\'s.',
+    `1. \`git rev-parse --abbrev-ref HEAD\` is the current branch${cfg.branch ? `; this run names \`${cfg.branch}\`, and any other checked-out branch is a problem` : ''}. Return it as \`branch\`.`,
+    `2. Decide whether that branch is the base branch — the trunk a feature merges into. ${cfg.baseBranch ? `This run names it: \`${cfg.baseBranch}\`.` : 'This run names none, so take it from `git symbolic-ref --short refs/remotes/origin/HEAD` with the remote prefix stripped, falling back to whichever of `main` or `master` the repository has.'} Return \`onBaseBranch\` true if the checked-out branch is it${full ? ', and add a problem saying so: a build works on the feature branch, which exists before it starts, and it never creates one' : '. This run starts at a later stage, on work that may already live on that branch, so report the fact and do not make it a problem'}.`,
+    cfg.featureDir
+      ? `3. The feature directory is \`${cfg.featureDir}\`: return it as \`featureDir\`, and check it as the next sentence says.`
+      : '3. Resolve the feature directory and return it as `featureDir`, in this order: (a) the `feature_directory` value in `.specify/feature.json`, which is where spec-kit\'s own scripts read the current feature from; (b) failing that, the branch name — `feature/<NNN>-<name>` or a bare `<NNN>-<name>` becomes `specs/<NNN>-<name>`. Guess nothing: where neither route names a directory, return `featureDir` empty with a problem saying what you tried.',
+    `   That directory must exist and hold a \`spec.md\` that is present and not empty (\`wc -c\`). A missing directory, a missing spec.md or an empty one is a problem, and \`featureDir\` comes back empty — this run builds a spec somebody has already written, and it writes no spec of its own.`,
+    full ? '4. `grep -n "\\[NEEDS CLARIFICATION" <the feature directory>/spec.md` — return every hit in `clarifications`, quoted with its line number. Those markers are the spec author\'s to resolve with `/speckit-clarify`, and this run never answers one.' : '',
+    full ? '5. `git status --porcelain` must be empty (untracked files under .specify/workflows/runs/ and .claude/worktrees/ do not count). A dirty tree is a problem.' : '',
+    full ? '6. `.specify/` must exist with `.specify/memory/constitution.md`, and `.claude/skills/speckit-plan/SKILL.md`, `speckit-tasks`, `speckit-analyze`, `speckit-implement`, `speckit-converge` must all be installed. Any missing one is a problem.' : '',
+    full
+      ? (cfg.wall
+        ? `7. The definition-of-done command is \`${cfg.wall}\`. Check that its executable and script exist; do not run it. Return it as \`wall\`.`
+        : `7. Find the project's definition-of-done command: read CLAUDE.md at the repo root (and the backend's CLAUDE.md if there is one) for the command it names as the definition of done or as "exactly what CI runs" — for example \`node backend/scripts/wall.mjs\`. Return it as \`wall\`. If no such command is named, return an empty string and add a problem saying so.`)
+      : `4. Return \`wall\` as \`${cfg.wall || ''}\` and \`clarifications\` empty: the checks this run skipped are not yours to redo.`,
     'Return ok=true only when there are no problems.',
-  ].filter(Boolean).join('\n'), S.preflight)
-  state.branch = state.branch || p.branch
+  ].filter(Boolean).join('\n'), S.preflight, 'Preflight')
+  state.branch = p.branch || state.branch
   state.wall = p.wall || state.wall
-  if (!p.ok) return await needsHuman('preflight', 'the repository is not ready', p.problems)
+  // The feature directory is adopted only where a handoff committed into it would be
+  // safe: an empty one is a path nothing may be written to, and on the branch a full
+  // preflight refuses there is no feature branch to carry the file. Both exits below
+  // therefore write no handoff and say so on the return, which is what every preflight
+  // exit did before discovery existed.
+  //
+  // The base branch is a refusal of the full preflight and not of discovery. A build
+  // starts on the feature branch its author made, so standing on the trunk means the
+  // run was launched in the wrong place; but a run that starts later — converge-feature
+  // closing out a feature that was implemented on the trunk, which is how 001 was
+  // converged — is resuming work that already lives there, and refusing it would be
+  // this script deciding a branching question the caller already answered.
+  state.featureDir = p.featureDir && !(full && p.onBaseBranch) ? p.featureDir : null
+  if (full && p.onBaseBranch) {
+    return await needsHuman('preflight',
+      `the checked-out branch \`${p.branch || '(none reported)'}\` is the base branch, and this run works only on a feature branch: the branch, the feature directory and spec.md are made by the feature's author with /speckit-specify before the build starts. Check the feature branch out, or pass args.branch and args.featureDir`,
+      p.problems)
+  }
+  if (!p.featureDir) {
+    return await needsHuman('preflight', cfg.featureDir
+      ? `\`${cfg.featureDir}\` is not a feature directory this run can build: it does not exist, or it holds no readable, non-empty spec.md. A feature is specified before this run starts — /speckit-specify and /speckit-clarify are the author's, not this script's`
+      : `no feature directory could be resolved, so there is no spec to build: .specify/feature.json did not resolve to a directory holding a readable, non-empty spec.md, and the branch \`${p.branch || '(none reported)'}\` does not name one either. Check the feature branch out, or pass args.featureDir; a feature is specified before this run starts — /speckit-specify and /speckit-clarify are the author's, not this script's`,
+      p.problems)
+  }
+  if (!p.ok) return await needsHuman('preflight', full ? 'the repository is not ready' : 'the repository does not match what this restart was given', p.problems)
   if (!state.wall) return await needsHuman('preflight', 'no definition-of-done command: pass args.wall', p.problems)
-  log(`preflight ok on ${p.branch}, wall = ${state.wall}`)
-}
-
-// ---------------------------------------------------------------------------
-// Stage: specify → clarify → review-spec ⇄ fix-spec
-// ---------------------------------------------------------------------------
-if (runs('specify')) {
-  phase('Specify')
-  state.stagesRun.push('specify')
-  const s = await run('specify', 'specify', [
-    UNATTENDED,
-    SKILL_HOW('speckit-specify'),
-    `Arguments for the skill: ${cfg.source} Use the short name '${cfg.shortName}'.`,
-    'Rules for the unattended decisions this skill would otherwise ask about:',
-    '- When the skill reaches its [NEEDS CLARIFICATION] step, do not present questions. Resolve every marker yourself: take the answer the source states; where the source is silent, take the most conservative option (the smallest scope, the strictest validation, the behaviour the existing code already has) and record each such decision as a bullet under an "## Assumptions" section of the spec (create the section after the overview if the template has none).',
-    `- If the source carries its own FR-/SC- ids (an upstream spec document), never write one bare — inside the new spec.md included. Cite it \`<QUALIFIER>/FR-nnn\`, where QUALIFIER is the upstream's own stable name for the block being implemented (a capability id where one exists; uppercase letters, digits and hyphens; never three digits alone). Declare the qualifier in the same change that first cites it, and declare it by running the script, never by hand: write its row in specs/trace-upstreams.tsv — five columns, sorted, \`QUALIFIER<TAB>NNN<TAB><repo>:<path><TAB>-<TAB>-\`, where NNN is this feature's three-digit prefix and the path is the source document inside its own repository — then run \`${(state.wall || 'node scripts/wall.mjs').replace(/[^/]+\.mjs$/, 'refresh-upstream-snapshot.mjs')} <QUALIFIER> <the local checkout the source document lies in> [<revision>]\`, which commits a pinned copy of the document to specs/upstream/<QUALIFIER>.md and fills in the two sha columns. Never write a snapshot or a sha yourself and never edit one; the snapshot and the row are committed with the spec. A bare FR-/SC- id inside the new spec.md means the feature's own requirement, defined there.`,
-    `- Every FR and SC that snapshot defines is then accounted for, and the gate holds this feature to it: either it is cited \`<QUALIFIER>/ID\` on the local requirement that carries it — mapped by reading both texts, never by number, because the two numberings diverge and a citation mapped by number resolves exactly as cleanly as a correct one — or it gets a row in specs/trace-upstream-dropped.tsv (\`QUALIFIER/ID<TAB>kind<TAB>reason\`, rows sorted), where kind is exactly \`dropped\` (this service does not take it) or \`deferred\` (a later feature takes it). The reason names the decision this spec records — a scope-table row, a Clarification, an Assumption — and the spec records that decision first: a row with no recorded decision behind it is not allowed.`,
-    '- The before_specify hook creates the feature branch; run it. Run every after_specify hook.',
-    '- Do not touch any file outside the feature directory except what the hooks commit, and specs/trace-upstreams.tsv, specs/upstream/<QUALIFIER>.md and specs/trace-upstream-dropped.tsv when the rules above need them.',
-    'Return the feature directory (from .specify/feature.json), the branch, and the list of assumptions you made.',
-  ].join('\n'), S.specified, 'Specify')
-  state.featureDir = s.featureDir
-  state.branch = s.branch
-  log(`specified ${s.featureDir} on ${s.branch}; ${s.assumptions.length} assumptions`)
-}
-
-if (runs('clarify')) {
-  state.stagesRun.push('clarify')
-  const P = featurePaths(state.featureDir)
-  const c = await run('clarify', 'clarify', [
-    UNATTENDED,
-    SKILL_HOW('speckit-clarify'),
-    `The feature is ${state.featureDir}; the spec is ${P.spec}. The source the spec was written from: ${cfg.source || '(none given; use the spec and the constitution)'}. The constitution is ${CONSTITUTION}.`,
-    'This skill is written as an interactive question loop. Run it in full, playing both roles:',
-    '- Generate the question queue exactly as the skill says (up to 5, highest impact first).',
-    '- Answer each question yourself, in this order of authority: what the source document states; what the constitution requires; what the existing code already does; otherwise the option the skill itself recommends.',
-    '- Record every question and answer under "## Clarifications" and integrate each answer into the spec sections, exactly as the skill specifies. Never ask, never wait.',
-    '- An upstream FR-/SC- id from the source is cited qualified, never bare, specify\'s own way; do not introduce a bare one while integrating an answer.',
-    '- Run the before_clarify and after_clarify hooks.',
-    'Return how many questions you asked and the recorded "Q → A" lines.',
-  ].join('\n'), S.clarified, 'Specify')
-  log(`clarify asked ${c.asked}`)
-}
-
-if (runs('review-spec')) {
-  state.stagesRun.push('review-spec')
-  const P = featurePaths(state.featureDir)
-  const r = await reviewLoop({
-    kind: 'spec',
-    group: 'Specify',
-    reviewer: 'reviewSpec',
-    fixer: 'fixSpec',
-    max: cfg.maxReviewRounds,
-    reviewPrompt: round => [
-      UNATTENDED,
-      `You are a fresh-context reviewer with no memory of how ${P.spec} was written. Your job is to REFUTE the claim that it is a complete, faithful and testable specification of its source. Read-only: change nothing.`,
-      `Read, in full: the source (${cfg.source || 'none given — review against the constitution and internal consistency only'}), ${P.spec}, ${P.checklists}requirements.md if present, ${CONSTITUTION}, and — where the spec cites an upstream qualifier — that qualifier's row in specs/trace-upstreams.tsv, its pinned snapshot specs/upstream/<QUALIFIER>.md and specs/trace-upstream-dropped.tsv.`,
-      'Report a finding for each of these, with the severity given:',
-      '- a requirement, scenario, acceptance criterion, state, transition, error case, limit or field in the source that has no counterpart in the spec — blocking',
-      '- a spec statement the source contradicts — blocking',
-      '- a "[NEEDS CLARIFICATION]" or template placeholder left in the spec — blocking',
-      '- an upstream id written bare, or a bare id the feature\'s spec.md does not define — blocking',
-      '- an FR or SC the pinned snapshot defines that nothing accounts for: neither a `<QUALIFIER>/ID` citation inside the feature directory nor a row in specs/trace-upstream-dropped.tsv — blocking',
-      '- a `dropped` or `deferred` row in specs/trace-upstream-dropped.tsv whose reason names a decision the spec does not actually record — blocking',
-      '- a `<QUALIFIER>/ID` citation whose local requirement does not say what that upstream requirement says: read both texts, because the two numberings diverge and a citation mapped by number resolves exactly as cleanly as a correct one — blocking',
-      '- a requirement that violates a constitution article — blocking, and say which article',
-      '- a requirement invented beyond the source and the recorded Clarifications and Assumptions — major (blocking if it widens scope)',
-      '- a requirement not testable as written, or a success criterion with no measure — major',
-      '- an Assumption or Clarification answer the source actually decides differently — major',
-      '- wording, ordering, duplication — minor',
-      'Each finding names the exact location and the concrete edit that resolves it. Verdict "fix" when any finding is blocking or major; "approve" otherwise.',
-      round > 1 ? `This is review round ${round}; earlier findings were applied. Check they were applied correctly and look for what the fix broke.` : '',
-    ].filter(Boolean).join('\n'),
-    fixPrompt: (findings, round, minorsOnly) => [
-      UNATTENDED,
-      `Apply the following review findings to ${P.spec} (and ${P.checklists}requirements.md where a checklist item's state changes). Keep the spec-kit structure and heading hierarchy; edit in place; do not regenerate the file.`,
-      minorsOnly ? 'These are minor findings; apply each unless it would change meaning.' : 'Apply every finding. If a finding is wrong against the source, do not apply it and list it under skipped with the reason.',
-      findingsBlock(findings),
-      `Then commit with the message "spec: review round ${round}" (git add the feature directory only). Return done=true with the short sha.`,
-    ].join('\n'),
-  })
-  if (!r.approved) return await needsHuman('review-spec', `blocking or major findings remain after ${cfg.maxReviewRounds} fix rounds and ${cfg.maxReviewRounds + 1} fresh-context refutation reviews: the loop applied every finding of every round and the review after the last fix still reports these. Raising args.maxReviewRounds buys more rounds of the same shape; the 2026-09-17 record is that most findings at a cap are holes the previous fix opened, so what is left is a judgment and not another round`, r.findings)
+  if (Array.isArray(p.clarifications) && p.clarifications.length) {
+    return await needsHuman('preflight',
+      `${p.clarifications.length} "[NEEDS CLARIFICATION]" marker(s) are still in ${state.featureDir}/spec.md. They are the spec author's to resolve, with \`/speckit-clarify\` in the project, and this run answers none: it does not edit the spec, and planning against an unresolved marker decides by accident what the marker exists to decide. Restart the build once the spec is clarified`,
+      p.clarifications)
+  }
+  log(`${full ? 'preflight ok' : 'discovery'}: feature ${state.featureDir} on ${state.branch}, wall = ${state.wall}`)
 }
 
 // ---------------------------------------------------------------------------
@@ -808,8 +805,9 @@ if (runs('plan')) {
     UNATTENDED,
     SKILL_HOW('speckit-plan'),
     `The feature is ${state.featureDir}; the spec is ${P.spec}; the constitution is ${CONSTITUTION}.`,
+    SPEC_IS_NOT_OURS(P.spec),
     cfg.planGuidance ? `Arguments for the skill (planning guidance): ${cfg.planGuidance}` : 'Arguments for the skill: none.',
-    'Rules: read the constitution first and treat every article as binding; read the existing code the feature touches before deciding on a design; leave no "[NEEDS CLARIFICATION]" — decide from the spec, the constitution and the code, and record the decision in research.md. An "Article VII candidate" is admissible only under the constitution\'s Governance admission test: it binds two or more feature packages, or a table or package this feature does not own; a rule about this feature\'s own tables, columns, endpoints or error codes is a plan decision recorded in plan.md and docs/GATES.md, never a candidate; a pre-positioned or placeholder structure is never the subject of one. Cite an upstream FR-/SC- id qualified, never bare, wherever plan.md or research.md names one; what this feature took from its source document was settled when it was specified, so the plan never drops an upstream requirement and never touches specs/trace-upstreams.tsv, specs/trace-upstream-dropped.tsv or specs/upstream/. A requirement the plan puts out of this feature\'s scope names that boundary in plan.md — the tasks stage waives it as `deferred` from exactly that sentence. Run the before_plan and after_plan hooks.',
+    `Rules: read the constitution first and treat every article as binding; read the existing code the feature touches before deciding on a design; leave no "[NEEDS CLARIFICATION]" in the plan artifacts — decide from the spec, the constitution and the code, and record the decision in research.md. An "Article VII candidate" is admissible only under the constitution's Governance admission test: it binds two or more feature packages, or a table or package this feature does not own; a rule about this feature's own tables, columns, endpoints or error codes is a plan decision recorded in plan.md and docs/GATES.md, never a candidate; a pre-positioned or placeholder structure is never the subject of one. Cite an FR or SC id of the spec qualified \`${featureNum(state.featureDir)}/FR-nnn\` or \`${featureNum(state.featureDir)}/SC-nnn\`, never bare, wherever plan.md or research.md names one. A requirement the plan puts out of this feature's scope names that boundary in plan.md — the tasks stage waives it as \`deferred\` from exactly that sentence. Run the before_plan and after_plan hooks.`,
     'Return done=true with a one-paragraph summary of the design and the artifacts written.',
   ].join('\n'), S.done, 'Plan')
 
@@ -831,18 +829,26 @@ if (runs('plan')) {
       '- a "[NEEDS CLARIFICATION]", a template placeholder, or a research question left open — major',
       '- a decision with no stated alternative and rationale where the constitution or the project rules require one — major',
       '- a decision that the plan defers to implementation without a task-sized statement of what to build — major',
+      `- a requirement of ${P.spec} that no plan can realise because the spec contradicts itself, the constitution or the existing code — blocking, and say in the fix that the remedy is a change to the spec: ${P.spec} is the feature author's and neither you nor the agent that applies your findings edits it`,
       '- naming, ordering, duplication — minor',
-      'Each finding names the exact file and location and the concrete edit that resolves it. Verdict "fix" when any finding is blocking or major; "approve" otherwise.',
+      `Each finding names the exact file and location and the concrete edit that resolves it, and no finding's fix is an edit to ${P.spec}. Verdict "fix" when any finding is blocking or major; "approve" otherwise.`,
       round > 1 ? `This is review round ${round}; earlier findings were applied. Check they were applied correctly and look for what the fix broke.` : '',
     ].filter(Boolean).join('\n'),
     fixPrompt: (findings, round, minorsOnly) => [
       UNATTENDED,
       `Apply the following review findings to the plan artifacts under ${state.featureDir}. Edit in place; do not regenerate a file. When a finding says the constitution needs an amendment, amend ${CONSTITUTION} only if the amendment passes the constitution's Governance admission test (it binds two or more features, or a table the feature does not own — otherwise change the plan instead and say so under skipped), following the constitution's own amendment and versioning rules and only in the articles it marks as the project's own, and record the amendment in ${P.research}.`,
+      SPEC_IS_NOT_OURS(P.spec),
+      `Where a finding cannot be resolved in the plan artifacts or the constitution because the only remedy is a change to ${P.spec} — the spec contradicts itself, the constitution or the code, or it is silent on something no plan can decide — do not apply it and do not work around it: put it in \`specChanges\`, naming the requirement and the change the spec needs. That stops the run and takes the finding to the spec's author, so put there only what you genuinely cannot resolve in the files you may write.`,
       minorsOnly ? 'These are minor findings; apply each unless it would change meaning.' : 'Apply every finding. If a finding is wrong against the spec or the code, do not apply it and list it under skipped with the reason.',
       findingsBlock(findings),
       `Then commit with the message "plan: review round ${round}". Return done=true with the short sha.`,
     ].join('\n'),
   })
+  if (r.specChanges && r.specChanges.length) {
+    return await needsHuman('review-plan',
+      `a review finding of the plan can only be resolved by changing ${P.spec}, and no stage of this run edits the spec: it is the feature author's, written before the build started. The ${r.specChanges.length} change(s) below go to that author — with /speckit-clarify or an edit to the spec — and the build restarts at plan afterwards. Nothing else in the plan was left unapplied`,
+      r.specChanges)
+  }
   if (!r.approved) return await needsHuman('review-plan', `blocking or major findings remain after ${cfg.maxReviewRounds} fix rounds and ${cfg.maxReviewRounds + 1} fresh-context refutation reviews: the loop applied every finding of every round and the review after the last fix still reports these. A plan finding that survives that is usually a decision the run is not authorised to take — a constitution amendment that fails its admission test, or a design the spec and the code disagree about`, r.findings)
 }
 
@@ -857,8 +863,9 @@ if (runs('tasks')) {
     UNATTENDED,
     SKILL_HOW('speckit-tasks'),
     `The feature is ${state.featureDir}.`,
+    `${SPEC_IS_NOT_OURS(P.spec)} No task you write edits it either: a gap that could only be closed by changing the spec is not a task, and a task that would reword a requirement to match the plan is the same edit at one remove.`,
     cfg.tasksGuidance ? `Arguments for the skill (task generation constraints): ${cfg.tasksGuidance}` : 'Arguments for the skill: none.',
-    `Rules: every task names the file it touches; every phase ends with a task that runs the definition of done, \`${state.wall}\`, and fixes until it is green; the phases follow the template ("## Phase N: ..."). Every FR and SC of ${P.spec} is named by at least one task in this file — the gate refuses an id no task names — in qualified form \`${featureNum(state.featureDir)}/FR-nnn\` or \`${featureNum(state.featureDir)}/SC-nnn\`, and that task writes a test citing it — or, it is named by a task that adds its row to specs/trace-waivers.tsv (\`${featureNum(state.featureDir)}/ID<TAB>kind<TAB>reason\`, rows sorted), where kind is exactly \`external\` (the criterion cannot be witnessed from inside this repository at all — a production latency figure, an operator procedure) or \`deferred\` (specified but deliberately not built in this feature; the reason names where that deferral is recorded — a plan.md scope boundary, a GATES.md named-gap row, the owning capability). A requirement that is merely untested is neither: it gets a test, not a waiver row. This tasks stage is the only place a waiver task may originate: no later stage adds one. The upstream accounting was settled when the feature was specified, so no task here adds, edits or removes a row in specs/trace-upstream-dropped.tsv or specs/trace-upstreams.tsv, or a file under specs/upstream/. A task that dictates Javadoc or comment wording also uses the qualified form, never the bare id. Run the before_tasks and after_tasks hooks.`,
+    `Rules: every task names the file it touches; every phase ends with a task that runs the definition of done, \`${state.wall}\`, and fixes until it is green; the phases follow the template ("## Phase N: ..."). Every FR and SC of ${P.spec} is named by at least one task in this file — the gate refuses an id no task names — in qualified form \`${featureNum(state.featureDir)}/FR-nnn\` or \`${featureNum(state.featureDir)}/SC-nnn\`, and that task writes a test citing it — or, it is named by a task that adds its row to specs/trace-waivers.tsv (\`${featureNum(state.featureDir)}/ID<TAB>kind<TAB>reason\`, rows sorted), where kind is exactly \`external\` (the criterion cannot be witnessed from inside this repository at all — a production latency figure, an operator procedure) or \`deferred\` (specified but deliberately not built in this feature; the reason names where that deferral is recorded — a plan.md scope boundary, a GATES.md named-gap row, the owning capability). A requirement that is merely untested is neither: it gets a test, not a waiver row. This tasks stage is the only place a waiver task may originate: no later stage adds one. A task that dictates Javadoc or comment wording also uses the qualified form, never the bare id. Run the before_tasks and after_tasks hooks.`,
     `Return done=true with the number of tasks and phases written to ${P.tasks}.`,
   ].join('\n'), S.done, 'Tasks')
 }
@@ -883,13 +890,21 @@ if (runs('analyze')) {
     if (serious.length === 0) { approved = true; break }
     if (round > cfg.maxAnalyzeRounds) break
     const fixer = critical.length ? 'remediateCritical' : 'remediate'
-    await run(fixer, `remediate ${round}`, [
+    const remedied = await run(fixer, `remediate ${round}`, [
       UNATTENDED,
-      `Resolve the following analysis findings by editing the artifact each one names under ${state.featureDir} (spec.md, plan.md and its companions, or tasks.md) or ${CONSTITUTION} for a constitution finding. Edit in place. A coverage gap is resolved by adding tasks to the right phase of ${P.tasks} with new ids after the current maximum, never by renumbering. A constitution violation is resolved by changing the plan or spec, not the constitution, unless the finding says the constitution is what is wrong.`,
+      `Resolve the following analysis findings by editing the artifact each one names under ${state.featureDir} (plan.md and its companions, or tasks.md) or ${CONSTITUTION} for a constitution finding. Edit in place. A coverage gap is resolved by adding tasks to the right phase of ${P.tasks} with new ids after the current maximum, never by renumbering. A constitution violation is resolved by changing the plan, not the constitution, unless the finding says the constitution is what is wrong.`,
+      SPEC_IS_NOT_OURS(P.spec),
+      `So a finding the analysis files against the spec is resolved in the plan or the tasks where it can be — the spec is the authority the other artifacts are wrong against — and where it genuinely cannot be, put it in \`specChanges\` naming the requirement and the change the spec needs, apply the rest, and change nothing in ${P.spec}. \`specChanges\` stops the run and takes those findings to the spec's author, so put there only what no edit you are allowed to make can resolve.`,
       'Apply every CRITICAL and HIGH finding; apply MEDIUM and LOW ones when the edit is local and safe, otherwise leave them.',
       analysis.findings.map(f => `${f.id} [${f.severity}] ${f.artifact} — ${f.location}: ${f.summary}\n   Recommendation: ${f.recommendation}`).join('\n'),
       `Then commit with the message "tasks: analysis round ${round}". Return done=true with the short sha and the findings you left unapplied under skipped.`,
     ].join('\n'), S.done, 'Tasks')
+    const specChanges = specChangesOf(remedied)
+    if (specChanges.length) {
+      return await needsHuman('analyze',
+        `an analysis finding can only be resolved by changing ${P.spec}, and no stage of this run edits the spec: it is the feature author's, written before the build started. The ${specChanges.length} change(s) below go to that author — with /speckit-clarify or an edit to the spec — and the build restarts at plan afterwards. Every other finding of this round was applied`,
+        specChanges)
+    }
   }
   if (!approved) return await needsHuman('analyze', `CRITICAL or HIGH analysis findings remain after ${cfg.maxAnalyzeRounds} remediation rounds and ${cfg.maxAnalyzeRounds + 1} analyses: the loop ran a remediation agent over every finding of every round — the critical-tier one where a CRITICAL was open — and the analysis after the last one still grades these CRITICAL or HIGH`, analysis.findings)
 }
@@ -905,14 +920,15 @@ if (runs('analyze')) {
 // names every move it may not make and tells the agent to return wallGreen=false and
 // leave the tree alone when the only route it can see is one of them.
 // A forced convergence task is closed by the fix (owner's rule, 2026-09-20: a severity
-// floor of NONE means a LOW finding is fixed). The two blockers admitted are the two
-// an agent cannot work past from inside the feature; everything else claimed on
+// floor of NONE means a LOW finding is fixed). The three blockers admitted are the ones
+// an agent cannot work past from inside the feature — the third being a fix that would
+// have to edit spec.md, which is the feature author's (2026-09-21); everything else claimed on
 // product-catalog 004 — "this toolchain cannot express it", "a deployment decision",
 // "the artifacts already name it as a gap", "the file is append-only" — was fixed by
 // hand the same day, so none of those is a blocker and the prompt says so by name.
 const FORCED_RULE = [
   '- FORCED CONVERGENCE PHASE. Every task in this phase is a finding the loop will not tolerate, and each is closed by the change that makes the finding untrue — code, a test, a migration, a gate, a document edit. It is never closed by writing down why it was not fixed: do not add a rationale entry anywhere, do not tick a task on the strength of one, and do not tick a task because an earlier rationale, a named gap in plan.md or a row in a gates document already describes the finding. Those describe the gap; the task is to close it.',
-  '- A fix is blocked in exactly two cases: (a) a numbered requirement in spec.md or an article of the constitution forbids the change — quote it with its id; (b) the change needs a system outside this repository that does not exist. Nothing else is a blocker. "The toolchain cannot express this check", "this is a deployment decision", "the plan already names this as a gap", "no feature has proposed it yet" and "the file is append-only" are not blockers: find another shape for the check, make the decision and wire it, close the named gap, edit the file. A finding you believe is simply wrong is not ticked either: it stays unchecked and the reason goes in `blocked`.',
+  '- A fix is blocked in exactly three cases: (a) a numbered requirement in spec.md or an article of the constitution forbids the change — quote it with its id; (b) the change needs a system outside this repository that does not exist; (c) the only fix is an edit to spec.md, which no stage of this run makes — name the requirement and the change the spec needs, and it goes to the spec\'s author. Nothing else is a blocker. "The toolchain cannot express this check", "this is a deployment decision", "the plan already names this as a gap", "no feature has proposed it yet" and "the file is append-only" are not blockers: find another shape for the check, make the decision and wire it, close the named gap, edit the file. A finding you believe is simply wrong is not ticked either: it stays unchecked and the reason goes in `blocked`.',
   '- A blocked task stays "- [ ]". Fix every task that is not blocked, tick those, and return the blocked ones in `blocked` with the blocker quoted. Never tick a task whose finding is still true.',
 ].join('\n')
 
@@ -924,9 +940,10 @@ const implementPhase = async (ph, phaseLabel, repair, forced) => {
     SKILL_HOW('speckit-implement'),
     `The feature is ${state.featureDir}. Arguments for the skill: "Execute only Phase ${ph.number}: ${ph.title} (tasks ${ids}). Every other phase is out of scope: do not start it, do not tick it."`,
     'Rules for the unattended decisions this skill would otherwise ask about:',
+    `- ${SPEC_IS_NOT_OURS(P.spec)} Where the only way you can see to finish a task is an edit to the spec, the task is not done: leave it "- [ ]" and say so, quoting the requirement. A run that reshapes the spec to fit the code has deleted its own definition of done.`,
     '- If a checklist has unchecked items, proceed anyway (the spec and plan were already reviewed) and list the unchecked items in your summary.',
     `- Definition of done for this phase: after its tasks, run \`${state.wall}\` and fix what it reports until it passes. Fix root causes in the code, never by weakening a gate, deleting a test or adding a suppression. Give up only after ${cfg.maxWallAttempts} full attempts, and then return wallGreen=false with the failing output.`,
-    `- Requirement ids: cite an FR or SC only in qualified form \`${featureNum(state.featureDir)}/FR-nnn\` or \`${featureNum(state.featureDir)}/SC-nnn\`, never bare, outside ${state.featureDir}/ — code, tests, SQL, OpenAPI descriptions and docs/GATES.md included. Prove an id by citing it, in qualified form, in a test under a test root. If the wall's traceability gate fails on a missing citation, fix it by writing or citing the test that proves it. Write a row to specs/trace-waivers.tsv only when the task you are executing says to; never add one on your own judgment to turn the gate green. Never write a row to specs/trace-upstream-dropped.tsv or specs/trace-upstreams.tsv, and never edit a snapshot under specs/upstream/: the upstream accounting was settled when the feature was specified, and an unaccounted upstream id is a finding for that stage, not a row to add here.`,
+    `- Requirement ids: cite an FR or SC only in qualified form \`${featureNum(state.featureDir)}/FR-nnn\` or \`${featureNum(state.featureDir)}/SC-nnn\`, never bare, outside ${state.featureDir}/ — code, tests, SQL, OpenAPI descriptions and docs/GATES.md included. Prove an id by citing it, in qualified form, in a test under a test root. If the wall's traceability gate fails on a missing citation, fix it by writing or citing the test that proves it. Write a row to specs/trace-waivers.tsv only when the task you are executing says to; never add one on your own judgment to turn the gate green.`,
     `- Tick each finished task in ${P.tasks} ("- [ ]" → "- [x]"). Wait for the wall to finish before you return; never leave it running in the background.`,
     '- Run the before_implement and after_implement hooks; if nothing committed the work, commit it yourself with a message naming the phase.',
     forced ? FORCED_RULE : '',
@@ -937,7 +954,7 @@ const implementPhase = async (ph, phaseLabel, repair, forced) => {
       '```',
       repair.wallOutput || '(the previous agent returned no output)',
       '```',
-      'How you may NOT make it pass, in any circumstances: skipping, ignoring, disabling, quarantining or deleting a test; adding a suppression, an exclusion, a baseline entry, a traceability waiver or upstream-dropped row, or an ignore comment; lowering a threshold or a coverage figure; relaxing, reordering or removing a gate; editing the wall script, the build file or any gate configuration to stop it reporting; or passing a force flag. A green wall bought any of those ways is a worse outcome than the red wall you were given, and it is the one result this run cannot accept. If the only route you can see is one of them, change nothing, leave the tree as you found it, and return wallGreen=false naming the gate and why.',
+      'How you may NOT make it pass, in any circumstances: skipping, ignoring, disabling, quarantining or deleting a test; adding a suppression, an exclusion, a baseline entry, a traceability waiver row, or an ignore comment; editing the spec.md of the feature directory; lowering a threshold or a coverage figure; relaxing, reordering or removing a gate; editing the wall script, the build file or any gate configuration to stop it reporting; or passing a force flag. A green wall bought any of those ways is a worse outcome than the red wall you were given, and it is the one result this run cannot accept. If the only route you can see is one of them, change nothing, leave the tree as you found it, and return wallGreen=false naming the gate and why.',
     ].join('\n') : '',
     `Return wallGreen, the task ids of this phase still unchecked, the commit sha and a short summary${forced ? ', and in `blocked` one entry per task you left unchecked with its blocker quoted' : ''}.`,
   ].filter(Boolean).join('\n'), S.implemented, phaseLabel)
@@ -1083,6 +1100,7 @@ if (runs('converge')) {
     UNATTENDED,
     SKILL_HOW('speckit-converge'),
     `The feature is ${state.featureDir}.`,
+    SPEC_IS_NOT_OURS(P.spec),
     assessOnly
       ? 'ASSESS ONLY. Run the skill\'s assessment through its findings summary and stop there. Append nothing: tasks.md and every other file must be byte-for-byte unchanged when you finish, nothing is committed, and you run no hook that writes or commits. Return the outcome "converged", because nothing was appended; the findings below are the whole value of this round.'
       : `Run the assessment in full. Return the outcome exactly as the skill defines it: "converged" when nothing was appended, "tasks_appended" with the new phase number and the appended task ids otherwise. When tasks were appended, commit tasks.md with the message "tasks: convergence round ${round}".`,
@@ -1172,6 +1190,7 @@ if (runs('converge')) {
     UNATTENDED,
     `The feature is ${state.featureDir}; its tasks file is ${P.tasks}.`,
     `A convergence assessment of this feature has just reported that it appended no tasks, and reported the findings below all the same. They are open work: nothing in ${P.tasks} closes them. Your only job is to append them to ${P.tasks} as one new convergence phase, one task per finding, so that the implement stage runs them. You are not assessing anything. Do not read the code to re-check a finding, do not re-grade one, do not judge one non-actionable, do not drop, merge, split or reorder them, do not add a finding of your own, and do not fix anything. Every finding below gets exactly one task, in the order given.`,
+    `${SPEC_IS_NOT_OURS(P.spec)} No task you write asks anyone else to either: a task worded to reconcile the spec with the code is that edit at one remove. Write each task against the code, the tests, the gates, the documents or the plan.`,
     'The findings, exactly as the assessment returned them:',
     forcedFindingsBlock(fs),
     `Append to the end of ${P.tasks}, following /speckit-converge's own append contract and nothing else: append only, rewrite nothing, renumber nothing, touch no existing task and no earlier convergence phase, and change no file but ${P.tasks}.`,
@@ -1416,7 +1435,7 @@ if (runs('finish')) {
     `3. Every task in ${P.tasks} is "- [x]" → allTasksChecked=true; otherwise false, and name the unchecked ids in the summary.`,
     cfg.push ? '4. Push the branch: `git push -u origin HEAD`. pushed=true only if the push succeeded.' : '4. Do not push; pushed=false.',
     cfg.mergeInto
-      ? `5. Fast-forward \`${cfg.mergeInto}\` onto this branch: \`git checkout ${cfg.mergeInto} && git merge --ff-only ${state.branch || 'HEAD@{1}'} && git push origin ${cfg.mergeInto}\`, then check the feature branch out again. merged=true only if every command succeeded; a non-fast-forward is merged=false with the reason in the summary.`
+      ? `5. Fast-forward \`${cfg.mergeInto}\` onto this branch: \`git checkout ${cfg.mergeInto} && git merge --ff-only ${state.branch} && git push origin ${cfg.mergeInto}\`, then check ${state.branch} out again. merged=true only if every command succeeded; a non-fast-forward is merged=false with the reason in the summary.`
       : '5. Do not merge; merged=false.',
     '6. head is the short sha of the feature branch.',
   ].join('\n')
@@ -1440,7 +1459,7 @@ if (runs('finish')) {
       `The feature ${state.featureDir} on branch ${state.branch || '(current branch)'} is implemented and every convergence round is done, but its definition of done is red: \`${state.wall}\` failed at the close-out check. It was green after the last implemented phase, so something later broke it. Find the root cause in the code and fix it.`,
       `1. Run \`${state.wall}\` and read what fails. What the close-out agent reported: ${finished.summary || '(no summary)'}`,
       `2. Fix the root cause in the code, then run the wall again, up to ${cfg.maxWallAttempts} full attempts.`,
-      'How you may NOT make it pass, in any circumstances: skipping, ignoring, disabling, quarantining or deleting a test; adding a suppression, an exclusion, a baseline entry, a traceability waiver or upstream-dropped row, or an ignore comment; lowering a threshold or a coverage figure; relaxing, reordering or removing a gate; editing the wall script, the build file or any gate configuration to stop it reporting; or passing a force flag. A green wall bought any of those ways is a worse outcome than the red wall you were given, and it is the one result this run cannot accept. If the only route you can see is one of them, change nothing, leave the tree as you found it, and return wallGreen=false naming the gate and why.',
+      'How you may NOT make it pass, in any circumstances: skipping, ignoring, disabling, quarantining or deleting a test; adding a suppression, an exclusion, a baseline entry, a traceability waiver row, or an ignore comment; editing the spec.md of the feature directory; lowering a threshold or a coverage figure; relaxing, reordering or removing a gate; editing the wall script, the build file or any gate configuration to stop it reporting; or passing a force flag. A green wall bought any of those ways is a worse outcome than the red wall you were given, and it is the one result this run cannot accept. If the only route you can see is one of them, change nothing, leave the tree as you found it, and return wallGreen=false naming the gate and why.',
       `3. Tick nothing in ${P.tasks} and add no task: this is a repair, not a phase. Commit your fix with a message naming what was broken.`,
       'Return wallGreen as you saw it, an empty unchecked list, the commit sha and a short summary of the root cause. Your verdict is not final — a separate agent re-runs the wall after you.',
     ].join('\n'), S.implemented, 'Finish')
