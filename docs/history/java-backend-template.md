@@ -386,3 +386,37 @@ Template `main` at `e6cba05`, `node scripts/wall.mjs` green at its root; `DEFAUL
 `new-java-backend/scripts/new-backend.mjs` moved to it. No text in this repo enumerates the wall's steps in a
 way the new steps falsify — the skills point at the template's `docs/GATES.md` rather than restating it,
 which is the property that made this port a one-repo change here.
+
+## 2026-09-21: an upstream citation resolves against a pinned copy of its document
+
+The second half of the same gate, built in `product-catalog` the same day and ported up by copy and `cmp`.
+A `<QUALIFIER>/FR-nnn` citation was accepted on its qualifier alone: the repository the qualifier names is
+not checked out in CI, so nothing knew that the document still defined that id, and a requirement of it could
+vanish out of a project's reading unnoticed. Each declared qualifier now carries a committed copy of its
+document at `specs/upstream/<QUALIFIER>.md`, and its row in `specs/trace-upstreams.tsv` grows to five
+columns — the feature that reads it, the location, the source commit the copy was taken at, and the copy's
+git blob sha, recomputed from the bytes on disk. A hand-edited snapshot fails on that sha;
+`scripts/refresh-upstream-snapshot.mjs` re-takes one from a local checkout at a named revision and rewrites
+the row, so a moved pin is a reviewable diff of the document and CI still reads only committed files. Both
+directions are then held: a citation names an id the snapshot defines, and every FR and SC the snapshot
+defines is cited under the feature that reads that document or carries a row in
+`specs/trace-upstream-dropped.tsv`, `dropped` or `deferred`, with the committed decision named. Beside it,
+spec → tasks: every requirement of every feature that has a `tasks.md` is named by some task there, or waived.
+
+Four files are byte-identical between the template and `product-catalog` now — the gate, the canary,
+`scripts/fixtures/traceability/` (48 trees, 53 cases) and `refresh-upstream-snapshot.mjs`. The template ships
+none of the four lists and no `specs/upstream/`, the same way it ships no `specs/` tree: each is optional, and
+the first feature that needs a row creates it. `wall.mjs` needed no change — the canary already ran before
+the gate it proves.
+
+`build-feature`'s prompts learned the new rules in the voice they were already written in. Specify declares a
+qualifier by *running* the refresh script — the row first with `-` in both sha columns, then the script, never
+a hand-written snapshot or sha — and accounts for every upstream FR and SC, by a `<QUALIFIER>/ID` citation on
+the local requirement that carries it, mapped by reading both texts and never by number, or by a dropped row
+whose reason names a decision the spec records first. Review-spec gained three blocking findings for exactly
+those three failures. The plan stage, the tasks stage and both wall-repair passes are barred from touching the
+upstream lists at all: what a feature took from its source document is settled when it is specified, so an
+unaccounted id is a finding for that stage and never a row added later to turn a gate green.
+
+Template `main` at `b21dbf9`, `node scripts/wall.mjs` green at its root; `DEFAULT_REF` moved to it and proven
+by scaffolding a throwaway project from the pin with a non-`com.*` package.

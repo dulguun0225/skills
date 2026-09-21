@@ -30,13 +30,17 @@ import { parseArgs } from 'node:util';
 
 const TEMPLATE_URL = process.env.TEMPLATE_URL || 'https://github.com/dulguun0225/java-backend-template.git';
 // The pinned template commit. Move it deliberately, in a commit that says which gate change it brings in.
-// Recorded 2026-09-21: "gates: spec<->code traceability, with the canary that proves it" on main. It brings in
-// the spec<->code traceability gate and the canary that proves it, both wired into scripts/wall.mjs, so a
-// project scaffolded from this pin refuses a bare requirement id from its first commit; on top of
-// "scaffold: project-level .claude/settings.json pins worktree.baseRef=head" (an agent worktree starts from
-// the session's HEAD, not main), #9 (guarded version update, ORDER BY id ban, table ownership, vacuum
-// ruleset, migration lint additions) and #8 (Article VI names no package; CLAUDE.md holds the pointer).
-const DEFAULT_REF = 'e6cba059bb9b9741708833073106a92d9ce98bdd';
+// Recorded 2026-09-21: "gates: an upstream citation resolves against a pinned copy of its document" on main.
+// It brings in the upstream half of the traceability gate -- a declared qualifier carries a committed,
+// pinned copy of its source document under specs/upstream/, every <QUALIFIER>/FR-nnn citation resolves
+// against it, every requirement it defines is cited or dropped with a reason, and every requirement of a
+// feature that has a tasks.md is named by a task -- plus scripts/refresh-upstream-snapshot.mjs, the only way
+// a pin moves; on top of "gates: spec<->code traceability, with the canary that proves it" (a project
+// scaffolded from this pin refuses a bare requirement id from its first commit), "scaffold: project-level
+// .claude/settings.json pins worktree.baseRef=head" (an agent worktree starts from the session's HEAD, not
+// main), #9 (guarded version update, ORDER BY id ban, table ownership, vacuum ruleset, migration lint
+// additions) and #8 (Article VI names no package; CLAUDE.md holds the pointer).
+const DEFAULT_REF = 'b21dbf9fcc1218246185fc443b9d45e9f4a3863a';
 
 const [major] = process.versions.node.split('.').map(Number);
 if (major < 22) die(`node ${process.versions.node} is too old; this script needs 22 or newer`);
