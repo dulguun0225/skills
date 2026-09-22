@@ -191,7 +191,11 @@ const cfg = {
   // findings at the cap were holes opened by the previous round's fix, so these loops
   // have no fixed point either and a bigger cap buys rounds rather than closure — and
   // the artifact reviews are where both early runs spent their tokens (1.19M and
-  // 0.91M). Not measured: no run has taken the third round.
+  // 0.91M). Measured 2026-09-22 over 28 run journals: six runs took a third round —
+  // four at review-plan, one at review-spec, one at analyze — and all six still ended
+  // needs-human at the cap, so the raise bought rounds and not closure. Raising it
+  // further is the same trade at a higher price; the unmeasured half is the
+  // counterfactual, whether a fourth round would have closed any of the six.
   maxReviewRounds: a.maxReviewRounds ?? 3,
   maxAnalyzeRounds: a.maxAnalyzeRounds ?? 3,
   maxConvergeRounds: a.maxConvergeRounds ?? 6,

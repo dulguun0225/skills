@@ -95,6 +95,16 @@ A persistence preference is a variant of an existing rule set, not a new one.
 | ---- | -------------- | ----- |
 | **The `review-by` freshness step** | Decided 2026-08-02 not to write it because nothing here ran on a schedule, and recorded as *reopens the day this repo gains CI* ([wired-gates](docs/history/wired-gates.md)). CI arrived 2026-09-16. A script that fails when any `review-by` date has passed is cheaper than either wired gate; what it needs is a scheduled run, and `guardrails-toolchain` records that GitHub disables a scheduled workflow after repository inactivity — so its artifact has to carry its own run timestamp, per that skill's layer clause | Earliest `review-by` in the set is 2027-01-21; nothing is mis-marked by its absence today |
 
+## Observation owed — opened 2026-09-22
+
+The first sweep of the run journals is in [docs/history/runs.md](docs/history/runs.md) and closed
+what it could. These two it could not.
+
+| Owed | Why it is owed | Watch |
+| ---- | -------------- | ----- |
+| **A journal that says which skill invoked the run** | Every journal names `build-feature`'s script and `workflowName: build-feature`, including runs started by `converge-feature`, which calls that script. So **`converge-feature` cannot be told from `build-feature` with `from: "converge"`**, and that skill's status line now says the question is unanswerable rather than claiming the negative. The fix is one argument carrying the invoking skill's name. **The owner declined it on 2026-09-22** on the ground that it is a change to the measured system, made before the first measurement had been read — so this row is the decision's record, not a rejection of it | One line in `workflow.mjs` plus one in each skill's invocation block. It buys attribution on run 29 onward and nothing retroactively |
+| **A `GATES.md` coverage reader — phase two** | A journal names **no skill at all**, so whether `money`, `primary-keys` or any other directive reached an implement agent is invisible from it. The service repos already answer a weaker and more useful question in `backend/docs/GATES.md`, which carries `## Wired` and `## Named gaps`, cites this set's directive ids and names the test hosting each. A reader over those files gives per-directive coverage across consumer repos **for every skill here**, not just the two that run the loop. The finding that says it would pay, read off those files 2026-09-22: **`business-numbering` appears in neither repo's `GATES.md` — not wired, not listed as a gap** — while `money` and `primary-keys` appear on both sides, so a `business-numbering` violation is invisible to the wall *and* to any coverage reader that trusts the gap section | A second dependency-free reader, same shape as `runs.mjs`; reading, not spending. It reports coverage and never compliance — compliance is the consumer's wall |
+
 ## Shelved
 
 Three exactness domains next to money — **physical quantities, legal time, and

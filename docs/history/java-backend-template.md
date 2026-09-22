@@ -340,13 +340,19 @@ skills the script lists, up from 4,851 the same day. **Both descriptions were ed
 `converge-feature`'s said *until nothing converge reports is above LOW severity*, which the reversal made
 false, and `build-feature`'s said the loop *ends when nothing it finds is above LOW severity*. A description
 edit invalidates any firing baseline; **neither skill has ever measured one**, so nothing was invalidated in
-fact, and the first measurement of either is still owed.
+fact, and the first measurement of either is still owed. **Still true of firing on 2026-09-22; no longer true
+of the runs themselves** — the first read of the Workflow journals landed that day and is in
+[runs.md](runs.md), which is where every later measurement of these two skills goes.
 
 Exercised, not measured: the exits were driven against a stub of the Workflow sandbox — `NONE` with a clean
 round, with one LOW on a `converged` return, with an off-scale severity, the cap with a clean and with a
 graded assess-only round, and the same cap shapes at a `LOW` floor — and each produced the `converge.ended`
 and the log line the skills claim. That is a reading of the script under stubs, not a run: no Workflow run
-has reached the converge stage at any floor. `npm run check` and `npm run gates` green after.
+has reached the converge stage at any floor. `npm run check` and `npm run gates` green after. **The last
+clause was overtaken three days later and the correction is dated 2026-09-22, not here**: nine runs have
+since entered at converge — three to the round cap at floor `NONE`, three `converged` at a floor raised to
+`LOW` or `MEDIUM`, three to the `needs-human` exit the forced round was written to remove — and the forced
+round itself has run seventeen times. [runs.md](runs.md) carries the reading and the run ids.
 
 ## 2026-09-21: the spec↔code traceability gate is born with the template
 
