@@ -72,7 +72,7 @@
 // findings): the payload existed only in the invoking session's tool result, a /tmp
 // file and the run journal under ~/.claude/projects/, so no colleague could reach it.
 // The sandbox has no filesystem, so the write is one agent (the `handoff` tier row,
-// sonnet low) dispatched on the way out; it is wrapped so that a handoff which fails,
+// opus low) dispatched on the way out; it is wrapped so that a handoff which fails,
 // errors or returns nothing still yields the full needs-human payload, with the
 // outcome recorded under `handoff` on the return. An exit before discovery has
 // resolved a feature directory, or one taken on the base branch, writes nothing and
@@ -96,14 +96,17 @@ export const meta = {
 }
 
 // ---------------------------------------------------------------------------
-// Tiers. The roster is six (model, effort) pairs — Haiku, Sonnet low, Sonnet
-// medium, Opus low, Opus medium, Fable low — and every row, from this table or
-// from args.tiers, must be one of them; tier() refuses any other before the
-// first agent starts. Model aliases resolve to the latest model of each line.
-// Haiku is in the roster with no effort named; a row on it passes low. The
-// rationale per row is in SKILL.md.
+// Tiers. The roster is one model at three efforts — Opus low, Opus medium, Opus
+// high (owner's decision, 2026-09-23: every subagent runs on Opus 5.5, no other
+// model line) — and every row, from this table or from args.tiers, must be one of
+// them; tier() refuses any other model, and xhigh or max, before the first agent
+// starts. The model is the alias `opus`, not a pinned id: the Workflow authoring
+// reference names no accepted values for agent()'s model, and the Agent tool's
+// model takes aliases only. The alias resolves to the newest Opus, which is Opus
+// 5.5 as of 2026-09-23, so a later Opus release moves every row with no edit here.
+// The rationale per row is in SKILL.md.
 // ---------------------------------------------------------------------------
-const ROSTER = { haiku: ['low'], sonnet: ['low', 'medium'], opus: ['low', 'medium'], fable: ['low'] }
+const ROSTER = { opus: ['low', 'medium', 'high'] }
 
 // The severity scale is /speckit-converge's own Step 5 scale, most severe first, and
 // the same four values the analyze schema carries. args.severityFloor names the
@@ -117,15 +120,15 @@ const ROSTER = { haiku: ['low'], sonnet: ['low', 'medium'], opus: ['low', 'mediu
 const SEVERITY_ORDER = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
 const SEVERITY_FLOORS = ['HIGH', 'MEDIUM', 'LOW', 'NONE']
 const TIERS = {
-  preflight: { model: 'sonnet', effort: 'low' },
-  plan: { model: 'fable', effort: 'low' },
-  reviewPlan: { model: 'fable', effort: 'low' },
+  preflight: { model: 'opus', effort: 'low' },
+  plan: { model: 'opus', effort: 'high' },
+  reviewPlan: { model: 'opus', effort: 'high' },
   fixPlan: { model: 'opus', effort: 'medium' },
   tasks: { model: 'opus', effort: 'medium' },
   analyze: { model: 'opus', effort: 'medium' },
   remediate: { model: 'opus', effort: 'medium' },
   remediateCritical: { model: 'opus', effort: 'medium' },
-  phases: { model: 'sonnet', effort: 'low' },
+  phases: { model: 'opus', effort: 'low' },
   implement: { model: 'opus', effort: 'medium' },
   converge: { model: 'opus', effort: 'medium' },
   // Writes the tasks a converge round graded and declined to append. Unlike the
@@ -138,8 +141,9 @@ const TIERS = {
   // the implement stage then executes, so it is priced with converge and implement
   // rather than with handoff: opus medium. A cheaper row would paraphrase a finding
   // into a task that closes on something else, and nothing downstream would notice.
-  // (The roster's fable row is unavailable on billing as of 2026-09-18 and is not
-  // considered.)
+  // Opus high was not taken: it is kept for plan and its refutation, the two rows
+  // every later stage inherits from, and this row's output is implemented and
+  // wall-checked rather than trusted.
   forceAppend: { model: 'opus', effort: 'medium' },
   // Runs only when a forced append reports it failed, and answers one question about
   // tasks.md: is the forced phase wholly absent, wholly present, or neither. Git is
@@ -148,17 +152,17 @@ const TIERS = {
   // this row must get right are not cheap. It may delete lines from tasks.md (only a
   // partial forced phase, only this round's), where a wrong deletion removes real
   // tasks and nothing downstream would notice; and it must return "unsure" rather
-  // than a guess, which is a calibration judgment the cheap tiers are worst at. Priced
-  // with every other row in this table that writes: opus medium. Its verdict is not
+  // than a guess, which is a calibration judgment the low-effort rows are worst at.
+  // Priced with every other row in this table that writes: opus medium. Its verdict is not
   // taken on its own word — the parse-only `phases` row re-reads the file afterwards
   // and the loop escalates where the two disagree.
   reconcileTasks: { model: 'opus', effort: 'medium' },
-  finish: { model: 'sonnet', effort: 'low' },
+  finish: { model: 'opus', effort: 'low' },
   // Writes one file whose whole text this script hands it, commits it, pushes it.
-  // Nothing here is a judgment, so it is priced at the cheapest tier that runs a
-  // shell and a write; the document is rendered in the script precisely so a tier
-  // this low cannot paraphrase a finding or drop one.
-  handoff: { model: 'sonnet', effort: 'low' },
+  // Nothing here is a judgment, so it is priced at the cheapest tier in the roster;
+  // the document is rendered in the script precisely so a tier this low cannot
+  // paraphrase a finding or drop one.
+  handoff: { model: 'opus', effort: 'low' },
 }
 
 const STAGES = ['preflight', 'plan', 'review-plan', 'tasks', 'analyze', 'implement', 'converge', 'finish']

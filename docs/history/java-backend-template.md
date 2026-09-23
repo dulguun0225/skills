@@ -693,3 +693,26 @@ green. **Nothing was executed — no session has applied a resolution under this
 or reported a stop as settled.** *Decided, not yet validated.* Unmeasured and worth naming: how often a session
 will in fact hold a recommendation with high confidence. The evidence is three items of one stop, all of one kind; whether it holds
 for a red finish wall, a reconcile disagreement or a preflight refusal is the first real run's measurement.
+
+## 2026-09-23: `build-feature`'s tier roster is Opus only
+
+The owner's decision: every subagent runs on Opus 5.5, at low, medium or high effort — no Haiku, Sonnet or Fable.
+The owner's global agent roster was switched the same day, so the script's roster still matches the roster the
+same work runs on anywhere else, which was the 2026-09-18 ground for having one. `ROSTER` in
+`skills/build-feature/workflow.mjs` is `opus` at `low`, `medium`, `high`. Mapping: preflight, phases, finish and
+handoff, Sonnet low → Opus low; plan and review-plan, Fable low → Opus high; every Opus medium row unchanged.
+`tier()` still refuses any other pair from the table or `args.tiers` before the first agent starts, exercised
+against a stub that day. The model stays the alias `opus`, not a pinned `claude-opus-5-5`: the Workflow
+authoring reference names no accepted values for `agent()`'s `model`, and the Agent tool's `model` is an enum of
+aliases. So the alias resolves to Opus 5.5 as of this date, and a later Opus moves every row with no edit.
+
+Swept: `build-feature` `SKILL.md` (roster directive, stage table, the effort rationale that replaced the
+unused-tiers paragraph, the handoff agent's tier, the cost status line now saying its figures predate the
+table) and `evidence.md` (a new dated entry, and supersession notes on the 2026-09-18 roster entry and the
+section summary rather than rewrites); the `workflow.mjs` comments; `converge-feature` `SKILL.md`'s `/loop`
+rejection, which named the phases row's tier. Left alone: every probe and firing stamp naming `claude-sonnet-5`,
+which records what was run, not what routes, and the model list in `scripts/runs.mjs`, which parses old journals.
+
+Per-session cost unchanged: no `description` edited. **No run has taken the new tiers**: every cost in
+[runs](runs.md) predates them, and plan and review-plan at Opus high are the rows to watch, since high effort on
+exactly those stages is how the 2026-09-17 runs got expensive, on Fable. *Decided, not yet validated.*
