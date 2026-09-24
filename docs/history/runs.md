@@ -7,7 +7,13 @@ skill doing the work it was written for**, and until 2026-09-22 nothing here did
 repositories for six days, every run leaving a journal, and no journal had been
 read back.
 
-`npm run runs` reads them. It is **a report and can never be a gate** — every
+`npm run runs` reads them. **Since 2026-09-24 it reads a second source beside
+them: each service repository's git history of `<featureDir>/HANDOFF.md`.** Every
+`needs-human` exit with a resolved feature directory, off the base branch, commits
+that file with the subject `handoff: the <stage> stage stopped and needs a person`;
+the report finds that commit for each stop, and lists the commits between it and
+the next run on the feature — what somebody changed before restarting, which no
+journal records. The git calls are read-only. It is **a report and can never be a gate** — every
 number in it is a property of runs that happened on one machine, in repositories
 this repo does not control, by an operator who may have intervened by hand
 between runs; a threshold on any of it would fail this build for something nobody
@@ -213,10 +219,11 @@ the recurrence block and it wants its own pass.
 
 ## The harvest procedure
 
-Run by an agent, per sweep, not per run. `npm run runs` is one command; steps b–f
-are reading skill text against a table, which is bounded reasoning — tier
-`analyst`, escalating to `principal` for step d, because deciding that a finding
-becomes a directive is a rule decision.
+Run by an agent, per sweep, not per run. `npm run runs` is one command; steps b,
+c, e and f are reading skill text against a table, which is bounded reasoning —
+tier `analyst`. Step d reads each stop's handoff and resolution commits out of the
+service repository and decides where the stop should have been prevented, which is
+a rule decision — tier `principal`.
 
 **Not a skill**, deliberately: a skill costs frontmatter in every session of every
 consumer for a job done once a sweep, which is the bad trade `CLAUDE.md` names —
@@ -226,7 +233,8 @@ every session and carries only what is needed every session. A section on this
 page costs nothing until somebody opens it.
 
 - **a.** `npm run runs --since <last sweep's date>`. Paste the per-run block, the
-  corpus line and the stage × tier table into a new sweep section, verbatim.
+  corpus line, the stage × tier table and the per-stop block's summary line into
+  a new sweep section, verbatim.
 - **b.** **Re-read every status line, and every *unmeasured* / *unrun* / *no run
   has taken* / *no measured cost* sentence, in `build-feature/SKILL.md`,
   `converge-feature/SKILL.md` and both `evidence.md` files against the mechanisms
@@ -236,14 +244,32 @@ page costs nothing until somebody opens it.
   measurement*, *unmeasured*, *has not taken* — checked against the stage × tier
   table, and either answered with its stamp and its marker, or restated as still
   open. An uncontrolled comparison answers at *convention* and says so.
-- **d.** Each `CROSS-FEATURE` group: decide **one** of — a directive in an
-  existing skill, an article in the consumer constitution, a gate in
-  `java-backend-template`, or nothing with the reason. A group that recurs and
-  gets none of the four is recorded as owed on `BACKLOG.md`.
-- **e.** Each `REPEAT` group is a resolution that did not take, so it goes to the
-  person under the skill's own one-attempt rule — and this page records that it
-  did.
-- **f.** Write what the sweep did **not** reach. Non-negotiable: the eight gaps
+- **d.** **Every `needs-human` stop in the window**, read from the per-stop
+  block: the handoff in full (its `read:` command) and each resolution commit
+  (`git -C <repo> show <sha>`), with `RESOLUTIONS.md` where the window has one.
+  Per stop, name **the earliest stage whose inputs already held what was
+  needed** to avoid the stop, and decide **exactly one** prevention target:
+  a question the spec should have answered at `specify` or `clarify`; an article
+  in the consumer constitution; a gate or scaffold change in
+  `java-backend-template`; a directive in an existing skill here; a
+  `build-feature` stage prompt in `workflow.mjs`; or nothing, with the reason —
+  irreducible where the stop needed a business value nothing in the repository
+  states, or somebody else's uncommitted work or merge conflict. A stop the
+  block reports with no handoff is decided from the journal's `result.why` and
+  `result.detail` alone, and the sweep says its resolution is unknown.
+  **Cross-feature recurrence sets priority, not eligibility**: a stop that
+  happened once, or recurs within one feature, gets a decision like any other,
+  and a `CROSS-FEATURE` group is decided first. The decisions go into the sweep
+  section as one row per stop — run id, stage, earliest stage, target, applied
+  or owed. A target decided and not applied is recorded as owed on
+  `BACKLOG.md`.
+- **e.** Each `REPEAT` group, and each stop flagged `REPEAT-STAGE` whose
+  resolution window holds a commit, is a resolution that did not take, so it
+  goes to the person under the skill's own one-attempt rule — and this page
+  records that it did. `REPEAT-STAGE` is a stage-level flag: whether the *item*
+  came back is read by comparing the two handoffs. A `REPEAT-STAGE` stop whose
+  window is empty is a restart with nothing changed, not a failed resolution.
+- **f.** Write what the sweep did **not** reach. Non-negotiable: the gaps listed
   below are most of any sweep's surface, and a sweep that lists no gaps has
   stopped reading rather than run out of them.
 
@@ -258,11 +284,22 @@ check is the sweep section being on this page to read.
 and run-id range — the verbatim script output, and a *did not reach* paragraph;
 absence is visible on the page — *convention*, 2026-09-22.)
 
+**Step d covers every stop since 2026-09-24, owner's decision.** Until then it
+decided only on `CROSS-FEATURE` groups, so a stop that happened once, or recurred
+within one feature — F3's eight runs on one feature among them — got no
+prevention decision at all. The per-stop block in `runs.mjs` was written the same
+day as its input; nothing in `workflow.mjs` or in the session's behaviour changed.
+**Status: *decided, not yet validated*** — no sweep has used step d in this form
+yet, so there is no result to report from it. Enforcement *convention*: the check
+is the per-stop decision table being in the sweep section.
+
 ---
 
-## The eight gaps — what a journal does not hold
+## The gaps — what a journal and the handoff history do not hold
 
-Verified by reading the files, 2026-09-22. Each is a thing a sweep must not claim.
+Verified by reading the files, 2026-09-22; the handoff-history entries and the
+narrowing of the preview and join entries, 2026-09-24. Each is a thing a sweep
+must not claim.
 
 1. **No cost in money.** One undifferentiated token number per agent, with no
    input/output/cache split, so no price table could be applied even if one
@@ -283,7 +320,11 @@ Verified by reading the files, 2026-09-22. Each is a thing a sweep must not clai
 5. **Prompt and result previews are capped at 401 characters.** A finding
    survives only where the script lifted it into `result.detail` or
    `result.converge.forced`; one a round graded and the script did not surface is
-   unrecoverable.
+   unrecoverable. **A stop with a handoff has its reported findings in git as
+   well**, durable past a cleared projects directory and readable on any clone;
+   **a stop without one has them only in the journal.** The handoff renders
+   `result.detail` and nothing more — on `wf_e5ab8e1a-c53`, 2026-09-24, twelve
+   items in both — so it does not recover a finding the script did not lift.
 6. **Which skill invoked the run is not recorded.** Every journal names
    `build-feature`'s script, so a `converge-feature` run is indistinguishable
    from `build-feature` with `from: "converge"`. `converge-feature`'s claim that
@@ -293,15 +334,34 @@ Verified by reading the files, 2026-09-22. Each is a thing a sweep must not clai
 7. **Wall attempts inside an implement agent are not recorded**, nor is a second
    implement pass over unchecked ids; neither has a label or a log line. Only the
    phase-level wall outcome is observable.
-8. **No id joins a journal to a commit.** The join is feature directory plus
-   time. `product-catalog` commits carry a `Claude-Session` trailer; the
+8. **One id joins a journal to a commit, and only one.** Since 2026-09-18 the
+   journal's `result.handoff.commit` names the handoff commit's sha, and the
+   report verifies it in git before using it. Every other commit — the
+   resolution commits included — joins by feature directory plus time.
+   `product-catalog` commits carry a `Claude-Session` trailer; the
    `reference-data` ones do not.
+9. **Why a resolution was chosen is not in git.** A resolution commit's diff
+   shows what changed, not what the confidence behind it rested on; only a
+   `RESOLUTIONS.md` entry says that, where one was written.
+10. **A stop with no handoff exists only in the journal's return value** — every
+    stop before 2026-09-18, and, under the script as it stands, every stop
+    before discovery or on the base branch, which commit nothing by design. A cleared projects directory erases
+    it.
+11. **A decision made in conversation and never committed is invisible.** Git
+    holds what was committed; the journal holds what the run returned; a person's
+    answer that changed nothing on disk, or changed it in a later commit outside
+    the window, is in neither.
+12. **The resolution window is bounded by time, not by intent.** It is every
+    non-merge commit on the ref between the handoff and the next run's start.
+    Where the feature branch is gone from the clone the report reads a ref that
+    holds the handoff, usually the base branch, and a stop with no later run
+    reads up to that ref's tip — both can pull unrelated work into the window.
 
 ---
 
 ## The two mechanisms that lost, and why
 
-**A hook.** It addresses exactly one of the eight gaps — skill attribution — and
+**A hook.** It addresses exactly one of the gaps listed above — skill attribution — and
 loses on three grounds. It must be installed in every consumer repository, which
 is the per-consumer-configuration growth law the owner banned for delivery
 reappearing for observation. It observes only the next run, where reading
@@ -319,7 +379,8 @@ consumer repository, so this repo could not sweep *across* repos, and the
 cross-feature recurrence question needs one reader over both; and it would be
 written by an LLM agent — the handoff row is Sonnet low — where a journal's
 numbers are the harness's own. **And the measured reason: `RESOLUTIONS.md` is
-instructed in prose and has been written 0 times in 8 stops.** A per-run record
+instructed in prose and had been written 0 times in 8 stops at sweep 1,
+2026-09-22.** A per-run record
 instructed the same way inherits that rate.
 
 ---

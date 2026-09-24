@@ -29,6 +29,15 @@
 // this repo did, which is the check-that-fails-on-noise `guardrails-toolchain`
 // bans by name. It is not in `npm run gates` and must not be added to it.
 //
+// A second source, git, for every stop. Each `needs-human` exit off the base
+// branch commits `<featureDir>/HANDOFF.md` in the service repo; the per-stop
+// block finds that commit, reports its size and the command that reads it in
+// full, and lists the commits between it and the next run on the feature — what
+// was changed before the restart, which no journal records. Owner's decision,
+// 2026-09-24: harvest step d decides a prevention target for every stop, not
+// only for recurring groups, and this block is its input. Its git calls are
+// read-only.
+//
 // It computes groups and never names a rule. A finding that recurs across
 // features is printed as a candidate; whether it becomes a directive, a
 // constitution article, a template gate or nothing is the harvest's judgment,
@@ -43,9 +52,10 @@
 //   --repo <abs path>   consumer repo to read; repeatable; defaults below
 //   --since <ISO date>  only runs whose timestamp is on or after this date
 //   --run <runId>       only this run (substring match on the run id)
-//   --json              machine-readable dump instead of the three blocks
+//   --json              machine-readable dump instead of the text report, the per-stop records included
 
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, sep } from "node:path";
 
@@ -200,10 +210,20 @@ function readRun(path, repo) {
   const stageCount = (re) => parsed.filter((p) => re.test(p.normalStage)).length;
   const logs = (j.logs ?? []).map(String);
 
+  // `timestamp` is when the run ended; `startTime` (epoch ms) is when it began.
+  const endMs = Date.parse(j.timestamp ?? "") || null;
+  const startMs = typeof j.startTime === "number" ? j.startTime : endMs && j.durationMs ? endMs - j.durationMs : endMs;
+
   return {
     repo: repo.split(sep).at(-1),
+    repoPath: repo,
     path,
     runId: j.runId ?? "?",
+    startMs,
+    endMs,
+    branch: res.branch ?? j.args?.branch ?? null,
+    baseBranch: j.args?.baseBranch ?? null,
+    handoffRecord: res.handoff ?? null,
     date: String(j.timestamp ?? "").slice(0, 10),
     timestamp: String(j.timestamp ?? ""),
     workflowName: j.workflowName ?? "?",
@@ -243,17 +263,240 @@ function readRun(path, repo) {
   };
 }
 
-const runs = [];
+// `allRuns` ignores `--run`, because the per-stop section needs the next run on
+// a stopped feature even when only the stopped run was asked for.
+const allRuns = [];
 for (const repo of repos) {
   for (const path of journalPaths(repo)) {
     const r = readRun(path, repo);
     if (!r) continue;
     if (since && r.date && r.date < since) continue;
-    if (onlyRun && !r.runId.includes(onlyRun)) continue;
-    runs.push(r);
+    allRuns.push(r);
   }
 }
-runs.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+allRuns.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+const runs = onlyRun ? allRuns.filter((r) => r.runId.includes(onlyRun)) : allRuns;
+
+// ---------------------------------------------------------------------------
+// Stops — what each needs-human exit left in git, and what changed after it
+// ---------------------------------------------------------------------------
+
+// A second source beside the journals. Every needs-human exit with a resolved
+// feature directory, off the base branch, commits `<featureDir>/HANDOFF.md` with
+// the subject below, rendering the return value's findings item by item. Its
+// content is the journal's `result.detail`, not more (checked 2026-09-24 on
+// wf_e5ab8e1a-c53: twelve items in both), but it is committed, so it survives a
+// cleared projects directory and is readable on any clone. The commits on the
+// branch between that commit and the next run's start are what somebody changed
+// before restarting — the one thing no journal records.
+//
+// Read-only by construction: every call is log, show, cat-file, rev-parse,
+// for-each-ref, merge-base --is-ancestor or symbolic-ref. Nothing fetches, checks
+// out or writes, so the report reads a service repo without touching its state.
+// A missing repo or a failing git call is reported on the stop it belongs to and
+// never ends the report.
+const HANDOFF_SUBJECT = /^handoff: the \S+ stage stopped and needs a person/;
+const CONSTITUTION = ".specify/memory/constitution.md";
+// The handoff commit is made inside the run, before it returns, so it falls
+// between the run's start and its end; the slack covers clock skew between the
+// journal's clock and the committer's.
+const MATCH_SLACK_MS = 10 * 60 * 1000;
+const MAX_LISTED_COMMITS = 15;
+
+function git(repo, args) {
+  try {
+    return { ok: true, out: execFileSync("git", ["-C", repo, ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], maxBuffer: 64 * 1024 * 1024 }) };
+  } catch (e) {
+    return { ok: false, out: "", err: String(e.stderr || e.message).trim().split("\n")[0].slice(0, 160) };
+  }
+}
+
+const repoState = new Map();
+function repoCheck(repo) {
+  if (repoState.has(repo)) return repoState.get(repo);
+  let s;
+  if (!existsSync(repo)) s = { ok: false, why: `repo path ${repo} does not exist on this machine` };
+  else {
+    const g = git(repo, ["rev-parse", "--git-dir"]);
+    if (!g.ok) s = { ok: false, why: `${repo} is not a git repository (${g.err})` };
+    else {
+      const head = git(repo, ["symbolic-ref", "--short", "refs/remotes/origin/HEAD"]);
+      s = { ok: true, originHead: head.ok ? head.out.trim().replace(/^origin\//, "") : null };
+    }
+  }
+  repoState.set(repo, s);
+  return s;
+}
+
+/** One commit: sha, commit time, subject, and the paths it touched. */
+function commitInfo(repo, sha) {
+  const g = git(repo, ["show", "--no-renames", "--name-only", "--format=%H%x09%ct%x09%s", sha]);
+  if (!g.ok) return null;
+  const [head, ...files] = g.out.split("\n").filter((l) => l !== "");
+  const [full, ct, ...subj] = head.split("\t");
+  return { sha: full, timeMs: Number(ct) * 1000, subject: subj.join("\t"), files };
+}
+
+/** Numbered items under `## What the stage reported`, and the document's size. */
+function handoffShape(repo, sha, path) {
+  const g = git(repo, ["show", `${sha}:${path}`]);
+  if (!g.ok) return { items: null, bytes: null };
+  const lines = g.out.split("\n");
+  const at = lines.findIndex((l) => /^## What the stage reported/.test(l));
+  let items = null;
+  if (at >= 0) {
+    const end = lines.findIndex((l, i) => i > at && /^## /.test(l));
+    items = lines.slice(at + 1, end < 0 ? undefined : end).filter((l) => /^\d+\.\s/.test(l)).length;
+  }
+  return { items, bytes: Buffer.byteLength(g.out, "utf8") };
+}
+
+function findHandoff(r, path) {
+  const rec = r.handoffRecord;
+  // The journal names the sha when its handoff agent reported one; verify it
+  // against git rather than trust it.
+  if (rec?.written && rec.commit) {
+    const c = commitInfo(r.repoPath, rec.commit);
+    if (c && HANDOFF_SUBJECT.test(c.subject) && c.files.includes(path)) return { commit: c, via: "journal sha, verified in git" };
+    if (!c) return { none: `the journal names commit ${rec.commit}, which this clone does not hold` };
+  }
+  // Otherwise search: a handoff-subject commit touching the file inside the
+  // run's window. --full-history, because default history simplification drops
+  // side-branch commits behind a merge, which hid every handoff of a merged
+  // feature on the first try. A commit touching HANDOFF.md under any other
+  // subject is a resolution rewrite or a sweep, never the handoff.
+  const g = git(r.repoPath, ["log", "--all", "--full-history", "--no-merges", "--format=%H%x09%ct%x09%s", "--", path]);
+  const inside = (c) => c.timeMs >= r.startMs && c.timeMs <= r.endMs;
+  if (!g.ok) return { none: `git log failed: ${g.err}` };
+  const hits = g.out
+    .split("\n")
+    .filter(Boolean)
+    .map((l) => {
+      const [sha, ct, ...s] = l.split("\t");
+      return { sha, timeMs: Number(ct) * 1000, subject: s.join("\t") };
+    })
+    .filter((c) => HANDOFF_SUBJECT.test(c.subject) && c.timeMs >= r.startMs - MATCH_SLACK_MS && c.timeMs <= r.endMs + MATCH_SLACK_MS)
+    // Inside the run's own window first, then the latest: the slack can reach a
+    // neighbouring run's handoff on the same feature.
+    .sort((a, b) => Number(inside(b)) - Number(inside(a)) || b.timeMs - a.timeMs);
+  if (hits.length) return { commit: commitInfo(r.repoPath, hits[0].sha), via: `git search by path, subject and run window${hits.length > 1 ? ` (${hits.length} candidates; the one inside the run's window, else the latest)` : ""}` };
+  if (rec && rec.written === false) return { none: `handoff not written: ${String(rec.note || "no reason given").slice(0, 160)}` };
+  const base = r.baseBranch || repoCheck(r.repoPath).originHead;
+  if (base && r.branch === base) return { none: `on base branch \`${base}\`; no handoff commit found` };
+  return { none: rec ? "the journal records a handoff with no sha and git holds no matching commit" : "the journal holds no handoff record (none was written before 2026-09-18) and git holds no matching commit" };
+}
+
+/** The ref the resolution window is read on: the feature branch if it holds the handoff, else any ref that does. */
+function resolutionRef(repo, branch, sha) {
+  const tries = branch ? [`refs/heads/${branch}`, `refs/remotes/origin/${branch}`] : [];
+  for (const ref of tries) {
+    if (git(repo, ["rev-parse", "--verify", "--quiet", ref]).ok && git(repo, ["merge-base", "--is-ancestor", sha, ref]).ok) return { ref, fallback: false };
+  }
+  const g = git(repo, ["for-each-ref", "--contains", sha, "--format=%(refname)", "refs/heads", "refs/remotes"]);
+  const refs = g.ok ? g.out.split("\n").filter((x) => x && !x.endsWith("/HEAD")) : [];
+  const pick = refs.find((x) => x.startsWith("refs/heads/")) ?? refs[0];
+  return pick ? { ref: pick, fallback: true } : null;
+}
+
+function commitFlags(repo, c, feature) {
+  const flags = [];
+  const f = new Set(c.files);
+  if (f.has(`${feature}/spec.md`)) flags.push("SPEC");
+  if (f.has(CONSTITUTION)) flags.push("CONSTITUTION");
+  if (c.files.some((p) => p === "CLAUDE.md" || p.endsWith("/CLAUDE.md"))) flags.push("CLAUDE.md");
+  if (f.has(`${feature}/RESOLUTIONS.md`)) flags.push("RESOLUTIONS");
+  if (f.has(`${feature}/HANDOFF.md`)) {
+    if (HANDOFF_SUBJECT.test(c.subject)) flags.push("HANDOFF-COMMIT");
+    else {
+      const g = git(repo, ["show", `${c.sha}:${feature}/HANDOFF.md`]);
+      flags.push(!g.ok ? "HANDOFF-DELETED" : /^#\s*Resolved\b/.test(g.out) ? "HANDOFF-RESOLVED-REWRITE" : "HANDOFF-TOUCHED");
+    }
+  }
+  return flags;
+}
+
+function readStop(r) {
+  const next = allRuns
+    .filter((n) => n.repoPath === r.repoPath && n.feature === r.feature && n.runId !== r.runId && n.startMs >= r.endMs)
+    .sort((a, b) => a.startMs - b.startMs)[0];
+  const stop = {
+    runId: r.runId,
+    date: r.date,
+    repo: r.repo,
+    repoPath: r.repoPath,
+    featureDir: r.feature,
+    stage: r.stage,
+    why: r.why,
+    handoff: null,
+    resolution: null,
+    next: next
+      ? {
+          runId: next.runId,
+          status: next.exit === "needs-human" ? `needs-human@${next.stage}` : next.exit === "done" ? `done (${next.convergeEnded})` : `harness:${next.harnessStatus}`,
+          stage: next.exit === "needs-human" ? next.stage : null,
+          repeatStage: next.exit === "needs-human" && next.stage === r.stage,
+        }
+      : null,
+  };
+  if (r.feature === "(unresolved)") {
+    stop.handoff = { none: "no feature directory resolved; the return value is the whole report" };
+    return stop;
+  }
+  const rc = repoCheck(r.repoPath);
+  if (!rc.ok) {
+    stop.handoff = { none: rc.why };
+    return stop;
+  }
+  const path = `${r.feature}/HANDOFF.md`;
+  const h = findHandoff(r, path);
+  if (!h.commit) {
+    stop.handoff = { none: h.none };
+    return stop;
+  }
+  const shape = handoffShape(r.repoPath, h.commit.sha, path);
+  stop.handoff = {
+    sha: h.commit.sha,
+    short: h.commit.sha.slice(0, 7),
+    subject: h.commit.subject,
+    via: h.via,
+    items: shape.items,
+    bytes: shape.bytes,
+    read: `git -C ${r.repoPath} show ${h.commit.sha.slice(0, 7)}:${path}`,
+  };
+
+  const ref = resolutionRef(r.repoPath, r.branch, h.commit.sha);
+  if (!ref) {
+    stop.resolution = { none: "no branch or remote ref in this clone contains the handoff commit" };
+    return stop;
+  }
+  const g = git(r.repoPath, ["log", "--ancestry-path", "--no-merges", "--reverse", "--no-renames", "--format=%x1e%H%x09%ct%x09%s", "--name-only", `${h.commit.sha}..${ref.ref}`]);
+  if (!g.ok) {
+    stop.resolution = { none: `git log failed: ${g.err}` };
+    return stop;
+  }
+  const until = next ? next.startMs : null;
+  const commits = g.out
+    .split("\x1e")
+    .filter((b) => b.trim())
+    .map((b) => {
+      const [head, ...files] = b.split("\n").filter((l) => l !== "");
+      const [sha, ct, ...s] = head.split("\t");
+      return { sha, timeMs: Number(ct) * 1000, subject: s.join("\t"), files };
+    })
+    .filter((c) => until === null || c.timeMs < until)
+    .map((c) => ({ ...c, flags: commitFlags(r.repoPath, c, r.feature) }));
+  const endSha = commits.at(-1)?.sha ?? h.commit.sha;
+  stop.resolution = {
+    ref: ref.ref,
+    refIsFallback: ref.fallback,
+    until: until ? `start of ${next.runId}` : `${ref.ref} tip (no later run on this feature)`,
+    commits: commits.map(({ sha, subject, files, flags, timeMs }) => ({ sha: sha.slice(0, 7), date: `${new Date(timeMs).toISOString().slice(0, 16)}Z`, subject, files, flags })),
+    resolutionsFile: git(r.repoPath, ["cat-file", "-e", `${endSha}:${r.feature}/RESOLUTIONS.md`]).ok,
+  };
+  return stop;
+}
+
+const stops = runs.filter((r) => r.exit === "needs-human").map(readStop);
 
 // ---------------------------------------------------------------------------
 // Output
@@ -266,7 +509,7 @@ const coverage = (tok, a, b) => `>=${tok.toLocaleString("en-US")} over ${a}/${b}
 if (asJson) {
   console.log(
     JSON.stringify(
-      { generated: new Date().toISOString(), repos, since: since ?? null, runs: runs.map(({ agents, ...r }) => ({ ...r, agents: agents.map((p) => ({ stage: p.normalStage, model: p.model, effort: p.effort, retry: p.retry, tokens: p.agent.tokens ?? null, durationMs: p.agent.durationMs ?? null })) })) },
+      { generated: new Date().toISOString(), repos, since: since ?? null, stops, runs: runs.map(({ agents, ...r }) => ({ ...r, agents: agents.map((p) => ({ stage: p.normalStage, model: p.model, effort: p.effort, retry: p.retry, tokens: p.agent.tokens ?? null, durationMs: p.agent.durationMs ?? null })) })) },
       null,
       2,
     ),
@@ -463,6 +706,48 @@ show(
   group(findingItems, (i) => (i.loc ? normalise(i.loc) : null), (i) => `[${i.sev}] ${i.loc}`),
 );
 
+// --- Block 4: every stop ---------------------------------------------------
+console.log(`\n=== Per-stop record — every needs-human exit, its handoff and what changed after it ===\n`);
+console.log(
+  `Read from each service repo's git history, read-only, beside the journal. Flags on a\n` +
+    `resolution commit: SPEC, CONSTITUTION, CLAUDE.md, RESOLUTIONS; HANDOFF-RESOLVED-REWRITE\n` +
+    `(HANDOFF.md overwritten with a "# Resolved" document), HANDOFF-TOUCHED or -DELETED\n` +
+    `(the file changed under a non-handoff subject), HANDOFF-COMMIT (another stop's handoff\n` +
+    `inside the window). REPEAT-STAGE: the next run on the feature stopped at the same stage.\n`,
+);
+for (const s of stops) {
+  console.log(`${s.date} ${s.runId.padEnd(17)} ${s.repo.padEnd(16)} ${s.featureDir.replace(/^specs\//, "").padEnd(22)} needs-human@${s.stage}`);
+  if (s.why) console.log(`    why: ${s.why.slice(0, 150)}${s.why.length > 150 ? "..." : ""}`);
+  const h = s.handoff;
+  if (h.none) console.log(`    handoff: none — ${h.none}`);
+  else {
+    console.log(`    handoff: ${h.short} (${h.via}) items=${h.items ?? "?"} bytes=${h.bytes ?? "?"}`);
+    console.log(`      read: ${h.read}`);
+  }
+  const rs = s.resolution;
+  if (rs?.none) console.log(`    resolution: unreadable — ${rs.none}`);
+  else if (rs) {
+    console.log(
+      `    resolution: ${rs.commits.length} commit(s) on ${rs.ref}${rs.refIsFallback ? " (feature branch not in this clone; a ref holding the handoff)" : ""}, up to ${rs.until}; ` +
+        `RESOLUTIONS.md ${rs.resolutionsFile ? "present" : "absent"} at the window's end`,
+    );
+    for (const c of rs.commits.slice(0, MAX_LISTED_COMMITS)) {
+      console.log(`      ${c.sha} ${c.date} ${c.subject.slice(0, 90)}${c.flags.length ? `  [${c.flags.join(" ")}]` : ""}`);
+      console.log(`        ${c.files.slice(0, 6).join(", ")}${c.files.length > 6 ? `, +${c.files.length - 6} more` : ""}`);
+    }
+    if (rs.commits.length > MAX_LISTED_COMMITS) console.log(`      ... ${rs.commits.length - MAX_LISTED_COMMITS} more; --json lists them all`);
+  }
+  const n = s.next;
+  console.log(`    next: ${n ? `${n.runId} ${n.status}${n.repeatStage ? "  REPEAT-STAGE" : ""}` : "none in the window"}`);
+  console.log();
+}
+if (!stops.length) console.log(`   none\n`);
+const withHandoff = stops.filter((s) => s.handoff.sha).length;
+console.log(
+  `Stops: ${stops.length}; with a handoff commit in git: ${withHandoff}; none found, so journal-only here: ${stops.length - withHandoff}; ` +
+    `next run stopped at the same stage: ${stops.filter((s) => s.next?.repeatStage).length}.\n`,
+);
+
 // --- What could not be read ------------------------------------------------
 if (unreadable.length) {
   console.log(`Journals that could not be parsed — every table above is short by these:`);
@@ -501,11 +786,23 @@ console.log(`What this report does not decide:
   - wall attempts inside an implement agent, or a second implement pass over
     unchecked ids. Neither has a label or a log line; only the phase-level wall
     outcome is recorded
-  - anything a finding did not survive into. Agent prompt and result previews are
-    capped at 401 characters, so a finding a round graded and the script did not
-    lift into result.detail or result.converge.forced is unrecoverable
-  - whether an operator intervened between two runs by hand. Nothing in a
-    journal records that, and two of these features were resolved by hand
+  - anything a finding did not survive into. Agent previews are capped at 401
+    characters, so a finding a round graded and the script did not lift into
+    result.detail or result.converge.forced is unrecoverable. A handoff renders
+    result.detail and nothing more: it makes a stop's reported findings durable
+    in git (the per-stop "read:" command), it does not recover a lost one
+  - why a resolution was chosen. The per-stop window shows what changed between
+    a stop and the next run, not what the confidence rested on; only a
+    RESOLUTIONS.md, where one was written, says that
+  - whether a commit in a resolution window is resolution work. The window is
+    every non-merge commit on the ref between the handoff and the next run's
+    start, by time; on a fallback ref, or with no later run, it can hold
+    unrelated work
+  - a decision made in conversation and never committed. Git holds only what
+    was committed; the journal holds only what the run returned
+  - the prevention target of a stop. The per-stop record is the input to harvest
+    step d in docs/history/runs.md; which earlier stage should have caught the
+    stop is that step's judgment
   - whether any of this generalises. One machine, one operator, no control arm;
     a number here is comparable only to another taken the same way
 `);
