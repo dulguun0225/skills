@@ -109,13 +109,11 @@ what it could. These two it could not.
 
 Sweep 2 of [docs/history/runs.md](docs/history/runs.md) decided, for every
 `needs-human` stop on record, the earliest stage that could have prevented it. It
-applied what was small and certain; these it could not, and each names its stops.
+applied what was small and certain; these it could not, and each names its stops. Two rows closed 2026-09-25 by the owner's decisions — a blocking finding at the plan review's final round keeps the hand-over to analysis, and a restart over an implemented feature updates `tasks.md` in place — recorded in `skills/build-feature/evidence.md` under that date.
 
 | Owed | Why it is owed | Watch |
 | ---- | -------------- | ----- |
 | **LOW spec findings in the build** | Whether `build-feature` should keep stopping on a spec-only finding of any severity (`specChangesOf` filters none; LOW items rode in four of the eight spec stops of Sweep 2) or carry MEDIUM and LOW ones to the author on a `done` return. `spec-readiness` (2026-09-24) lists every question and stops nothing, so it does not decide this | The owner's floor question, in the build |
-| **A restart at `review-plan` over an implemented feature** | Every spec-edit exit restarts at `review-plan` (owner's decision, 2026-09-24), and from converge — the stage `converge-feature` runs — that start regenerates `tasks.md` at the tasks stage with every task unchecked, so implement runs every phase again over code that exists and the forced convergence phases leave the file. Confirmed on the stub 2026-09-24. The guard is a choice: the tasks stage updating a ticked `tasks.md` in place, or refusing to regenerate over one and leaving the delta to analyze and converge | The first converge-stage `specChanges` stop that is restarted |
-| **A blocking finding at the plan review's final round** | Since 2026-09-24 the final review stops only on a survivor, and its open blocking and major findings are handed to the first analysis rather than stopping the run. Whether a blocking one should stop outright is the owner's: it is the one place a finding the reviewer did not label a repeat reaches implement if analyze grades it below `HIGH` — a blocking one is floored at `HIGH` by prompt, not by script | How often a real reviewer labels a repeat — `npm run runs`, the survivor and `round-cap` exits |
 
 ## Shelved
 

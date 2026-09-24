@@ -32,7 +32,10 @@
 // Preflight also puts the repository where the build belongs. The feature's author works
 // on the base branch, so a full preflight started there checks out the feature branch —
 // making it when it does not exist — and then merges the base into it; so does every
-// later entry that finds itself on a feature branch. Without that merge the run plans
+// later entry that finds itself on a feature branch. A later entry started ON the base
+// branch — converge-feature closing out a feature implemented on the trunk — makes the
+// feature branch at the base branch's HEAD and moves onto it (2026-09-25), so no stage of
+// any run commits on the base branch. Without that merge the run plans
 // against a spec the author has since moved and fails its final `merge --ff-only` after
 // the whole run is paid for. It writes .specify/feature.json to match, because spec-kit's
 // own scripts resolve the feature from that file (or SPECIFY_FEATURE_DIRECTORY) and
@@ -86,7 +89,8 @@
 // resolved a feature directory, or one taken on the base branch, writes nothing and
 // says so there instead: there is no feature branch to carry the file, and a dirty
 // tree is one of the states preflight refuses on, so a commit at the repo root — or
-// on the base branch — would sweep it up.
+// on the base branch — would sweep it up. Since 2026-09-25 the only exits taken on the
+// base branch are preflight's own, before it has moved the run onto the feature branch.
 
 export const meta = {
   name: 'build-feature',
@@ -285,7 +289,7 @@ const REPEAT_OF_FIELD = {
 const S = {
   preflight: {
     type: 'object',
-    required: ['ok', 'branch', 'baseBranch', 'featureDir', 'wall', 'onBaseBranch', 'synced', 'clarifications', 'missingInputs', 'problems'],
+    required: ['ok', 'branch', 'baseBranch', 'featureDir', 'wall', 'onBaseBranch', 'synced', 'clarifications', 'missingInputs', 'checkedTasks', 'problems'],
     properties: {
       ok: { type: 'boolean' },
       branch: { type: 'string', description: 'the branch checked out when you finish, which is the feature branch whenever you checked one out or made one' },
@@ -325,6 +329,11 @@ const S = {
         items: { type: 'string' },
         description: 'the repo-relative path of every input artifact the prompt told you to check that is missing or empty; empty when all are present, or when the prompt names none to check',
       },
+      checkedTasks: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'the id (e.g. T012) of every task the feature\'s tasks.md holds ticked, "- [x]" or "- [X]", in file order; empty when the file does not exist, ticks nothing, or the prompt says to return it empty',
+      },
       problems: { type: 'array', items: { type: 'string' } },
     },
   },
@@ -359,6 +368,51 @@ const S = {
       commit: { type: 'string', description: 'short sha of the commit that holds the work, empty if nothing was committed' },
       skipped: { type: 'array', items: { type: 'string' }, description: 'findings not applied, each with the reason' },
       specChanges: SPEC_CHANGES_FIELD,
+    },
+  },
+  // The tasks stage in update mode (2026-09-25): what it changed, task by task, so the
+  // return value carries the delta and the certification below has something to hold
+  // the file against.
+  tasksUpdated: {
+    type: 'object',
+    required: ['done', 'summary', 'reopened', 'removed', 'added'],
+    properties: {
+      done: { type: 'boolean' },
+      summary: { type: 'string' },
+      commit: { type: 'string', description: 'short sha of the commit that holds the update, empty if nothing was committed' },
+      reopened: {
+        type: 'array',
+        description: 'every ticked task you unticked, with the reason written in its line',
+        items: { type: 'object', required: ['taskId', 'reason'], properties: { taskId: { type: 'string' }, reason: { type: 'string' } } },
+      },
+      removed: {
+        type: 'array',
+        description: 'every task you marked removed, ticked or not, with the reason written in its line',
+        items: { type: 'object', required: ['taskId', 'reason'], properties: { taskId: { type: 'string' }, reason: { type: 'string' } } },
+      },
+      added: { type: 'array', items: { type: 'string' }, description: 'the id of every task you added' },
+      specChanges: SPEC_CHANGES_FIELD,
+    },
+  },
+  // The parse-only certification of an update: the state of every task that was ticked
+  // before it. The agent that edited the file is not the one that certifies it.
+  tasksCertified: {
+    type: 'object',
+    required: ['tasks'],
+    properties: {
+      tasks: {
+        type: 'array',
+        description: 'one entry per task id the prompt listed, in its order',
+        items: {
+          type: 'object',
+          required: ['taskId', 'state'],
+          properties: {
+            taskId: { type: 'string' },
+            state: { type: 'string', enum: ['checked', 'reopened', 'removed', 'unchecked', 'missing'] },
+            reason: { type: 'string', description: 'for reopened and removed: the reason the line carries, quoted; empty otherwise' },
+          },
+        },
+      },
     },
   },
   analysis: {
@@ -581,6 +635,17 @@ const SPEC_IS_NOT_OURS = spec =>
 const NO_TASK_WAITS_ON_A_PERSON =
   'No task may wait on a person: never write a task whose completion needs an owner\'s answer, a /speckit-clarify session, a sign-off or a review by anyone outside this run, and never make another task depend on one. A reading of the spec that the plan has already decided and recorded stands as the plan wrote it; a question only the spec\'s author can answer is not a task — it goes in `specChanges`, which stops the run and takes it to that author.'
 
+// A task the tasks stage's update mode (2026-09-25) found no longer needed. Spec-kit's
+// checklist format has no such state — a task is "- [ ]" or "- [x]" — and both are wrong
+// for it: an open box is work implement would run and the traceability gate counts as in
+// flight, a ticked one claims work that was not done. So the box goes and the line stays,
+// struck through with its reason. The id stays in the file, so /speckit-converge's append
+// contract ("scan all existing task IDs; let M be the maximum") never reuses it, and no
+// checkbox pattern — speckit-implement's, the service repos' OPEN_TASK — matches the line.
+// Every stage that counts or runs tasks is told the same, in these words.
+const REMOVED_TASK = 'A line of tasks.md whose checkbox is replaced by struck-through text and which carries "(removed: <reason>)" — `- ~~T015 …~~ (removed: …)` — is a removed task: it is not a task, it is neither open nor done, it covers no requirement, and its id is never reused.'
+const REMOVED_LINE = '`- ~~T015 <the task text as it stood>~~ (removed: <what in the spec or plan makes it unneeded>)`'
+
 // Stock spec-kit resolves the feature from SPECIFY_FEATURE_DIRECTORY, then from
 // .specify/feature.json, and never from the branch name (its own common.sh:
 // get_current_branch() returns $SPECIFY_FEATURE or nothing and reads no git). Preflight
@@ -626,6 +691,9 @@ const state = {
   branch: cfg.branch,
   baseBranch: cfg.baseBranch,
   onBaseBranch: false, // set by preflight; no handoff is committed while it is true
+  createdBranch: false, // set by preflight; true when this run made the feature branch
+  checkedTasks: [], // set by preflight when the tasks stage runs: ids ticked in tasks.md before it
+  tasksUpdate: null, // { checkedBefore, kept, reopened, removed, added, commit } once an update ran
   featureJsonTracked: false, // set by preflight; true means the stages carry the env var instead
   wall: cfg.wall,
   rounds: { reviewPlan: 0, analyze: 0, converge: 0 },
@@ -730,7 +798,7 @@ const handoffDoc = (stage, why, detail, restartFrom) => [
   `| Stopped at stage | \`${stage}\` |`,
   `| Reason | ${why} |`,
   `| Feature directory | \`${state.featureDir}\` |`,
-  `| Branch | \`${state.branch || '(unknown)'}\` |`,
+  `| Branch | \`${state.branch || '(unknown)'}\`${state.createdBranch ? ` — made by this run from \`${state.baseBranch || 'the base branch'}\`` : ''} |`,
   `| Base branch | \`${state.baseBranch || '(unknown)'}\` |`,
   `| Stages run | ${state.stagesRun.length ? state.stagesRun.join(' → ') : '(none)'} |`,
   `| Rounds | ${Object.keys(state.rounds).map(k => `${k} ${state.rounds[k]}`).join(', ')} |`,
@@ -772,10 +840,12 @@ const writeHandoff = async (stage, why, detail, restartFrom) => {
     return { written: false, path: null, note: 'no feature directory — the run stopped before discovery resolved one, so there is nowhere in the repo the file belongs. The detail on this return value is the whole report.' }
   }
   // The file is committed on whatever branch the run is standing on, so a run that
-  // never left the base branch — a later-stage start on a feature implemented on the
-  // trunk, and every failure before preflight checked a feature branch out — gets no
-  // handoff. A commit on the trunk is not this script's to make, and a dirty tree is
-  // one of the states preflight refuses on.
+  // never left the base branch gets no handoff. Since 2026-09-25 that is only a preflight
+  // exit taken before preflight moved the run onto the feature branch — a dirty tree, a
+  // feature that cannot be resolved, a feature branch that already holds work the base
+  // branch lacks — because every other run is on the feature branch by then, a later-stage
+  // start on the trunk included. A commit on the trunk is not this script's to make, and a
+  // dirty tree is one of the states preflight refuses on.
   if (state.onBaseBranch) {
     log(`no handoff file: the run is standing on the base branch (${state.baseBranch || 'unknown'}), where this script commits nothing; the detail on the return value is the whole report`)
     return { written: false, path: null, note: `the run is on the base branch (${state.baseBranch || 'unknown'}), and a handoff is committed on the branch the run is on — this script does not commit to the trunk. The detail on this return value is the whole report.` }
@@ -827,6 +897,7 @@ const needsHuman = async (stage, why, detail, restartFrom) => {
     detail: detail === undefined ? null : detail,
     featureDir: state.featureDir,
     branch: state.branch,
+    createdBranch: state.createdBranch,
     rounds: state.rounds,
     stagesRun: state.stagesRun,
     handoff,
@@ -1024,9 +1095,18 @@ async function reviewLoop({ kind, group, reviewer, fixer, reviewPrompt, fixPromp
 // `from: "plan"` restart left state.branch null, the handoff table said "(unknown)" and
 // finish merged from HEAD@{1}. A later-stage run standing on the base branch — which is
 // converge-feature closing out a feature implemented on the trunk, as 001 was — is
-// reported and not refused, and gets no branch creation and no sync: it is resuming work
-// that already lives there. args.wall is still required on a start after preflight,
-// because only the full check reads CLAUDE.md for it.
+// resuming work that already lives there, and until 2026-09-25 it ran there: no branch,
+// no sync, and every converge, implement and fix agent committing on the trunk, while
+// SKILL.md said the run never does. Since then preflight makes the feature branch at the
+// base branch's HEAD and checks it out first (owner's decision, 2026-09-25), under the
+// name a full preflight would make, and only after the same clean-tree check a full
+// preflight makes — `git checkout -b` carries uncommitted changes onto the new branch,
+// where the run would commit them. A feature branch of that name that already exists is
+// reused only when it is an ancestor of the base HEAD, so moving it forward loses nothing;
+// one holding work the base lacks is a problem, because which of the two places holds the
+// feature is not the run's to choose. The rejected default was to stop and ask: a person
+// step for a mechanical act a full run already performs. args.wall is still required on
+// a start after preflight, because only the full check reads CLAUDE.md for it.
 //
 // A later-stage start also checks that the feature artifacts its stages read exist
 // (2026-09-24). Until then `from: "review-plan"` with no plan.md, or `from: "implement"`
@@ -1067,10 +1147,12 @@ const inputsToCheck = (() => {
     UNATTENDED,
     full
       ? 'Establish which spec-kit feature this unattended build is for, put the repository on that feature\'s branch, bring the branch in step with the base, and check that the repository is ready to build. Everything you may write is named in the steps below — one branch checkout, one merge, one machine-local state file — and nothing else. Never write to spec.md or to anything else in the feature directory: the spec is its author\'s.'
-      : 'Establish which spec-kit feature this unattended build is for and bring its branch in step with the base. This run starts at a later stage, so the readiness checks belong to the start it is resuming, and you create no branch and check nothing out. Everything you may write is named in the steps below — one merge and one machine-local state file — and nothing else. Never write to spec.md or to anything else in the feature directory: the spec is its author\'s.',
+      : 'Establish which spec-kit feature this unattended build is for and bring its branch in step with the base. This run starts at a later stage, so the readiness checks belong to the start it is resuming; you create or check out a branch only when you start on the base branch (step 5). Everything you may write is named in the steps below — at most one branch made or checked out, one merge and one machine-local state file — and nothing else. Never write to spec.md or to anything else in the feature directory: the spec is its author\'s.',
     `1. \`git rev-parse --abbrev-ref HEAD\` is the branch you start on${cfg.branch ? `. This run names \`${cfg.branch}\` as the feature branch, so that is where you must end up` : ''}.`,
     `2. The base branch — the trunk a feature merges into, and the branch the feature's author works on. ${cfg.baseBranch ? `This run names it: \`${cfg.baseBranch}\`.` : 'This run names none, so take it from `git symbolic-ref --short refs/remotes/origin/HEAD` with the remote prefix stripped, falling back to whichever of `main` or `master` the repository has. If none of those resolves, return `baseBranch` empty and carry on: steps 5 and 6 then do nothing.'} Return it as \`baseBranch\`.`,
-    full ? '3. `git status --porcelain` must be empty (untracked files under .specify/workflows/runs/ and .claude/worktrees/ do not count). A dirty tree is a problem and you stop there: check nothing out, merge nothing, write nothing, and return what you have. Every step after this one moves the tree, and somebody\'s uncommitted work is not this run\'s to carry onto another branch.' : '',
+    full
+      ? '3. `git status --porcelain` must be empty (untracked files under .specify/workflows/runs/ and .claude/worktrees/ do not count). A dirty tree is a problem and you stop there: check nothing out, merge nothing, write nothing, and return what you have. Every step after this one moves the tree, and somebody\'s uncommitted work is not this run\'s to carry onto another branch.'
+      : '3. Only when the branch you started on is the base branch: `git status --porcelain` must be empty (untracked files under .specify/workflows/runs/ and .claude/worktrees/ do not count). A dirty tree there is a problem and you stop: check nothing out, merge nothing, write nothing, and return what you have. Step 5 moves this run off the base branch, and somebody\'s uncommitted work is not this run\'s to carry onto another branch.',
     '4. Resolve the feature directory and return it as `featureDir`, in this order, taking the first that answers:',
     cfg.featureDir
       ? `   (a) this run names it: \`${cfg.featureDir}\`. If the branch you started on names a different feature by the rule in (b), that disagreement is a problem — say which two — and you stop rather than choose.`
@@ -1084,12 +1166,15 @@ const inputsToCheck = (() => {
       : '',
     full
       ? `5. When the branch you started on IS the base branch, put the repository on the feature branch. Let DIR be the last path segment of the feature directory (${dirName}). The target branch is${cfg.branch ? ` \`${cfg.branch}\`, which this run names` : ': an existing branch named `feature/DIR` or `DIR` — look for both locally (`git branch --list`) and on the remote (`git branch -r --list \'origin/*\'`) — and otherwise a new `feature/DIR`'}. Then: a branch that exists locally, \`git checkout <target>\`; one that exists only on the remote, \`git checkout --track origin/<target>\`; one that does not exist, \`git checkout -b <target>\` from where you are standing, and return \`createdBranch\` true. Return the branch you end on as \`branch\` and the one you checked out as \`checkedOut\`. When you did not start on the base branch, check nothing out: you are already on the feature branch.`
-      : '5. Check nothing out and create nothing: this run starts at a later stage, on the branch it was given. Return `branch` as the branch you are on, `createdBranch` false and `checkedOut` empty.',
+      : `5. When the branch you started on IS the base branch, move the run off it: every stage after this one commits, and none of them commits on the base branch. The work this run resumes is on the base branch, so the feature branch starts at the base branch's HEAD. Let DIR be the last path segment of the feature directory (${dirName}). The target branch is${cfg.branch ? ` \`${cfg.branch}\`, which this run names` : ': an existing branch named `feature/DIR` or `DIR` — look for both locally (`git branch --list`) and on the remote (`git branch -r --list \'origin/*\'`) — and otherwise a new `feature/DIR`'}. A target that exists must hold nothing the base branch lacks: \`git merge-base --is-ancestor <target> HEAD\` for a local one and \`git merge-base --is-ancestor origin/<target> HEAD\` for a remote one must both succeed. If either fails, that is a problem — the feature's work is on the base branch and also on that branch, and which one to continue is not yours to choose — and you stop: check nothing out, merge nothing, write nothing. Otherwise \`git checkout -B <target>\`, which makes the branch at HEAD, or moves an existing one forward to HEAD and loses nothing because it was an ancestor. Return \`createdBranch\` true when no branch of that name existed locally or on the remote, the branch you end on as \`branch\`, and the one you checked out as \`checkedOut\`. When you did not start on the base branch, check nothing out and create nothing: return \`branch\` as the branch you are on, \`createdBranch\` false and \`checkedOut\` empty.`,
     '6. Sync with the base branch, whenever the branch you are now on is not the base branch and a base branch is known. Do not fetch; the local base branch is what this run merges. Note `git rev-parse HEAD` first, then:',
     '   - `git merge-base --is-ancestor <base> HEAD` succeeds — the base is already in this branch. Do nothing; `synced` is "none".',
     '   - otherwise `git merge-base --is-ancestor HEAD <base>` succeeds — this branch is strictly behind. `git merge --ff-only <base>`; `synced` is "fast-forward".',
     '   - otherwise the two have diverged. `git merge --no-edit <base>`; `synced` is "merge". If it conflicts, `git merge --abort` immediately, set `synced` to "conflict", return the conflicted paths in `conflicts` and add a problem. Never resolve a conflict yourself, and never rebase: this branch may already be pushed.',
     '   Then `git diff --name-only <the sha you noted> HEAD -- <featureDir>/spec.md`: a non-empty result means the sync brought a change to the spec, and `specChanged` is true. Where you finish on the base branch, or no base branch is known, `synced` is "not-applicable".',
+    runs('tasks')
+      ? '   Then, on the branch you are on now — after the checkout of step 5 and the sync of this step, so the file is the one the run will build from — when `<featureDir>/tasks.md` exists, list every task it holds ticked: `grep -oE \'^[[:space:]]*[-*] \\[[xX]\\] T[0-9]+\' <featureDir>/tasks.md`, and return each task id (e.g. `T012`) in `checkedTasks`, in file order. Return it empty when the file does not exist or ticks nothing. This is a fact about the file, not a problem.'
+      : '   Return `checkedTasks` empty: no stage of this run writes tasks.md.',
     '7. Make spec-kit agree with the feature you resolved. Its own scripts resolve the feature from the `SPECIFY_FEATURE_DIRECTORY` environment variable, then from `.specify/feature.json`, and from nothing else — never from the branch name — so a stale file sends every later stage into another feature\'s directory. Run `git check-ignore -q .specify/feature.json`. Exit 0 (the file is git-ignored, which is how spec-kit ships it): if its `feature_directory` is not the directory you resolved, write the file as exactly `{"feature_directory":"<the resolved directory>"}` and return `featureJson` "written"; if it already names it, write nothing and return "unchanged". A non-zero exit means the repository tracks the file: leave it untouched, return "tracked", and add no problem — the run carries the environment variable to its stages instead.',
     full ? '8. `grep -n "\\[NEEDS CLARIFICATION" <featureDir>/spec.md` — return every hit in `clarifications`, quoted with its line number. Those markers are the spec author\'s to resolve with `/speckit-clarify`, and this run never answers one.' : '',
     full ? '9. `.specify/` must exist with `.specify/memory/constitution.md`, and `.claude/skills/speckit-plan/SKILL.md`, `speckit-tasks`, `speckit-analyze`, `speckit-implement`, `speckit-converge` must all be installed. Any missing one is a problem.' : '',
@@ -1109,13 +1194,19 @@ const inputsToCheck = (() => {
   // args.wall, where given, wins: every argument overrides what preflight would find.
   state.wall = state.wall || p.wall || null
   state.baseBranch = p.baseBranch || cfg.baseBranch || null
-  // Where the run finishes preflight standing on the base branch — a later-stage start
-  // on a trunk-implemented feature — no handoff file is written, whatever else goes
-  // wrong afterwards: HANDOFF.md is committed on the branch the run is on, and a commit
-  // on the trunk is not this script's to make. The report then lives on the return value,
-  // which is what every preflight exit did before there was a feature directory to write
-  // into at all.
+  // Where preflight finishes still standing on the base branch, no handoff file is
+  // written: HANDOFF.md is committed on the branch the run is on, and a commit on the trunk
+  // is not this script's to make. The report then lives on the return value, which is what
+  // every preflight exit did before there was a feature directory to write into at all.
+  // Since 2026-09-25 that happens only on a preflight exit — preflight moves every other
+  // run onto the feature branch, and the guard below stops one it did not move.
   state.onBaseBranch = !!p.onBaseBranch
+  state.createdBranch = !!p.createdBranch
+  // Ticked tasks are only read where the tasks stage runs, since that stage alone would
+  // regenerate the file over them; an id the agent returns twice is counted once.
+  state.checkedTasks = runs('tasks') && Array.isArray(p.checkedTasks)
+    ? p.checkedTasks.map(id => String(id || '').trim()).filter((id, i, all) => /^T\d+$/.test(id) && all.indexOf(id) === i)
+    : []
   state.featureJsonTracked = p.featureJson === 'tracked'
   state.featureDir = p.featureDir || null
   if (!p.featureDir && Array.isArray(p.candidates) && p.candidates.length) {
@@ -1153,6 +1244,16 @@ const inputsToCheck = (() => {
       : `no feature directory could be resolved, so there is no spec to build: the branch \`${p.branch || '(none reported)'}\` does not name one, no single specified-but-unplanned directory under specs/ answered for it, and .specify/feature.json — machine-local state, and the last thing this run trusts — named nothing usable either. Pass args.featureDir, or check the feature branch out`,
       p.problems)
   }
+  // Every stage after preflight can commit — fix-plan, tasks, remediate, implement,
+  // converge, the forced append, finish's leftovers — so a run preflight did not move off
+  // the base branch is not started on it. This is the script's own check on the agent's
+  // report, not a question the agent was asked: an agent that reports ok while still on
+  // the trunk would otherwise hand every later agent the trunk to commit on.
+  if (state.onBaseBranch && STAGES.some(st => st !== 'preflight' && runs(st))) {
+    return await needsHuman('preflight',
+      `preflight finished on the base branch \`${state.baseBranch || '(unknown)'}\` and reported no problem, and every stage this run would start after it commits; no stage of this run commits on the base branch, so none was started. Preflight makes the feature branch at the base branch's HEAD when it starts there, and this time it did not: check the feature branch \`${cfg.branch || `feature/${(state.featureDir || '').split('/').pop()}`}\` out and restart`,
+      p.problems)
+  }
   if (!state.wall) return await needsHuman('preflight', 'no definition-of-done command: pass args.wall', p.problems)
   if (Array.isArray(p.clarifications) && p.clarifications.length) {
     return await needsHuman('preflight',
@@ -1170,7 +1271,7 @@ const inputsToCheck = (() => {
       { changed: [`${state.featureDir}/spec.md changed in the merge from ${state.baseBranch || 'the base branch'}`], from: cfg.from, restartFrom: SPEC_EDIT_RESTART },
       SPEC_EDIT_RESTART)
   }
-  log(`${full ? 'preflight ok' : 'discovery'}: feature ${state.featureDir} on ${state.branch}${p.createdBranch ? ' (branch created)' : p.checkedOut ? ' (checked out)' : ''}, base ${state.baseBranch || '(none)'}, sync ${p.synced}${p.specChanged ? ' and the spec changed' : ''}, feature.json ${p.featureJson || 'unknown'}, wall = ${state.wall}`)
+  log(`${full ? 'preflight ok' : 'discovery'}: feature ${state.featureDir} on ${state.branch}${p.createdBranch ? ' (branch created)' : p.checkedOut ? ' (checked out)' : ''}, base ${state.baseBranch || '(none)'}, sync ${p.synced}${p.specChanged ? ' and the spec changed' : ''}, feature.json ${p.featureJson || 'unknown'}, wall = ${state.wall}${state.checkedTasks.length ? `, ${state.checkedTasks.length} task(s) already ticked in tasks.md` : ''}`)
 }
 
 // ---------------------------------------------------------------------------
@@ -1262,21 +1363,63 @@ if (runs('plan') || runs('review-plan')) {
 // ---------------------------------------------------------------------------
 // Stage: tasks → analyze ⇄ remediate
 // ---------------------------------------------------------------------------
+// The rules every task this stage writes follows, in generate and update mode alike.
+const TASK_RULES = P => `Rules: every task names the file it touches; every phase ends with a task that runs the definition of done, \`${state.wall}\`, and fixes until it is green; the phases follow the template ("## Phase N: ..."). Every FR and SC of ${P.spec} is named by at least one task in this file — the gate refuses an id no task names — in qualified form \`${featureNum(state.featureDir)}/FR-nnn\` or \`${featureNum(state.featureDir)}/SC-nnn\`, and that task writes a test citing it — or, it is named by a task that adds its row to specs/trace-waivers.tsv (\`${featureNum(state.featureDir)}/ID<TAB>kind<TAB>reason\`, rows sorted), where kind is exactly \`external\` (the criterion cannot be witnessed from inside this repository at all — a production latency figure, an operator procedure) or \`deferred\` (specified but deliberately not built in this feature; the reason names where that deferral is recorded — a plan.md scope boundary, a GATES.md named-gap row, the owning capability). A requirement that is merely untested is neither: it gets a test, not a waiver row. This tasks stage is the only place a waiver task may originate: no later stage adds one. A task that dictates Javadoc or comment wording also uses the qualified form, never the bare id. Run the before_tasks and after_tasks hooks.`
+
+// The tasks stage has two modes, and preflight decides which (2026-09-25). On a first run
+// tasks.md does not exist, or ticks nothing, and the stage generates it with
+// /speckit-tasks exactly as before. Where preflight found ticked tasks in it — a restart at
+// review-plan after a spec edit on a feature already implemented or converged, the restart
+// converge-feature's spec exits name — the stage updates the file in place instead (owner's
+// decision, 2026-09-25): ticked tasks stay ticked, forced convergence phases included; a
+// ticked task whose requirement the change altered is unticked with the reason in its line;
+// a task the revised spec and plan no longer need is marked removed (REMOVED_TASK), never
+// deleted; new work gets new tasks with ids after the maximum. Implement then runs only
+// what is open, as it always did. The rejected default is the regeneration this stage did
+// until that day: /speckit-tasks writes tasks.md whole, every task unticked, so implement
+// ran every phase again over code that exists and the forced convergence phases left the
+// file.
+//
+// The update is certified by a parse-only reader, on the `phases` row's precedent: the
+// agent that edited the file is not the one that says what it holds. Every task preflight
+// saw ticked must come back ticked, reopened with a reason, or removed with a reason; one
+// unticked without a reason, or gone, stops the run, because implement would then redo it
+// on nobody's decision — or never know it had been done.
 if (runs('tasks')) {
   phase('Tasks')
   state.stagesRun.push('tasks')
   const P = featurePaths(state.featureDir)
-  const generated = await run('tasks', 'tasks', [
-    UNATTENDED,
-    SKILL_HOW('speckit-tasks'),
-    FEATURE_CONTEXT(),
-    `The feature is ${state.featureDir}.`,
-    `${SPEC_IS_NOT_OURS(P.spec)} No task you write edits it either: a gap that could only be closed by changing the spec is not a task, and a task that would reword a requirement to match the plan is the same edit at one remove.`,
-    NO_TASK_WAITS_ON_A_PERSON,
-    cfg.tasksGuidance ? `Arguments for the skill (task generation constraints): ${cfg.tasksGuidance}` : 'Arguments for the skill: none.',
-    `Rules: every task names the file it touches; every phase ends with a task that runs the definition of done, \`${state.wall}\`, and fixes until it is green; the phases follow the template ("## Phase N: ..."). Every FR and SC of ${P.spec} is named by at least one task in this file — the gate refuses an id no task names — in qualified form \`${featureNum(state.featureDir)}/FR-nnn\` or \`${featureNum(state.featureDir)}/SC-nnn\`, and that task writes a test citing it — or, it is named by a task that adds its row to specs/trace-waivers.tsv (\`${featureNum(state.featureDir)}/ID<TAB>kind<TAB>reason\`, rows sorted), where kind is exactly \`external\` (the criterion cannot be witnessed from inside this repository at all — a production latency figure, an operator procedure) or \`deferred\` (specified but deliberately not built in this feature; the reason names where that deferral is recorded — a plan.md scope boundary, a GATES.md named-gap row, the owning capability). A requirement that is merely untested is neither: it gets a test, not a waiver row. This tasks stage is the only place a waiver task may originate: no later stage adds one. A task that dictates Javadoc or comment wording also uses the qualified form, never the bare id. Run the before_tasks and after_tasks hooks.`,
-    `Return done=true with the number of tasks and phases written to ${P.tasks}.`,
-  ].filter(Boolean).join('\n'), S.done, 'Tasks')
+  const before = state.checkedTasks
+  const update = before.length > 0
+  const specNote = `${SPEC_IS_NOT_OURS(P.spec)} No task you write edits it either: a gap that could only be closed by changing the spec is not a task, and a task that would reword a requirement to match the plan is the same edit at one remove.`
+  const generated = !update
+    ? await run('tasks', 'tasks', [
+      UNATTENDED,
+      SKILL_HOW('speckit-tasks'),
+      FEATURE_CONTEXT(),
+      `The feature is ${state.featureDir}.`,
+      specNote,
+      NO_TASK_WAITS_ON_A_PERSON,
+      cfg.tasksGuidance ? `Arguments for the skill (task generation constraints): ${cfg.tasksGuidance}` : 'Arguments for the skill: none.',
+      TASK_RULES(P),
+      `Return done=true with the number of tasks and phases written to ${P.tasks}.`,
+    ].filter(Boolean).join('\n'), S.done, 'Tasks')
+    : await run('tasks', 'tasks (update in place)', [
+      UNATTENDED,
+      FEATURE_CONTEXT(),
+      `The feature is ${state.featureDir}. ${P.tasks} already exists and ${before.length} of its tasks are ticked: work an earlier run implemented and committed, convergence and forced convergence phases included. This run follows an edit to the spec or a revision of the plan, so bring ${P.tasks} into agreement with ${P.spec} and ${P.plan} as they stand now, IN PLACE. Do not regenerate it: do not run speckit-tasks' generation, do not rewrite the file from the template, and never renumber, reorder or re-word an existing task. Read \`.claude/skills/speckit-tasks/SKILL.md\` for its checklist format, phase structure and task rules only, and apply them to the tasks you add.`,
+      specNote,
+      NO_TASK_WAITS_ON_A_PERSON,
+      cfg.tasksGuidance ? `Task generation constraints, for the tasks you add: ${cfg.tasksGuidance}` : '',
+      `Read the spec, ${P.plan} and its companions, ${P.tasks} and the code the ticked tasks produced. Then, task by task:`,
+      '- A ticked task whose requirement, criterion or plan decision is unchanged stays exactly as it is, "- [x]" — every task of a "Convergence" or "Convergence (forced round n)" phase included. Work that was done is not redone because the spec moved somewhere else.',
+      '- A ticked task whose requirement, criterion or plan decision the change altered, so that what it built no longer satisfies it, is unticked, with the reason at the end of its first line: `- [ ] T014 <the task text as it stood> (reopened: <what changed, naming the requirement or plan section>)`. Untick nothing else, and never untick a task without that reason in its line.',
+      `- A task, ticked or not, that the revised spec and plan no longer need is marked removed and never deleted: its first line becomes ${REMOVED_LINE}, and any continuation lines under it stay as they are. ${REMOVED_TASK}`,
+      '- An unticked task whose requirement is unchanged stays as it is.',
+      '- Work the revised spec and plan need that no task covers gets a new task, "- [ ]", with an id after the current maximum, in the phase it belongs to — or in a new phase at the end of the file when it belongs to none — in the checklist format speckit-tasks defines.',
+      TASK_RULES(P),
+      `Commit ${P.tasks} with the message "tasks: update in place after a spec or plan revision". Return done=true, the commit sha, and every task you reopened, removed or added — reopened and removed each with the reason its line carries.`,
+    ].filter(Boolean).join('\n'), S.tasksUpdated, 'Tasks')
   // NO_TASK_WAITS_ON_A_PERSON sends a question only the author can answer to
   // `specChanges`, and the schema tells this agent that field stops the run. Until
   // 2026-09-24 nothing here read it, so the question left the run with no trace and
@@ -1286,6 +1429,48 @@ if (runs('tasks')) {
     return await needsHuman('tasks',
       `writing the tasks found ${specChanges.length} question(s) only the author of ${P.spec} can answer, and no stage of this run edits the spec: it is the feature author's, written before the build started. The change(s) below go to that author — with /speckit-clarify or an edit to the spec — and the build restarts at ${SPEC_EDIT_RESTART} afterwards, which reads the plan against the edited spec and repairs it in place`,
       specChanges, SPEC_EDIT_RESTART)
+  }
+  if (update) {
+    const cert = await run('phases', 'check tasks.md after update', [
+      UNATTENDED,
+      `Read ${P.tasks}. Every task id below was ticked before an agent updated the file in place. For each one, find the line that carries it as a task and report its state now:`,
+      '- "checked": the line is "- [x]" or "- [X]";',
+      '- "reopened": the line is "- [ ]" and carries "(reopened: <reason>)" with a reason in it;',
+      '- "removed": the line has no checkbox, its text is struck through, and it carries "(removed: <reason>)" with a reason in it;',
+      '- "unchecked": the line is "- [ ]" and carries no reopened reason;',
+      '- "missing": no line of the file carries that id as a task.',
+      'Quote the reason for "reopened" and "removed". Parse only; change nothing.',
+      before.join(', '),
+    ].join('\n'), S.tasksCertified, 'Tasks')
+    const seen = {}
+    for (const t of Array.isArray(cert.tasks) ? cert.tasks : []) if (t && t.taskId && !seen[t.taskId]) seen[t.taskId] = t
+    const hasReason = t => typeof t.reason === 'string' && t.reason.trim() !== ''
+    const lost = []
+    const kept = []
+    const reopened = []
+    const removed = []
+    for (const id of before) {
+      const t = seen[id]
+      if (!t) lost.push({ taskId: id, state: 'not reported by the reader' })
+      else if (t.state === 'checked') kept.push(id)
+      else if (t.state === 'reopened' && hasReason(t)) reopened.push({ taskId: id, reason: t.reason })
+      else if (t.state === 'removed' && hasReason(t)) removed.push({ taskId: id, reason: t.reason })
+      else lost.push({ taskId: id, state: t.state === 'reopened' || t.state === 'removed' ? `${t.state} with no reason in its line` : t.state })
+    }
+    state.tasksUpdate = {
+      checkedBefore: before.length,
+      kept: kept.length,
+      reopened,
+      removed: removed.concat((generated.removed || []).filter(r => r && r.taskId && !before.includes(r.taskId))),
+      added: Array.isArray(generated.added) ? generated.added : [],
+      commit: generated.commit || '',
+    }
+    log(`tasks updated in place: ${kept.length} of ${before.length} ticked task(s) kept, ${reopened.length} reopened, ${removed.length} ticked task(s) removed, ${state.tasksUpdate.added.length} added${lost.length ? `; ${lost.length} ticked task(s) unaccounted for` : ''}`)
+    if (lost.length) {
+      return await needsHuman('tasks',
+        `the tasks stage updated ${P.tasks} in place over ${before.length} ticked task(s), and a parse-only read of the file afterwards finds ${lost.length} of them neither ticked, nor reopened with a reason, nor removed with a reason: ${lost.map(t => `${t.taskId} (${t.state})`).join(', ')}. Implement would redo that work on nobody's decision, or lose the record that it was done, so the run stops before it. The update is committed (${generated.commit || 'no commit named'}); the file as it stood before it is its parent commit's`,
+        { lost, kept: kept.length, reopened, removed, updateCommit: generated.commit || '', updateSummary: generated.summary || '' })
+    }
   }
 }
 
@@ -1332,6 +1517,7 @@ if (runs('analyze')) {
       FEATURE_CONTEXT(),
       `The feature is ${state.featureDir}. Read-only: change nothing.`,
       'Run the analysis in full and produce its report, then instead of offering remediation return every finding as data: id, severity as the skill grades it, the artifact it lives in (spec, plan, tasks, constitution, other), the location, a one-sentence summary and the concrete recommendation. Include the coverage figure.',
+      REMOVED_TASK,
       round === 1 ? analyzeCarry() : '',
       handed.block('analysis', f => `${f.id} [${f.severity}] ${f.artifact} — ${f.location}: ${f.summary}`),
     ].filter(Boolean).join('\n'), S.analysis, 'Tasks')
@@ -1483,6 +1669,7 @@ const readPhases = async (label, group) => {
   const p = await run('phases', label, [
     UNATTENDED,
     `Read ${P.tasks} and return its phases: each "## Phase N: title" heading with N, the title, every task id (Txxx) under it in order, and how many of them are still unchecked ("- [ ]"). Parse only; change nothing.`,
+    `${REMOVED_TASK} Leave its id out of the phase's task ids.`,
   ].join('\n'), S.phases, group)
   return p.phases
 }
@@ -1509,6 +1696,7 @@ const readAppendedPhase = async (number, label, group) => {
   const again = await run('phases', `${label} (re-read)`, [
     UNATTENDED,
     `Read ${P.tasks} to its last line and return its phases: each "## Phase N: title" heading with N, the title, every task id (Txxx) under it in order, and how many of them are still unchecked ("- [ ]"). Parse only; change nothing.`,
+    `${REMOVED_TASK} Leave its id out of the phase's task ids.`,
     `An earlier read of this file returned ${first.length} phase(s) and stopped short: it did not return ${want}, which was appended to the end of the file moments ago. The file is long. Count the "## Phase" headings first (\`grep -c '^## Phase ' ${P.tasks}\`) and return exactly that many phases, the last of them included.`,
   ].join('\n'), S.phases, group)
   return pick(again.phases) || null
@@ -1585,6 +1773,7 @@ if (runs('converge')) {
       : `Run the assessment in full. Return the outcome exactly as the skill defines it: "converged" when nothing was appended, "tasks_appended" with the new phase number and the appended task ids otherwise. When tasks were appended, commit tasks.md with the message "tasks: convergence round ${round}".`,
     forcedSoFarBlock(),
     'Also return every gap the assessment found as findings — appended or not, actionable or not, including every gap it surfaced only for awareness — each graded by the severity rule in the skill\'s own Step 5 and by no other scale: CRITICAL, HIGH, MEDIUM or LOW exactly as that step defines them. For each appended one, name the task id that closes it; leave the task id empty for a gap no task closes.',
+    REMOVED_TASK,
     'An FR or SC the wall\'s traceability gate reports as uncovered is unbuilt work, not a documentation finding: grade it like any other gap and, when it is actionable, append the task that writes the missing test — never a note explaining the absence.',
     specDefers(),
   ].filter(Boolean).join('\n')
@@ -1996,7 +2185,7 @@ if (runs('finish')) {
     `Close out the feature on branch ${state.branch || '(current branch)'}:`,
     `1. Run \`${state.wall}\` and wait for it; wallGreen is whether it passed. Do not fix anything.`,
     `2. \`git status --porcelain\` is empty → clean=true. If it is not, commit the leftovers with the message "feature: leftovers after converge" and report clean=true only if that commit succeeded.`,
-    `3. Every task in ${P.tasks} is "- [x]" → allTasksChecked=true; otherwise false, and name the unchecked ids in the summary.`,
+    `3. Every task in ${P.tasks} is "- [x]" → allTasksChecked=true; otherwise false, and name the unchecked ids in the summary. ${REMOVED_TASK}`,
     cfg.push ? '4. Push the branch: `git push -u origin HEAD`. pushed=true only if the push succeeded.' : '4. Do not push; pushed=false.',
     cfg.mergeInto
       ? `5. Fast-forward \`${cfg.mergeInto}\` onto this branch: \`git checkout ${cfg.mergeInto} && git merge --ff-only ${state.branch} && git push origin ${cfg.mergeInto}\`, then check ${state.branch} out again. merged=true only if every command succeeded; a non-fast-forward is merged=false with the reason in the summary.`
@@ -2059,10 +2248,12 @@ return {
   status: finishNeedsHuman ? 'needs-human' : 'done',
   featureDir: state.featureDir,
   branch: state.branch,
+  createdBranch: state.createdBranch,
   baseBranch: state.baseBranch,
   wall: state.wall,
   rounds: state.rounds,
   reviewPlan: state.reviewPlan,
+  tasksUpdate: state.tasksUpdate,
   analysis: state.analysis,
   converge: state.converge,
   implemented: state.implemented,
