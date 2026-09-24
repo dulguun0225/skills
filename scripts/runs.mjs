@@ -59,12 +59,13 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, sep } from "node:path";
 
-// The two consumer repos that have run these skills. Named rather than
-// discovered: a scan of every project directory would read journals from
-// unrelated work, and the two names are the fact being reported on.
+// The consumer repos that have run these skills. Named rather than discovered:
+// a scan of every project directory would read journals from unrelated work,
+// and the names are the fact being reported on.
 const DEFAULT_REPOS = [
   join(homedir(), "repos", "netos", "netcore-platform", "reference-data"),
   join(homedir(), "repos", "netos", "netcore-platform", "product-catalog"),
+  join(homedir(), "repos", "netos", "netcore-platform", "customer-party-adapter"),
 ];
 
 const argv = process.argv.slice(2);
@@ -112,36 +113,41 @@ const unparsedLabels = [];
 // Agent labels
 // ---------------------------------------------------------------------------
 
-// A label is `<stage> (<model> <effort>)` with an optional ` (retry N)`, and the
-// stage part may itself hold parentheses — `preflight (discovery and sync)`,
-// `converge 3 (assess only)`. Model and effort are not fields on the journal
+// A label is `<stage> (<model> <effort>)` followed by zero or more trailing
+// parenthesised annotations — ` (retry N)` from the stall retry, and free text
+// such as ` (after usage limit)` on an agent relaunched by hand after a usage
+// stop (first seen 2026-09-22, wf_9e8bb81f-135). The stage part may itself hold
+// parentheses — `preflight (discovery and sync)`, `converge 3 (assess only)` —
+// so the tier is the last `(<model> <effort>)` group and everything after it
+// must be annotation groups. Model and effort are not fields on the journal
 // entry; they exist only inside this string, so this parse is coupled to
 // `workflow.mjs`'s label format and says so when it fails rather than dropping
 // the agent and quietly shortening every total below.
 const MODELS = ["opus", "sonnet", "haiku", "fable"];
 const EFFORTS = ["low", "medium", "high", "xhigh", "max"];
-const TIER = new RegExp(`\\s\\((${MODELS.join("|")}) (${EFFORTS.join("|")})\\)$`);
+const LABEL = new RegExp(`^(.*)\\s\\((${MODELS.join("|")}) (${EFFORTS.join("|")})\\)((?:\\s\\([^()]*\\))*)$`);
 
 function parseLabel(label) {
   if (typeof label !== "string") return null;
-  let rest = label;
-  let retry = 0;
-  const r = rest.match(/\s\(retry (\d+)\)$/);
-  if (r) {
-    retry = Number(r[1]);
-    rest = rest.slice(0, r.index);
-  }
-  const t = rest.match(TIER);
+  const t = label.match(LABEL);
   if (!t) return null;
-  const stage = rest.slice(0, t.index).trim();
+  const stage = t[1].trim();
+  let retry = 0;
+  const annotations = [];
+  for (const [, a] of t[4].matchAll(/\(([^()]*)\)/g)) {
+    const r = a.match(/^retry (\d+)$/);
+    if (r) retry = Number(r[1]);
+    else annotations.push(a.trim());
+  }
   return {
     stage,
     // The round or phase number is what makes two runs of one stage look like
     // two stages; strip it so the cost table groups.
     normalStage: stage.replace(/\s+\d+/g, "").replace(/\s+/g, " ").trim(),
-    model: t[1],
-    effort: t[2],
+    model: t[2],
+    effort: t[3],
     retry,
+    annotations,
   };
 }
 
@@ -200,7 +206,7 @@ function readRun(path, repo) {
     const p = parseLabel(a.label);
     if (!p) {
       unparsedLabels.push(`${j.runId ?? "?"}: ${String(a.label).slice(0, 70)}`);
-      parsed.push({ stage: "(unparsed)", normalStage: "(unparsed)", model: a.model ?? "?", effort: "?", retry: 0, agent: a });
+      parsed.push({ stage: "(unparsed)", normalStage: "(unparsed)", model: a.model ?? "?", effort: "?", retry: 0, annotations: [], agent: a });
       continue;
     }
     parsed.push({ ...p, agent: a });
@@ -509,7 +515,7 @@ const coverage = (tok, a, b) => `>=${tok.toLocaleString("en-US")} over ${a}/${b}
 if (asJson) {
   console.log(
     JSON.stringify(
-      { generated: new Date().toISOString(), repos, since: since ?? null, stops, runs: runs.map(({ agents, ...r }) => ({ ...r, agents: agents.map((p) => ({ stage: p.normalStage, model: p.model, effort: p.effort, retry: p.retry, tokens: p.agent.tokens ?? null, durationMs: p.agent.durationMs ?? null })) })) },
+      { generated: new Date().toISOString(), repos, since: since ?? null, stops, runs: runs.map(({ agents, ...r }) => ({ ...r, agents: agents.map((p) => ({ stage: p.normalStage, model: p.model, effort: p.effort, retry: p.retry, annotations: p.annotations, tokens: p.agent.tokens ?? null, durationMs: p.agent.durationMs ?? null })) })) },
       null,
       2,
     ),
@@ -573,6 +579,14 @@ console.log(
     ["forced", "wallRepair", "reconcile", "assessOnly", "stallRetry"]
       .map((k) => `${k}=${tot((r) => r.mech[k])}`)
       .join(", "),
+);
+// Label annotations other than `retry N`, which is counted as sr above. An
+// annotated agent is parsed and counted like any other; this line says how many
+// were relaunched or marked by hand, and --json carries each one per agent.
+const annotationCounts = {};
+for (const r of runs) for (const p of r.agents) for (const a of p.annotations) annotationCounts[a] = (annotationCounts[a] ?? 0) + 1;
+console.log(
+  `Agent label annotations: ${Object.entries(annotationCounts).sort().map(([k, v]) => `"${k}"=${v}`).join(", ") || "none"}`,
 );
 
 // A feature that never reached implement is the loop failing to leave a fixed
