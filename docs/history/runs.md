@@ -673,6 +673,16 @@ did not return.
 - **`../java-backend-template` was not opened** — no stop's target landed there.
 - **The phase-two `GATES.md` reader** is still unbuilt.
 
+**Decided and applied later on 2026-09-24.** The owner took four of the owed rows and
+`build-feature` applied them the same day, stub-tested and unrun: the review and
+analyze loops stop on a survivor, not at the cap (group 2); the restart after a spec
+edit is `from: "review-plan"` (group 3's second row); a deferral written into
+`spec.md` exempts a converge finding from forcing (the open question under Sweep 1's
+observation, `wf_e4af9888-80a`); and the handoff names no journal path, since a script
+has no handle on its own run id (group 1's third finding). Their rows left
+`BACKLOG.md`; spec readiness stays there. Record: `build-feature/evidence.md`, the
+2026-09-24 evening entry.
+
 ---
 
 ## The harvest procedure

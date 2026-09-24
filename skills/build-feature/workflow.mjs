@@ -38,10 +38,17 @@
 // own scripts resolve the feature from that file (or SPECIFY_FEATURE_DIRECTORY) and
 // never from the branch name.
 //
-// Review and analyze loops terminate on a clean verdict or on their round cap; a
-// cap reached with blocking findings still open ends the run with status
-// "needs-human" and the findings, never with a silent approval. The converge loop
-// is different: it has no fixed point (evidence.md, 2026-09-18), so its only stop
+// Review and analyze loops stop the run on a SURVIVOR only (owner's decision,
+// 2026-09-24): a serious finding the reviewer labels, by `repeatOf`, as restating one
+// an earlier fix round was handed. They end cleanly on a clean verdict, and at their
+// round cap they do what converge does — apply the last round's findings and go on —
+// with one final review after that fix whose only stop is a survivor, so no fix of a
+// serious finding reaches the next stage unreviewed; its open findings are reported on
+// the return as `ended: "round-cap"`. Until that day a cap reached with blocking findings
+// open was needs-human, and nine of the eleven such stops on record were resolved by
+// applying the findings unchanged: these loops have no fixed point either, so a cap
+// buys a stop and not closure. The converge loop
+// has no fixed point either (evidence.md, 2026-09-18), so its only stop
 // test is a severity floor — the loop ends when the round's findings hold nothing
 // above args.severityFloor — and reaching its round cap is a reported outcome the
 // run carries to finish, not a human question; the wall is still the gate. The
@@ -66,8 +73,8 @@
 //
 // Every needs-human exit writes a handoff file first — HANDOFF.md in the feature
 // directory — carrying the stage, the reason, the full findings rendered legibly,
-// the branch, the round counts, the stages run, the run's date and the path of the
-// machine-local run journal, committed on the feature branch and pushed when
+// the branch, the round counts, the stages run, the run's date and where the
+// machine-local run journal is found, committed on the feature branch and pushed when
 // args.push is true. Gap observed 2026-09-18 on run wf_7e4e8726-4b5 (converge, three
 // findings): the payload existed only in the invoking session's tool result, a /tmp
 // file and the run journal under ~/.claude/projects/, so no colleague could reach it.
@@ -203,6 +210,8 @@ const cfg = {
   // untaken on 2026-09-24, though it looked taken: the launching session applied the
   // fourth review's findings on seven review-plan stops and restarted at review-plan,
   // and that start ran no review until the same day, so no fifth review ever read them.
+  // Since 2026-09-24 the cap no longer stops the run (reviewLoop below): it is the
+  // number of ordinary fix rounds, after which one more fix and one final review run.
   maxReviewRounds: a.maxReviewRounds ?? 3,
   maxAnalyzeRounds: a.maxAnalyzeRounds ?? 3,
   maxConvergeRounds: a.maxConvergeRounds ?? 6,
@@ -255,6 +264,15 @@ const SPEC_CHANGES_FIELD = {
   type: 'array',
   items: { type: 'string' },
   description: 'findings whose only remedy is an edit to the feature\'s spec.md, which no stage of this run may make: one entry per finding, naming the requirement or section and the change the spec needs. Each one stops the run and goes to the spec\'s author, so put here only what cannot be resolved in the artifacts you may write.',
+}
+
+// Identity across rounds for the review and analyze loops (2026-09-24), on converge's
+// precedent: the reviewer or analyzer is handed the numbered list of findings earlier
+// fix rounds were handed, and labels each finding it returns with the entry it restates.
+// The script, not the agent's prose, decides from this field whether a finding survived.
+const REPEAT_OF_FIELD = {
+  type: 'integer',
+  description: 'the number of the earlier-round finding this one restates, from the numbered list in the prompt; 0 or absent when it is new or no list was given',
 }
 
 const S = {
@@ -319,6 +337,7 @@ const S = {
             location: { type: 'string', description: 'heading, requirement id or line' },
             problem: { type: 'string' },
             fix: { type: 'string', description: 'the concrete edit that resolves it' },
+            repeatOf: REPEAT_OF_FIELD,
           },
         },
       },
@@ -351,6 +370,7 @@ const S = {
             location: { type: 'string' },
             summary: { type: 'string' },
             recommendation: { type: 'string' },
+            repeatOf: REPEAT_OF_FIELD,
           },
         },
       },
@@ -420,6 +440,10 @@ const S = {
             summary: { type: 'string' },
             taskId: { type: 'string', description: 'the appended task that closes it, empty if none was appended' },
             repeatOf: { type: 'integer', description: 'the number of the already-forced finding this one restates, from the numbered list in the prompt; 0 or absent when it is new or no list was given' },
+            deferredBy: {
+              type: 'string',
+              description: 'only when spec.md itself defers this item or puts it outside this feature\'s scope: that spec.md text, quoted verbatim with its section or line. Empty otherwise. A deferral, scope boundary or named gap written anywhere but spec.md — plan.md, tasks.md, research.md, docs/GATES.md, specs/trace-waivers.tsv — does not count and leaves this empty.',
+            },
           },
         },
       },
@@ -580,6 +604,8 @@ const state = {
   wall: cfg.wall,
   rounds: { reviewPlan: 0, analyze: 0, converge: 0 },
   converge: null, // { ended, rounds, findings } once the converge stage has run
+  reviewPlan: null, // { ended, rounds, findings } once the review-plan loop has run
+  analysis: null, // { ended, rounds, findings } once the analyze loop has run
   implemented: [],
   finishRepaired: false, // true once the finish wall was red and the one repair pass ran
   open: [],
@@ -599,8 +625,15 @@ const state = {
 // The document is rendered here rather than described to the agent. The sandbox has
 // no filesystem, so an agent must do the write; making that agent compose the report
 // would let the cheapest tier in the table paraphrase a finding, reorder it or drop
-// it. It gets finished Markdown and two placeholders it can only substitute, because
-// the script has no Date and does not know its own run id.
+// it. It gets finished Markdown and one placeholder it can only substitute, the date,
+// because the script has no Date.
+//
+// It names no journal path (2026-09-24). The script has no handle on its own run id —
+// the Workflow API gives a script none — and until that day the handoff agent took the
+// newest wf_*.json on disk, which on 25 of 27 handoffs was an earlier run's journal or
+// nothing, because the running journal is, by inference, not yet written. A durable
+// file stating a false path is worse than one stating where the true one is kept: the
+// run id is on the Workflow tool result the launching session received.
 // ---------------------------------------------------------------------------
 const HANDOFF_FILE = 'HANDOFF.md'
 
@@ -648,9 +681,18 @@ const detailBlock = detail => {
 // An exit whose restart is not its own stage says so in its detail — the preflight exit
 // for a missing input artifact, whose restart is the stage that writes it — and the
 // document's restart paragraph follows it rather than contradicting the reason.
+// Every exit whose whole remedy is a change to spec.md passes `restartFrom` itself —
+// "review-plan" since 2026-09-24 — and the return value carries it beside `stage`.
 const restartOf = detail => (detail && !Array.isArray(detail) && typeof detail === 'object' && STAGES.includes(detail.restartFrom) ? detail.restartFrom : null)
+const restartAt = (detail, restartFrom) => (STAGES.includes(restartFrom) ? restartFrom : restartOf(detail))
 
-const handoffDoc = (stage, why, detail) => [
+// The restart after a spec edit (owner's decision, 2026-09-24). `from: "review-plan"`
+// reads the plan already on the branch against the edited spec and repairs it in place;
+// `from: "plan"` regenerates plan.md whole and discards every review fix, and on eight
+// restarts that way the regenerated plan hit a fresh review-plan cap five times.
+const SPEC_EDIT_RESTART = 'review-plan'
+
+const handoffDoc = (stage, why, detail, restartFrom) => [
   `# Handoff — the unattended build of ${state.featureDir} stopped at ${stage}`,
   '',
   `**This run has stopped.** \`build-feature\` runs the spec-kit cycle with no human gate: it reached the \`${stage}\` stage, found something no rule its own agents carry can decide, and ended there. Nothing reported below was fixed by the run.`,
@@ -676,13 +718,11 @@ const handoffDoc = (stage, why, detail) => [
   '',
   '## Restarting the run',
   '',
-  `Once the decision is applied, check out \`${state.branch || 'the feature branch'}\` and restart ${restartOf(detail) ? 'at the stage the reason names' : 'at this stage'} through the \`build-feature\` skill with \`from: "${restartOf(detail) || stage}"\` and \`wall: "${state.wall || ''}"\`; \`wall\` is required on any start after preflight, and the feature directory and branch are discovered from the checkout unless you pass \`featureDir: "${state.featureDir}"\` and \`branch: "${state.branch || ''}"\`. A decision that was a change to \`${state.featureDir}/spec.md\` restarts at \`from: "plan"\`, because every later artifact was planned from the old text. To replay this run instead of restarting it, pass \`resumeFromRunId\` with the run id in the journal path below.`,
+  `Once the decision is applied, check out \`${state.branch || 'the feature branch'}\` and restart ${restartAt(detail, restartFrom) && restartAt(detail, restartFrom) !== stage ? 'at the stage the reason names' : 'at this stage'} through the \`build-feature\` skill with \`from: "${restartAt(detail, restartFrom) || stage}"\` and \`wall: "${state.wall || ''}"\`; \`wall\` is required on any start after preflight, and the feature directory and branch are discovered from the checkout unless you pass \`featureDir: "${state.featureDir}"\` and \`branch: "${state.branch || ''}"\`. A decision that was a change to \`${state.featureDir}/spec.md\` restarts at \`from: "${SPEC_EDIT_RESTART}"\`, whatever stage stopped: that start reads the plan already on the branch against the edited spec and repairs it in place, and every stage after it runs again over the result. \`from: "plan"\` regenerates the plan whole and discards every review fix; it is there for a person who wants that. To replay this run instead of restarting it, pass \`resumeFromRunId\` with this run's id (below).`,
   '',
   '## Run journal',
   '',
-  '{{RUN_JOURNAL}}',
-  '',
-  'The journal holds every agent prompt and every agent return value of this run. It is machine-local and is not in this repository: if you are reading this anywhere else, this file is the whole of what the run reported.',
+  'This file names no journal path, because the run cannot see its own id. The run id — `wf_…` — is on the Workflow tool result the launching session received, and the session that resolves this stop records it in `RESOLUTIONS.md`. On the machine that ran it, the journal is `~/.claude/projects/<the project directory, every / replaced by ->/<session id>/workflows/<run id>.json`, and it holds every agent prompt and every agent return value of this run. It is machine-local and is not in this repository: if you are reading this anywhere else, this file is the whole of what the run reported.',
   '',
   `_Written by \`build-feature\`'s handoff stage. The next needs-human exit on this feature overwrites it; \`git log -p -- ${state.featureDir}/${HANDOFF_FILE}\` holds the earlier ones._`,
 ].join('\n')
@@ -693,7 +733,7 @@ const handoffDoc = (stage, why, detail) => [
 // — no feature directory, a thrown dispatch, a skipped or dead agent, an agent that
 // reports it could not write — ends in a record saying so, and the caller returns its
 // full payload regardless.
-const writeHandoff = async (stage, why, detail) => {
+const writeHandoff = async (stage, why, detail, restartFrom) => {
   // Every preflight exit lands here: no feature has been created, so there is no
   // feature directory and no feature branch to carry the file. The write is skipped
   // rather than aimed at the repo root. A preflight refusal is a repo-state fact the
@@ -722,15 +762,14 @@ const writeHandoff = async (stage, why, detail) => {
       UNATTENDED,
       `The unattended feature build has stopped at the "${stage}" stage and needs a person. Your only job is to leave a durable handoff file in the repository, so that somebody who was not in this session can pick the decision up. Fix nothing, run no build, and change no file other than the one named here.`,
       '1. Get today\'s date: run `date -I`.',
-      '2. Find this run\'s journal — the newest `wf_*.json` under this project\'s Claude directory: `ls -t ~/.claude/projects/$(pwd | sed \'s#/#-#g\')/*/workflows/wf_*.json 2>/dev/null | head -1`. If it finds nothing, use the literal text `(not found on this machine)`.',
-      `3. Write the document between the BEGIN and END markers below to \`${path}\`, byte for byte, replacing exactly two placeholders and nothing else: \`{{RUN_DATE}}\` with the date from step 1, and \`{{RUN_JOURNAL}}\` with the absolute journal path from step 2 wrapped in single backticks. Do not summarise it, re-word it, reorder it, shorten it or add to it — it is the report, not a draft of one. Do not write the BEGIN and END marker lines themselves. Overwrite the file if it already exists.`,
-      `4. Commit that one file and nothing else: \`git add -- ${path} && git commit -m "handoff: the ${stage} stage stopped and needs a person" -- ${path}\`. The pathspec matters: the working tree may hold the run's unfinished or failing work, and none of it belongs in this commit.`,
+      `2. Write the document between the BEGIN and END markers below to \`${path}\`, byte for byte, replacing exactly one placeholder and nothing else: \`{{RUN_DATE}}\` with the date from step 1. Do not look for this run's journal or add a path to it: the document says where it is kept, and the newest journal on disk belongs to another run. Do not summarise it, re-word it, reorder it, shorten it or add to it — it is the report, not a draft of one. Do not write the BEGIN and END marker lines themselves. Overwrite the file if it already exists.`,
+      `3. Commit that one file and nothing else: \`git add -- ${path} && git commit -m "handoff: the ${stage} stage stopped and needs a person" -- ${path}\`. The pathspec matters: the working tree may hold the run's unfinished or failing work, and none of it belongs in this commit.`,
       cfg.push
-        ? '5. Push it: `git push -u origin HEAD`. Set pushed=true only if the push succeeded; a push that fails is not a failed handoff, so report it in note and leave written=true.'
-        : '5. Do not push; return pushed=false. This run was started with pushing disabled.',
+        ? '4. Push it: `git push -u origin HEAD`. Set pushed=true only if the push succeeded; a push that fails is not a failed handoff, so report it in note and leave written=true.'
+        : '4. Do not push; return pushed=false. This run was started with pushing disabled.',
       'Return written=true only when the whole document is on disk at that path. If any step fails, return written=false with the reason in note; never return written=true for a partial or paraphrased file.',
       '--- BEGIN DOCUMENT ---',
-      handoffDoc(stage, why, detail),
+      handoffDoc(stage, why, detail, restartFrom),
       '--- END DOCUMENT ---',
     ].join('\n'), { label: `handoff (${t.model} ${t.effort})`, phase: 'Handoff', schema: S.handoff, model: t.model, effort: t.effort })
   } catch (e) {
@@ -752,11 +791,12 @@ const writeHandoff = async (stage, why, detail) => {
 // Keeps the shape every caller and reader already relies on — status, stage, why,
 // detail, featureDir, branch, rounds, stagesRun — and adds `handoff`, which is the
 // record of the artifact, never a condition on the verdict.
-const needsHuman = async (stage, why, detail) => {
-  const handoff = await writeHandoff(stage, why, detail)
+const needsHuman = async (stage, why, detail, restartFrom) => {
+  const handoff = await writeHandoff(stage, why, detail, restartFrom)
   return {
     status: 'needs-human',
     stage,
+    restartFrom: restartAt(detail, restartFrom) || stage,
     why,
     detail: detail === undefined ? null : detail,
     featureDir: state.featureDir,
@@ -782,8 +822,28 @@ const run = async (name, stage, prompt, schema, group) => {
 
 // A review/fix loop: review with the reviewer tier; when it returns a blocking
 // or major finding, the fixer applies every finding and the review runs again.
-// The cap counts fix rounds; the review after the last fix still runs, so the
-// run never continues on an unreviewed fix.
+//
+// It stops the run on a SURVIVOR and on nothing else of its own (owner's decision,
+// 2026-09-24). A survivor is a serious finding that restates one an earlier fix round
+// was handed — by exact identity, or by the reviewer's own `repeatOf` label against the
+// numbered list of handed findings it is given — so the loop can show the same defect
+// twice. That is converge's forced-once rule one stage earlier: the loop tried, the
+// attempt did not take, and what is left is a decision. Both owner-needed cap stops on
+// record read as survivors under the labelling rule in handedFindings — wf_c65ab41b-8a6,
+// a lock protocol the review refuted again after each fix, and wf_e5ab8e1a-c53, the
+// FR-024 gap the first remediation declared as a narrowing and the fourth analysis
+// graded HIGH again — but the label is the reviewer's, and the first case holds only if
+// it takes the protocol's correctness as the one requirement both findings restate.
+//
+// The cap no longer stops. The rejected default is "stop at the cap": nine of the
+// eleven cap stops on record were resolved by applying the last round's findings
+// unchanged (or once by applying none), because the loop has no fixed point and a
+// fourth review finds new holes as surely as a first. So after `max` ordinary fix
+// rounds the review after the last of them is applied too — the cap fix — and one
+// FINAL review reads the result. Its only stop is a survivor; its other findings are
+// not applied, since nothing would review that fix, and are returned open as
+// `ended: "round-cap"`. So no fix of a serious finding reaches the next stage
+// unreviewed. The one fix that does, as before, is the minors pass on an approve.
 //
 // A fix round that reports `specChanges` ends the loop with them: the only remedy the
 // fixer could see for those findings is an edit to spec.md, which this run does not
@@ -791,28 +851,79 @@ const run = async (name, stage, prompt, schema, group) => {
 // round that would find the same thing.
 const specChangesOf = r => (r && Array.isArray(r.specChanges) ? r.specChanges.filter(Boolean) : [])
 
+const normText = v => String(v || '').toLowerCase().replace(/\s+/g, ' ').trim().replace(/\.$/, '')
+
+// The findings earlier fix rounds were handed, numbered for the next reader, with the
+// round that handed each. `idOf` is exact identity after normalisation; `repeatOf` is
+// the reader's label, honoured only when it names an entry that exists.
+const handedFindings = idOf => {
+  const list = []
+  const ids = {}
+  return {
+    hand(round, findings) {
+      for (const f of findings) {
+        const id = idOf(f)
+        if (ids[id]) continue
+        list.push({ round, f })
+        ids[id] = list.length
+      }
+    },
+    roundOf(f) {
+      const n = ids[idOf(f)] || (Number.isInteger(f.repeatOf) && f.repeatOf > 0 && f.repeatOf <= list.length ? f.repeatOf : 0)
+      return n ? list[n - 1].round : 0
+    },
+    block(what, render) {
+      if (!list.length) return ''
+      return [
+        `Earlier rounds of this ${what} handed each finding below to a fix agent, which applied it or declined it with its reason. Do the ${what} exactly as you would without this list. Then, for every finding you return, set \`repeatOf\` to the number of the entry it restates, or to 0 where it is new.`,
+        'A finding restates an entry when the defect that entry named is still there: the same requirement, invariant, property or contradiction, at the same place, is still unmet — however either is worded, and also where the fix replaced the mechanism and the replacement fails the same requirement in a new way, or where the fix declared the gap, narrowed the requirement or recorded it as accepted instead of closing it. A defect the fix introduced in a different requirement or at a different place is new, and so is anything this list does not name.',
+        list.map((e, i) => `${i + 1}. (round ${e.round}) ${render(e.f)}`).join('\n'),
+      ].join('\n')
+    },
+  }
+}
+
+// The detail a survivor exit carries: the survivors first, each marked with the round
+// that handed it, then everything else the same reader reported.
+const survivorDetail = (findings, isSurvivor, roundOf) =>
+  findings.filter(isSurvivor).map(f => ({ ...f, survivedRound: roundOf(f) }))
+    .concat(findings.filter(f => !isSurvivor(f)))
+
 async function reviewLoop({ kind, group, reviewer, fixer, reviewPrompt, fixPrompt, max }) {
+  const handed = handedFindings(f => [normText(f.artifact), normText(f.location), normText(f.problem)].join(' | '))
+  const priorBlock = () => handed.block('review', f => `[${f.severity}] ${f.artifact} — ${f.location}: ${f.problem}`)
   let review = null
-  for (let round = 1; round <= max + 1; round++) {
-    review = await run(reviewer, `review-${kind} ${round}`, reviewPrompt(round), S.review, group)
+  for (let round = 1; round <= max + 2; round++) {
+    const final = round === max + 2
+    review = await run(reviewer, `review-${kind} ${round}${final ? ' (final)' : ''}`, reviewPrompt(round, final, priorBlock()), S.review, group)
     state.rounds[reviewer] = round
     const serious = review.findings.filter(f => f.severity !== 'minor')
     const blocking = review.findings.filter(f => f.severity === 'blocking')
-    log(`review-${kind} round ${round}: ${review.verdict}, ${blocking.length} blocking, ${serious.length - blocking.length} major, ${review.findings.length - serious.length} minor`)
+    const survivors = serious.filter(f => handed.roundOf(f))
+    log(`review-${kind} round ${round}${final ? ' (final)' : ''}: ${review.verdict}, ${blocking.length} blocking, ${serious.length - blocking.length} major, ${review.findings.length - serious.length} minor${survivors.length ? `, ${survivors.length} survived the fix round that was handed it` : ''}`)
+    if (survivors.length) {
+      const isSurvivor = f => f.severity !== 'minor' && handed.roundOf(f) > 0
+      return { approved: false, ended: 'survivor', rounds: round, findings: survivorDetail(review.findings, isSurvivor, f => handed.roundOf(f)), survivors: survivors.map(f => ({ ...f, survivedRound: handed.roundOf(f) })), specChanges: [] }
+    }
     if (review.verdict === 'approve' && serious.length === 0) {
       if (review.findings.length) {
         const fixed = await run(fixer, `fix-${kind} minors`, fixPrompt(review.findings, round, true), S.done, group)
         const specChanges = specChangesOf(fixed)
-        if (specChanges.length) return { approved: false, rounds: round, findings: review.findings, specChanges }
+        if (specChanges.length) return { approved: false, ended: 'spec-changes', rounds: round, findings: review.findings, survivors: [], specChanges }
       }
-      return { approved: true, rounds: round, findings: review.findings, specChanges: [] }
+      return { approved: true, ended: 'approved', rounds: round, findings: review.findings, survivors: [], specChanges: [] }
     }
-    if (round > max) break
-    const fixed = await run(fixer, `fix-${kind} ${round}`, fixPrompt(review.findings, round, false), S.done, group)
+    if (final) {
+      log(`review-${kind}: round cap ${max} reached and its findings applied; the final review found no survivor, so its ${review.findings.length} finding(s) are reported open, unapplied, and the run goes on`)
+      return { approved: false, ended: 'round-cap', rounds: round, findings: review.findings, survivors: [], specChanges: [] }
+    }
+    handed.hand(round, review.findings)
+    const capFix = round === max + 1
+    const fixed = await run(fixer, `fix-${kind} ${round}${capFix ? ' (cap)' : ''}`, fixPrompt(review.findings, round, false), S.done, group)
     const specChanges = specChangesOf(fixed)
-    if (specChanges.length) return { approved: false, rounds: round, findings: review.findings, specChanges }
+    if (specChanges.length) return { approved: false, ended: 'spec-changes', rounds: round, findings: review.findings, survivors: [], specChanges }
   }
-  return { approved: false, rounds: max + 1, findings: review ? review.findings : [], specChanges: [] }
+  throw new Error('reviewLoop fell out of its bound') // unreachable: round max + 2 always returns
 }
 
 // ---------------------------------------------------------------------------
@@ -852,8 +963,9 @@ async function reviewLoop({ kind, group, reviewer, fixer, reviewPrompt, fixPromp
 // after the whole run has been paid for. It is a merge and never a rebase, because the
 // branch may already be pushed. It is conflict-free by construction for the spec — the
 // build never writes spec.md — and a conflict anywhere else stops the run with the
-// paths. A spec that changed under an already-written plan is a needs-human exit whose
-// restart is `from: "plan"`.
+// paths. A spec that changed under a run told to start after review-plan is a
+// needs-human exit whose restart is `from: "review-plan"` (since 2026-09-24; `plan` until
+// then), which reads the plan already written against the new text and repairs it.
 //
 // The discovery half runs even on a start at a later stage: before 2026-09-21 a
 // `from: "plan"` restart left state.branch null, the handoff table said "(unknown)" and
@@ -971,15 +1083,15 @@ const inputsToCheck = (() => {
     : []
   if (missing.length) {
     // The earliest stage that writes a missing file; a spec the sync just changed sends
-    // the restart to plan whatever is missing, for the reason the specChanged exit gives.
-    const restart = p.specChanged ? 'plan' : STAGES.find(st => missing.some(f => producerOf(f) === st))
+    // the restart no later than review-plan, for the reason the specChanged exit gives.
+    const restart = STAGES.find(st => missing.some(f => producerOf(f) === st) || (p.specChanged && st === SPEC_EDIT_RESTART))
     const paths = missing.map(f => `${state.featureDir}/${f}`)
     const one = missing.length === 1
     return await needsHuman('preflight',
-      `this run was told to start at "${cfg.from}", and ${paths.join(' and ')} ${one ? 'is' : 'are'} missing or empty: the run reads ${one ? 'it' : 'them'} before any stage of it writes ${one ? 'it' : 'them'}. Nothing was started. Restart with \`from: "${restart}"\`, ${p.specChanged
-        ? 'because the sync also changed spec.md and every artifact after the plan is derived from the old text'
-        : `the first stage that writes ${missing.filter(f => producerOf(f) === restart).join(' and ')}`}`,
-      { missingInputs: paths, from: cfg.from, restartFrom: restart, problems: p.problems || [] })
+      `this run was told to start at "${cfg.from}", and ${paths.join(' and ')} ${one ? 'is' : 'are'} missing or empty: the run reads ${one ? 'it' : 'them'} before any stage of it writes ${one ? 'it' : 'them'}. Nothing was started. Restart with \`from: "${restart}"\`, ${missing.some(f => producerOf(f) === restart)
+        ? `the first stage that writes ${missing.filter(f => producerOf(f) === restart).join(' and ')}`
+        : 'because the sync also changed spec.md, and that start reads the plan already written against the new text and repairs it'}`,
+      { missingInputs: paths, from: cfg.from, restartFrom: restart, problems: p.problems || [] }, restart)
   }
   if (!p.ok) return await needsHuman('preflight', full ? 'the repository is not ready' : 'the repository does not match what this restart was given', p.problems)
   if (!p.featureDir) {
@@ -997,11 +1109,13 @@ const inputsToCheck = (() => {
   // A spec that moved under artifacts already written is not something a later stage
   // reconciles: plan.md, tasks.md and the code were all derived from the old text, and
   // the analyze stage would report it as a dozen findings against the wrong artifact.
-  // A run that starts at plan is about to read the new text anyway, so it carries on.
-  if (p.specChanged && STAGES.indexOf(cfg.from) > STAGES.indexOf('plan')) {
+  // A run that starts at plan or at review-plan is about to read the new text against
+  // the plan anyway, so it carries on; review-plan is the restart this exit names.
+  if (p.specChanged && STAGES.indexOf(cfg.from) > STAGES.indexOf(SPEC_EDIT_RESTART)) {
     return await needsHuman('preflight',
-      `the sync with \`${state.baseBranch || 'the base branch'}\` brought a change to ${state.featureDir}/spec.md, and this run was told to start at "${cfg.from}" — after the plan that was written from the old text. Every artifact from plan.md onwards is now derived from a spec that has moved. The merge is done and committed on \`${state.branch}\`, so nothing is lost: restart with \`from: "plan"\``,
-      [`${state.featureDir}/spec.md changed in the merge from ${state.baseBranch || 'the base branch'}`])
+      `the sync with \`${state.baseBranch || 'the base branch'}\` brought a change to ${state.featureDir}/spec.md, and this run was told to start at "${cfg.from}" — after the plan review that read the old text. Every artifact from plan.md onwards is now derived from a spec that has moved. The merge is done and committed on \`${state.branch}\`, so nothing is lost: restart with \`from: "${SPEC_EDIT_RESTART}"\`, which reads the plan already written against the new text and repairs it in place`,
+      { changed: [`${state.featureDir}/spec.md changed in the merge from ${state.baseBranch || 'the base branch'}`], from: cfg.from, restartFrom: SPEC_EDIT_RESTART },
+      SPEC_EDIT_RESTART)
   }
   log(`${full ? 'preflight ok' : 'discovery'}: feature ${state.featureDir} on ${state.branch}${p.createdBranch ? ' (branch created)' : p.checkedOut ? ' (checked out)' : ''}, base ${state.baseBranch || '(none)'}, sync ${p.synced}${p.specChanged ? ' and the spec changed' : ''}, feature.json ${p.featureJson || 'unknown'}, wall = ${state.wall}`)
 }
@@ -1017,6 +1131,11 @@ const inputsToCheck = (() => {
 // resolution rule's restart exists to prevent (run ledger, sweep 2). An `until: "plan"`
 // run now stops before the review, and `until: "review-plan"` is still the way to read
 // a reviewed plan before tasks.
+//
+// Since 2026-09-24 that start is also the restart after a spec edit, so a review that
+// did not follow this run's own plan stage is told the spec may have moved since the
+// plan was written, and that a disagreement with the spec's current text is a finding
+// whose fix brings the plan into agreement in place.
 if (runs('plan') || runs('review-plan')) {
   phase('Plan')
   const P = featurePaths(state.featureDir)
@@ -1042,10 +1161,13 @@ if (runs('plan') || runs('review-plan')) {
       reviewer: 'reviewPlan',
       fixer: 'fixPlan',
       max: cfg.maxReviewRounds,
-      reviewPrompt: round => [
+      reviewPrompt: (round, final, prior) => [
         UNATTENDED,
         `You are a fresh-context reviewer with no memory of how the plan was written. Your job is to REFUTE the claim that ${P.plan} (with ${P.research}, ${P.dataModel}, ${P.contracts} and ${P.quickstart} where present) fully and correctly realises ${P.spec} under ${CONSTITUTION}. Read-only: change nothing.`,
         'Read the spec, every plan artifact, the constitution, the project CLAUDE.md files, and the existing code and schema the plan touches or depends on.',
+        !runs('plan') && round === 1
+          ? `${P.spec} MAY HAVE CHANGED SINCE THE PLAN WAS WRITTEN: this run did not write the plan, and it is the start the build restarts at after its spec is edited. Read the spec as it stands now, not as the plan quotes or paraphrases it. Every place the plan artifacts disagree with its current text — a requirement, criterion, scenario, clarification or assumption added, removed, reworded or reversed — is a blocking finding against the plan artifact, and its fix is the in-place edit that brings that artifact into agreement with the spec. Never propose regenerating a file.`
+          : '',
         'Report a finding for each of these, with the severity given:',
         '- a functional requirement, success criterion, state, transition or error case in the spec that no plan element realises — blocking',
         '- a plan decision that violates a constitution article or a build gate the project documents — blocking, naming the article or gate; propose a constitution amendment only when the rule passes the constitution\'s Governance admission test (it binds two or more features, or a table the feature does not own), otherwise the finding is against the plan',
@@ -1058,10 +1180,11 @@ if (runs('plan') || runs('review-plan')) {
         '- naming, ordering, duplication — minor',
         `Each finding names the exact file and location and the concrete edit that resolves it, and no finding's fix is an edit to ${P.spec}. Verdict "fix" when any finding is blocking or major; "approve" otherwise.`,
         round > 1 ? `This is review round ${round}; earlier findings were applied. Check they were applied correctly and look for what the fix broke.` : '',
+        prior,
       ].filter(Boolean).join('\n'),
       fixPrompt: (findings, round, minorsOnly) => [
         UNATTENDED,
-        `Apply the following review findings to the plan artifacts under ${state.featureDir}. Edit in place; do not regenerate a file. When a finding says the constitution needs an amendment, amend ${CONSTITUTION} only if the amendment passes the constitution's Governance admission test (it binds two or more features, or a table the feature does not own — otherwise change the plan instead and say so under skipped), following the constitution's own amendment and versioning rules and only in the articles it marks as the project's own, and record the amendment in ${P.research}.`,
+        `Apply the following review findings to the plan artifacts under ${state.featureDir}. Edit in place; do not regenerate a file. Where a finding says a plan artifact disagrees with the current text of ${P.spec}, the spec is right: bring the artifact into agreement with it. When a finding says the constitution needs an amendment, amend ${CONSTITUTION} only if the amendment passes the constitution's Governance admission test (it binds two or more features, or a table the feature does not own — otherwise change the plan instead and say so under skipped), following the constitution's own amendment and versioning rules and only in the articles it marks as the project's own, and record the amendment in ${P.research}.`,
         SPEC_IS_NOT_OURS(P.spec),
         `Where a finding cannot be resolved in the plan artifacts or the constitution because the only remedy is a change to ${P.spec} — the spec contradicts itself, the constitution or the code, or it is silent on something no plan can decide — do not apply it and do not work around it: put it in \`specChanges\`, naming the requirement and the change the spec needs. That stops the run and takes the finding to the spec's author, so put there only what you genuinely cannot resolve in the files you may write.`,
         minorsOnly ? 'These are minor findings; apply each unless it would change meaning.' : 'Apply every finding. If a finding is wrong against the spec or the code, do not apply it and list it under skipped with the reason.',
@@ -1071,10 +1194,15 @@ if (runs('plan') || runs('review-plan')) {
     })
     if (r.specChanges && r.specChanges.length) {
       return await needsHuman('review-plan',
-        `a review finding of the plan can only be resolved by changing ${P.spec}, and no stage of this run edits the spec: it is the feature author's, written before the build started. The ${r.specChanges.length} change(s) below go to that author — with /speckit-clarify or an edit to the spec — and the build restarts at plan afterwards. Nothing else in the plan was left unapplied`,
-        r.specChanges)
+        `a review finding of the plan can only be resolved by changing ${P.spec}, and no stage of this run edits the spec: it is the feature author's, written before the build started. The ${r.specChanges.length} change(s) below go to that author — with /speckit-clarify or an edit to the spec — and the build restarts at ${SPEC_EDIT_RESTART} afterwards, which reads this plan against the edited spec and repairs it in place. Nothing else in the plan was left unapplied`,
+        r.specChanges, SPEC_EDIT_RESTART)
     }
-    if (!r.approved) return await needsHuman('review-plan', `blocking or major findings remain after ${cfg.maxReviewRounds} fix rounds and ${cfg.maxReviewRounds + 1} fresh-context refutation reviews: the loop applied every finding of every round and the review after the last fix still reports these. A plan finding that survives that is usually a decision the run is not authorised to take — a constitution amendment that fails its admission test, or a design the spec and the code disagree about`, r.findings)
+    if (r.ended === 'survivor') {
+      return await needsHuman('review-plan',
+        `${r.survivors.length} blocking or major finding(s) survived the fix round that was handed them: the loop applied every finding of that round — or the fixer declined one with its reason — and a later fresh-context review, round ${r.rounds}, reports the same defect again. Survived: ${r.survivors.map(f => `[${f.severity}] ${f.artifact} — ${f.location} (handed in round ${f.survivedRound})`).join('; ')}. A plan finding the loop has tried once and lost is usually a decision the run is not authorised to take — a design the review keeps refuting, a constitution amendment that fails its admission test, or a requirement the plan narrows rather than meets — so it is not tried again`,
+        r.findings)
+    }
+    state.reviewPlan = { ended: r.ended, rounds: r.rounds, findings: r.findings }
   }
 }
 
@@ -1103,33 +1231,55 @@ if (runs('tasks')) {
   const specChanges = specChangesOf(generated)
   if (specChanges.length) {
     return await needsHuman('tasks',
-      `writing the tasks found ${specChanges.length} question(s) only the author of ${P.spec} can answer, and no stage of this run edits the spec: it is the feature author's, written before the build started. The change(s) below go to that author — with /speckit-clarify or an edit to the spec — and the build restarts at plan afterwards`,
-      specChanges)
+      `writing the tasks found ${specChanges.length} question(s) only the author of ${P.spec} can answer, and no stage of this run edits the spec: it is the feature author's, written before the build started. The change(s) below go to that author — with /speckit-clarify or an edit to the spec — and the build restarts at ${SPEC_EDIT_RESTART} afterwards, which reads the plan against the edited spec and repairs it in place`,
+      specChanges, SPEC_EDIT_RESTART)
   }
 }
 
+// The analyze loop has the review loop's stop rule (2026-09-24): a survivor stops the
+// run, the cap does not. After maxAnalyzeRounds remediations the analysis after the last
+// one is remediated too, and one final analysis reads the result; its only stop is a
+// CRITICAL or HIGH finding restating one a remediation was handed, and its other
+// findings go on to implement open, reported as `analysis.ended: "round-cap"`. The
+// converge loop later reads the code against the spec, which is where a finding the
+// final analysis left open is met again if it is real.
 if (runs('analyze')) {
   state.stagesRun.push('analyze')
   const P = featurePaths(state.featureDir)
+  const handed = handedFindings(f => [normText(f.artifact), normText(f.location), normText(f.summary)].join(' | '))
+  const serious = f => f.severity === 'CRITICAL' || f.severity === 'HIGH'
   let analysis = null
-  let approved = false
-  for (let round = 1; round <= cfg.maxAnalyzeRounds + 1; round++) {
-    analysis = await run('analyze', `analyze ${round}`, [
+  let ended = null
+  const max = cfg.maxAnalyzeRounds
+  for (let round = 1; round <= max + 2; round++) {
+    const final = round === max + 2
+    analysis = await run('analyze', `analyze ${round}${final ? ' (final)' : ''}`, [
       UNATTENDED,
       SKILL_HOW('speckit-analyze'),
       FEATURE_CONTEXT(),
       `The feature is ${state.featureDir}. Read-only: change nothing.`,
       'Run the analysis in full and produce its report, then instead of offering remediation return every finding as data: id, severity as the skill grades it, the artifact it lives in (spec, plan, tasks, constitution, other), the location, a one-sentence summary and the concrete recommendation. Include the coverage figure.',
+      handed.block('analysis', f => `${f.id} [${f.severity}] ${f.artifact} — ${f.location}: ${f.summary}`),
     ].filter(Boolean).join('\n'), S.analysis, 'Tasks')
     state.rounds.analyze = round
     const critical = analysis.findings.filter(f => f.severity === 'CRITICAL')
     const high = analysis.findings.filter(f => f.severity === 'HIGH')
-    log(`analyze round ${round}: ${critical.length} critical, ${high.length} high, ${analysis.findings.length - critical.length - high.length} medium/low, coverage ${analysis.coverage}`)
-    const serious = critical.concat(high)
-    if (serious.length === 0) { approved = true; break }
-    if (round > cfg.maxAnalyzeRounds) break
+    const survivors = analysis.findings.filter(f => serious(f) && handed.roundOf(f))
+    log(`analyze round ${round}${final ? ' (final)' : ''}: ${critical.length} critical, ${high.length} high, ${analysis.findings.length - critical.length - high.length} medium/low, coverage ${analysis.coverage}${survivors.length ? `, ${survivors.length} survived the remediation that was handed it` : ''}`)
+    if (survivors.length) {
+      return await needsHuman('analyze',
+        `${survivors.length} CRITICAL or HIGH analysis finding(s) survived the remediation round that was handed them: a remediation agent applied that round's findings — or declined one with its reason — and a later analysis, round ${round}, grades the same gap again. Survived: ${survivors.map(f => `${f.id} [${f.severity}] ${f.location} (handed in round ${handed.roundOf(f)})`).join('; ')}. A finding the loop has tried once and lost is usually a scope or design decision the run is not authorised to take — a requirement the plan narrows rather than meets, or a constitution question — so it is not tried again`,
+        survivorDetail(analysis.findings, f => serious(f) && handed.roundOf(f) > 0, f => handed.roundOf(f)))
+    }
+    if (critical.length + high.length === 0) { ended = 'approved'; break }
+    if (final) {
+      ended = 'round-cap'
+      log(`analyze: round cap ${max} reached and its findings remediated; the final analysis found no survivor, so its ${analysis.findings.length} finding(s) go on to implement open, unapplied`)
+      break
+    }
+    handed.hand(round, analysis.findings)
     const fixer = critical.length ? 'remediateCritical' : 'remediate'
-    const remedied = await run(fixer, `remediate ${round}`, [
+    const remedied = await run(fixer, `remediate ${round}${round === max + 1 ? ' (cap)' : ''}`, [
       UNATTENDED,
       `Resolve the following analysis findings by editing the artifact each one names under ${state.featureDir} (plan.md and its companions, or tasks.md) or ${CONSTITUTION} for a constitution finding. Edit in place. A coverage gap is resolved by adding tasks to the right phase of ${P.tasks} with new ids after the current maximum, never by renumbering. A constitution violation is resolved by changing the plan, not the constitution, unless the finding says the constitution is what is wrong.`,
       SPEC_IS_NOT_OURS(P.spec),
@@ -1142,11 +1292,11 @@ if (runs('analyze')) {
     const specChanges = specChangesOf(remedied)
     if (specChanges.length) {
       return await needsHuman('analyze',
-        `an analysis finding can only be resolved by changing ${P.spec}, and no stage of this run edits the spec: it is the feature author's, written before the build started. The ${specChanges.length} change(s) below go to that author — with /speckit-clarify or an edit to the spec — and the build restarts at plan afterwards. Every other finding of this round was applied`,
-        specChanges)
+        `an analysis finding can only be resolved by changing ${P.spec}, and no stage of this run edits the spec: it is the feature author's, written before the build started. The ${specChanges.length} change(s) below go to that author — with /speckit-clarify or an edit to the spec — and the build restarts at ${SPEC_EDIT_RESTART} afterwards, which reads the plan against the edited spec and repairs it in place. Every other finding of this round was applied`,
+        specChanges, SPEC_EDIT_RESTART)
     }
   }
-  if (!approved) return await needsHuman('analyze', `CRITICAL or HIGH analysis findings remain after ${cfg.maxAnalyzeRounds} remediation rounds and ${cfg.maxAnalyzeRounds + 1} analyses: the loop ran a remediation agent over every finding of every round — the critical-tier one where a CRITICAL was open — and the analysis after the last one still grades these CRITICAL or HIGH`, analysis.findings)
+  state.analysis = { ended, rounds: state.rounds.analyze, findings: analysis ? analysis.findings : [] }
 }
 
 // ---------------------------------------------------------------------------
@@ -1337,6 +1487,16 @@ if (runs('converge')) {
   // grade. One prompt for both kinds of round. assessOnly is the extra round after the cap:
   // same assessment, no append, no commit, so its findings are open work rather than
   // work the round that found it has already closed.
+  // A deferral the owner wrote into the spec wins over forcing (owner's decision,
+  // 2026-09-24). On wf_e4af9888-80a the loop forced and built 003/FR-034, which the
+  // owner's post-plan clarification in spec.md had deferred to a later feature. Narrow by
+  // construction: only spec.md text counts, quoted in `deferredBy`, because every other
+  // artifact that could record a deferral — plan.md, tasks.md, research.md, GATES.md, a
+  // waiver row — was written by this run or an earlier one from the spec, and the run's
+  // own output is never the ground for not doing work (the resolution rule's test). A
+  // deferred finding is not forced, not counted against the floor, never a survivor, and
+  // is reported under converge.deferred.
+  const specDefers = () => `An item ${P.spec} itself defers is not a gap of this feature: a requirement, criterion, scenario or capability that spec.md says is deferred, out of this feature's scope, or left to a later feature — in its requirements, assumptions, out-of-scope text or clarifications. Append no task for it. Return it as a finding all the same, graded as usual, with \`deferredBy\` holding that spec.md text quoted verbatim with its section or line. Only spec.md counts: a deferral, scope boundary or named gap written in plan.md, tasks.md, research.md, docs/GATES.md or specs/trace-waivers.tsv was written from the spec by a run like this one and defers nothing — a finding against it gets \`deferredBy\` empty and is handled like any other. A requirement spec.md states without deferring it is never deferred.`
   const convergePrompt = (round, assessOnly) => [
     UNATTENDED,
     SKILL_HOW('speckit-converge'),
@@ -1350,6 +1510,7 @@ if (runs('converge')) {
     forcedSoFarBlock(),
     'Also return every gap the assessment found as findings — appended or not, actionable or not, including every gap it surfaced only for awareness — each graded by the severity rule in the skill\'s own Step 5 and by no other scale: CRITICAL, HIGH, MEDIUM or LOW exactly as that step defines them. For each appended one, name the task id that closes it; leave the task id empty for a gap no task closes.',
     'An FR or SC the wall\'s traceability gate reports as uncovered is unbuilt work, not a documentation finding: grade it like any other gap and, when it is actionable, append the task that writes the missing test — never a note explaining the absence.',
+    specDefers(),
   ].filter(Boolean).join('\n')
 
   // -------------------------------------------------------------------------
@@ -1382,7 +1543,7 @@ if (runs('converge')) {
   // The reason every converge-stage `specChanges` exit gives — the assessment's and the
   // forced append's alike — in the words the tasks exit uses.
   const specWhy = (where, n) =>
-    `${where} found ${n} question(s) only the author of ${P.spec} can answer, and no stage of this run edits the spec or writes a task that waits on a person: it is the feature author's, written before the build started. The change(s) below go to that author — with /speckit-clarify or an edit to the spec — and the build restarts at plan afterwards`
+    `${where} found ${n} question(s) only the author of ${P.spec} can answer, and no stage of this run edits the spec or writes a task that waits on a person: it is the feature author's, written before the build started. The change(s) below go to that author — with /speckit-clarify or an edit to the spec — and the build restarts at ${SPEC_EDIT_RESTART} afterwards, which reads the plan against the edited spec and repairs it in place`
 
   // A finding's identity, so the loop can tell a finding it already forced from a new
   // one. Severity, location and summary, lowercased with whitespace collapsed and a
@@ -1402,6 +1563,19 @@ if (runs('converge')) {
   // and for the handoff a survivor writes.
   const forcedIds = {}
   const forcedList = []
+  // Findings the assessment reported as deferred by spec.md, once each, with the round
+  // that first reported them and the quote it gave.
+  const deferredOf = f => typeof f.deferredBy === 'string' && f.deferredBy.trim() !== ''
+  const deferredIds = {}
+  const deferredList = []
+  const noteDeferred = (findings, round) => {
+    for (const f of findings.filter(deferredOf)) {
+      const id = findingId(f)
+      if (deferredIds[id]) continue
+      deferredIds[id] = round
+      deferredList.push({ round, severity: f.severity, location: f.location, summary: f.summary, deferredBy: f.deferredBy })
+    }
+  }
   // Exact match alone never fired: on product-catalog 004 (2026-09-20) the same
   // thirteen findings came back six rounds running, re-worded each time, and were
   // forced six times. So the assessment is also handed the numbered list of what this
@@ -1438,6 +1612,7 @@ if (runs('converge')) {
     `The feature is ${state.featureDir}; its tasks file is ${P.tasks}.`,
     `A convergence assessment of this feature has just reported that it appended no tasks, and reported the findings below all the same. They are open work: nothing in ${P.tasks} closes them. Your only job is to append them to ${P.tasks} as one new convergence phase, one task per finding, so that the implement stage runs them. You are not assessing anything. Do not read the code to re-check a finding, do not re-grade one, do not judge one non-actionable, do not drop, merge, split or reorder them, do not add a finding of your own, and do not fix anything. Every finding below gets exactly one task, in the order given, save for the one case the next paragraphs name.`,
     `${SPEC_IS_NOT_OURS(P.spec)} No task you write asks anyone else to either: a task worded to reconcile the spec with the code is that edit at one remove. Write each task against the code, the tests, the gates, the documents or the plan.`,
+    `The assessment found none of these deferred by ${P.spec} itself, which is the only deferral that exempts a finding here: a scope boundary, named gap or deferral in plan.md, tasks.md, research.md, docs/GATES.md or specs/trace-waivers.tsv is not a reason to drop a finding or to write its task as anything but the fix.`,
     NO_TASK_WAITS_ON_A_PERSON,
     `That is the one judgment this prompt leaves you. Where a finding below can be closed only by an answer from the spec's author — the only task you could write for it would wait on that answer — append nothing and commit nothing, for that finding or any other: return appended=false, \`tasks\` empty, and every such finding in \`specChanges\`, naming the requirement or section and the change the spec needs. The run stops there and goes to the author; the findings you did not name are assessed again when it restarts.`,
     'The findings, exactly as the assessment returned them:',
@@ -1490,12 +1665,14 @@ if (runs('converge')) {
     const last = await run('converge', `converge ${round}`, convergePrompt(round, false), S.converged, 'Converge')
     state.rounds.converge = round
     // Read before the outcome: a phase this round appended beside a question for the
-    // author is left unimplemented, since the restart the question needs is at plan.
+    // author is left unimplemented, since the restart the question needs is at review-plan.
     const askedR = specChangesOf(last)
-    if (askedR.length) return await needsHuman('converge', specWhy(`converge round ${round}`, askedR.length), askedR)
+    if (askedR.length) return await needsHuman('converge', specWhy(`converge round ${round}`, askedR.length), askedR, SPEC_EDIT_RESTART)
     const findings = Array.isArray(last.findings) ? last.findings : []
-    const aboveFloor = findings.filter(aboveFloorSev)
-    const grade = gradeOf(findings)
+    noteDeferred(findings, round)
+    const live = findings.filter(f => !deferredOf(f))
+    const aboveFloor = live.filter(aboveFloorSev)
+    const grade = gradeOf(live) + (live.length < findings.length ? `, ${findings.length - live.length} deferred by the spec` : '')
     if (last.outcome === 'converged') {
       // The floor is consulted before the outcome. /speckit-converge Step 7 calls a
       // round converged when it judges its findings non-actionable, and Step 4
@@ -1521,7 +1698,7 @@ if (runs('converge')) {
         // Read before `appended`: a forced append that routes a finding to the author
         // returns appended=false by instruction, and that is not a failed write to reconcile.
         const askedF = specChangesOf(fa)
-        if (askedF.length) return await needsHuman('converge', specWhy(`the forced append of converge round ${round}`, askedF.length), askedF)
+        if (askedF.length) return await needsHuman('converge', specWhy(`the forced append of converge round ${round}`, askedF.length), askedF, SPEC_EDIT_RESTART)
         // A failed append is reconciled and retried once, never escalated blind. The
         // sequence is: one reconcile agent brings tasks.md to a known state, the
         // parse-only `phases` reader certifies that state independently — the same
@@ -1577,7 +1754,7 @@ if (runs('converge')) {
             log(`reconcile after forced append ${round}: tasks.md holds no part of the forced phase${recon.removed ? ' (a partial one was removed)' : ''} — one retry of the forced append, and the loop escalates if that fails too`)
             const retry = await run('forceAppend', `force-append converge ${round} (retry)`, forceAppendPrompt(round, aboveFloor), S.forceAppended, 'Converge')
             const askedRetry = specChangesOf(retry)
-            if (askedRetry.length) return await needsHuman('converge', specWhy(`the retried forced append of converge round ${round}`, askedRetry.length), askedRetry)
+            if (askedRetry.length) return await needsHuman('converge', specWhy(`the retried forced append of converge round ${round}`, askedRetry.length), askedRetry, SPEC_EDIT_RESTART)
             if (!retry.appended) {
               return await needsHuman('converge',
                 `the forced convergence round could not append its ${aboveFloor.length} finding(s) to tasks.md, and the loop has tried twice: the first append failed (${failedAppend.note || 'no reason given'}), a reconcile read tasks.md against git and left it with no part of the forced phase in it${recon.removed ? ', having removed a partial one' : ''}, and a second append against that clean file failed as well (${retry.note || 'no reason given'}). tasks.md is in the known state the reconcile reports below — it does not need to be worked out`,
@@ -1630,7 +1807,7 @@ if (runs('converge')) {
     if (!cdone.ok) return await needsHuman('converge', cdone.why, cdone.detail)
     // A round that appends tasks and grades nothing has not shown the floor was
     // reached; it has shown nothing. Counted as above the floor, so the loop goes on.
-    if (findings.length === 0) {
+    if (live.length === 0) {
       log(`converge round ${round}: appended tasks as phase ${ph.number} and graded nothing — what is left is unknown, not below the floor, so the loop continues`)
       continue
     }
@@ -1654,9 +1831,10 @@ if (runs('converge')) {
     // A question for the author is not an open finding to carry to finish under
     // round-cap: the run would end `done` with it.
     const askedA = specChangesOf(assess)
-    if (askedA.length) return await needsHuman('converge', specWhy(`the assess-only converge round ${assessRound}`, askedA.length), askedA)
+    if (askedA.length) return await needsHuman('converge', specWhy(`the assess-only converge round ${assessRound}`, askedA.length), askedA, SPEC_EDIT_RESTART)
     const findings = Array.isArray(assess.findings) ? assess.findings : []
-    const aboveFloor = findings.filter(aboveFloorSev)
+    noteDeferred(findings, assessRound)
+    const aboveFloor = findings.filter(f => !deferredOf(f)).filter(aboveFloorSev)
     endingFindings = findings
     if (aboveFloor.length === 0) {
       // Under NONE this round graded nothing at all, so the run stopped because
@@ -1679,7 +1857,7 @@ if (runs('converge')) {
   }
   // The findings of whichever assessment ended the loop, never of an earlier one;
   // `forced` is every finding this run appended itself, with the round that did it.
-  state.converge = { ended, rounds: state.rounds.converge, floor: SEVERITY_FLOOR, forced: forcedList, findings: endingFindings }
+  state.converge = { ended, rounds: state.rounds.converge, floor: SEVERITY_FLOOR, forced: forcedList, deferred: deferredList, findings: endingFindings }
 }
 
 // ---------------------------------------------------------------------------
@@ -1761,6 +1939,8 @@ return {
   baseBranch: state.baseBranch,
   wall: state.wall,
   rounds: state.rounds,
+  reviewPlan: state.reviewPlan,
+  analysis: state.analysis,
   converge: state.converge,
   implemented: state.implemented,
   finish: finished,
