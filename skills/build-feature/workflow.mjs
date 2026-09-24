@@ -199,7 +199,10 @@ const cfg = {
   // four at review-plan, one at review-spec, one at analyze — and all six still ended
   // needs-human at the cap, so the raise bought rounds and not closure. Raising it
   // further is the same trade at a higher price; the unmeasured half is the
-  // counterfactual, whether a fourth round would have closed any of the six.
+  // counterfactual, whether a fourth round would have closed any of the six. Still
+  // untaken on 2026-09-24, though it looked taken: the launching session applied the
+  // fourth review's findings on seven review-plan stops and restarted at review-plan,
+  // and that start ran no review until the same day, so no fifth review ever read them.
   maxReviewRounds: a.maxReviewRounds ?? 3,
   maxAnalyzeRounds: a.maxAnalyzeRounds ?? 3,
   maxConvergeRounds: a.maxConvergeRounds ?? 6,
@@ -498,6 +501,17 @@ const UNATTENDED = [
 // beside it, which is the route out — the run stops and the finding goes to the author.
 const SPEC_IS_NOT_OURS = spec =>
   `THE SPEC IS NOT YOURS TO EDIT. \`${spec}\` was written by the feature's domain expert and is the fixed input to this run: never edit it, never regenerate it, never "align" it with anything, and never add, reword, renumber or delete a requirement, a success criterion, a clarification or an assumption in it. Every other artifact under the feature directory is yours to fix.`
+
+// A task is work an implement agent can finish. On reference-data 003, 2026-09-23, an
+// analysis remediation added T104 — "check that spec.md's Clarifications carries a
+// /speckit-clarify session, run by the spec's owner and dated after this plan" — and
+// gated two closing tasks on it, so the run built eight phases wall-green and then
+// stopped at implement on a task no agent could close; the owner then confirmed every
+// reading the plan had already taken, unchanged. The plan decides an open reading and
+// records it (the "Unattended" rule); a question only the author can answer is a
+// `specChanges` entry, which stops the run where it is found rather than after implement.
+const NO_TASK_WAITS_ON_A_PERSON =
+  'No task may wait on a person: never write a task whose completion needs an owner\'s answer, a /speckit-clarify session, a sign-off or a review by anyone outside this run, and never make another task depend on one. A reading of the spec that the plan has already decided and recorded stands as the plan wrote it; a question only the spec\'s author can answer is not a task — where you return `specChanges`, it goes there, and otherwise it is left out.'
 
 // Stock spec-kit resolves the feature from SPECIFY_FEATURE_DIRECTORY, then from
 // .specify/feature.json, and never from the branch name (its own common.sh:
@@ -866,6 +880,13 @@ async function reviewLoop({ kind, group, reviewer, fixer, reviewPrompt, fixPromp
     'Return ok=true only when there are no problems.',
   ].filter(Boolean).join('\n'), S.preflight, 'Preflight')
   state.branch = p.branch || state.branch
+  // The command preflight read out of CLAUDE.md. This line was lost in c4b9a16
+  // (2026-09-21), and from then every full preflight without args.wall stopped on "no
+  // definition-of-done command" with the command sitting in the agent's own return:
+  // six stops on six features, 2026-09-21..24, the first run of every feature since,
+  // each resolved by passing the value the agent had already found (run ledger, sweep 2).
+  // args.wall, where given, wins: every argument overrides what preflight would find.
+  state.wall = state.wall || p.wall || null
   state.baseBranch = p.baseBranch || cfg.baseBranch || null
   // Where the run finishes preflight standing on the base branch — a later-stage start
   // on a trunk-implemented feature — no handoff file is written, whatever else goes
@@ -914,60 +935,72 @@ async function reviewLoop({ kind, group, reviewer, fixer, reviewPrompt, fixPromp
 // ---------------------------------------------------------------------------
 // Stage: plan → review-plan ⇄ fix-plan
 // ---------------------------------------------------------------------------
-if (runs('plan')) {
+// `from: "review-plan"` runs the review over the plan already on the branch and does
+// not regenerate it. Until 2026-09-24 the review sat inside the plan stage's guard, so
+// that start ran no review at all and went straight to tasks: every review-plan stop
+// restarted at the stage its handoff named — seven, 2026-09-21..23 — reached tasks with
+// no review of what was applied after the fourth one, which is the one thing the
+// resolution rule's restart exists to prevent (run ledger, sweep 2). An `until: "plan"` run now stops before the review, and `until:
+// "review-plan"` is still the way to read a reviewed plan before tasks.
+if (runs('plan') || runs('review-plan')) {
   phase('Plan')
-  state.stagesRun.push('plan')
   const P = featurePaths(state.featureDir)
-  await run('plan', 'plan', [
-    UNATTENDED,
-    SKILL_HOW('speckit-plan'),
-    FEATURE_CONTEXT(),
-    `The feature is ${state.featureDir}; the spec is ${P.spec}; the constitution is ${CONSTITUTION}.`,
-    SPEC_IS_NOT_OURS(P.spec),
-    cfg.planGuidance ? `Arguments for the skill (planning guidance): ${cfg.planGuidance}` : 'Arguments for the skill: none.',
-    `Rules: read the constitution first and treat every article as binding; read the existing code the feature touches before deciding on a design; leave no "[NEEDS CLARIFICATION]" in the plan artifacts — decide from the spec, the constitution and the code, and record the decision in research.md. An "Article VII candidate" is admissible only under the constitution's Governance admission test: it binds two or more feature packages, or a table or package this feature does not own; a rule about this feature's own tables, columns, endpoints or error codes is a plan decision recorded in plan.md and docs/GATES.md, never a candidate; a pre-positioned or placeholder structure is never the subject of one. Cite an FR or SC id of the spec qualified \`${featureNum(state.featureDir)}/FR-nnn\` or \`${featureNum(state.featureDir)}/SC-nnn\`, never bare, wherever plan.md or research.md names one. A requirement the plan puts out of this feature's scope names that boundary in plan.md — the tasks stage waives it as \`deferred\` from exactly that sentence. Run the before_plan and after_plan hooks.`,
-    'Return done=true with a one-paragraph summary of the design and the artifacts written.',
-  ].filter(Boolean).join('\n'), S.done, 'Plan')
-
-  const r = await reviewLoop({
-    kind: 'plan',
-    group: 'Plan',
-    reviewer: 'reviewPlan',
-    fixer: 'fixPlan',
-    max: cfg.maxReviewRounds,
-    reviewPrompt: round => [
+  if (runs('plan')) {
+    state.stagesRun.push('plan')
+    await run('plan', 'plan', [
       UNATTENDED,
-      `You are a fresh-context reviewer with no memory of how the plan was written. Your job is to REFUTE the claim that ${P.plan} (with ${P.research}, ${P.dataModel}, ${P.contracts} and ${P.quickstart} where present) fully and correctly realises ${P.spec} under ${CONSTITUTION}. Read-only: change nothing.`,
-      'Read the spec, every plan artifact, the constitution, the project CLAUDE.md files, and the existing code and schema the plan touches or depends on.',
-      'Report a finding for each of these, with the severity given:',
-      '- a functional requirement, success criterion, state, transition or error case in the spec that no plan element realises — blocking',
-      '- a plan decision that violates a constitution article or a build gate the project documents — blocking, naming the article or gate; propose a constitution amendment only when the rule passes the constitution\'s Governance admission test (it binds two or more features, or a table the feature does not own), otherwise the finding is against the plan',
-      '- a contract, data model or migration that contradicts the existing schema, an existing endpoint, or another plan artifact — blocking',
-      '- a decision that contradicts what the existing code already does without saying so and migrating it — major',
-      '- a "[NEEDS CLARIFICATION]", a template placeholder, or a research question left open — major',
-      '- a decision with no stated alternative and rationale where the constitution or the project rules require one — major',
-      '- a decision that the plan defers to implementation without a task-sized statement of what to build — major',
-      `- a requirement of ${P.spec} that no plan can realise because the spec contradicts itself, the constitution or the existing code — blocking, and say in the fix that the remedy is a change to the spec: ${P.spec} is the feature author's and neither you nor the agent that applies your findings edits it`,
-      '- naming, ordering, duplication — minor',
-      `Each finding names the exact file and location and the concrete edit that resolves it, and no finding's fix is an edit to ${P.spec}. Verdict "fix" when any finding is blocking or major; "approve" otherwise.`,
-      round > 1 ? `This is review round ${round}; earlier findings were applied. Check they were applied correctly and look for what the fix broke.` : '',
-    ].filter(Boolean).join('\n'),
-    fixPrompt: (findings, round, minorsOnly) => [
-      UNATTENDED,
-      `Apply the following review findings to the plan artifacts under ${state.featureDir}. Edit in place; do not regenerate a file. When a finding says the constitution needs an amendment, amend ${CONSTITUTION} only if the amendment passes the constitution's Governance admission test (it binds two or more features, or a table the feature does not own — otherwise change the plan instead and say so under skipped), following the constitution's own amendment and versioning rules and only in the articles it marks as the project's own, and record the amendment in ${P.research}.`,
+      SKILL_HOW('speckit-plan'),
+      FEATURE_CONTEXT(),
+      `The feature is ${state.featureDir}; the spec is ${P.spec}; the constitution is ${CONSTITUTION}.`,
       SPEC_IS_NOT_OURS(P.spec),
-      `Where a finding cannot be resolved in the plan artifacts or the constitution because the only remedy is a change to ${P.spec} — the spec contradicts itself, the constitution or the code, or it is silent on something no plan can decide — do not apply it and do not work around it: put it in \`specChanges\`, naming the requirement and the change the spec needs. That stops the run and takes the finding to the spec's author, so put there only what you genuinely cannot resolve in the files you may write.`,
-      minorsOnly ? 'These are minor findings; apply each unless it would change meaning.' : 'Apply every finding. If a finding is wrong against the spec or the code, do not apply it and list it under skipped with the reason.',
-      findingsBlock(findings),
-      `Then commit with the message "plan: review round ${round}". Return done=true with the short sha.`,
-    ].join('\n'),
-  })
-  if (r.specChanges && r.specChanges.length) {
-    return await needsHuman('review-plan',
-      `a review finding of the plan can only be resolved by changing ${P.spec}, and no stage of this run edits the spec: it is the feature author's, written before the build started. The ${r.specChanges.length} change(s) below go to that author — with /speckit-clarify or an edit to the spec — and the build restarts at plan afterwards. Nothing else in the plan was left unapplied`,
-      r.specChanges)
+      cfg.planGuidance ? `Arguments for the skill (planning guidance): ${cfg.planGuidance}` : 'Arguments for the skill: none.',
+      `Rules: read the constitution first and treat every article as binding; read the existing code the feature touches before deciding on a design; leave no "[NEEDS CLARIFICATION]" in the plan artifacts — decide from the spec, the constitution and the code, and record the decision in research.md. An "Article VII candidate" is admissible only under the constitution's Governance admission test: it binds two or more feature packages, or a table or package this feature does not own; a rule about this feature's own tables, columns, endpoints or error codes is a plan decision recorded in plan.md and docs/GATES.md, never a candidate; a pre-positioned or placeholder structure is never the subject of one. Cite an FR or SC id of the spec qualified \`${featureNum(state.featureDir)}/FR-nnn\` or \`${featureNum(state.featureDir)}/SC-nnn\`, never bare, wherever plan.md or research.md names one. A requirement the plan puts out of this feature's scope names that boundary in plan.md — the tasks stage waives it as \`deferred\` from exactly that sentence. Run the before_plan and after_plan hooks.`,
+      'Return done=true with a one-paragraph summary of the design and the artifacts written.',
+    ].filter(Boolean).join('\n'), S.done, 'Plan')
   }
-  if (!r.approved) return await needsHuman('review-plan', `blocking or major findings remain after ${cfg.maxReviewRounds} fix rounds and ${cfg.maxReviewRounds + 1} fresh-context refutation reviews: the loop applied every finding of every round and the review after the last fix still reports these. A plan finding that survives that is usually a decision the run is not authorised to take — a constitution amendment that fails its admission test, or a design the spec and the code disagree about`, r.findings)
+
+  if (runs('review-plan')) {
+    state.stagesRun.push('review-plan')
+    const r = await reviewLoop({
+      kind: 'plan',
+      group: 'Plan',
+      reviewer: 'reviewPlan',
+      fixer: 'fixPlan',
+      max: cfg.maxReviewRounds,
+      reviewPrompt: round => [
+        UNATTENDED,
+        `You are a fresh-context reviewer with no memory of how the plan was written. Your job is to REFUTE the claim that ${P.plan} (with ${P.research}, ${P.dataModel}, ${P.contracts} and ${P.quickstart} where present) fully and correctly realises ${P.spec} under ${CONSTITUTION}. Read-only: change nothing.`,
+        'Read the spec, every plan artifact, the constitution, the project CLAUDE.md files, and the existing code and schema the plan touches or depends on.',
+        'Report a finding for each of these, with the severity given:',
+        '- a functional requirement, success criterion, state, transition or error case in the spec that no plan element realises — blocking',
+        '- a plan decision that violates a constitution article or a build gate the project documents — blocking, naming the article or gate; propose a constitution amendment only when the rule passes the constitution\'s Governance admission test (it binds two or more features, or a table the feature does not own), otherwise the finding is against the plan',
+        '- a contract, data model or migration that contradicts the existing schema, an existing endpoint, or another plan artifact — blocking',
+        '- a decision that contradicts what the existing code already does without saying so and migrating it — major',
+        '- a "[NEEDS CLARIFICATION]", a template placeholder, or a research question left open — major',
+        '- a decision with no stated alternative and rationale where the constitution or the project rules require one — major',
+        '- a decision that the plan defers to implementation without a task-sized statement of what to build — major',
+        `- a requirement of ${P.spec} that no plan can realise because the spec contradicts itself, the constitution or the existing code — blocking, and say in the fix that the remedy is a change to the spec: ${P.spec} is the feature author's and neither you nor the agent that applies your findings edits it`,
+        '- naming, ordering, duplication — minor',
+        `Each finding names the exact file and location and the concrete edit that resolves it, and no finding's fix is an edit to ${P.spec}. Verdict "fix" when any finding is blocking or major; "approve" otherwise.`,
+        round > 1 ? `This is review round ${round}; earlier findings were applied. Check they were applied correctly and look for what the fix broke.` : '',
+      ].filter(Boolean).join('\n'),
+      fixPrompt: (findings, round, minorsOnly) => [
+        UNATTENDED,
+        `Apply the following review findings to the plan artifacts under ${state.featureDir}. Edit in place; do not regenerate a file. When a finding says the constitution needs an amendment, amend ${CONSTITUTION} only if the amendment passes the constitution's Governance admission test (it binds two or more features, or a table the feature does not own — otherwise change the plan instead and say so under skipped), following the constitution's own amendment and versioning rules and only in the articles it marks as the project's own, and record the amendment in ${P.research}.`,
+        SPEC_IS_NOT_OURS(P.spec),
+        `Where a finding cannot be resolved in the plan artifacts or the constitution because the only remedy is a change to ${P.spec} — the spec contradicts itself, the constitution or the code, or it is silent on something no plan can decide — do not apply it and do not work around it: put it in \`specChanges\`, naming the requirement and the change the spec needs. That stops the run and takes the finding to the spec's author, so put there only what you genuinely cannot resolve in the files you may write.`,
+        minorsOnly ? 'These are minor findings; apply each unless it would change meaning.' : 'Apply every finding. If a finding is wrong against the spec or the code, do not apply it and list it under skipped with the reason.',
+        findingsBlock(findings),
+        `Then commit with the message "plan: review round ${round}". Return done=true with the short sha.`,
+      ].join('\n'),
+    })
+    if (r.specChanges && r.specChanges.length) {
+      return await needsHuman('review-plan',
+        `a review finding of the plan can only be resolved by changing ${P.spec}, and no stage of this run edits the spec: it is the feature author's, written before the build started. The ${r.specChanges.length} change(s) below go to that author — with /speckit-clarify or an edit to the spec — and the build restarts at plan afterwards. Nothing else in the plan was left unapplied`,
+        r.specChanges)
+    }
+    if (!r.approved) return await needsHuman('review-plan', `blocking or major findings remain after ${cfg.maxReviewRounds} fix rounds and ${cfg.maxReviewRounds + 1} fresh-context refutation reviews: the loop applied every finding of every round and the review after the last fix still reports these. A plan finding that survives that is usually a decision the run is not authorised to take — a constitution amendment that fails its admission test, or a design the spec and the code disagree about`, r.findings)
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -983,6 +1016,7 @@ if (runs('tasks')) {
     FEATURE_CONTEXT(),
     `The feature is ${state.featureDir}.`,
     `${SPEC_IS_NOT_OURS(P.spec)} No task you write edits it either: a gap that could only be closed by changing the spec is not a task, and a task that would reword a requirement to match the plan is the same edit at one remove.`,
+    NO_TASK_WAITS_ON_A_PERSON,
     cfg.tasksGuidance ? `Arguments for the skill (task generation constraints): ${cfg.tasksGuidance}` : 'Arguments for the skill: none.',
     `Rules: every task names the file it touches; every phase ends with a task that runs the definition of done, \`${state.wall}\`, and fixes until it is green; the phases follow the template ("## Phase N: ..."). Every FR and SC of ${P.spec} is named by at least one task in this file — the gate refuses an id no task names — in qualified form \`${featureNum(state.featureDir)}/FR-nnn\` or \`${featureNum(state.featureDir)}/SC-nnn\`, and that task writes a test citing it — or, it is named by a task that adds its row to specs/trace-waivers.tsv (\`${featureNum(state.featureDir)}/ID<TAB>kind<TAB>reason\`, rows sorted), where kind is exactly \`external\` (the criterion cannot be witnessed from inside this repository at all — a production latency figure, an operator procedure) or \`deferred\` (specified but deliberately not built in this feature; the reason names where that deferral is recorded — a plan.md scope boundary, a GATES.md named-gap row, the owning capability). A requirement that is merely untested is neither: it gets a test, not a waiver row. This tasks stage is the only place a waiver task may originate: no later stage adds one. A task that dictates Javadoc or comment wording also uses the qualified form, never the bare id. Run the before_tasks and after_tasks hooks.`,
     `Return done=true with the number of tasks and phases written to ${P.tasks}.`,
@@ -1015,6 +1049,7 @@ if (runs('analyze')) {
       `Resolve the following analysis findings by editing the artifact each one names under ${state.featureDir} (plan.md and its companions, or tasks.md) or ${CONSTITUTION} for a constitution finding. Edit in place. A coverage gap is resolved by adding tasks to the right phase of ${P.tasks} with new ids after the current maximum, never by renumbering. A constitution violation is resolved by changing the plan, not the constitution, unless the finding says the constitution is what is wrong.`,
       SPEC_IS_NOT_OURS(P.spec),
       `So a finding the analysis files against the spec is resolved in the plan or the tasks where it can be — the spec is the authority the other artifacts are wrong against — and where it genuinely cannot be, put it in \`specChanges\` naming the requirement and the change the spec needs, apply the rest, and change nothing in ${P.spec}. \`specChanges\` stops the run and takes those findings to the spec's author, so put there only what no edit you are allowed to make can resolve.`,
+      NO_TASK_WAITS_ON_A_PERSON,
       'Apply every CRITICAL and HIGH finding; apply MEDIUM and LOW ones when the edit is local and safe, otherwise leave them.',
       analysis.findings.map(f => `${f.id} [${f.severity}] ${f.artifact} — ${f.location}: ${f.summary}\n   Recommendation: ${f.recommendation}`).join('\n'),
       `Then commit with the message "tasks: analysis round ${round}". Return done=true with the short sha and the findings you left unapplied under skipped.`,
