@@ -30,7 +30,13 @@ import { parseArgs } from 'node:util';
 
 const TEMPLATE_URL = process.env.TEMPLATE_URL || 'https://github.com/dulguun0225/java-backend-template.git';
 // The pinned template commit. Move it deliberately, in a commit that says which gate change it brings in.
-// Recorded 2026-09-25: "docs: the project CLAUDE.md states the base branch in one line" on main. Both CLAUDE.md
+// Recorded 2026-09-25: "gates: strict request bodies — identifiers in the path only, one request type per
+// operation" on main. Every @RequestBody binds as BoundBody<T> through StrictJsonBodyConverter, which refuses
+// undeclared members, members named after a path variable and wrong JSON types; RequestBodyContractTest,
+// StrictBodyEndpointIT and the vacuum rule request-body-schemas-are-closed gate it, and constitution Article IV
+// states it for the plan stage (java-backend-api *Request bodies*). Verified at this pin: a full vendored run of
+// this script for package mn.netgroup.netcore.pintest, mvn verify green, its own init: commit made. On top of
+// "docs: the project CLAUDE.md states the base branch in one line", recorded 2026-09-25. Both CLAUDE.md
 // files gain the line `Base branch: \`main\``, beside the definition-of-done command, which build-feature reads
 // from the repository root's CLAUDE.md; main is the trunk this script's `git init -b main` makes. No build input
 // changed, so mvn verify was not re-run for this pin; verified by a --skip-verify vendored run of this script
@@ -69,7 +75,7 @@ const TEMPLATE_URL = process.env.TEMPLATE_URL || 'https://github.com/dulguun0225
 // .claude/settings.json pins worktree.baseRef=head" (an agent worktree starts from the session's HEAD, not
 // main), #9 (guarded version update, ORDER BY id ban, table ownership, vacuum ruleset, migration lint
 // additions) and #8 (Article VI names no package; CLAUDE.md holds the pointer).
-const DEFAULT_REF = '00639a918712f6d815ae6ad407eb45bd2340b0ce';
+const DEFAULT_REF = 'd6c598e9b7e6f6da5e7c6434ad18a3af3a5aca53';
 
 const [major] = process.versions.node.split('.').map(Number);
 if (major < 22) die(`node ${process.versions.node} is too old; this script needs 22 or newer`);

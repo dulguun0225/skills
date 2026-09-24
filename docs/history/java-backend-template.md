@@ -735,3 +735,18 @@ line at the project root. **The pin names a commit that was not on the template'
 `new-backend.mjs` fetches `main` from GitHub and refuses a pin not reachable from it, so a scaffold from the
 default URL fails until the template is pushed. Per-session cost unchanged: no `description` edited.
 
+## 2026-09-25: strict request bodies
+
+Template `main` at `d6c598e`, ported from `netcore-platform/reference-data` `1b74507`, where update endpoints
+built across four features carried the path's identifier in the body and refused a mismatch with `*-immutable`
+codes; root cause and the skill side are in [java-backend](java-backend.md), *The request-body rules*. Every
+`@RequestBody` binds as `BoundBody<T>`, read only by `StrictJsonBodyConverter` (undeclared member, member named
+after a path variable, wrong JSON type, collected in one pass; the shared mapper's lenient setting untouched, since
+broker decoding must stay tolerant). Gates: `BanListArchTest.requestBodiesBindThroughBoundBody` with fixture, meta
+row and negative control; `RequestBodyContractTest`; `StrictBodyEndpointIT`, over the operations Spring's handler
+mapping discovers, held equal to the committed document's request-body operations, with a test-only probe
+controller for the path-variable case, since `greeting` has no body-taking route with a path variable; the vacuum
+rule `request-body-schemas-are-closed`. Constitution Article IV states the rule for the plan stage. Wall green;
+`DEFAULT_REF` moved to it after a full vendored scaffold from the pin ran `mvn verify` green. Per-session cost
+unchanged: no `description` edited.
+
