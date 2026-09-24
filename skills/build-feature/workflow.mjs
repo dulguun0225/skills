@@ -246,10 +246,21 @@ for (const name of Object.keys(cfg.tiers)) tier(name)
 // ---------------------------------------------------------------------------
 // Schemas — every stage returns data, never prose.
 // ---------------------------------------------------------------------------
+// One field, one description, on every stage that can write a task or resolve a
+// finding: the review-plan fixer, the tasks stage and the analyze remediator (S.done),
+// and since 2026-09-24 the converge assessment and the forced append. Every stage that
+// returns it is read by the script and stops the run on a non-empty list — a field the
+// schema says stops the run and the script ignores is the defect 211809f fixed.
+const SPEC_CHANGES_FIELD = {
+  type: 'array',
+  items: { type: 'string' },
+  description: 'findings whose only remedy is an edit to the feature\'s spec.md, which no stage of this run may make: one entry per finding, naming the requirement or section and the change the spec needs. Each one stops the run and goes to the spec\'s author, so put here only what cannot be resolved in the artifacts you may write.',
+}
+
 const S = {
   preflight: {
     type: 'object',
-    required: ['ok', 'branch', 'baseBranch', 'featureDir', 'wall', 'onBaseBranch', 'synced', 'clarifications', 'problems'],
+    required: ['ok', 'branch', 'baseBranch', 'featureDir', 'wall', 'onBaseBranch', 'synced', 'clarifications', 'missingInputs', 'problems'],
     properties: {
       ok: { type: 'boolean' },
       branch: { type: 'string', description: 'the branch checked out when you finish, which is the feature branch whenever you checked one out or made one' },
@@ -284,6 +295,11 @@ const S = {
         items: { type: 'string' },
         description: 'every "[NEEDS CLARIFICATION]" marker still in spec.md, quoted with its line number; empty when there are none',
       },
+      missingInputs: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'the repo-relative path of every input artifact the prompt told you to check that is missing or empty; empty when all are present, or when the prompt names none to check',
+      },
       problems: { type: 'array', items: { type: 'string' } },
     },
   },
@@ -316,11 +332,7 @@ const S = {
       summary: { type: 'string' },
       commit: { type: 'string', description: 'short sha of the commit that holds the work, empty if nothing was committed' },
       skipped: { type: 'array', items: { type: 'string' }, description: 'findings not applied, each with the reason' },
-      specChanges: {
-        type: 'array',
-        items: { type: 'string' },
-        description: 'findings whose only remedy is an edit to the feature\'s spec.md, which no stage of this run may make: one entry per finding, naming the requirement or section and the change the spec needs. Each one stops the run and goes to the spec\'s author, so put here only what cannot be resolved in the artifacts you may write.',
-      },
+      specChanges: SPEC_CHANGES_FIELD,
     },
   },
   analysis: {
@@ -411,6 +423,7 @@ const S = {
           },
         },
       },
+      specChanges: SPEC_CHANGES_FIELD,
       summary: { type: 'string' },
     },
   },
@@ -425,7 +438,7 @@ const S = {
       phase: { type: 'integer', description: 'the appended phase number' },
       tasks: {
         type: 'array',
-        description: 'one entry per finding this prompt handed you, in the order it gave them — a finding with no task is a failed append, not an omission to report here',
+        description: 'one entry per finding this prompt handed you, in the order it gave them — a finding with no task is a failed append, not an omission to report here. Empty when you returned specChanges, because then you append nothing',
         items: {
           type: 'object',
           required: ['taskId', 'location'],
@@ -437,6 +450,7 @@ const S = {
       },
       commit: { type: 'string', description: 'short sha of the commit that holds tasks.md, empty if nothing was committed' },
       note: { type: 'string', description: 'when appended is false, why; otherwise anything the writer had to decide' },
+      specChanges: SPEC_CHANGES_FIELD,
     },
   },
   reconciled: {
@@ -510,8 +524,12 @@ const SPEC_IS_NOT_OURS = spec =>
 // reading the plan had already taken, unchanged. The plan decides an open reading and
 // records it (the "Unattended" rule); a question only the author can answer is a
 // `specChanges` entry, which stops the run where it is found rather than after implement.
+// Carried by every stage that writes tasks: tasks and remediate, and since 2026-09-24
+// converge and the forced append, which until then could write the same gating task.
+// Every one of them returns `specChanges` and the script reads it, so the constant no
+// longer offers a stage without the field a way to leave the question out.
 const NO_TASK_WAITS_ON_A_PERSON =
-  'No task may wait on a person: never write a task whose completion needs an owner\'s answer, a /speckit-clarify session, a sign-off or a review by anyone outside this run, and never make another task depend on one. A reading of the spec that the plan has already decided and recorded stands as the plan wrote it; a question only the spec\'s author can answer is not a task — where you return `specChanges`, it goes there, and otherwise it is left out.'
+  'No task may wait on a person: never write a task whose completion needs an owner\'s answer, a /speckit-clarify session, a sign-off or a review by anyone outside this run, and never make another task depend on one. A reading of the spec that the plan has already decided and recorded stands as the plan wrote it; a question only the spec\'s author can answer is not a task — it goes in `specChanges`, which stops the run and takes it to that author.'
 
 // Stock spec-kit resolves the feature from SPECIFY_FEATURE_DIRECTORY, then from
 // .specify/feature.json, and never from the branch name (its own common.sh:
@@ -627,6 +645,11 @@ const detailBlock = detail => {
   return scalar(detail)
 }
 
+// An exit whose restart is not its own stage says so in its detail — the preflight exit
+// for a missing input artifact, whose restart is the stage that writes it — and the
+// document's restart paragraph follows it rather than contradicting the reason.
+const restartOf = detail => (detail && !Array.isArray(detail) && typeof detail === 'object' && STAGES.includes(detail.restartFrom) ? detail.restartFrom : null)
+
 const handoffDoc = (stage, why, detail) => [
   `# Handoff — the unattended build of ${state.featureDir} stopped at ${stage}`,
   '',
@@ -653,7 +676,7 @@ const handoffDoc = (stage, why, detail) => [
   '',
   '## Restarting the run',
   '',
-  `Once the decision is applied, check out \`${state.branch || 'the feature branch'}\` and restart at this stage through the \`build-feature\` skill with \`from: "${stage}"\` and \`wall: "${state.wall || ''}"\`; \`wall\` is required on any start after preflight, and the feature directory and branch are discovered from the checkout unless you pass \`featureDir: "${state.featureDir}"\` and \`branch: "${state.branch || ''}"\`. A decision that was a change to \`${state.featureDir}/spec.md\` restarts at \`from: "plan"\`, because every later artifact was planned from the old text. To replay this run instead of restarting it, pass \`resumeFromRunId\` with the run id in the journal path below.`,
+  `Once the decision is applied, check out \`${state.branch || 'the feature branch'}\` and restart ${restartOf(detail) ? 'at the stage the reason names' : 'at this stage'} through the \`build-feature\` skill with \`from: "${restartOf(detail) || stage}"\` and \`wall: "${state.wall || ''}"\`; \`wall\` is required on any start after preflight, and the feature directory and branch are discovered from the checkout unless you pass \`featureDir: "${state.featureDir}"\` and \`branch: "${state.branch || ''}"\`. A decision that was a change to \`${state.featureDir}/spec.md\` restarts at \`from: "plan"\`, because every later artifact was planned from the old text. To replay this run instead of restarting it, pass \`resumeFromRunId\` with the run id in the journal path below.`,
   '',
   '## Run journal',
   '',
@@ -839,7 +862,37 @@ async function reviewLoop({ kind, group, reviewer, fixer, reviewPrompt, fixPromp
 // reported and not refused, and gets no branch creation and no sync: it is resuming work
 // that already lives there. args.wall is still required on a start after preflight,
 // because only the full check reads CLAUDE.md for it.
+//
+// A later-stage start also checks that the feature artifacts its stages read exist
+// (2026-09-24). Until then `from: "review-plan"` with no plan.md, or `from: "implement"`
+// with no tasks.md, was caught by nothing in the script: the first agent of the stage met
+// the absence, and spec-kit's own check-prerequisites.sh refuses a missing plan.md in
+// every mode and a missing tasks.md under --require-tasks, so what came back was an agent
+// failing inside a stage rather than a stop that names the start that would make the
+// file. The list is derived per stage from what its prompt and its speckit skill read,
+// less what a stage earlier in the same run writes; spec.md is step 4's own check.
 // ---------------------------------------------------------------------------
+const STAGE_READS = {
+  'review-plan': ['plan.md'], // the review prompt refutes plan.md; its companions are read where present
+  tasks: ['plan.md'], // speckit-tasks: check-prerequisites.sh requires plan.md
+  analyze: ['plan.md', 'tasks.md'], // speckit-analyze: --require-tasks
+  implement: ['plan.md', 'tasks.md'], // speckit-implement: --require-tasks; the phase reader parses tasks.md
+  converge: ['plan.md', 'tasks.md'], // speckit-converge: --require-tasks; the forced append writes into tasks.md
+  finish: ['tasks.md'], // the close-out checks every task in tasks.md is ticked
+}
+const STAGE_WRITES = { plan: ['plan.md'], tasks: ['tasks.md'] }
+const producerOf = file => STAGES.find(st => (STAGE_WRITES[st] || []).includes(file))
+const inputsToCheck = (() => {
+  const need = []
+  const made = {}
+  for (const st of STAGES) {
+    if (!runs(st)) continue
+    for (const f of STAGE_READS[st] || []) if (!made[f] && !need.includes(f)) need.push(f)
+    for (const f of STAGE_WRITES[st] || []) made[f] = true
+  }
+  return need
+})()
+
 {
   const full = runs('preflight')
   phase('Preflight')
@@ -861,6 +914,9 @@ async function reviewLoop({ kind, group, reviewer, fixer, reviewPrompt, fixPromp
     '   (c) only when you started on the base branch: the one directory under `specs/` that holds a non-empty `spec.md` and no `plan.md` — the feature that has been specified and not yet planned, which is what this run exists to build. List them (`ls -d specs/*/`) and test each. Exactly one is the answer. Zero or more than one is a problem: return every directory you considered in `candidates` with what made it a candidate or not, leave `featureDir` empty, and stop. Never pick one of several, and never take the newest or the highest-numbered — a person passes `args.featureDir` instead.',
     '   (d) only when nothing above resolved: the `feature_directory` value in `.specify/feature.json`. It is machine-local, git-ignored state written by whichever machine last ran /speckit-specify, so it is the last resort and never overrides (a), (b) or (c).',
     '   The resolved directory must exist and hold a `spec.md` that is present and not empty (`wc -c`). A missing directory, a missing spec.md or an empty one is a problem, and `featureDir` comes back empty — this run builds a spec somebody has already written, and it writes no spec of its own.',
+    inputsToCheck.length
+      ? `   Then, in the directory you resolved, check the artifacts this run reads before any stage of it writes them: ${inputsToCheck.map(f => `\`<featureDir>/${f}\``).join(', ')}. Test each with \`test -s\` — present and not empty — and return every one that fails, as its repo-relative path, in \`missingInputs\`. A missing one is not a problem: do not add it to \`problems\`, do not create it, and carry on; the run reports it itself.`
+      : '',
     full
       ? `5. When the branch you started on IS the base branch, put the repository on the feature branch. Let DIR be the last path segment of the feature directory (${dirName}). The target branch is${cfg.branch ? ` \`${cfg.branch}\`, which this run names` : ': an existing branch named `feature/DIR` or `DIR` — look for both locally (`git branch --list`) and on the remote (`git branch -r --list \'origin/*\'`) — and otherwise a new `feature/DIR`'}. Then: a branch that exists locally, \`git checkout <target>\`; one that exists only on the remote, \`git checkout --track origin/<target>\`; one that does not exist, \`git checkout -b <target>\` from where you are standing, and return \`createdBranch\` true. Return the branch you end on as \`branch\` and the one you checked out as \`checkedOut\`. When you did not start on the base branch, check nothing out: you are already on the feature branch.`
       : '5. Check nothing out and create nothing: this run starts at a later stage, on the branch it was given. Return `branch` as the branch you are on, `createdBranch` false and `checkedOut` empty.',
@@ -906,6 +962,24 @@ async function reviewLoop({ kind, group, reviewer, fixer, reviewPrompt, fixPromp
     return await needsHuman('preflight',
       `merging \`${state.baseBranch || 'the base branch'}\` into \`${state.branch || 'the feature branch'}\` conflicted, and the merge was aborted, so the tree is as it was. The build never edits spec.md, so a conflict here is between the base branch and this feature's own committed work in the files below — a person's to resolve, on the branch, before the run restarts`,
       { conflicts: p.conflicts || [], problems: p.problems })
+  }
+  // Before the `ok` test, so the exit that names the start producing the file wins even
+  // where the agent also reported the absence as a problem. Only the files the prompt
+  // named count; a path the agent returns beyond them is ignored.
+  const missing = p.featureDir && Array.isArray(p.missingInputs)
+    ? inputsToCheck.filter(f => p.missingInputs.some(m => String(m || '').replace(/\/+$/, '').split('/').pop() === f))
+    : []
+  if (missing.length) {
+    // The earliest stage that writes a missing file; a spec the sync just changed sends
+    // the restart to plan whatever is missing, for the reason the specChanged exit gives.
+    const restart = p.specChanged ? 'plan' : STAGES.find(st => missing.some(f => producerOf(f) === st))
+    const paths = missing.map(f => `${state.featureDir}/${f}`)
+    const one = missing.length === 1
+    return await needsHuman('preflight',
+      `this run was told to start at "${cfg.from}", and ${paths.join(' and ')} ${one ? 'is' : 'are'} missing or empty: the run reads ${one ? 'it' : 'them'} before any stage of it writes ${one ? 'it' : 'them'}. Nothing was started. Restart with \`from: "${restart}"\`, ${p.specChanged
+        ? 'because the sync also changed spec.md and every artifact after the plan is derived from the old text'
+        : `the first stage that writes ${missing.filter(f => producerOf(f) === restart).join(' and ')}`}`,
+      { missingInputs: paths, from: cfg.from, restartFrom: restart, problems: p.problems || [] })
   }
   if (!p.ok) return await needsHuman('preflight', full ? 'the repository is not ready' : 'the repository does not match what this restart was given', p.problems)
   if (!p.featureDir) {
@@ -1269,6 +1343,7 @@ if (runs('converge')) {
     FEATURE_CONTEXT(),
     `The feature is ${state.featureDir}.`,
     SPEC_IS_NOT_OURS(P.spec),
+    NO_TASK_WAITS_ON_A_PERSON,
     assessOnly
       ? 'ASSESS ONLY. Run the skill\'s assessment through its findings summary and stop there. Append nothing: tasks.md and every other file must be byte-for-byte unchanged when you finish, nothing is committed, and you run no hook that writes or commits. Return the outcome "converged", because nothing was appended; the findings below are the whole value of this round.'
       : `Run the assessment in full. Return the outcome exactly as the skill defines it: "converged" when nothing was appended, "tasks_appended" with the new phase number and the appended task ids otherwise. When tasks were appended, commit tasks.md with the message "tasks: convergence round ${round}".`,
@@ -1304,6 +1379,10 @@ if (runs('converge')) {
   // The extra cost of a forced round over an appended one is one forceAppend agent.
   // -------------------------------------------------------------------------
   const P = featurePaths(state.featureDir)
+  // The reason every converge-stage `specChanges` exit gives — the assessment's and the
+  // forced append's alike — in the words the tasks exit uses.
+  const specWhy = (where, n) =>
+    `${where} found ${n} question(s) only the author of ${P.spec} can answer, and no stage of this run edits the spec or writes a task that waits on a person: it is the feature author's, written before the build started. The change(s) below go to that author — with /speckit-clarify or an edit to the spec — and the build restarts at plan afterwards`
 
   // A finding's identity, so the loop can tell a finding it already forced from a new
   // one. Severity, location and summary, lowercased with whitespace collapsed and a
@@ -1357,8 +1436,10 @@ if (runs('converge')) {
   const forceAppendPrompt = (round, fs) => [
     UNATTENDED,
     `The feature is ${state.featureDir}; its tasks file is ${P.tasks}.`,
-    `A convergence assessment of this feature has just reported that it appended no tasks, and reported the findings below all the same. They are open work: nothing in ${P.tasks} closes them. Your only job is to append them to ${P.tasks} as one new convergence phase, one task per finding, so that the implement stage runs them. You are not assessing anything. Do not read the code to re-check a finding, do not re-grade one, do not judge one non-actionable, do not drop, merge, split or reorder them, do not add a finding of your own, and do not fix anything. Every finding below gets exactly one task, in the order given.`,
+    `A convergence assessment of this feature has just reported that it appended no tasks, and reported the findings below all the same. They are open work: nothing in ${P.tasks} closes them. Your only job is to append them to ${P.tasks} as one new convergence phase, one task per finding, so that the implement stage runs them. You are not assessing anything. Do not read the code to re-check a finding, do not re-grade one, do not judge one non-actionable, do not drop, merge, split or reorder them, do not add a finding of your own, and do not fix anything. Every finding below gets exactly one task, in the order given, save for the one case the next paragraphs name.`,
     `${SPEC_IS_NOT_OURS(P.spec)} No task you write asks anyone else to either: a task worded to reconcile the spec with the code is that edit at one remove. Write each task against the code, the tests, the gates, the documents or the plan.`,
+    NO_TASK_WAITS_ON_A_PERSON,
+    `That is the one judgment this prompt leaves you. Where a finding below can be closed only by an answer from the spec's author — the only task you could write for it would wait on that answer — append nothing and commit nothing, for that finding or any other: return appended=false, \`tasks\` empty, and every such finding in \`specChanges\`, naming the requirement or section and the change the spec needs. The run stops there and goes to the author; the findings you did not name are assessed again when it restarts.`,
     'The findings, exactly as the assessment returned them:',
     forcedFindingsBlock(fs),
     `Append to the end of ${P.tasks}, following /speckit-converge's own append contract and nothing else: append only, rewrite nothing, renumber nothing, touch no existing task and no earlier convergence phase, and change no file but ${P.tasks}.`,
@@ -1408,6 +1489,10 @@ if (runs('converge')) {
   for (let round = 1; round <= cfg.maxConvergeRounds; round++) {
     const last = await run('converge', `converge ${round}`, convergePrompt(round, false), S.converged, 'Converge')
     state.rounds.converge = round
+    // Read before the outcome: a phase this round appended beside a question for the
+    // author is left unimplemented, since the restart the question needs is at plan.
+    const askedR = specChangesOf(last)
+    if (askedR.length) return await needsHuman('converge', specWhy(`converge round ${round}`, askedR.length), askedR)
     const findings = Array.isArray(last.findings) ? last.findings : []
     const aboveFloor = findings.filter(aboveFloorSev)
     const grade = gradeOf(findings)
@@ -1433,6 +1518,10 @@ if (runs('converge')) {
         }
         log(`converge round ${round}: converged with nothing appended and ${aboveFloor.length} finding(s) above the floor (${grade}) — appending them as a forced convergence round; ${floorPhrase}, so converge's non-actionable judgment is not this loop's`)
         let fa = await run('forceAppend', `force-append converge ${round}`, forceAppendPrompt(round, aboveFloor), S.forceAppended, 'Converge')
+        // Read before `appended`: a forced append that routes a finding to the author
+        // returns appended=false by instruction, and that is not a failed write to reconcile.
+        const askedF = specChangesOf(fa)
+        if (askedF.length) return await needsHuman('converge', specWhy(`the forced append of converge round ${round}`, askedF.length), askedF)
         // A failed append is reconciled and retried once, never escalated blind. The
         // sequence is: one reconcile agent brings tasks.md to a known state, the
         // parse-only `phases` reader certifies that state independently — the same
@@ -1487,6 +1576,8 @@ if (runs('converge')) {
           } else {
             log(`reconcile after forced append ${round}: tasks.md holds no part of the forced phase${recon.removed ? ' (a partial one was removed)' : ''} — one retry of the forced append, and the loop escalates if that fails too`)
             const retry = await run('forceAppend', `force-append converge ${round} (retry)`, forceAppendPrompt(round, aboveFloor), S.forceAppended, 'Converge')
+            const askedRetry = specChangesOf(retry)
+            if (askedRetry.length) return await needsHuman('converge', specWhy(`the retried forced append of converge round ${round}`, askedRetry.length), askedRetry)
             if (!retry.appended) {
               return await needsHuman('converge',
                 `the forced convergence round could not append its ${aboveFloor.length} finding(s) to tasks.md, and the loop has tried twice: the first append failed (${failedAppend.note || 'no reason given'}), a reconcile read tasks.md against git and left it with no part of the forced phase in it${recon.removed ? ', having removed a partial one' : ''}, and a second append against that clean file failed as well (${retry.note || 'no reason given'}). tasks.md is in the known state the reconcile reports below — it does not need to be worked out`,
@@ -1560,6 +1651,10 @@ if (runs('converge')) {
     // max + 1 — reports what no implement pass has closed.
     const assessRound = state.rounds.converge + 1
     const assess = await run('converge', `converge ${assessRound} (assess only)`, convergePrompt(assessRound, true), S.converged, 'Converge')
+    // A question for the author is not an open finding to carry to finish under
+    // round-cap: the run would end `done` with it.
+    const askedA = specChangesOf(assess)
+    if (askedA.length) return await needsHuman('converge', specWhy(`the assess-only converge round ${assessRound}`, askedA.length), askedA)
     const findings = Array.isArray(assess.findings) ? assess.findings : []
     const aboveFloor = findings.filter(aboveFloorSev)
     endingFindings = findings
