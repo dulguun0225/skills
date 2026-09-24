@@ -26,7 +26,7 @@ They are machine-local, in no repository, and a cleared projects directory erase
 them. **This page is the durable record** — the same arrangement `npm run firing`
 has, where the sessions are thrown away and the rates are written down. Owner's
 decision, 2026-09-22: no raw-JSON backup is committed anywhere, and
-`npm run runs --json` exists for piping, not for keeping.
+`npm run runs -- --json` exists for piping, not for keeping.
 
 **The defect class this page exists for.** The lapse rule decays a *confirmed*
 marker to *convention* once `review-by` passes, with no maintainer action needed.
@@ -46,7 +46,14 @@ runs) and `netos/netcore-platform/product-catalog` (20). One machine, linux
 7.1.5 x86_64, Claude Code CLI 2.1.278, Node v26.5.1, one operator. **No control
 arm and no repeat**: every claim below is *convention* unless it is a direct
 reading of a field, and a number is comparable only to another taken the same
-way. Re-run with `npm run runs --since 2026-09-17`.
+way. Re-run with `npm run runs -- --since 2026-09-17 --until 2026-09-22 --repo
+~/repos/netos/netcore-platform/reference-data --repo
+~/repos/netos/netcore-platform/product-catalog`; the `--` is required, since
+without it npm strips the flag names and the script reads every run unfiltered.
+**That window is a superset of this stamp and cannot be narrowed to it**:
+`--until` is day-granular and more runs ended on 2026-09-22 after this sweep was
+taken, so the command lists 37 runs on 2026-09-24, and this sweep's 28 are the
+first 28 of them, through `wf_fbb2141f-8bf` (03:12Z).
 
 ### Corpus
 
@@ -232,7 +239,9 @@ made twice a year*. **Not a checklist in `CLAUDE.md`** either: that file is load
 every session and carries only what is needed every session. A section on this
 page costs nothing until somebody opens it.
 
-- **a.** `npm run runs --since <last sweep's date>`. Paste the per-run block, the
+- **a.** `npm run runs -- --since <last sweep's date> --until <today>`, and record
+  both dates in the stamp beside the run-id range, which is the only exact bound
+  when either day holds runs from outside the sweep. Paste the per-run block, the
   corpus line, the stage × tier table and the per-stop block's summary line into
   a new sweep section, verbatim.
 - **b.** **Re-read every status line, and every *unmeasured* / *unrun* / *no run

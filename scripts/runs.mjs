@@ -51,6 +51,12 @@
 // Flags:
 //   --repo <abs path>   consumer repo to read; repeatable; defaults below
 //   --since <ISO date>  only runs whose timestamp is on or after this date
+//   --until <ISO date>  only runs whose timestamp is on or before this date,
+//                       inclusive; with --since it reproduces a sweep's stamp.
+//                       A stop's next run is still looked up past --until and,
+//                       when it lies outside the window, is shown marked so: it
+//                       answers whether the resolution took, which the window
+//                       cannot. It is not counted in any table
 //   --run <runId>       only this run (substring match on the run id)
 //   --json              machine-readable dump instead of the text report, the per-stop records included
 
@@ -74,6 +80,7 @@ const flagValues = (name) =>
 const flagValue = (name) => flagValues(name).at(-1);
 const repos = flagValues("--repo").length ? flagValues("--repo") : DEFAULT_REPOS;
 const since = flagValue("--since");
+const until = flagValue("--until");
 const onlyRun = flagValue("--run");
 const asJson = argv.includes("--json");
 
@@ -269,8 +276,10 @@ function readRun(path, repo) {
   };
 }
 
-// `allRuns` ignores `--run`, because the per-stop section needs the next run on
-// a stopped feature even when only the stopped run was asked for.
+// `allRuns` ignores `--run` and `--until`, because the per-stop section needs
+// the next run on a stopped feature even when only the stopped run was asked
+// for, or when that next run falls after the window. Both date bounds compare
+// against the run's end date, `YYYY-MM-DD`.
 const allRuns = [];
 for (const repo of repos) {
   for (const path of journalPaths(repo)) {
@@ -281,7 +290,8 @@ for (const repo of repos) {
   }
 }
 allRuns.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
-const runs = onlyRun ? allRuns.filter((r) => r.runId.includes(onlyRun)) : allRuns;
+const inWindow = (r) => !(until && r.date && r.date > until.slice(0, 10));
+const runs = allRuns.filter((r) => inWindow(r) && (!onlyRun || r.runId.includes(onlyRun)));
 
 // ---------------------------------------------------------------------------
 // Stops — what each needs-human exit left in git, and what changed after it
@@ -441,6 +451,7 @@ function readStop(r) {
           status: next.exit === "needs-human" ? `needs-human@${next.stage}` : next.exit === "done" ? `done (${next.convergeEnded})` : `harness:${next.harnessStatus}`,
           stage: next.exit === "needs-human" ? next.stage : null,
           repeatStage: next.exit === "needs-human" && next.stage === r.stage,
+          outsideWindow: !inWindow(next),
         }
       : null,
   };
@@ -512,273 +523,283 @@ const fmtM = (n) => `${(n / 1e6).toFixed(2)}M`;
 const mins = (ms) => `${Math.round(ms / 60000)}m`;
 const coverage = (tok, a, b) => `>=${tok.toLocaleString("en-US")} over ${a}/${b} agents`;
 
+// Every exit sets process.exitCode and lets the process end once stdout has
+// drained. process.exit() does not wait for a pipe: `--json | <reader>` was cut
+// at exactly 65,536 bytes, invalid JSON, while a redirect to a file was complete.
+const readFailed = unreadable.length || unparsedLabels.length ? 1 : 0;
 if (asJson) {
   console.log(
     JSON.stringify(
-      { generated: new Date().toISOString(), repos, since: since ?? null, stops, runs: runs.map(({ agents, ...r }) => ({ ...r, agents: agents.map((p) => ({ stage: p.normalStage, model: p.model, effort: p.effort, retry: p.retry, annotations: p.annotations, tokens: p.agent.tokens ?? null, durationMs: p.agent.durationMs ?? null })) })) },
+      { generated: new Date().toISOString(), repos, since: since ?? null, until: until ?? null, stops, runs: runs.map(({ agents, ...r }) => ({ ...r, agents: agents.map((p) => ({ stage: p.normalStage, model: p.model, effort: p.effort, retry: p.retry, annotations: p.annotations, tokens: p.agent.tokens ?? null, durationMs: p.agent.durationMs ?? null })) })) },
       null,
       2,
     ),
   );
-  process.exit(unreadable.length || unparsedLabels.length ? 1 : 0);
+  process.exitCode = readFailed;
+} else {
+  process.exitCode = textReport();
 }
 
-if (!runs.length) {
-  console.log(
-    `\nNo run journals found.\n\nLooked in:\n${repos.map((r) => `  ${projectDir(r)}`).join("\n")}\n\n` +
-      `The journals are machine-local and ephemeral — a cleared ~/.claude/projects\n` +
-      `erases them. The durable record is docs/history/runs.md.\n`,
-  );
-  process.exit(0);
-}
-
-// --- Block 1: one record per run -------------------------------------------
-console.log(`\n=== Per-run record — ${runs.length} run(s), ${runs[0].date}..${runs.at(-1).date} ===\n`);
-console.log(
-  `Mechanisms: fc=forced convergence round, wr=wall repair, rc=reconcile after a\n` +
-    `failed forced append, ao=assess-only round, sr=stall retry. A second implement\n` +
-    `pass over unchecked task ids has no label of its own and is not counted.\n`,
-);
-for (const r of runs) {
-  const m = r.mech;
-  const rounds = r.rounds
-    ? Object.entries(r.rounds)
-        .filter(([, v]) => v)
-        .map(([k, v]) => `${k}=${v}`)
-        .join(",") || "none"
-    : "(no result)";
-  console.log(
-    `${r.date} ${r.runId.padEnd(17)} ${r.repo.padEnd(16)} ${(r.feature.replace(/^specs\//, "")).padEnd(22)}` +
-      ` ${r.exit === "needs-human" ? `needs-human@${r.stage}` : r.exit === "done" ? `done (${r.convergeEnded})` : `harness:${r.harnessStatus}`}`,
-  );
-  console.log(
-    `    from=${r.from} until=${r.until} rounds:${rounds} floor=${r.convergeFloor} handoff=${r.handoff}` +
-      ` | fc=${m.forced} wr=${m.wallRepair} rc=${m.reconcile} ao=${m.assessOnly} sr=${m.stallRetry}` +
-      ` | agents=${r.agentCount} ${coverage(r.tokens, r.tokenAgents, r.agentCount)} ${mins(r.durationMs)} tools=${r.toolCalls}`,
-  );
-  if (r.stagesRun) console.log(`    stagesRun: ${r.stagesRun.join(" -> ")}`);
-  for (const l of [...r.wallRed, ...r.roundCap, ...r.stalls]) console.log(`    ! ${l.slice(0, 150)}`);
-  if (r.why) console.log(`    why: ${r.why.slice(0, 150)}${r.why.length > 150 ? "..." : ""}`);
-  console.log();
-}
-
-const tot = (fn) => runs.reduce((n, r) => n + fn(r), 0);
-const exits = {};
-for (const r of runs) {
-  const k = r.exit === "needs-human" ? `needs-human@${r.stage}` : r.exit === "done" ? "done" : `harness:${r.harnessStatus}`;
-  exits[k] = (exits[k] ?? 0) + 1;
-}
-console.log(
-  `Corpus: ${runs.length} runs, ${runs[0].date}..${runs.at(-1).date}, ` +
-    `${coverage(tot((r) => r.tokens), tot((r) => r.tokenAgents), tot((r) => r.agentCount))}, ` +
-    `${(tot((r) => r.durationMs) / 3600000).toFixed(1)}h, ${tot((r) => r.agentCount)} agents.`,
-);
-console.log(`Exits: ${Object.entries(exits).sort().map(([k, v]) => `${k}=${v}`).join(", ")}`);
-console.log(
-  `Mechanisms across the corpus: ` +
-    ["forced", "wallRepair", "reconcile", "assessOnly", "stallRetry"]
-      .map((k) => `${k}=${tot((r) => r.mech[k])}`)
-      .join(", "),
-);
-// Label annotations other than `retry N`, which is counted as sr above. An
-// annotated agent is parsed and counted like any other; this line says how many
-// were relaunched or marked by hand, and --json carries each one per agent.
-const annotationCounts = {};
-for (const r of runs) for (const p of r.agents) for (const a of p.annotations) annotationCounts[a] = (annotationCounts[a] ?? 0) + 1;
-console.log(
-  `Agent label annotations: ${Object.entries(annotationCounts).sort().map(([k, v]) => `"${k}"=${v}`).join(", ") || "none"}`,
-);
-
-// A feature that never reached implement is the loop failing to leave a fixed
-// point, and it is invisible in any per-run line.
-const byFeature = new Map();
-for (const r of runs) {
-  const key = `${r.repo}/${r.feature}`;
-  const e = byFeature.get(key) ?? { runs: 0, tokens: 0, implement: 0, exits: [] };
-  e.runs += 1;
-  e.tokens += r.tokens;
-  e.implement += r.agents.filter((p) => /^implement/.test(p.normalStage)).length;
-  e.exits.push(r.exit === "needs-human" ? r.stage : r.exit);
-  byFeature.set(key, e);
-}
-console.log(`\nPer feature:`);
-for (const [k, e] of [...byFeature].sort()) {
-  console.log(
-    `  ${k.padEnd(52)} runs=${String(e.runs).padStart(2)} tok=${fmtM(e.tokens)} implement-agents=${String(e.implement).padStart(2)}` +
-      `${e.implement === 0 ? "  <- never reached implement" : ""}`,
-  );
-}
-
-// --- Block 2: stage x tier -------------------------------------------------
-console.log(`\n\n=== Stage x tier — tokens and wall-clock per agent ===\n`);
-const cells = new Map();
-for (const r of runs) {
-  for (const p of r.agents) {
-    const key = `${p.normalStage}|${p.model} ${p.effort}`;
-    const c = cells.get(key) ?? { n: 0, withTok: 0, tokens: 0, ms: 0, withMs: 0, retries: 0 };
-    c.n += 1;
-    if (typeof p.agent.tokens === "number") {
-      c.withTok += 1;
-      c.tokens += p.agent.tokens;
-    }
-    if (typeof p.agent.durationMs === "number") {
-      c.withMs += 1;
-      c.ms += p.agent.durationMs;
-    }
-    if (p.retry > 0) c.retries += 1;
-    cells.set(key, c);
-  }
-}
-const rowsOut = [...cells].map(([k, c]) => ({ stage: k.split("|")[0], tier: k.split("|")[1], ...c }));
-rowsOut.sort((a, b) => b.tokens - a.tokens);
-const w = Math.max(...rowsOut.map((r) => r.stage.length), 5);
-console.log(`${"stage".padEnd(w)}  ${"tier".padEnd(14)}  ${"n".padStart(4)}  ${"tok(cov)".padStart(18)}  ${"mean tok".padStart(9)}  ${"mean s".padStart(7)}  retries`);
-for (const r of rowsOut) {
-  console.log(
-    `${r.stage.padEnd(w)}  ${r.tier.padEnd(14)}  ${String(r.n).padStart(4)}  ` +
-      `${`${r.tokens.toLocaleString("en-US")} (${r.withTok}/${r.n})`.padStart(18)}  ` +
-      `${String(r.withTok ? Math.round(r.tokens / r.withTok) : 0).padStart(9)}  ` +
-      `${String(r.withMs ? Math.round(r.ms / r.withMs / 1000) : 0).padStart(7)}  ${r.retries}`,
-  );
-}
-
-console.log(`\nBy tier alone:`);
-const tiers = new Map();
-for (const r of rowsOut) {
-  const t = tiers.get(r.tier) ?? { n: 0, withTok: 0, tokens: 0, ms: 0, withMs: 0 };
-  t.n += r.n;
-  t.withTok += r.withTok;
-  t.tokens += r.tokens;
-  t.ms += r.ms;
-  t.withMs += r.withMs;
-  tiers.set(r.tier, t);
-}
-for (const [k, t] of [...tiers].sort((a, b) => b[1].tokens - a[1].tokens)) {
-  console.log(
-    `  ${k.padEnd(14)} n=${String(t.n).padStart(4)}  ${coverage(t.tokens, t.withTok, t.n).padEnd(44)}` +
-      ` mean=${t.withTok ? Math.round(t.tokens / t.withTok) : 0}  mean_s=${t.withMs ? Math.round(t.ms / t.withMs / 1000) : 0}`,
-  );
-}
-
-// --- Block 3: recurrence ---------------------------------------------------
-console.log(`\n\n=== Recurrence — what came back, and where ===\n`);
-
-function group(items, keyOf, labelOf) {
-  const g = new Map();
-  for (const it of items) {
-    const k = keyOf(it);
-    if (!k) continue;
-    const e = g.get(k) ?? { label: labelOf(it), runs: new Set(), features: new Set(), n: 0 };
-    e.runs.add(it.runId);
-    e.features.add(it.feature);
-    e.n += 1;
-    g.set(k, e);
-  }
-  return [...g.values()].filter((e) => e.runs.size > 1).sort((a, b) => b.runs.size - a.runs.size);
-}
-
-const tag = (e) => (e.features.size > 1 ? "CROSS-FEATURE" : "REPEAT       ");
-const show = (title, groups) => {
-  console.log(`-- ${title}: ${groups.length} group(s) spanning more than one run`);
-  for (const e of groups) {
-    console.log(`   ${tag(e)}  ${e.runs.size} runs, ${e.features.size} feature(s), ${e.n} occurrence(s)`);
-    console.log(`     ${e.label.slice(0, 160)}${e.label.length > 160 ? "..." : ""}`);
-    console.log(`     runs: ${[...e.runs].join(", ")}`);
-    console.log(`     features: ${[...e.features].join(", ")}`);
-  }
-  if (!groups.length) console.log(`   none`);
-  console.log();
-};
-
-const exitItems = runs.filter((r) => r.why).map((r) => ({ runId: r.runId, feature: r.feature, why: r.why }));
-show(
-  "Exit reasons (result.why, verbatim then normalised)",
-  group(exitItems, (i) => normalise(i.why), (i) => i.why),
-);
-
-const findingItems = runs.flatMap((r) =>
-  r.findings.map(({ kind, f }) => ({
-    runId: r.runId,
-    feature: r.feature,
-    kind,
-    sev: findingSeverity(f),
-    text: findingText(f),
-    loc: findingLocation(f),
-  })),
-);
-console.log(
-  `${findingItems.length} finding(s) read: ` +
-    `${findingItems.filter((i) => i.kind === "detail").length} from result.detail, ` +
-    `${findingItems.filter((i) => i.kind === "forced").length} from result.converge.forced.\n`,
-);
-show(
-  "Finding text",
-  group(findingItems, (i) => (i.text ? normalise(i.text) : null), (i) => `[${i.sev}] ${i.text}`),
-);
-show(
-  "Finding location",
-  group(findingItems, (i) => (i.loc ? normalise(i.loc) : null), (i) => `[${i.sev}] ${i.loc}`),
-);
-
-// --- Block 4: every stop ---------------------------------------------------
-console.log(`\n=== Per-stop record — every needs-human exit, its handoff and what changed after it ===\n`);
-console.log(
-  `Read from each service repo's git history, read-only, beside the journal. Flags on a\n` +
-    `resolution commit: SPEC, CONSTITUTION, CLAUDE.md, RESOLUTIONS; HANDOFF-RESOLVED-REWRITE\n` +
-    `(HANDOFF.md overwritten with a "# Resolved" document), HANDOFF-TOUCHED or -DELETED\n` +
-    `(the file changed under a non-handoff subject), HANDOFF-COMMIT (another stop's handoff\n` +
-    `inside the window). REPEAT-STAGE: the next run on the feature stopped at the same stage.\n`,
-);
-for (const s of stops) {
-  console.log(`${s.date} ${s.runId.padEnd(17)} ${s.repo.padEnd(16)} ${s.featureDir.replace(/^specs\//, "").padEnd(22)} needs-human@${s.stage}`);
-  if (s.why) console.log(`    why: ${s.why.slice(0, 150)}${s.why.length > 150 ? "..." : ""}`);
-  const h = s.handoff;
-  if (h.none) console.log(`    handoff: none — ${h.none}`);
-  else {
-    console.log(`    handoff: ${h.short} (${h.via}) items=${h.items ?? "?"} bytes=${h.bytes ?? "?"}`);
-    console.log(`      read: ${h.read}`);
-  }
-  const rs = s.resolution;
-  if (rs?.none) console.log(`    resolution: unreadable — ${rs.none}`);
-  else if (rs) {
+/** The text report; returns the exit code. */
+function textReport() {
+  if (!runs.length) {
     console.log(
-      `    resolution: ${rs.commits.length} commit(s) on ${rs.ref}${rs.refIsFallback ? " (feature branch not in this clone; a ref holding the handoff)" : ""}, up to ${rs.until}; ` +
-        `RESOLUTIONS.md ${rs.resolutionsFile ? "present" : "absent"} at the window's end`,
+      `\nNo run journals found.\n\nLooked in:\n${repos.map((r) => `  ${projectDir(r)}`).join("\n")}\n\n` +
+        `The journals are machine-local and ephemeral — a cleared ~/.claude/projects\n` +
+        `erases them. The durable record is docs/history/runs.md.\n`,
     );
-    for (const c of rs.commits.slice(0, MAX_LISTED_COMMITS)) {
-      console.log(`      ${c.sha} ${c.date} ${c.subject.slice(0, 90)}${c.flags.length ? `  [${c.flags.join(" ")}]` : ""}`);
-      console.log(`        ${c.files.slice(0, 6).join(", ")}${c.files.length > 6 ? `, +${c.files.length - 6} more` : ""}`);
-    }
-    if (rs.commits.length > MAX_LISTED_COMMITS) console.log(`      ... ${rs.commits.length - MAX_LISTED_COMMITS} more; --json lists them all`);
+    return 0;
   }
-  const n = s.next;
-  console.log(`    next: ${n ? `${n.runId} ${n.status}${n.repeatStage ? "  REPEAT-STAGE" : ""}` : "none in the window"}`);
-  console.log();
-}
-if (!stops.length) console.log(`   none\n`);
-const withHandoff = stops.filter((s) => s.handoff.sha).length;
-console.log(
-  `Stops: ${stops.length}; with a handoff commit in git: ${withHandoff}; none found, so journal-only here: ${stops.length - withHandoff}; ` +
-    `next run stopped at the same stage: ${stops.filter((s) => s.next?.repeatStage).length}.\n`,
-);
 
-// --- What could not be read ------------------------------------------------
-if (unreadable.length) {
-  console.log(`Journals that could not be parsed — every table above is short by these:`);
-  for (const u of unreadable) console.log(`  ${u}`);
-  console.log();
-}
-if (unparsedLabels.length) {
+  // --- Block 1: one record per run -------------------------------------------
+  console.log(`\n=== Per-run record — ${runs.length} run(s), ${runs[0].date}..${runs.at(-1).date} ===\n`);
   console.log(
-    `Agent labels this script could not read. They are counted in the agent totals\n` +
-      `under "(unparsed)" and contribute no tier, so the stage x tier table is short\n` +
-      `by them. A label format change in workflow.mjs is the usual cause:`,
+    `Mechanisms: fc=forced convergence round, wr=wall repair, rc=reconcile after a\n` +
+      `failed forced append, ao=assess-only round, sr=stall retry. A second implement\n` +
+      `pass over unchecked task ids has no label of its own and is not counted.\n`,
   );
-  for (const u of unparsedLabels) console.log(`  ${u}`);
-  console.log();
-}
+  for (const r of runs) {
+    const m = r.mech;
+    const rounds = r.rounds
+      ? Object.entries(r.rounds)
+          .filter(([, v]) => v)
+          .map(([k, v]) => `${k}=${v}`)
+          .join(",") || "none"
+      : "(no result)";
+    console.log(
+      `${r.date} ${r.runId.padEnd(17)} ${r.repo.padEnd(16)} ${(r.feature.replace(/^specs\//, "")).padEnd(22)}` +
+        ` ${r.exit === "needs-human" ? `needs-human@${r.stage}` : r.exit === "done" ? `done (${r.convergeEnded})` : `harness:${r.harnessStatus}`}`,
+    );
+    console.log(
+      `    from=${r.from} until=${r.until} rounds:${rounds} floor=${r.convergeFloor} handoff=${r.handoff}` +
+        ` | fc=${m.forced} wr=${m.wallRepair} rc=${m.reconcile} ao=${m.assessOnly} sr=${m.stallRetry}` +
+        ` | agents=${r.agentCount} ${coverage(r.tokens, r.tokenAgents, r.agentCount)} ${mins(r.durationMs)} tools=${r.toolCalls}`,
+    );
+    if (r.stagesRun) console.log(`    stagesRun: ${r.stagesRun.join(" -> ")}`);
+    for (const l of [...r.wallRed, ...r.roundCap, ...r.stalls]) console.log(`    ! ${l.slice(0, 150)}`);
+    if (r.why) console.log(`    why: ${r.why.slice(0, 150)}${r.why.length > 150 ? "..." : ""}`);
+    console.log();
+  }
 
-console.log(`What this report does not decide:
+  const tot = (fn) => runs.reduce((n, r) => n + fn(r), 0);
+  const exits = {};
+  for (const r of runs) {
+    const k = r.exit === "needs-human" ? `needs-human@${r.stage}` : r.exit === "done" ? "done" : `harness:${r.harnessStatus}`;
+    exits[k] = (exits[k] ?? 0) + 1;
+  }
+  console.log(
+    `Corpus: ${runs.length} runs, ${runs[0].date}..${runs.at(-1).date}, ` +
+      `${coverage(tot((r) => r.tokens), tot((r) => r.tokenAgents), tot((r) => r.agentCount))}, ` +
+      `${(tot((r) => r.durationMs) / 3600000).toFixed(1)}h, ${tot((r) => r.agentCount)} agents.`,
+  );
+  console.log(`Exits: ${Object.entries(exits).sort().map(([k, v]) => `${k}=${v}`).join(", ")}`);
+  console.log(
+    `Mechanisms across the corpus: ` +
+      ["forced", "wallRepair", "reconcile", "assessOnly", "stallRetry"]
+        .map((k) => `${k}=${tot((r) => r.mech[k])}`)
+        .join(", "),
+  );
+  // Label annotations other than `retry N`, which is counted as sr above. An
+  // annotated agent is parsed and counted like any other; this line says how many
+  // were relaunched or marked by hand, and --json carries each one per agent.
+  const annotationCounts = {};
+  for (const r of runs) for (const p of r.agents) for (const a of p.annotations) annotationCounts[a] = (annotationCounts[a] ?? 0) + 1;
+  console.log(
+    `Agent label annotations: ${Object.entries(annotationCounts).sort().map(([k, v]) => `"${k}"=${v}`).join(", ") || "none"}`,
+  );
+
+  // A feature that never reached implement is the loop failing to leave a fixed
+  // point, and it is invisible in any per-run line.
+  const byFeature = new Map();
+  for (const r of runs) {
+    const key = `${r.repo}/${r.feature}`;
+    const e = byFeature.get(key) ?? { runs: 0, tokens: 0, implement: 0, exits: [] };
+    e.runs += 1;
+    e.tokens += r.tokens;
+    e.implement += r.agents.filter((p) => /^implement/.test(p.normalStage)).length;
+    e.exits.push(r.exit === "needs-human" ? r.stage : r.exit);
+    byFeature.set(key, e);
+  }
+  console.log(`\nPer feature:`);
+  for (const [k, e] of [...byFeature].sort()) {
+    console.log(
+      `  ${k.padEnd(52)} runs=${String(e.runs).padStart(2)} tok=${fmtM(e.tokens)} implement-agents=${String(e.implement).padStart(2)}` +
+        `${e.implement === 0 ? "  <- never reached implement" : ""}`,
+    );
+  }
+
+  // --- Block 2: stage x tier -------------------------------------------------
+  console.log(`\n\n=== Stage x tier — tokens and wall-clock per agent ===\n`);
+  const cells = new Map();
+  for (const r of runs) {
+    for (const p of r.agents) {
+      const key = `${p.normalStage}|${p.model} ${p.effort}`;
+      const c = cells.get(key) ?? { n: 0, withTok: 0, tokens: 0, ms: 0, withMs: 0, retries: 0 };
+      c.n += 1;
+      if (typeof p.agent.tokens === "number") {
+        c.withTok += 1;
+        c.tokens += p.agent.tokens;
+      }
+      if (typeof p.agent.durationMs === "number") {
+        c.withMs += 1;
+        c.ms += p.agent.durationMs;
+      }
+      if (p.retry > 0) c.retries += 1;
+      cells.set(key, c);
+    }
+  }
+  const rowsOut = [...cells].map(([k, c]) => ({ stage: k.split("|")[0], tier: k.split("|")[1], ...c }));
+  rowsOut.sort((a, b) => b.tokens - a.tokens);
+  const w = Math.max(...rowsOut.map((r) => r.stage.length), 5);
+  console.log(`${"stage".padEnd(w)}  ${"tier".padEnd(14)}  ${"n".padStart(4)}  ${"tok(cov)".padStart(18)}  ${"mean tok".padStart(9)}  ${"mean s".padStart(7)}  retries`);
+  for (const r of rowsOut) {
+    console.log(
+      `${r.stage.padEnd(w)}  ${r.tier.padEnd(14)}  ${String(r.n).padStart(4)}  ` +
+        `${`${r.tokens.toLocaleString("en-US")} (${r.withTok}/${r.n})`.padStart(18)}  ` +
+        `${String(r.withTok ? Math.round(r.tokens / r.withTok) : 0).padStart(9)}  ` +
+        `${String(r.withMs ? Math.round(r.ms / r.withMs / 1000) : 0).padStart(7)}  ${r.retries}`,
+    );
+  }
+
+  console.log(`\nBy tier alone:`);
+  const tiers = new Map();
+  for (const r of rowsOut) {
+    const t = tiers.get(r.tier) ?? { n: 0, withTok: 0, tokens: 0, ms: 0, withMs: 0 };
+    t.n += r.n;
+    t.withTok += r.withTok;
+    t.tokens += r.tokens;
+    t.ms += r.ms;
+    t.withMs += r.withMs;
+    tiers.set(r.tier, t);
+  }
+  for (const [k, t] of [...tiers].sort((a, b) => b[1].tokens - a[1].tokens)) {
+    console.log(
+      `  ${k.padEnd(14)} n=${String(t.n).padStart(4)}  ${coverage(t.tokens, t.withTok, t.n).padEnd(44)}` +
+        ` mean=${t.withTok ? Math.round(t.tokens / t.withTok) : 0}  mean_s=${t.withMs ? Math.round(t.ms / t.withMs / 1000) : 0}`,
+    );
+  }
+
+  // --- Block 3: recurrence ---------------------------------------------------
+  console.log(`\n\n=== Recurrence — what came back, and where ===\n`);
+
+  function group(items, keyOf, labelOf) {
+    const g = new Map();
+    for (const it of items) {
+      const k = keyOf(it);
+      if (!k) continue;
+      const e = g.get(k) ?? { label: labelOf(it), runs: new Set(), features: new Set(), n: 0 };
+      e.runs.add(it.runId);
+      e.features.add(it.feature);
+      e.n += 1;
+      g.set(k, e);
+    }
+    return [...g.values()].filter((e) => e.runs.size > 1).sort((a, b) => b.runs.size - a.runs.size);
+  }
+
+  const tag = (e) => (e.features.size > 1 ? "CROSS-FEATURE" : "REPEAT       ");
+  const show = (title, groups) => {
+    console.log(`-- ${title}: ${groups.length} group(s) spanning more than one run`);
+    for (const e of groups) {
+      console.log(`   ${tag(e)}  ${e.runs.size} runs, ${e.features.size} feature(s), ${e.n} occurrence(s)`);
+      console.log(`     ${e.label.slice(0, 160)}${e.label.length > 160 ? "..." : ""}`);
+      console.log(`     runs: ${[...e.runs].join(", ")}`);
+      console.log(`     features: ${[...e.features].join(", ")}`);
+    }
+    if (!groups.length) console.log(`   none`);
+    console.log();
+  };
+
+  const exitItems = runs.filter((r) => r.why).map((r) => ({ runId: r.runId, feature: r.feature, why: r.why }));
+  show(
+    "Exit reasons (result.why, verbatim then normalised)",
+    group(exitItems, (i) => normalise(i.why), (i) => i.why),
+  );
+
+  const findingItems = runs.flatMap((r) =>
+    r.findings.map(({ kind, f }) => ({
+      runId: r.runId,
+      feature: r.feature,
+      kind,
+      sev: findingSeverity(f),
+      text: findingText(f),
+      loc: findingLocation(f),
+    })),
+  );
+  console.log(
+    `${findingItems.length} finding(s) read: ` +
+      `${findingItems.filter((i) => i.kind === "detail").length} from result.detail, ` +
+      `${findingItems.filter((i) => i.kind === "forced").length} from result.converge.forced.\n`,
+  );
+  show(
+    "Finding text",
+    group(findingItems, (i) => (i.text ? normalise(i.text) : null), (i) => `[${i.sev}] ${i.text}`),
+  );
+  show(
+    "Finding location",
+    group(findingItems, (i) => (i.loc ? normalise(i.loc) : null), (i) => `[${i.sev}] ${i.loc}`),
+  );
+
+  // --- Block 4: every stop ---------------------------------------------------
+  console.log(`\n=== Per-stop record — every needs-human exit, its handoff and what changed after it ===\n`);
+  console.log(
+    `Read from each service repo's git history, read-only, beside the journal. Flags on a\n` +
+      `resolution commit: SPEC, CONSTITUTION, CLAUDE.md, RESOLUTIONS; HANDOFF-RESOLVED-REWRITE\n` +
+      `(HANDOFF.md overwritten with a "# Resolved" document), HANDOFF-TOUCHED or -DELETED\n` +
+      `(the file changed under a non-handoff subject), HANDOFF-COMMIT (another stop's handoff\n` +
+      `inside the window). REPEAT-STAGE: the next run on the feature stopped at the same stage.\n`,
+  );
+  for (const s of stops) {
+    console.log(`${s.date} ${s.runId.padEnd(17)} ${s.repo.padEnd(16)} ${s.featureDir.replace(/^specs\//, "").padEnd(22)} needs-human@${s.stage}`);
+    if (s.why) console.log(`    why: ${s.why.slice(0, 150)}${s.why.length > 150 ? "..." : ""}`);
+    const h = s.handoff;
+    if (h.none) console.log(`    handoff: none — ${h.none}`);
+    else {
+      console.log(`    handoff: ${h.short} (${h.via}) items=${h.items ?? "?"} bytes=${h.bytes ?? "?"}`);
+      console.log(`      read: ${h.read}`);
+    }
+    const rs = s.resolution;
+    if (rs?.none) console.log(`    resolution: unreadable — ${rs.none}`);
+    else if (rs) {
+      console.log(
+        `    resolution: ${rs.commits.length} commit(s) on ${rs.ref}${rs.refIsFallback ? " (feature branch not in this clone; a ref holding the handoff)" : ""}, up to ${rs.until}; ` +
+          `RESOLUTIONS.md ${rs.resolutionsFile ? "present" : "absent"} at the window's end`,
+      );
+      for (const c of rs.commits.slice(0, MAX_LISTED_COMMITS)) {
+        console.log(`      ${c.sha} ${c.date} ${c.subject.slice(0, 90)}${c.flags.length ? `  [${c.flags.join(" ")}]` : ""}`);
+        console.log(`        ${c.files.slice(0, 6).join(", ")}${c.files.length > 6 ? `, +${c.files.length - 6} more` : ""}`);
+      }
+      if (rs.commits.length > MAX_LISTED_COMMITS) console.log(`      ... ${rs.commits.length - MAX_LISTED_COMMITS} more; --json lists them all`);
+    }
+    const n = s.next;
+    console.log(
+      `    next: ${n ? `${n.runId} ${n.status}${n.repeatStage ? "  REPEAT-STAGE" : ""}${n.outsideWindow ? `  (after --until ${until}; outside the window)` : ""}` : "none in the journals read"}`,
+    );
+    console.log();
+  }
+  if (!stops.length) console.log(`   none\n`);
+  const withHandoff = stops.filter((s) => s.handoff.sha).length;
+  console.log(
+    `Stops: ${stops.length}; with a handoff commit in git: ${withHandoff}; none found, so journal-only here: ${stops.length - withHandoff}; ` +
+      `next run stopped at the same stage: ${stops.filter((s) => s.next?.repeatStage).length}.\n`,
+  );
+
+  // --- What could not be read ------------------------------------------------
+  if (unreadable.length) {
+    console.log(`Journals that could not be parsed — every table above is short by these:`);
+    for (const u of unreadable) console.log(`  ${u}`);
+    console.log();
+  }
+  if (unparsedLabels.length) {
+    console.log(
+      `Agent labels this script could not read. They are counted in the agent totals\n` +
+        `under "(unparsed)" and contribute no tier, so the stage x tier table is short\n` +
+        `by them. A label format change in workflow.mjs is the usual cause:`,
+    );
+    for (const u of unparsedLabels) console.log(`  ${u}`);
+    console.log();
+  }
+
+  console.log(`What this report does not decide:
   - anything about money. The journal carries one undifferentiated token number
     per agent with no input/output/cache split, so no price could be applied
     even with a table. Cost here is tokens and wall-clock, never dollars
@@ -821,4 +842,5 @@ console.log(`What this report does not decide:
     a number here is comparable only to another taken the same way
 `);
 
-process.exit(unreadable.length || unparsedLabels.length ? 1 : 0);
+  return readFailed;
+}
