@@ -99,6 +99,8 @@ const DENIED = [
   "PushNotification", "RemoteTrigger", "ReportFindings", "ScheduleWakeup", "SendMessage",
   "ShareOnboardingGuide", "TaskCreate", "TaskGet", "TaskList", "TaskOutput", "TaskStop",
   "TaskUpdate", "Workflow",
+  // CLI 2.1.281 added these two; the preflight caught them on 2026-09-24.
+  "ListAgents", "Monitor",
   ...(args.explore ? [] : ["Read", "Write", "Edit", "Glob", "Grep"]),
 ];
 
@@ -132,6 +134,7 @@ const FIXTURES = {
   sql: sqlFixture,
   docs: docsFixture,
   ci: ciFixture,
+  speckit: speckitFixture,
 };
 
 const cases = corpus.cases.filter((c) => {
@@ -932,6 +935,81 @@ def publish(payload):
     channel = connection.channel()
     channel.basic_publish(exchange="", routing_key="partner-exports", body=payload)
     connection.close()
+`,
+  };
+}
+
+/**
+ * A spec-kit project with two written specs and no plan, for the cases that ask
+ * whether a spec is ready to build. Added 2026-09-24 with the `spec-readiness`
+ * cases. The specs are ordinary rather than exemplary: one bound is left to the
+ * plan, one criterion has no measurement conditions, one search requirement
+ * states no semantics — the shapes that stopped real builds — so the prompt can
+ * point at the files without the fixture answering it.
+ */
+function speckitFixture() {
+  return {
+    ".specify/memory/constitution.md": `# Constitution
+
+## Article I. The platform is decided
+Java 25, Spring Boot, jOOQ, PostgreSQL. Features do not re-decide it.
+
+## Article II. The gates are the review
+\`node scripts/wall.mjs\` is the definition of done. No gate is relaxed to make it pass.
+
+## Article III. Explicit over silent
+A request that cannot be served is refused with a stated reason, never answered with a default.
+`,
+    ".specify/feature.json": `{ "feature_directory": "specs/002-refund-limits" }
+`,
+    "specs/001-order-returns/spec.md": `# Feature Specification: Order returns
+
+**Feature Branch**: \`feature/001-order-returns\`
+**Status**: Clarified
+
+## Clarifications
+
+### Session 2026-09-20
+- Q: Can a return be opened after the refund window? → A: No, it is refused.
+
+## Requirements
+
+- **FR-001**: A customer MUST be able to open a return for a delivered order within the refund window.
+- **FR-002**: A return MUST NOT be opened for an order that is not delivered.
+- **FR-003**: Support staff MUST be able to find a return by part of its order number or the customer's name.
+
+## Success Criteria
+
+- **SC-001**: Opening a return takes under 2 seconds.
+
+## Assumptions
+
+- The refund window is 30 days, to be confirmed with finance before planning.
+`,
+    "specs/002-refund-limits/spec.md": `# Feature Specification: Refund limits
+
+**Feature Branch**: \`feature/spec-refund-limits\`
+**Status**: Draft
+
+## Clarifications
+
+### Session 2026-09-23
+- Q: Does the per-day refund limit apply per customer or per store? → A: Per store.
+
+## User Scenarios & Testing
+
+1. A store that has refunded its daily limit is refused a further refund that day.
+2. A customer who has reached the daily limit is refused a further refund that day.
+
+## Requirements
+
+- **FR-001**: The system MUST refuse a refund that would take a store past its daily refund limit.
+- **FR-002**: Refunds above the approval threshold MUST be approved by a manager; the threshold is confirmed at plan stage.
+- **FR-003**: Every refund MUST be possible without manager involvement.
+
+## Success Criteria
+
+- **SC-001**: Refund decisions are made fast at peak load.
 `,
   };
 }
