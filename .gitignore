@@ -18,3 +18,6 @@ Thumbs.db
 probe-results*/
 results-sonnet*/
 results-opus*/
+
+# per-agent memory the subagents keep for themselves; machine-local
+.claude/agent-memory/
