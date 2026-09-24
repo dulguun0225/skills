@@ -18,6 +18,8 @@ The default is vendored: the directory is the project root, the template lands i
 
 The default an agent reaches for — a `pom.xml`, an ArchUnit ban list, a CI file and an error-response skeleton written from the directives in `java-backend-rules` — is rejected on three grounds: it costs the first session, it produces a different ban list each time, and on 2026-09-01 it pinned a superseded Java LTS and a superseded Spring Boot major while passing every gate it had just written. The template is one tree, byte-identical for a given commit, package and name.
 
+The project `CLAUDE.md` it lifts states the trunk in one line, `` Base branch: `main` ``, beside the definition-of-done command, and `main` is the branch the script's `git init -b main` makes; `build-feature` reads that line to find the base branch (2026-09-25). A project whose trunk is named otherwise — renamed after the scaffold, or pushed to a forge whose default is another branch — changes the name between the backticks in the same commit as the rename, together with the trunk named in the root CI trigger and the branch ruleset; the service's own `backend/CLAUDE.md` carries the template's line and is not read.
+
 The pinned commit is `DEFAULT_REF` inside the script, recorded with its source and date in the comment beside it. It moves deliberately, in a commit that says which gate change it brings in; `--ref` overrides it for one run.
 
 (Check: after the run, the directory's `git log` holds the script's `init:` commit and nothing hand-written precedes it; a build file that exists before that commit is the finding — *convention*, 2026-09-16.)

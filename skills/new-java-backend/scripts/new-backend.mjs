@@ -30,7 +30,12 @@ import { parseArgs } from 'node:util';
 
 const TEMPLATE_URL = process.env.TEMPLATE_URL || 'https://github.com/dulguun0225/java-backend-template.git';
 // The pinned template commit. Move it deliberately, in a commit that says which gate change it brings in.
-// Recorded 2026-09-21, last: "init: the printed procedure formats after the rename, before the wall" on main.
+// Recorded 2026-09-25: "docs: the project CLAUDE.md states the base branch in one line" on main. Both CLAUDE.md
+// files gain the line `Base branch: \`main\``, beside the definition-of-done command, which build-feature reads
+// from the repository root's CLAUDE.md; main is the trunk this script's `git init -b main` makes. No build input
+// changed, so mvn verify was not re-run for this pin; verified by a --skip-verify vendored run of this script
+// against a local clone (TEMPLATE_URL), whose root CLAUDE.md carried the line. On top of
+// "init: the printed procedure formats after the rename, before the wall", recorded 2026-09-21.
 // The template's init.mjs message and README procedure gain `mvn spotless:apply` between codegen and verify,
 // matching step 5 below. Verified at this pin: a full run of this script for package mn.netgroup.netcore.fmttest,
 // codegen, format and `mvn verify` green, its own init: commit made, 2026-09-21. On top of
@@ -64,7 +69,7 @@ const TEMPLATE_URL = process.env.TEMPLATE_URL || 'https://github.com/dulguun0225
 // .claude/settings.json pins worktree.baseRef=head" (an agent worktree starts from the session's HEAD, not
 // main), #9 (guarded version update, ORDER BY id ban, table ownership, vacuum ruleset, migration lint
 // additions) and #8 (Article VI names no package; CLAUDE.md holds the pointer).
-const DEFAULT_REF = 'a89bd281953c2076194b91d7147ccade14167ec4';
+const DEFAULT_REF = '00639a918712f6d815ae6ad407eb45bd2340b0ce';
 
 const [major] = process.versions.node.split('.').map(Number);
 if (major < 22) die(`node ${process.versions.node} is too old; this script needs 22 or newer`);

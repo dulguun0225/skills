@@ -30,11 +30,13 @@
 // degraded to "(unknown)" and HEAD@{1}).
 //
 // The base branch is discovered, not assumed (owner's decision, 2026-09-25): args.baseBranch,
-// else origin/HEAD, else the one local branch among main, master, develop and dev — and a
-// run where none of those answers stops at preflight before anything is written. Until
-// that day an absent baseBranch fell back to main or master: the service repositories
-// set no origin/HEAD and hold both main and dev, so a run started on dev read dev as a
-// feature branch, merged main into it and committed there.
+// else the project's CLAUDE.md line `Base branch: \`<branch>\`` (the same file that states the
+// definition of done; owner's decision, later the same day), else origin/HEAD, else the one
+// local branch among main, master, develop and dev — and a run where none of those answers,
+// or whose CLAUDE.md line names no local branch, stops at preflight before anything is
+// written. Until that day an absent baseBranch fell back to main or master: the service
+// repositories set no origin/HEAD and hold both main and dev, so a run started on dev read
+// dev as a feature branch, merged main into it and committed there.
 //
 // Preflight also puts the repository where the build belongs. The feature's author works
 // on the base branch, so a full preflight started there checks out the feature branch —
@@ -99,7 +101,8 @@
 // on the base branch — would sweep it up. Since 2026-09-25 the only exits taken on the
 // base branch are preflight's own, before it has moved the run onto the feature branch —
 // a missing input artifact among them, checked before any branch is made — and an
-// unresolved base branch, which stops before preflight's agent runs, commits nothing.
+// unresolved base branch or an unreadable or stale CLAUDE.md base-branch line, which stop
+// before preflight's agent runs, commit nothing.
 
 export const meta = {
   name: 'build-feature',
@@ -249,7 +252,8 @@ if (!SEVERITY_FLOORS.includes(cfg.severityFloor)) {
     : `args.severityFloor is "${cfg.severityFloor}", not one of ${SEVERITY_FLOORS.join(', ')}`)
 }
 // Preflight's checks are the only stage that resolves the definition-of-done command
-// (its discovery half runs on every entry and reads CLAUDE.md only there). A run that
+// (its discovery half runs on every entry and reads the command out of CLAUDE.md only
+// there; the base-branch agent reads CLAUDE.md on every entry, for its one line). A run that
 // starts after it would hand every later prompt the literal string "null" as the command.
 if (STAGES.indexOf(cfg.from) > STAGES.indexOf('preflight') && !cfg.wall) {
   throw new Error(`args.wall is required when starting from "${cfg.from}": preflight resolves it and is skipped`)
@@ -351,14 +355,16 @@ const S = {
       problems: { type: 'array', items: { type: 'string' } },
     },
   },
-  // The base branch, when args.baseBranch is absent: two read-only git facts, from which
-  // the script — not the agent — decides the base (resolveBase), before any agent writes.
+  // The base branch, when args.baseBranch is absent: three read-only facts, printed by
+  // commands and returned verbatim, from which the script — not the agent — decides the
+  // base (resolveBase), before any agent writes.
   baseFacts: {
     type: 'object',
-    required: ['originHead', 'localTrunks'],
+    required: ['claudeMdLines', 'originHead', 'localBranches'],
     properties: {
+      claudeMdLines: { type: 'array', items: { type: 'string' }, description: 'every line step 1\'s grep printed, exactly as printed, in order; empty when it printed nothing or CLAUDE.md does not exist at HEAD' },
       originHead: { type: 'string', description: 'what `git symbolic-ref --short refs/remotes/origin/HEAD` printed, e.g. origin/main; empty when the command failed or printed nothing' },
-      localTrunks: { type: 'array', items: { type: 'string' }, description: 'each of main, master, develop and dev that exists as a local branch, in that order; empty when none does' },
+      localBranches: { type: 'array', items: { type: 'string' }, description: 'every line `git for-each-ref --format=\'%(refname)\' refs/heads/` printed, e.g. refs/heads/dev, in order' },
     },
   },
   review: {
@@ -725,7 +731,7 @@ const state = {
   featureDir: cfg.featureDir,
   branch: cfg.branch,
   baseBranch: cfg.baseBranch,
-  baseBranchSource: cfg.baseBranch ? 'arg' : null, // 'arg', 'origin-HEAD' or 'fallback' once resolved
+  baseBranchSource: cfg.baseBranch ? 'arg' : null, // 'arg', 'claude-md', 'origin-HEAD' or 'fallback' once resolved
   onBaseBranch: false, // set by preflight; no handoff is committed while it is true
   createdBranch: false, // set by preflight; true when this run made the feature branch
   checkedTasks: [], // set by preflight when the tasks stage runs: ids ticked in tasks.md before it
@@ -827,6 +833,7 @@ const SPEC_EDIT_RESTART = 'review-plan'
 // Where the base branch came from, for the handoff table and the preflight prompt.
 const BASE_SOURCE_TEXT = {
   arg: 'passed as `baseBranch`',
+  'claude-md': 'read from the `Base branch:` line of the repository root\'s `CLAUDE.md`, as committed on the branch the run started on',
   'origin-HEAD': 'read from `origin/HEAD`',
   fallback: 'the one local branch among `main`, `master`, `develop` and `dev`; the repository sets no `origin/HEAD`',
 }
@@ -1177,7 +1184,8 @@ async function reviewLoop({ kind, group, reviewer, fixer, reviewPrompt, fixPromp
 // refuses over one that does. A detached HEAD stops the run at preflight on every entry.
 // The rejected default was to stop and ask: a person step for a mechanical act a full run
 // already performs. args.wall is still required on
-// a start after preflight, because only the full check reads CLAUDE.md for it.
+// a start after preflight, because only the full check reads CLAUDE.md for it; the
+// base-branch line is read on every entry, by the agent that runs before preflight's.
 //
 // A later-stage start also checks that the feature artifacts its stages read exist
 // (2026-09-24). Until then `from: "review-plan"` with no plan.md, or `from: "implement"`
@@ -1212,11 +1220,39 @@ const inputsToCheck = (() => {
 // ---------------------------------------------------------------------------
 // The base branch is discovered, not assumed (owner's decision, 2026-09-25).
 //
-// Precedence: args.baseBranch; else `origin/HEAD`, the remote's default branch as the last
-// clone or `git remote set-head` recorded it; else the one local branch among TRUNK_NAMES,
-// where exactly one exists; else unresolved, which stops the run at preflight before any
-// agent writes. Nothing is fetched: `git remote show origin` and `git ls-remote` would
-// answer the same question from the network, and this run never goes there.
+// Precedence: args.baseBranch; else the project's own statement of it, one line in the
+// repository root's CLAUDE.md of exactly the form BASE_LINE_FORMAT (owner's decision, later
+// the same day: the file that states the definition of done states the trunk too); else
+// `origin/HEAD`, the remote's default branch as the last clone or `git remote set-head`
+// recorded it; else the one local branch among TRUNK_NAMES, where exactly one exists; else
+// unresolved, which stops the run at preflight before any agent writes. Nothing is fetched:
+// `git remote show origin` and `git ls-remote` would answer the origin/HEAD question from
+// the network, and this run never goes there.
+//
+// The CLAUDE.md line exists because the step after it resolves nothing where the runs are:
+// in all three service repositories origin/HEAD is unset and both dev and main exist, so
+// until the line every run there without args.baseBranch stopped here. Rejected: `git
+// remote set-head` per clone, lost on every fresh clone, and args.baseBranch on every run,
+// a person step on every run. The line is a committed fact of the repository, so every
+// clone and every run reads the same one.
+//
+// Which CLAUDE.md is read: the repository root's, as committed at HEAD of the branch the
+// run starts on (`git show HEAD:CLAUDE.md`), whether that is the base branch or a feature
+// branch. The base is not known yet, so no other branch can be chosen to read it from; a
+// feature branch carries the line of the base it was cut from or last merged, and the line
+// names the trunk, which does not move with the feature. A feature branch cut before the
+// line was committed holds none, and the run takes the next source down. Not a backend's
+// CLAUDE.md: in a project that vendors java-backend-template into backend/, that file is
+// the template's and states the template's trunk. Not the working tree: an uncommitted
+// edit is nobody's decision yet.
+//
+// The line is parsed here, not by the agent: it greps for anything shaped like a
+// `Base branch:` line — bulleted, indented or in another case included — and returns what
+// grep printed, verbatim. A line that is found and cannot be read in the exact form, two
+// lines naming different branches, and a line naming a branch that does not exist locally
+// are each a stop, never a fall-through to origin/HEAD or to a trunk name: the line exists
+// to overrule both, and a stale one silently overruled would take the base from the source
+// the owner wrote it to replace.
 //
 // The fallback counts develop and dev beside main and master not because either is a
 // likelier trunk but because its presence makes main ambiguous. The service repositories
@@ -1226,16 +1262,35 @@ const inputsToCheck = (() => {
 // as a feature branch, merged main into it and committed there. Rejected: main as a silent
 // default (that defect), and refusing every run without baseBranch (a person step for a
 // fact git holds wherever origin/HEAD is set). The script decides from the facts the agent
-// reports, so the rule is in code and the agent runs two read-only commands.
+// reports, so the rule is in code and the agent runs three read-only commands.
 // ---------------------------------------------------------------------------
 const TRUNK_NAMES = ['main', 'master', 'develop', 'dev']
-const resolveBase = facts => {
-  const head = String((facts && facts.originHead) || '').trim().replace(/^refs\/remotes\//, '').replace(/^origin\//, '')
-  if (head && head !== 'HEAD') return { branch: head, source: 'origin-HEAD', trunks: [] }
-  const got = Array.isArray(facts && facts.localTrunks) ? facts.localTrunks.map(t => String(t || '').trim()) : []
-  const trunks = TRUNK_NAMES.filter(n => got.includes(n))
-  return trunks.length === 1 ? { branch: trunks[0], source: 'fallback', trunks } : { branch: null, source: null, trunks }
+const BASE_LINE = /^Base branch: `([^`\s]+)`\s*$/
+const BASE_LINE_FORMAT = 'Base branch: `<branch>`'
+const BASE_LINE_CODE = '`` ' + BASE_LINE_FORMAT + ' ``' // a Markdown code span that can hold the backticks
+const BASE_LINE_GREP = "git show HEAD:CLAUDE.md | grep -i -E '^[[:space:]]*([-*+][[:space:]]+)?base branch[[:space:]]*:'"
+// What the CLAUDE.md lines say: { lines } when there are none, { lines, branch } for one
+// readable name, { lines, unreadable, names } otherwise. A readable line naming HEAD is
+// unreadable: HEAD is no branch.
+const readBaseLine = raw => {
+  const lines = (Array.isArray(raw) ? raw : []).map(l => String(l === null || l === undefined ? '' : l).replace(/\r$/, '')).filter(l => l.trim() !== '')
+  const names = lines.map(l => (BASE_LINE.exec(l) || [])[1]).filter(n => n && n !== 'HEAD').filter((n, i, all) => all.indexOf(n) === i)
+  const unreadable = lines.filter(l => { const m = BASE_LINE.exec(l); return !m || m[1] === 'HEAD' })
+  if (!lines.length) return { lines }
+  if (unreadable.length || names.length !== 1) return { lines, unreadable, names }
+  return { lines, branch: names[0] }
 }
+const resolveBase = facts => {
+  const branches = (Array.isArray(facts && facts.localBranches) ? facts.localBranches : []).map(b => String(b || '').trim().replace(/^refs\/heads\//, '')).filter(Boolean)
+  const trunks = TRUNK_NAMES.filter(n => branches.includes(n))
+  const line = readBaseLine(facts && facts.claudeMdLines)
+  if (line.unreadable) return { branch: null, source: null, trunks, line }
+  if (line.branch) return branches.includes(line.branch) ? { branch: line.branch, source: 'claude-md', trunks, line } : { branch: null, source: null, trunks, line, stale: true }
+  const head = String((facts && facts.originHead) || '').trim().replace(/^refs\/remotes\//, '').replace(/^origin\//, '')
+  if (head && head !== 'HEAD') return { branch: head, source: 'origin-HEAD', trunks, line }
+  return trunks.length === 1 ? { branch: trunks[0], source: 'fallback', trunks, line } : { branch: null, source: null, trunks, line }
+}
+const codeList = names => names.map(n => `\`${n}\``).join(' and ')
 
 {
   const full = runs('preflight')
@@ -1245,15 +1300,24 @@ const resolveBase = facts => {
     const t = tier('preflight')
     const facts = must(await agent([
       UNATTENDED,
-      'Report two facts about this git repository. Read-only: run exactly the commands below, fetch nothing, contact no remote, and change nothing — no checkout, no branch, no config, no file.',
-      '1. `git symbolic-ref --short refs/remotes/origin/HEAD` — return what it prints as `originHead`, e.g. `origin/main`; return it empty when the command fails or prints nothing. Do not run `git remote show`, `git remote set-head` or `git ls-remote` in its place: each of those can contact the remote.',
-      `2. For each of ${TRUNK_NAMES.map(n => `\`${n}\``).join(', ')}: \`git show-ref --verify --quiet refs/heads/<name>\`. Return every one whose command succeeded, in that order, as \`localTrunks\`.`,
+      'Report three facts about this git repository. Read-only: run exactly the commands below, fetch nothing, contact no remote, and change nothing — no checkout, no branch, no config, no file.',
+      `1. \`${BASE_LINE_GREP}\` — the repository root's CLAUDE.md as committed on the branch you are on, and not the working tree's copy or any other CLAUDE.md. Return every line it prints as \`claudeMdLines\`, in order and exactly as printed: do not correct, complete, trim, number or interpret a line, and do not decide what it says — the script reads them. Return it empty when the command prints nothing or fails, including when the file does not exist at HEAD.`,
+      '2. `git symbolic-ref --short refs/remotes/origin/HEAD` — return what it prints as `originHead`, e.g. `origin/main`; return it empty when the command fails or prints nothing. Do not run `git remote show`, `git remote set-head` or `git ls-remote` in its place: each of those can contact the remote.',
+      "3. `git for-each-ref --format='%(refname)' refs/heads/` — return every line it prints, in order, as `localBranches`.",
     ].join('\n'), { label: `base branch (${t.model} ${t.effort})`, phase: 'Preflight', schema: S.baseFacts, model: t.model, effort: t.effort }), 'preflight')
     const b = resolveBase(facts)
+    const fix = `Correct the line in the repository root's \`CLAUDE.md\` and commit it on the base branch — one line, exactly ${BASE_LINE_CODE} — or pass \`baseBranch\` for this run`
+    if (b.line.unreadable || b.stale) {
+      return await needsHuman('preflight',
+        b.stale
+          ? `the repository root's \`CLAUDE.md\`, as committed on the branch this run started on, names the base branch \`${b.line.branch}\`, and no local branch of that name exists, so nothing was checked, checked out, merged or written. A base-branch line that names no branch is stale, and the run does not fall back past it to \`origin/HEAD\` or to a local trunk name: the line is there to overrule both. ${fix}, or make the local branch — \`git branch ${b.line.branch} origin/${b.line.branch}\` where the remote has it`
+          : `the repository root's \`CLAUDE.md\`, as committed on the branch this run started on, holds ${b.line.lines.length === 1 ? 'a base-branch line' : 'base-branch lines'} the run cannot read${b.line.names.length > 1 ? ` — they name ${codeList(b.line.names)}` : ''}, so nothing was checked, checked out, merged or written. The line is read in one form only, ${BASE_LINE_CODE}, alone on its line and unindented, once, with the branch in backticks; a line shaped like it in any other form is a stop rather than skipped, because a skipped line would hand the base to \`origin/HEAD\` or to a trunk name the line was written to overrule. ${fix}`,
+        { claudeMdLines: b.line.lines, unreadable: b.line.unreadable || [], named: b.line.branch || b.line.names || [], format: BASE_LINE_FORMAT, localTrunks: b.trunks })
+    }
     if (!b.branch) {
       return await needsHuman('preflight',
-        `no base branch could be resolved, and every step of preflight after this one keys off it — which branch is the trunk, what to check out, what to merge — so nothing was checked, checked out, merged or written. This run was given no \`baseBranch\`, \`origin/HEAD\` is not set, and ${b.trunks.length ? `the local branches ${b.trunks.map(n => `\`${n}\``).join(' and ')} are all trunk-shaped` : `none of ${TRUNK_NAMES.map(n => `\`${n}\``).join(', ')} exists as a local branch`}, so which one is the trunk is not the run's to guess. Pass \`baseBranch\`, or record the remote's default branch once in this clone with \`git remote set-head origin <branch>\`, which writes \`origin/HEAD\` locally and contacts no remote`,
-        { originHead: facts.originHead || '', localTrunks: b.trunks, checked: TRUNK_NAMES.slice() })
+        `no base branch could be resolved, and every step of preflight after this one keys off it — which branch is the trunk, what to check out, what to merge — so nothing was checked, checked out, merged or written. This run was given no \`baseBranch\`, the repository root's \`CLAUDE.md\` as committed on the branch it started on holds no base-branch line, \`origin/HEAD\` is not set, and ${b.trunks.length ? `the local branches ${codeList(b.trunks)} are all trunk-shaped` : `none of ${TRUNK_NAMES.map(n => `\`${n}\``).join(', ')} exists as a local branch`}, so which one is the trunk is not the run's to guess. Add the line ${BASE_LINE_CODE} to the repository root's \`CLAUDE.md\`, alone on its line and unindented, beside the definition-of-done command, and commit it on the base branch; every feature branch cut from it afterwards carries it. A feature branch cut before that commit does not: start the run from the base branch, or merge the base into the feature branch first. Or pass \`baseBranch\` for this run`,
+        { originHead: facts.originHead || '', localTrunks: b.trunks, checked: TRUNK_NAMES.slice(), claudeMdLines: [], format: BASE_LINE_FORMAT })
     }
     state.baseBranch = b.branch
     state.baseBranchSource = b.source

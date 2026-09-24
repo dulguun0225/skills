@@ -716,3 +716,22 @@ which records what was run, not what routes, and the model list in `scripts/runs
 Per-session cost unchanged: no `description` edited. **No run has taken the new tiers**: every cost in
 [runs](runs.md) predates them, and plan and review-plan at Opus high are the rows to watch, since high effort on
 exactly those stages is how the 2026-09-17 runs got expensive, on Fable. *Decided, not yet validated.*
+
+## 2026-09-25: the project `CLAUDE.md` states the base branch
+
+The owner's decision: `build-feature` reads the base branch from the project's `CLAUDE.md`, the way it already
+reads the definition-of-done command, because in the three service repositories `origin/HEAD` is unset and both
+`dev` and `main` exist, so its discovery resolved nothing and every run without `baseBranch` stopped at preflight.
+The format is one line, `` Base branch: `<branch>` ``, unindented, alone and once, read from the repository root's
+`CLAUDE.md` as committed on the branch a run starts on; the record and the stub are in `build-feature`'s evidence.
+
+Template `main` at `00639a9`: `` Base branch: `main` `` in `project-root/CLAUDE.md`, which `init.mjs` lifts to a
+project's root, and in the service's own `CLAUDE.md`, the root file of a standalone repo, which also says the line
+is not read where the directory is `backend/`. `main` because `new-backend.mjs` runs `git init -b main`, the root
+and template CI trigger on `main`, and the ruleset protects `main`. `DEFAULT_REF` moved to it. No build input
+changed, so the wall was not run; `check-traceability.mjs` and `check-forbidden-flags.mjs` green in the template,
+and a `--skip-verify` vendored scaffold from the pin, with `TEMPLATE_URL` pointed at the local clone, carried the
+line at the project root. **The pin names a commit that was not on the template's remote when it was recorded**:
+`new-backend.mjs` fetches `main` from GitHub and refuses a pin not reachable from it, so a scaffold from the
+default URL fails until the template is pushed. Per-session cost unchanged: no `description` edited.
+
