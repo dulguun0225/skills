@@ -588,7 +588,7 @@ const HANDOFF_FILE = 'HANDOFF.md'
 
 const scalar = v => (typeof v === 'string' ? v : JSON.stringify(v))
 
-// One renderer for every detail payload the twelve call sites pass: a list of
+// One renderer for every detail payload the needsHuman() call sites pass: a list of
 // strings (problems, unchecked task ids), a list of finding objects on any of the
 // three finding shapes this script carries, or a plain object ({unchecked, wallOutput}).
 // Unknown keys are printed rather than skipped — a reader who was not in the session
@@ -940,8 +940,9 @@ async function reviewLoop({ kind, group, reviewer, fixer, reviewPrompt, fixPromp
 // that start ran no review at all and went straight to tasks: every review-plan stop
 // restarted at the stage its handoff named — seven, 2026-09-21..23 — reached tasks with
 // no review of what was applied after the fourth one, which is the one thing the
-// resolution rule's restart exists to prevent (run ledger, sweep 2). An `until: "plan"` run now stops before the review, and `until:
-// "review-plan"` is still the way to read a reviewed plan before tasks.
+// resolution rule's restart exists to prevent (run ledger, sweep 2). An `until: "plan"`
+// run now stops before the review, and `until: "review-plan"` is still the way to read
+// a reviewed plan before tasks.
 if (runs('plan') || runs('review-plan')) {
   phase('Plan')
   const P = featurePaths(state.featureDir)
@@ -1010,7 +1011,7 @@ if (runs('tasks')) {
   phase('Tasks')
   state.stagesRun.push('tasks')
   const P = featurePaths(state.featureDir)
-  await run('tasks', 'tasks', [
+  const generated = await run('tasks', 'tasks', [
     UNATTENDED,
     SKILL_HOW('speckit-tasks'),
     FEATURE_CONTEXT(),
@@ -1021,6 +1022,16 @@ if (runs('tasks')) {
     `Rules: every task names the file it touches; every phase ends with a task that runs the definition of done, \`${state.wall}\`, and fixes until it is green; the phases follow the template ("## Phase N: ..."). Every FR and SC of ${P.spec} is named by at least one task in this file — the gate refuses an id no task names — in qualified form \`${featureNum(state.featureDir)}/FR-nnn\` or \`${featureNum(state.featureDir)}/SC-nnn\`, and that task writes a test citing it — or, it is named by a task that adds its row to specs/trace-waivers.tsv (\`${featureNum(state.featureDir)}/ID<TAB>kind<TAB>reason\`, rows sorted), where kind is exactly \`external\` (the criterion cannot be witnessed from inside this repository at all — a production latency figure, an operator procedure) or \`deferred\` (specified but deliberately not built in this feature; the reason names where that deferral is recorded — a plan.md scope boundary, a GATES.md named-gap row, the owning capability). A requirement that is merely untested is neither: it gets a test, not a waiver row. This tasks stage is the only place a waiver task may originate: no later stage adds one. A task that dictates Javadoc or comment wording also uses the qualified form, never the bare id. Run the before_tasks and after_tasks hooks.`,
     `Return done=true with the number of tasks and phases written to ${P.tasks}.`,
   ].filter(Boolean).join('\n'), S.done, 'Tasks')
+  // NO_TASK_WAITS_ON_A_PERSON sends a question only the author can answer to
+  // `specChanges`, and the schema tells this agent that field stops the run. Until
+  // 2026-09-24 nothing here read it, so the question left the run with no trace and
+  // analyze was the next chance to find it again.
+  const specChanges = specChangesOf(generated)
+  if (specChanges.length) {
+    return await needsHuman('tasks',
+      `writing the tasks found ${specChanges.length} question(s) only the author of ${P.spec} can answer, and no stage of this run edits the spec: it is the feature author's, written before the build started. The change(s) below go to that author — with /speckit-clarify or an edit to the spec — and the build restarts at plan afterwards`,
+      specChanges)
+  }
 }
 
 if (runs('analyze')) {
@@ -1627,7 +1638,7 @@ if (runs('finish')) {
   }
 }
 
-// The thirteenth needs-human exit, and the one that does not go through needsHuman():
+// The one needs-human exit that does not go through needsHuman():
 // finish ran and its wall is red. It gets the same artifact for the same reason — a
 // red wall at finish is the whole verdict of the run and it must not live only in the
 // invoking session — while this return keeps its own shape, with `handoff` added
