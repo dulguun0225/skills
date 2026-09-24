@@ -2,7 +2,7 @@
 // wall-green, pushed feature branch, with no human gate.
 //
 // Run through Claude Code's Workflow tool:
-//   Workflow({ scriptPath: "<this skill dir>/workflow.mjs", args: { baseBranch, ... } })
+//   Workflow({ scriptPath: "<this skill dir>/workflow.mjs", args: { ... } })   // nothing is required
 //
 // THE SPEC IS NOT THIS RUN'S. A domain expert writes specs/<NNN>-<name>/spec.md in
 // the project with /speckit-specify and /speckit-clarify, on the feature branch those
@@ -28,6 +28,13 @@
 // still gets state.branch and state.featureDir that way (before 2026-09-21 a
 // `from: "plan"` restart left the branch null, and the handoff and finish prompts
 // degraded to "(unknown)" and HEAD@{1}).
+//
+// The base branch is discovered, not assumed (owner's decision, 2026-09-25): args.baseBranch,
+// else origin/HEAD, else the one local branch among main, master, develop and dev — and a
+// run where none of those answers stops at preflight before anything is written. Until
+// that day an absent baseBranch fell back to main or master: the service repositories
+// set no origin/HEAD and hold both main and dev, so a run started on dev read dev as a
+// feature branch, merged main into it and committed there.
 //
 // Preflight also puts the repository where the build belongs. The feature's author works
 // on the base branch, so a full preflight started there checks out the feature branch —
@@ -90,7 +97,9 @@
 // says so there instead: there is no feature branch to carry the file, and a dirty
 // tree is one of the states preflight refuses on, so a commit at the repo root — or
 // on the base branch — would sweep it up. Since 2026-09-25 the only exits taken on the
-// base branch are preflight's own, before it has moved the run onto the feature branch.
+// base branch are preflight's own, before it has moved the run onto the feature branch —
+// a missing input artifact among them, checked before any branch is made — and an
+// unresolved base branch, which stops before preflight's agent runs, commits nothing.
 
 export const meta = {
   name: 'build-feature',
@@ -196,7 +205,7 @@ const a = args && typeof args === 'object' ? args : {}
 const cfg = {
   featureDir: a.featureDir || null, // discovered by preflight when absent
   branch: a.branch || null, // discovered by preflight when absent
-  baseBranch: a.baseBranch || null, // preflight refuses to start elsewhere when set
+  baseBranch: a.baseBranch || null, // discovered before preflight when absent; see resolveBase
   wall: a.wall || null, // definition-of-done command; preflight finds it in CLAUDE.md when null
   planGuidance: a.planGuidance || '',
   tasksGuidance: a.tasksGuidance || '',
@@ -293,7 +302,7 @@ const S = {
     properties: {
       ok: { type: 'boolean' },
       branch: { type: 'string', description: 'the branch checked out when you finish, which is the feature branch whenever you checked one out or made one' },
-      baseBranch: { type: 'string', description: 'the base branch you worked against, empty when none could be determined' },
+      baseBranch: { type: 'string', description: 'the base branch you worked against: the one step 2 names' },
       onBaseBranch: { type: 'boolean', description: 'true when the branch you finish on is the base branch' },
       featureDir: {
         type: 'string',
@@ -340,6 +349,16 @@ const S = {
         description: 'the id of every task the feature\'s tasks.md holds open, "- [ ]", in file order; empty when the file does not exist, holds none, or the prompt says to return it empty',
       },
       problems: { type: 'array', items: { type: 'string' } },
+    },
+  },
+  // The base branch, when args.baseBranch is absent: two read-only git facts, from which
+  // the script — not the agent — decides the base (resolveBase), before any agent writes.
+  baseFacts: {
+    type: 'object',
+    required: ['originHead', 'localTrunks'],
+    properties: {
+      originHead: { type: 'string', description: 'what `git symbolic-ref --short refs/remotes/origin/HEAD` printed, e.g. origin/main; empty when the command failed or printed nothing' },
+      localTrunks: { type: 'array', items: { type: 'string' }, description: 'each of main, master, develop and dev that exists as a local branch, in that order; empty when none does' },
     },
   },
   review: {
@@ -706,12 +725,14 @@ const state = {
   featureDir: cfg.featureDir,
   branch: cfg.branch,
   baseBranch: cfg.baseBranch,
+  baseBranchSource: cfg.baseBranch ? 'arg' : null, // 'arg', 'origin-HEAD' or 'fallback' once resolved
   onBaseBranch: false, // set by preflight; no handoff is committed while it is true
   createdBranch: false, // set by preflight; true when this run made the feature branch
   checkedTasks: [], // set by preflight when the tasks stage runs: ids ticked in tasks.md before it
   openTasks: [], // set by preflight with checkedTasks: ids open in tasks.md before it
   tasksUpdate: null, // { checkedBefore, kept, reopened, removed, added, commit } once an update ran
   featureJsonTracked: false, // set by preflight; true means the stages carry the env var instead
+  handoffRefused: null, // set when preflight made a branch it was told not to; no handoff is committed on it
   wall: cfg.wall,
   rounds: { reviewPlan: 0, analyze: 0, converge: 0 },
   converge: null, // { ended, rounds, findings } once the converge stage has run
@@ -803,6 +824,14 @@ const restartAt = (detail, restartFrom) => (STAGES.includes(restartFrom) ? resta
 // restarts that way the regenerated plan hit a fresh review-plan cap five times.
 const SPEC_EDIT_RESTART = 'review-plan'
 
+// Where the base branch came from, for the handoff table and the preflight prompt.
+const BASE_SOURCE_TEXT = {
+  arg: 'passed as `baseBranch`',
+  'origin-HEAD': 'read from `origin/HEAD`',
+  fallback: 'the one local branch among `main`, `master`, `develop` and `dev`; the repository sets no `origin/HEAD`',
+}
+const baseSourceText = src => BASE_SOURCE_TEXT[src] || 'source unknown'
+
 const handoffDoc = (stage, why, detail, restartFrom) => [
   `# Handoff — the unattended build of ${state.featureDir} stopped at ${stage}`,
   '',
@@ -816,7 +845,7 @@ const handoffDoc = (stage, why, detail, restartFrom) => [
   `| Reason | ${why} |`,
   `| Feature directory | \`${state.featureDir}\` |`,
   `| Branch | \`${state.branch || '(unknown)'}\`${state.createdBranch ? ` — made by this run from \`${state.baseBranch || 'the base branch'}\`` : ''} |`,
-  `| Base branch | \`${state.baseBranch || '(unknown)'}\` |`,
+  `| Base branch | \`${state.baseBranch || '(unknown)'}\`${state.baseBranch ? ` — ${baseSourceText(state.baseBranchSource)}` : ''} |`,
   `| Stages run | ${state.stagesRun.length ? state.stagesRun.join(' → ') : '(none)'} |`,
   `| Rounds | ${Object.keys(state.rounds).map(k => `${k} ${state.rounds[k]}`).join(', ')} |`,
   `| Definition of done | \`${state.wall || '(not resolved)'}\` |`,
@@ -862,7 +891,8 @@ const writeHandoff = async (stage, why, detail, restartFrom) => {
   // Since 2026-09-25 a base-branch exit is only a preflight exit taken before preflight
   // moved the run onto the feature branch — a dirty tree, a
   // feature that cannot be resolved, a feature branch that already holds work the base
-  // branch lacks — because every other run is on the feature branch by then, a later-stage
+  // branch lacks, an input artifact missing on the branch the run would work on — because
+  // every other run is on the feature branch by then, a later-stage
   // start on the trunk included. A commit on the trunk is not this script's to make, and a
   // dirty tree is one of the states preflight refuses on.
   if (state.branch === 'HEAD') {
@@ -872,6 +902,18 @@ const writeHandoff = async (stage, why, detail, restartFrom) => {
   if (state.onBaseBranch) {
     log(`no handoff file: the run is standing on the base branch (${state.baseBranch || 'unknown'}), where this script commits nothing; the detail on the return value is the whole report`)
     return { written: false, path: null, note: `the run is on the base branch (${state.baseBranch || 'unknown'}), and a handoff is committed on the branch the run is on — this script does not commit to the trunk. The detail on this return value is the whole report.` }
+  }
+  // No base branch resolved (2026-09-25): the run stopped before preflight's agent ran, so
+  // it does not know whether it stands on the trunk, and commits nothing anywhere.
+  if (!state.baseBranch) {
+    log('no handoff file: no base branch was resolved, so the run does not know whether it stands on the trunk; the detail on the return value is the whole report')
+    return { written: false, path: null, note: 'no base branch was resolved, so the run stopped before preflight could tell whether the checkout is the trunk, and it commits nothing on a branch it cannot place. The detail on this return value is the whole report.' }
+  }
+  // A preflight told to stop before making a branch that made one anyway (2026-09-25): the
+  // branch holds no commit of this run, and a handoff committed there would give it one.
+  if (state.handoffRefused) {
+    log(`no handoff file: ${state.handoffRefused}`)
+    return { written: false, path: null, note: `${state.handoffRefused} The detail on this return value is the whole report.` }
   }
   const path = `${state.featureDir}/${HANDOFF_FILE}`
   let r = null
@@ -921,6 +963,8 @@ const needsHuman = async (stage, why, detail, restartFrom) => {
     featureDir: state.featureDir,
     branch: state.branch,
     createdBranch: state.createdBranch,
+    baseBranch: state.baseBranch,
+    baseBranchSource: state.baseBranchSource,
     rounds: state.rounds,
     stagesRun: state.stagesRun,
     handoff,
@@ -1165,10 +1209,56 @@ const inputsToCheck = (() => {
   return need
 })()
 
+// ---------------------------------------------------------------------------
+// The base branch is discovered, not assumed (owner's decision, 2026-09-25).
+//
+// Precedence: args.baseBranch; else `origin/HEAD`, the remote's default branch as the last
+// clone or `git remote set-head` recorded it; else the one local branch among TRUNK_NAMES,
+// where exactly one exists; else unresolved, which stops the run at preflight before any
+// agent writes. Nothing is fetched: `git remote show origin` and `git ls-remote` would
+// answer the same question from the network, and this run never goes there.
+//
+// The fallback counts develop and dev beside main and master not because either is a
+// likelier trunk but because its presence makes main ambiguous. The service repositories
+// set no origin/HEAD and hold local main and dev, and their trunk is dev; a fallback over
+// main and master alone answers main there, which is the defect this replaces — 12 of 54
+// journals on the owner's machine passed no baseBranch, and a run started on dev read dev
+// as a feature branch, merged main into it and committed there. Rejected: main as a silent
+// default (that defect), and refusing every run without baseBranch (a person step for a
+// fact git holds wherever origin/HEAD is set). The script decides from the facts the agent
+// reports, so the rule is in code and the agent runs two read-only commands.
+// ---------------------------------------------------------------------------
+const TRUNK_NAMES = ['main', 'master', 'develop', 'dev']
+const resolveBase = facts => {
+  const head = String((facts && facts.originHead) || '').trim().replace(/^refs\/remotes\//, '').replace(/^origin\//, '')
+  if (head && head !== 'HEAD') return { branch: head, source: 'origin-HEAD', trunks: [] }
+  const got = Array.isArray(facts && facts.localTrunks) ? facts.localTrunks.map(t => String(t || '').trim()) : []
+  const trunks = TRUNK_NAMES.filter(n => got.includes(n))
+  return trunks.length === 1 ? { branch: trunks[0], source: 'fallback', trunks } : { branch: null, source: null, trunks }
+}
+
 {
   const full = runs('preflight')
   phase('Preflight')
   if (full) state.stagesRun.push('preflight')
+  if (!state.baseBranch) {
+    const t = tier('preflight')
+    const facts = must(await agent([
+      UNATTENDED,
+      'Report two facts about this git repository. Read-only: run exactly the commands below, fetch nothing, contact no remote, and change nothing — no checkout, no branch, no config, no file.',
+      '1. `git symbolic-ref --short refs/remotes/origin/HEAD` — return what it prints as `originHead`, e.g. `origin/main`; return it empty when the command fails or prints nothing. Do not run `git remote show`, `git remote set-head` or `git ls-remote` in its place: each of those can contact the remote.',
+      `2. For each of ${TRUNK_NAMES.map(n => `\`${n}\``).join(', ')}: \`git show-ref --verify --quiet refs/heads/<name>\`. Return every one whose command succeeded, in that order, as \`localTrunks\`.`,
+    ].join('\n'), { label: `base branch (${t.model} ${t.effort})`, phase: 'Preflight', schema: S.baseFacts, model: t.model, effort: t.effort }), 'preflight')
+    const b = resolveBase(facts)
+    if (!b.branch) {
+      return await needsHuman('preflight',
+        `no base branch could be resolved, and every step of preflight after this one keys off it — which branch is the trunk, what to check out, what to merge — so nothing was checked, checked out, merged or written. This run was given no \`baseBranch\`, \`origin/HEAD\` is not set, and ${b.trunks.length ? `the local branches ${b.trunks.map(n => `\`${n}\``).join(' and ')} are all trunk-shaped` : `none of ${TRUNK_NAMES.map(n => `\`${n}\``).join(', ')} exists as a local branch`}, so which one is the trunk is not the run's to guess. Pass \`baseBranch\`, or record the remote's default branch once in this clone with \`git remote set-head origin <branch>\`, which writes \`origin/HEAD\` locally and contacts no remote`,
+        { originHead: facts.originHead || '', localTrunks: b.trunks, checked: TRUNK_NAMES.slice() })
+    }
+    state.baseBranch = b.branch
+    state.baseBranchSource = b.source
+    log(`base branch: ${b.branch} (${baseSourceText(b.source)})`)
+  }
   const dirName = '<the last path segment of the feature directory, e.g. 004-product-gl-config>'
   const p = await run('preflight', full ? 'preflight' : 'preflight (discovery and sync)', [
     UNATTENDED,
@@ -1176,7 +1266,7 @@ const inputsToCheck = (() => {
       ? 'Establish which spec-kit feature this unattended build is for, put the repository on that feature\'s branch, bring the branch in step with the base, and check that the repository is ready to build. Everything you may write is named in the steps below — one branch checkout, one merge, one machine-local state file — and nothing else. Never write to spec.md or to anything else in the feature directory: the spec is its author\'s.'
       : 'Establish which spec-kit feature this unattended build is for and bring its branch in step with the base. This run starts at a later stage, so the readiness checks belong to the start it is resuming; you create or check out a branch only when you start on the base branch (step 5). Everything you may write is named in the steps below — at most one branch made or checked out, one merge and one machine-local state file — and nothing else. Never write to spec.md or to anything else in the feature directory: the spec is its author\'s.',
     `1. \`git rev-parse --abbrev-ref HEAD\` is the branch you start on${cfg.branch ? `. This run names \`${cfg.branch}\` as the feature branch, so that is where you must end up` : ''}. If it prints \`HEAD\`, the checkout is detached: that is a problem and you stop there — check nothing out, merge nothing, write nothing, and return \`branch\` as \`HEAD\` — because every stage of this run commits on the branch it stands on, and a detached HEAD is none.`,
-    `2. The base branch — the trunk a feature merges into, and the branch the feature's author works on. ${cfg.baseBranch ? `This run names it: \`${cfg.baseBranch}\`.` : 'This run names none, so take it from `git symbolic-ref --short refs/remotes/origin/HEAD` with the remote prefix stripped, falling back to whichever of `main` or `master` the repository has. If none of those resolves, return `baseBranch` empty and carry on: step 5 then checks nothing out and step 6 merges nothing.'} Return it as \`baseBranch\`.`,
+    `2. The base branch — the trunk a feature merges into, and the branch the feature's author works on — is \`${state.baseBranch}\`, ${state.baseBranchSource === 'arg' ? 'which this run names' : `resolved before you started (${baseSourceText(state.baseBranchSource)})`}. Use it as given, look for no other, and return it as \`baseBranch\`.`,
     full
       ? '3. `git status --porcelain` must be empty (untracked files under .specify/workflows/runs/ and .claude/worktrees/ do not count). A dirty tree is a problem and you stop there: check nothing out, merge nothing, write nothing, and return what you have. Every step after this one moves the tree, and somebody\'s uncommitted work is not this run\'s to carry onto another branch.'
       : '3. Only when the branch you started on is the base branch: `git status --porcelain` must be empty (untracked files under .specify/workflows/runs/ and .claude/worktrees/ do not count). A dirty tree there is a problem and you stop: check nothing out, merge nothing, write nothing, and return what you have. Step 5 moves this run off the base branch, and somebody\'s uncommitted work is not this run\'s to carry onto another branch.',
@@ -1189,16 +1279,29 @@ const inputsToCheck = (() => {
     '   (d) only when nothing above resolved: the `feature_directory` value in `.specify/feature.json`. It is machine-local, git-ignored state written by whichever machine last ran /speckit-specify, so it is the last resort and never overrides (a), (b) or (c).',
     '   The resolved directory must exist and hold a `spec.md` that is present and not empty (`wc -c`). A missing directory, a missing spec.md or an empty one is a problem, and `featureDir` comes back empty — this run builds a spec somebody has already written, and it writes no spec of its own.',
     inputsToCheck.length
-      ? `   Then, in the directory you resolved, check the artifacts this run reads before any stage of it writes them: ${inputsToCheck.map(f => `\`<featureDir>/${f}\``).join(', ')}. Test each with \`test -s\` — present and not empty — and return every one that fails, as its repo-relative path, in \`missingInputs\`. A missing one is not a problem: do not add it to \`problems\`, do not create it, and carry on; the run reports it itself.`
+      ? `   Then, in the directory you resolved, check the artifacts this run reads before any stage of it writes them: ${inputsToCheck.map(f => `\`<featureDir>/${f}\``).join(', ')}. Test each on the branch the run will work on, which is not always the one you are standing on: step 5 says which it is when you started on the base branch, and step 6 tests them again after the sync. A file counts only when it is present and not empty — in the working tree, \`test -s <featureDir>/<file>\`; on a branch you have not checked out, \`git cat-file -s <ref>:<featureDir>/<file>\` succeeding and printing a number above 0. Return every one that fails there, as its repo-relative path, in \`missingInputs\`. A missing one is not a problem: do not add it to \`problems\`, do not create it; the run reports it itself.`
       : '',
     full
       ? `5. When the branch you started on IS the base branch, put the repository on the feature branch. Let DIR be the last path segment of the feature directory (${dirName}). The target branch is${cfg.branch ? ` \`${cfg.branch}\`, which this run names` : ': an existing branch named `feature/DIR` or `DIR` — look for both locally (`git branch --list`) and on the remote (`git branch -r --list \'origin/*\'`) — and otherwise a new `feature/DIR`'}. Then: a branch that exists locally, \`git checkout <target>\`; one that exists only on the remote, \`git checkout --track origin/<target>\`; one that does not exist, \`git checkout -b <target>\` from where you are standing, and return \`createdBranch\` true. Return the branch you end on as \`branch\` and the one you checked out as \`checkedOut\`. When you did not start on the base branch, check nothing out: you are already on the feature branch.`
-      : `5. When the branch you started on IS the base branch, move the run off it: every stage after this one commits, and none of them commits on the base branch. The work this run resumes is on the base branch, so the feature branch starts at the base branch's HEAD. Let DIR be the last path segment of the feature directory (${dirName}). The target branch is${cfg.branch ? ` \`${cfg.branch}\`, which this run names` : ': an existing branch named `feature/DIR` or `DIR` — look for both locally (`git branch --list`) and on the remote (`git branch -r --list \'origin/*\'`) — and otherwise a new `feature/DIR`'}. A target that exists must hold nothing the base branch lacks: \`git merge-base --is-ancestor <target> HEAD\` for a local one and \`git merge-base --is-ancestor origin/<target> HEAD\` for a remote one must both succeed. Run those checks and the checkout as one command, so the checkout never runs when a check fails: \`git merge-base --is-ancestor <target> HEAD && git merge-base --is-ancestor origin/<target> HEAD && git checkout -B <target>\`, leaving out the check for the side the target does not exist on. \`git checkout -B\` makes the branch at HEAD, or moves an existing one forward to HEAD and loses nothing because it was an ancestor. If a check fails, that is a problem — the feature's work is on the base branch and also on that branch, and which one to continue is not yours to choose — and you stop: check nothing out, merge nothing, write nothing; a checkout that fails is a problem too, with git's message quoted. A target that exists neither locally nor on the remote is \`git checkout -b <target>\`, which refuses rather than moves a branch that does exist. Return \`createdBranch\` true when no branch of that name existed locally or on the remote, the branch you end on as \`branch\`, and the one you checked out as \`checkedOut\`. When you did not start on the base branch, check nothing out and create nothing: return \`branch\` as the branch you are on, \`createdBranch\` false and \`checkedOut\` empty.`,
+      : [
+        `5. When the branch you started on IS the base branch, move the run off it: every stage after this one commits, and none of them commits on the base branch. Let DIR be the last path segment of the feature directory (${dirName}). The target branch is${cfg.branch ? ` \`${cfg.branch}\`, which this run names` : ': an existing branch named `feature/DIR` or `DIR` — look for both locally (`git branch --list`) and on the remote (`git branch -r --list \'origin/*\'`) — and otherwise a new `feature/DIR`'}.`,
+        inputsToCheck.length
+          ? '   Decide which branch the run will work on before you create, move or check out anything, because that is the branch the artifacts of step 4 must be on. Test them first in the working tree, which is the base branch\'s HEAD. Then, when the target exists, test whether it holds anything the base branch lacks: `git merge-base --is-ancestor <target> HEAD` for a local one and `git merge-base --is-ancestor origin/<target> HEAD` for a remote one.'
+          : '   When the target exists, test whether it holds anything the base branch lacks: `git merge-base --is-ancestor <target> HEAD` for a local one and `git merge-base --is-ancestor origin/<target> HEAD` for a remote one.',
+        `   (a) The target exists nowhere, or every check succeeds: the feature branch starts at the base branch's HEAD, because the work this run resumes is on the base branch${inputsToCheck.length ? ', and the artifacts on the base branch are the ones the run reads. If any of them is missing, stop here: return them in `missingInputs`, and make, move and check out nothing, merge nothing and write nothing — a run that stops on a missing input makes no branch' : ''}. A target the run moves to the base branch's HEAD must hold nothing the base branch lacks, so run the checks and the checkout as one command, so the checkout never runs when a check fails: \`git merge-base --is-ancestor <target> HEAD && git merge-base --is-ancestor origin/<target> HEAD && git checkout -B <target>\`, leaving out the check for the side the target does not exist on. \`git checkout -B\` makes the branch at HEAD, or moves an existing one forward to HEAD and loses nothing because it was an ancestor. A target that exists neither locally nor on the remote is \`git checkout -b <target>\`, which refuses rather than moves a branch that does exist.`,
+        inputsToCheck.length
+          ? '   (b) A check fails — the target holds commits the base branch lacks — and the base branch holds at least one of the artifacts: the feature\'s work is on the base branch and also on that branch, and which one to continue is not yours to choose. That is a problem and you stop: check nothing out, merge nothing, write nothing.\n   (c) A check fails and the base branch holds none of the artifacts: the feature\'s work is on the target and not on the base branch, so the target is the branch the run works on. Test the artifacts on it without checking it out, with `git cat-file -s` on `<target>` when it exists locally and on `origin/<target>` otherwise. If any of them is missing there, stop as in (a): return those in `missingInputs` and check nothing out. Otherwise check it out — `git checkout <target>` for a local one, `git checkout --track origin/<target>` for one only on the remote — and go on to step 6, which merges the base branch into it.'
+          : '   (b) A check fails: that is a problem — the feature\'s work is on the base branch and also on that branch, and which one to continue is not yours to choose — and you stop: check nothing out, merge nothing, write nothing.',
+        '   A checkout that fails is a problem too, with git\'s message quoted. Return `createdBranch` true when no branch of that name existed locally or on the remote, the branch you end on as `branch`, and the one you checked out as `checkedOut`. When you did not start on the base branch, check nothing out and create nothing: return `branch` as the branch you are on, `createdBranch` false and `checkedOut` empty.',
+      ].join('\n'),
     '6. Sync with the base branch, whenever the branch you are now on is not the base branch and a base branch is known. Do not fetch; the local base branch is what this run merges. Note `git rev-parse HEAD` first, then:',
     '   - `git merge-base --is-ancestor <base> HEAD` succeeds — the base is already in this branch. Do nothing; `synced` is "none".',
     '   - otherwise `git merge-base --is-ancestor HEAD <base>` succeeds — this branch is strictly behind. `git merge --ff-only <base>`; `synced` is "fast-forward".',
     '   - otherwise the two have diverged. `git merge --no-edit <base>`; `synced` is "merge". If it conflicts, `git merge --abort` immediately, set `synced` to "conflict", return the conflicted paths in `conflicts` and add a problem. Never resolve a conflict yourself, and never rebase: this branch may already be pushed.',
     '   Then `git diff --name-only <the sha you noted> HEAD -- <featureDir>/spec.md`: a non-empty result means the sync brought a change to the spec, and `specChanged` is true. Where you finish on the base branch, or no base branch is known, `synced` is "not-applicable".',
+    inputsToCheck.length
+      ? '   Then, whether or not you merged anything, test the artifacts of step 4 again in the working tree of the branch you are on now, and return in `missingInputs` every one that is missing or empty: after the checkout and the sync, this is the tree every later stage reads. Where step 5 stopped you on a missing artifact you never reach this step, and `missingInputs` is what step 5 found.'
+      : '',
     runs('tasks')
       ? '   Then, whether or not you merged anything, on the branch you are on now — after the checkout of step 5 and the sync of this step, so the file is the one the run will build from — when `<featureDir>/tasks.md` exists, list every task it holds: `grep -oE \'^[[:space:]]*[-*] \\[[ xX]\\] T[0-9]+\' <featureDir>/tasks.md`. Return the id (e.g. `T012`) of each ticked one, `[x]` or `[X]`, in `checkedTasks`, and of each open one, `[ ]`, in `openTasks`, both in file order. Return both empty when the file does not exist or holds no task. This is a fact about the file, not a problem.'
       : '   Return `checkedTasks` and `openTasks` empty: no stage of this run writes tasks.md.',
@@ -1220,7 +1323,8 @@ const inputsToCheck = (() => {
   // each resolved by passing the value the agent had already found (run ledger, sweep 2).
   // args.wall, where given, wins: every argument overrides what preflight would find.
   state.wall = state.wall || p.wall || null
-  state.baseBranch = p.baseBranch || cfg.baseBranch || null
+  // The base branch is the script's, resolved before this agent ran; the agent's echo of it
+  // is not read, so a different name in its return cannot move the guard below.
   // Where preflight finishes still standing on the base branch, no handoff file is
   // written: HANDOFF.md is committed on the branch the run is on, and a commit on the trunk
   // is not this script's to make. The report then lives on the return value, which is what
@@ -1262,8 +1366,16 @@ const inputsToCheck = (() => {
     const restart = STAGES.find(st => missing.some(f => producerOf(f) === st) || (p.specChanged && st === SPEC_EDIT_RESTART))
     const paths = missing.map(f => `${state.featureDir}/${f}`)
     const one = missing.length === 1
+    // Missing inputs are checked before a branch is made (owner's decision, 2026-09-25): a
+    // later start on the base branch that stops here leaves no branch and commits nothing,
+    // like every other pre-branch refusal. The script cannot see whether the agent stopped
+    // before `git checkout -b`; `createdBranch` is its report, and a branch it made anyway
+    // gets no handoff commit, so it holds nothing of this run and the return says so.
+    if (state.createdBranch) {
+      state.handoffRefused = `preflight made the branch \`${state.branch}\` although ${paths.join(' and ')} ${one ? 'is' : 'are'} missing, where it is told to stop before making one. The branch holds no commit of this run, and no handoff was committed on it; a restart on the base branch moves it forward, since it is an ancestor, or it can be deleted.`
+    }
     return await needsHuman('preflight',
-      `this run was told to start at "${cfg.from}", and ${paths.join(' and ')} ${one ? 'is' : 'are'} missing or empty: the run reads ${one ? 'it' : 'them'} before any stage of it writes ${one ? 'it' : 'them'}. Nothing was started. Restart with \`from: "${restart}"\`, ${missing.some(f => producerOf(f) === restart)
+      `this run was told to start at "${cfg.from}", and ${paths.join(' and ')} ${one ? 'is' : 'are'} missing or empty on the branch the run would work on: the run reads ${one ? 'it' : 'them'} before any stage of it writes ${one ? 'it' : 'them'}. Nothing was started${state.onBaseBranch ? `, and no branch was made — the run is still on \`${state.baseBranch}\`` : ''}. Restart with \`from: "${restart}"\`, ${missing.some(f => producerOf(f) === restart)
         ? `the first stage that writes ${missing.filter(f => producerOf(f) === restart).join(' and ')}`
         : 'because the sync also changed spec.md, and that start reads the plan already written against the new text and repairs it'}`,
       { missingInputs: paths, from: cfg.from, restartFrom: restart, problems: p.problems || [] }, restart)
@@ -2307,6 +2419,7 @@ return {
   branch: state.branch,
   createdBranch: state.createdBranch,
   baseBranch: state.baseBranch,
+  baseBranchSource: state.baseBranchSource,
   wall: state.wall,
   rounds: state.rounds,
   reviewPlan: state.reviewPlan,
