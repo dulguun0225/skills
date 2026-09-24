@@ -230,6 +230,101 @@ the founding pass, which did not cover this area at all.
   because the maximum exponent is 4 either way and the money rules say to read the
   counterparty's published table rather than derive an exponent.*
 
+## Request bodies
+
+**Written 2026-09-25 from one observed failure, not from a research pass.** No
+refutation vote and no second source stand behind the policy; everything below
+the observation is either a tool fact checked by running the tool or an
+inference, and each is labelled.
+
+- **The observed failure — primary-source verified from the service repo's git
+  history and its build agents' transcripts, 2026-09-25.** In
+  `netcore-platform/reference-data`, a Spring Boot service built feature by feature
+  by LLM agents with `build-feature` from `dulguun0225/java-backend-template`,
+  update endpoints accepted the resource identifier in the body although the path
+  already carried it — `PUT /api/companies/{code}` with `{ "name",
+  "registrationNumber", "code"? }` — and refused a differing value with a coded
+  409. Across four features: nine echo members on update requests, and five codes,
+  `company.code-immutable`, `branch.number-immutable`, `constant.code-immutable`,
+  `calendar.code-immutable` and `calendar.exception-date-immutable`.
+
+  **Origin: the plan stage, not the spec and not the code.** The human-written
+  specs require only that "an attempt to change the code is refused" — a
+  requirement, an acceptance scenario and a success criterion counting the attempt
+  among inputs refused every time — and name no request body. The echo first
+  appears in the first feature's plan artifacts, commit `1f28db6` (2026-09-21):
+  research decision R8, *"The request may carry `code`; if it does and it differs
+  from the path after normalisation, the answer is 409 `company.code-immutable`"*,
+  with no reason and no alternative given for the echo itself. **Later features
+  copied it by analogy** — "the analogue of `company.code-immutable`", "the same
+  shape as 002's `number` echo" — **and one plan-review round re-added it**: the
+  third feature's plan had written one update request "the same without `code`",
+  and the reviewer's fix restored the echo because "the echo is present on every
+  registry". No review round in any feature questioned the echo.
+
+  **Which skills the plan agents read:** the first feature's plan agent loaded no
+  directive skill and grepped this one for unrelated terms; the third feature's
+  plan agent loaded this skill whole and still wrote echoes. The skill neither
+  induced the echo nor forbade it — it had no directive on request bodies — and
+  its *`PATCH` is banned* directive then said "full-replace `PUT`", which reads as
+  compatible with sending the whole representation. Narrowed the same day.
+
+- **Why the echo was written — uncertain: inferred, not recorded.** The plan agent's
+  reasoning is not in its transcript. The reading that fits every fact: under
+  Boot's lenient reader, leaving `code` out of the update type makes a body
+  naming it a silent 200, which fails the spec's refusal scenario; the plan
+  reviewer blocks on a spec error case no plan element realises, and the tasks
+  stage requires a test for every requirement. Declaring the member and comparing
+  it was the only refusal a lenient reader leaves. **This is why the directive
+  pairs the field's absence with strict reading** — absence alone, under the
+  default reader, fails the spec.
+
+- **Spring Boot disables `FAIL_ON_UNKNOWN_PROPERTIES` — primary-source verified,
+  2026-09-25**, from the bytecode of
+  `JacksonAutoConfiguration$AbstractMapperBuilderCustomizer` in
+  `spring-boot-jackson` 4.1.1: the builder calls `disable` with
+  `DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES`. Jackson's own default is
+  the opposite; Boot overrides it. Re-verify on a Boot major change.
+
+- **What the in-place fix proved — primary-source verified, 2026-09-25.**
+  Commit `1b74507` in the same repo removed the nine members and the five codes,
+  added the strict reader (`StrictJsonBodyConverter`, `BoundBody<T>`, codes
+  `validation.unknown-field`, `validation.identifier-in-path`,
+  `validation.wrong-type`) and its gates (`BanListArchTest.requestBodiesBindThroughBoundBody`,
+  `RequestBodyContractTest`, `StrictBodyEndpointIT`), edited no `spec.md`, and
+  kept every refusal requirement witnessed: the reflection test and the endpoint
+  sweep now cite the same requirement ids the echoes did. **So the spec is met
+  without the echo.** The same commit **kept one field of the same shape** —
+  a currency's minor-unit count, carried on update and refused on difference as
+  `constant.minor-units-immutable` — which *Each operation binds its own request
+  type* now bans and no gate here reaches, because the field is not named after
+  a path variable.
+
+- **Strictness scoped to the reader, not the mapper — convention.** The fix chose
+  a per-read problem handler over the global Boot property and recorded why: the
+  mapper-wide settings stay as they are for every other reader. **That the global
+  flag would also reach the outbound HTTP client is uncertain — inferred, not
+  verified.** The
+  conflict with a tolerant message decoder is a reading of `async-handoff`'s
+  decode-discipline rule, which requires the decoder's strictness configured in
+  the adapter only.
+
+- **vacuum can assert closed request schemas — primary-source verified,
+  2026-09-25**, vacuum 0.30.5: a rule over
+  `$.paths[*][*].requestBody.content[*].schema` with `field: additionalProperties`
+  and core functions `defined` then `falsy` exits 1 on the service's pre-fix
+  document, once per body-taking operation, and 0 on the post-fix one, with
+  component references resolved. It reads the top-level request schema only.
+  **Comparing path parameter names with request-body property names was not
+  attempted as a vacuum custom function**; core functions judge the selected node
+  alone.
+
+- **Premise-specificity — convention.** Under human review an echo member on an
+  update type is visible in the diff; here nobody reads the diff, and a lenient
+  reader hides a dropped member even from a test that only checks the status.
+  Both halves change stakes under the absent reader, so the rules clear the test
+  rather than being kept as cheap-and-safe.
+
 ## Versioning and change
 
 - **A header or date versioning pipeline was rejected on a confirmed
@@ -375,6 +470,12 @@ the founding pass, which did not cover this area at all.
   colon-form vacuum lint. **Until it is verified it stays out**, because a bare 404 makes
   the case fail loud, which makes leaving it out a fail-loud convention rather
   than a premise-derived rule.
+- **The request-body rules** — reopen on a Spring Boot major change (re-verify
+  that Boot still disables `FAIL_ON_UNKNOWN_PROPERTIES`, and that a
+  `DeserializationProblemHandler` still sees every undeclared member), on a vacuum
+  line change (re-run the closed-schema rule against a document known to fail),
+  or on a second observed failure of the same shape in a repo that has the gates —
+  the name-matching gap is the likeliest route.
 
 ## Markers, dates, and what they mean
 
@@ -410,3 +511,8 @@ claim is, what marker it carries, and the date it was taken.
 | `If-Match` uses strong comparison, never matches weak validator | confirmed | 2026-07-25 |
 | 412-versus-404 split | convention — needs re-read | 2026-07-25 |
 | Flat list-response shape, and pager carve-out | convention | 2026-07-25 |
+| Spring Boot 4.1.1 disables `FAIL_ON_UNKNOWN_PROPERTIES` | primary-source verified (bytecode) | 2026-09-25 |
+| vacuum 0.30.5 core functions express closed request-body schemas, top level only | primary-source verified (run) | 2026-09-25 |
+| Strict request reading, identifier in path only, one request type per operation | convention — from one observed failure, no research pass | 2026-09-25 |
+| Why the plan agent wrote the echo (lenient reader plus refusal requirement) | uncertain — inferred, the agent's reasoning is not recorded | 2026-09-25 |
+| Global Jackson flag would reach the outbound HTTP client | uncertain — inferred, not verified | 2026-09-25 |

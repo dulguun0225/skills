@@ -6,7 +6,7 @@ description: HTTP contract rules for a Java backend on Spring Boot Web MVC. ALWA
 
 **Rules bind when backend exposes HTTP API described by OpenAPI document.**
 
-**No document → what goes dormant is set of gates, not set of rules. Know split before reading on.** Dormant: regenerate-and-diff job, normalizer, single-OS byte-identity check, conformance-fuzz oracle, breaking-change diff, one-file-per-major CI file check, and **all five vacuum lints** — problem-schema assertion over declared error responses, no-offset-parameter rule, declared `limit` maximum, temporal naming-and-format agreement, no-`PATCH` operation rule. Same five as *Wiring the gates* step 2; if lists disagree, that one is build, this one wrong. Still live, because ArchUnit or test hosts them: keyset pager + offset-target ban, guarded version-column update, cursor sealing, list-response shape, error-code catalog + snapshot, one-advice rule + leak test, wire-temporal serialization tests, `@PatchMapping` ban, strong-`ETag` test.
+**No document → what goes dormant is set of gates, not set of rules. Know split before reading on.** Dormant: regenerate-and-diff job, normalizer, single-OS byte-identity check, conformance-fuzz oracle, breaking-change diff, one-file-per-major CI file check, and **every vacuum lint** — problem-schema assertion over declared error responses, no-offset-parameter rule, declared `limit` maximum, temporal naming-and-format agreement, no-`PATCH` operation rule, closed request-body schemas. Same list as *Wiring the gates* step 2; if lists disagree, that one is build, this one wrong. Still live, because ArchUnit or test hosts them: keyset pager + offset-target ban, guarded version-column update, cursor sealing, list-response shape, error-code catalog + snapshot, one-advice rule + leak test, wire-temporal serialization tests, `@PatchMapping` ban, strong-`ETag` test, the strict request reader with its binding rule, request-type reflection test and endpoint sweep.
 
 **Two directives sit in neither list. Neither is oversight.** *The pager is the one carve-out from a synthetic-id sort ban* dormant on **different** condition — whether this repo bans `ORDER BY` on synthetic id at all — says so inline. *The API version is a URL path segment* splits: one-file-per-major half is in dormant list above; its ban on request-time version-transformation pipeline is spec-and-review, holds with or without document.
 
@@ -14,14 +14,14 @@ description: HTTP contract rules for a Java backend on Spring Boot Web MVC. ALWA
 
 This skill is one of three for this stack. Repo exposing HTTP API installs all three:
 
-- **`java-backend-rules`** — platform constitution. Persistence, transaction seam, concurrency model, runtime-silent ban list, test toolchain. **Install with this skill**: several directives below built in shape of rule living there — codegen-diff job, ArchUnit predicate style, excluded generated packages — and **six rules below are ArchUnit bans hosted on that skill's ban-list test class**, the six in *Wiring the gates* step 5.
+- **`java-backend-rules`** — platform constitution. Persistence, transaction seam, concurrency model, runtime-silent ban list, test toolchain. **Install with this skill**: several directives below built in shape of rule living there — codegen-diff job, ArchUnit predicate style, excluded generated packages — and **the rules listed in *Wiring the gates* step 5 are ArchUnit bans hosted on that skill's ban-list test class**.
 - **`java-backend-observability`** — logging, metrics, alerting. Correlation id that generic internal problem response carries is useless unless it retrieves log event, and **that rule lives there, not here.**
 
 **No rule ids here. Deliberate.** Each directive is a `###` heading; that heading is the citation — *the single conformance oracle*, *the keyset pager*, *the PATCH ban*. Nothing in this skill set numbers these rules, so invented number resolves only for repo that installed this skill; skill name + subject resolves either way.
 
 ## The marker ceiling, before the rules
 
-**Every directive comes from one pass, 2026-07-25, single researcher against primary sources, no panel.**
+**Every directive comes from one pass, 2026-07-25, single researcher against primary sources, no panel — except *Request bodies*, written 2026-09-25 from one observed failure in an agent-built service, with no research pass behind it.** Its policy is convention throughout; its two tool facts were checked against the tools themselves — one read from bytecode, one by a run — and it carries no *confirmed* marker.
 
 **That pass still wrote *confirmed* on many claims, and word cannot mean what it normally means.** Confirmed normally = claim survived three independent refutation votes; **no vote ever cast in this area.** Here it means *checked against published standard or vendor documentation by one researcher*. **Usage is the pass's own, carried here rather than silently re-marked** — re-grading someone else's verdict is not conversion — but read every *confirmed* here as documentation check, and treat gap between it and *primary-source verified* as source quality, not scrutiny.
 
@@ -31,7 +31,7 @@ Concretely: **tool facts well sourced, policy choices not.** That linter gates o
 
 Whole set `review-by` **2027-01-21**. **Past that date every *confirmed* marker reads as *convention*** until new pass re-dates it. No maintainer action needed.
 
-Status tier: **decided, not yet validated** — researched and decided, **no production use yet** behind enforcement shapes.
+Status tier: **decided, not yet validated** — researched and decided, **no production use yet** behind enforcement shapes. *Request bodies* holds the same tier on different ground: decided from a failure, not researched, and its enforcement shapes have been built and run in one service repo, not in production.
 
 ## The premise
 
@@ -47,6 +47,8 @@ Picks unbriefed agent statistically makes. **Naming loser is load-bearing half.*
 
 - **Offset and page-number pagination** — corpus-default paging. Rejected: under concurrent inserts/deletes between page fetches it **silently skips and duplicates rows**, giving wrong-but-plausible page no reader catches. Keyset with unique final tiebreak has no such anomaly. Page-number is offset internally, loses same way.
 - **`PATCH` with JSON Merge Patch** — corpus-default partial update. Rejected: standard gives `null` member meaning **delete this field**, so merge-patch body silently drops field instead of setting it.
+- **Tolerant reading of request bodies** — Spring Boot's own default (its Jackson auto-configuration disables `FAIL_ON_UNKNOWN_PROPERTIES`) and the robustness principle behind it. Rejected: a member the request type does not declare is dropped, the answer is 200, and the client's instruction — a misspelt field, a field the server never had — is lost with nothing recording it.
+- **Echo the identifier, refuse a mismatch** — the update body carries the path's identifier, or a field that never changes, and a coded 409 (`*-immutable`) refuses a differing value; often reached by reusing one request type, or the whole representation, as the `PUT` body. Rejected: one value arrives through two channels, the contract grows a refusal for a request no client should be able to send, and the shape spreads by analogy to every later resource. What a spec's "an attempt to change it is refused" needs is the field's absence plus strict reading.
 - **A header or date versioning pipeline** — corpus-admired scheme, one Stripe famous for. Rejected: selects applied contract per request from ambient input, rewrites response back through runtime version-change modules — runtime-silent transformation — and **version never appears in committed contract**, defeating regenerate-and-diff. URL-major keeps each version diffable committed file. Second scheme, GitHub's, is date-and-header-versioned too but ships **separate dated contracts with no transformation modules**; not the shape rejected.
 - **Code-first with no committed document** — introspect running app, serve spec live, commit nothing. Rejected: no committed artifact → **no diff to gate, no stable oracle for fuzzer.** Pick is code-first generation *with* normalized document committed and diff-gated.
 - **Response envelopes and HATEOAS** — `{data, meta}` wrapper, `_links` hypermedia. Rejected: absent human reader changes nothing about their stakes, so neither earns place under this premise, and both add surface agent must keep consistent for **no machine-enforced payoff.** List shape is flat `{items, nextCursor}`; navigation is cursor, not embedded links.
@@ -55,11 +57,12 @@ Picks unbriefed agent statistically makes. **Naming loser is load-bearing half.*
 
 ## What is here and what is elsewhere
 
-Three things reader will look for here and not find.
+Things a reader will look for here and not find.
 
 - **Rule that every decimal-valued field on wire is a string** — rates, percentages, FX factors, not only money — **is `M-15` in `money-api`. No general directive for it here.** Plainly: **repo installing this skill and not money skills has no decimal-string rule at all**, including for rate or percentage field carrying no money. Rules deciding wire form of decimal are filed under money, widening to every decimal field filed there too. Repo with rate field and no money feature: state rule in repo's own text, own it there.
 - **Money-path refinements of two directives below.** Conformance-fuzz gate's money edge cases are `M-19` in `money-api`. Conditional-request precondition becomes **required** rather than merely honored on money-path mutation — `M-18` there, which reuses same version column as *the guarded version-column update* below and says explicitly that repo with no general rule of that kind must state one. **This skill is that general rule.**
 - **Correlation id's other half.** *One advice builds every error body* requires generic internal problem to carry only correlation id. Dead end unless id retrieves log event; rule requiring that is in `java-backend-observability`.
+- **The storage half of immutability.** That a business number is never renumbered, and has no update path outside issuance, is `business-numbering`'s rule, restated in `primary-keys`. **This skill carries only the wire half**: a field that never changes is absent from every update body — *Request bodies*.
 
 ## The document
 
@@ -183,6 +186,30 @@ Three things reader will look for here and not find.
 
 *vacuum lint — off-the-shelf host, bespoke ruleset. **Convention**, 2026-07-25. **Lint governs contract's internal consistency, not runtime strictness**: in JSON Schema 2020-12 `format` is annotation not assertion by default, so runtime strictness comes from typed parser above, never from `format` keyword. Reading green format lint as runtime validation is this rule's specific misreading.*
 
+## Request bodies
+
+**Why these need gates under this premise:** a human reviewing a handler diff sees `code` in an update type and asks why; nobody here reads it. And a lenient reader hides the other half even at runtime — a dropped member returns 200.
+
+### A request body refuses every member its type does not declare
+
+**Every `@RequestBody` is read by one strict reader. Each member the request type does not declare is refused — 400 `validation.failed`, one `validation.unknown-field` entry per member at its pointer — and a value of the wrong JSON type is named at its pointer (`validation.wrong-type`), not answered as an unnamed malformed body. The whole body is judged before the transaction, so a body refusal runs no statement.**
+
+**Strictness is scoped to that reader, never set on the shared mapper.** Boot's mapper serves every other reader in the process, and a broker-message decoder must stay tolerant: `async-handoff`'s decode-discipline rule tolerates, counts and alerts on an unknown field, because there the reader lags the writer by design and rejecting additions turns every additive producer change into an outage. **For a request the relation is reversed**: the server owns the schema and deploys first, so a member it does not know is a typo or a client ahead of the contract, and tolerating it loses the write silently. **On a contract that crosses the build boundary, turning this on breaks any client already sending extra members** — decide it under *Breaking-change diff where a contract crosses the build boundary*, not silently.
+
+*Bespoke. `StrictJsonBodyConverter` is the one reader: a per-read Jackson `DeserializationProblemHandler` on Boot's mapper that records every undeclared member and wrong-typed value in one pass and hands them to the service inside `BoundBody<T>`, leaving mapper-wide settings untouched. `BanListArchTest.requestBodiesBindThroughBoundBody` fails the build on a `@RequestBody` bound as any other type, which Spring's `JacksonJsonHttpMessageConverter` would read under Boot's lenient mapper. `RequestBodyContractTest.noRequestBodyWidensWhatItAccepts` bans `@JsonIgnoreProperties`, `@JsonAnySetter` and `@JsonIgnore` on request types. `StrictBodyEndpointIT` sends an undeclared member and wrong-typed values to every body-taking operation — discovered from Spring's handler mapping, held equal both ways to the operations the committed document gives a request body — and asserts 400 with no transaction opened. Document half: every request-body schema declares `additionalProperties: false` (an `OpenApiCustomizer`), asserted by a vacuum rule — core functions `defined` then `falsy` on `additionalProperties` over `$.paths[*][*].requestBody.content[*].schema`; **vacuum 0.30.5 run and verified to express it, 2026-09-25**, top-level schema only. That Boot disables `FAIL_ON_UNKNOWN_PROPERTIES` is **primary-source verified** from spring-boot-jackson 4.1.1 bytecode, 2026-09-25. Policy **convention**, 2026-09-25. The global `spring.jackson.deserialization.fail-on-unknown-properties: true` is the off-the-shelf alternative, rejected: it reaches every consumer of the shared mapper, stops at the first unknown member, and without an advice mapping answers with a body naming nothing.*
+
+### An identifier travels in the path only
+
+**No request body declares or accepts a member named after a path template variable of its operation — not required, not optional, not as an echo that must equal the path.** The body of `PUT /companies/{code}` carries `name` and `registrationNumber`, never `code`. **A spec clause "an attempt to change the code is refused" is met by that absence plus the strict reader** — a body naming `code` is refused as `validation.identifier-in-path` whatever its value, equal to the path included — and the endpoint sweep is the test that witnesses it. **Never realise that clause as an echo compared against the path plus a coded 409**: the default this directive overrides, observed shipped across a whole agent-built service ([evidence.md](evidence.md)).
+
+*Bespoke. `RequestBodyContractTest.everyRequestBodyIsARecordNamingNoPathVariable` reflects over every `@RequestBody BoundBody<T>` and fails when `T` has a record component named as one of the handler's `@PathVariable`s. `StrictJsonBodyConverter` refuses a top-level member named after one of the matched route's URI template variables. `StrictBodyEndpointIT` sends each path variable in the body of every body-taking operation. Names are compared, nothing else — *Named gaps*. A document-level comparison of path parameters with request-body properties is not expressible with vacuum's core functions, which judge the selected node alone; a custom function was not tried. **Convention**, 2026-09-25.*
+
+### Each operation binds its own request type, and an update type declares only what it writes
+
+**Create and update bind different request types. The create type may carry a client-chosen identifier; the update type carries only the fields the update may change** — never the identifier, never a field the spec fixes for the record's life, such as a currency's minor-unit count. Under the strict reader, a body sending such a field is refused as an undeclared member, which is the refusal the spec asks for: no per-field comparison, no `*-immutable` code.
+
+*Bespoke — `RequestBodyContractTest.noRecordIsTheRequestBodyOfTwoHandlers` fails when one record is the `@RequestBody` of two handlers. **That is the decidable half.** Whether every member of an update type is one the update writes has no static check: a member compared against the stored value and refused on difference passes every gate here unless it is named after a path variable — *Named gaps*. **Convention**, 2026-09-25.*
+
 ## Versioning and change
 
 ### The API version is a URL path segment
@@ -193,7 +220,7 @@ Three things reader will look for here and not find.
 
 ### `PATCH` is banned on every endpoint
 
-**`PATCH` banned on every endpoint.** JSON Merge Patch reads `null` member as **delete this field**, so `PATCH` body silently drops field instead of setting it. Cover update with **full-replace `PUT` under precondition** — see *the guarded version-column update*. **Reopen only by recorded decision.**
+**`PATCH` banned on every endpoint.** JSON Merge Patch reads `null` member as **delete this field**, so `PATCH` body silently drops field instead of setting it. Cover update with **`PUT` under precondition, replacing the fields the update may change** — see *the guarded version-column update*. Its body declares those fields and nothing else: not the identifier in its path, not a field that never changes — *Request bodies*. **Reopen only by recorded decision.**
 
 *Off-the-shelf — vacuum lint permits no `PATCH` operation, plus ArchUnit ban on `@PatchMapping`. **Null-means-remove fact confirmed** 2026-07-25 against RFC 7396; **categorical repo-wide ban is convention** built on it. Narrower JSON Patch standard lacks footgun, but merge-patch is corpus-default body — why ban is categorical rather than per-format.*
 
@@ -226,14 +253,15 @@ Three things reader will look for here and not find.
 **Run once per repo, in first pull request exposing or changing HTTP contract.** These directives are two kinds welded together: instinct-overrides firing while agent writes endpoint, and build gates that must exist in repo. **Gate is what catches next agent**; unwired gate is rule described as enforced that is not.
 
 1. **Regenerate-and-diff job** — springdoc, pinned to line matching Spring Boot major, writing through hand-owned normalizer, run in **one** pinned container, **twice** under varied timezone and locale, committed document required byte-identical to both.
-2. **The vacuum lint** — one host, all five rulesets **bespoke**: no offset or page parameter, no `PATCH` operation, `limit` declares its maximum, every declared error response uses problem schema, temporal naming-versus-format agreement both directions.
+2. **The vacuum lint** — one host, every ruleset **bespoke**: no offset or page parameter, no `PATCH` operation, `limit` declares its maximum, every declared error response uses problem schema, temporal naming-versus-format agreement both directions, every request-body schema declares `additionalProperties: false`.
 3. **Breaking-change diff**, `--fail-on ERR`, **scoped to surface whose clients are not rebuilt in same pull request.** If nothing crosses build boundary, record that gate is deliberately absent and compile is the check — do not wire it and describe it as protecting internal contract it adds nothing to.
 4. **Conformance-fuzz job** — Schemathesis against app booted in throwaway container, one synthetic tenant, deterministic generation, pinned seed, **retries off**. If money skills installed, their edge-case input set runs here too; **not a second job.**
-5. **ArchUnit rules**, on same test class platform ban list uses: error-body-construction ban, inline wire-code literal ban, patch-mapping ban, offset-target ban with **every** offset-emitting target enumerated, pager scoping, versioned-table update predicate. **Generated packages excluded** throughout.
+5. **ArchUnit rules**, on same test class platform ban list uses: error-body-construction ban, inline wire-code literal ban, patch-mapping ban, offset-target ban with **every** offset-emitting target enumerated, pager scoping, versioned-table update predicate, `requestBodiesBindThroughBoundBody`. **Generated packages excluded** throughout.
 6. **Error-catalog snapshot**, generated from enum, diffed each build.
 7. **Leak test** — sentinel-message exception, asserting message, class name and stack absent from every response body.
 8. **Serialization and deserialization tests** for wire temporals, plus pinned time module they depend on.
 9. **Validation test** posting `limit = cap + 1` asserting 400, and **cursor parse-rejection tests** for tampered cursor and stale sort spec.
+10. **Strict request bodies** — `StrictJsonBodyConverter` and `BoundBody<T>`, the codes `validation.unknown-field`, `validation.identifier-in-path` and `validation.wrong-type` in the platform's field-code catalog, `RequestBodyContractTest` (`everyRequestBodyIsARecordNamingNoPathVariable`, `noRequestBodyWidensWhatItAccepts`, `noRecordIsTheRequestBodyOfTwoHandlers`), `StrictBodyEndpointIT`, and the request-body `OpenApiCustomizer` that closes every request schema. **Greenfield: `dulguun0225/java-backend-template` carries all of it**, with the ArchUnit rule in step 5 and the vacuum rule in step 2. **Existing repo: port it**, then remove every identifier echo and every `*-immutable` refusal it replaces — a behaviour change on the wire, so a contract crossing the build boundary goes through *Breaking-change diff where a contract crosses the build boundary* first.
 
 **Then record what was wired and what was skipped, with reason.** These entries **nothing above gates**; each must be listed as ungated:
 
@@ -243,6 +271,7 @@ Three things reader will look for here and not find.
 - **412-versus-404 split**, resting on re-read the helper performs, which no static check can verify.
 - **Single-seam discipline for pager and update helper** — ArchUnit scopes them; that they are *only* such constructs depends on predicate being complete.
 - **Decimal-string rule, if money skills not installed.** No general one here. Say so rather than leaving wire-format area reading as covered.
+- **That an update type declares only what the update writes.** The reflection test reaches members named after a path variable and records shared between handlers; any other field carried and compared is spec and review.
 
 **Record listing only what was wired reads as complete coverage.** That is the failure this step prevents.
 
@@ -256,8 +285,11 @@ Silence reads as coverage, so each is stated.
 4. **Cross-OS byte-identity claim is uncertain.** Gate kept because byte-identity cheap; specific cross-platform ordering defect it was originally justified by was not reproducible.
 5. **Cursors are sealed, not opaque**, unless repo additionally encrypts payload. Client can read sort spec and last-row values out of base64 cursor; cannot forge one.
 6. **Keyset pagination is not a snapshot.** Rows inserted after first page appear on later pages. Nothing here gives consistent point-in-time list; consumer needing one needs different mechanism.
-7. **vacuum's rulesets are bespoke in every case.** Host is off shelf; all five rules it runs here were authored, so rule nobody wrote is rule nobody is protected by, and vacuum passes either way.
+7. **vacuum's rulesets are bespoke in every case.** Host is off shelf; every rule it runs here was authored, so rule nobody wrote is rule nobody is protected by, and vacuum passes either way.
 8. **Colon-verb routing lint deliberately absent.** Silent mis-route mechanism for Google AIP-136's `{id}:verb` request paths was identified but **not verified against pinned Spring version**, so no vacuum lint ships for it. Bare 404 makes untested case fail loud — why leaving it out is acceptable — see re-open trigger in [evidence.md](evidence.md).
+9. **The identifier checks compare names, nothing else.** `/companies/{companyCode}` with a body member `code` passes the reflection test and the strict reader alike. Naming each path variable after the member it identifies is what makes the check reach — convention, unchecked.
+10. **The undecidable half of *Each operation binds its own request type*.** An update type carrying a field the spec fixes, compared against the stored value and refused on difference, passes every gate here unless the field is named after a path variable. The strict reader refuses the field only once it is left out of the type.
+11. **Plan-stage prose is reached only by plan review.** A contract drafted in a feature's plan artifacts — an optional echo in a `contracts/` file, a `*-immutable` code in an error table — meets none of these checks until code implementing it reaches the build. The one reader before then is whoever reviews the plan. The template's constitution states the rule in the article the plan agent reads for API shape; stating is not checking.
 
 ## Markers, dates, and what they mean
 

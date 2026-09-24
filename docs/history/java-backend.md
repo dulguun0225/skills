@@ -137,3 +137,79 @@ version pinned in build* resolves to nothing where no build file exists yet.
   skill use an existing-repo fixture, which is exactly the hole — owed on
   `BACKLOG.md` under *Firing owed*.
 
+
+## The request-body rules, 2026-09-25
+
+Written from one observed failure, no research pass; the ground, with its markers,
+is `java-backend-api/evidence.md` under *Request bodies*. In
+`netcore-platform/reference-data`, built by `build-feature` from
+`java-backend-template`, update endpoints across four features accepted the path's
+identifier in the body and refused a differing value — nine echo members, five
+`*-immutable` codes — until the service's own commit `1b74507` replaced them with a
+strict request reader. The echo started in the first feature's plan artifacts
+(`1f28db6`), not in the human-written spec, which asks only that an attempt to change
+the code be refused; later plans copied it by analogy and one plan-review round
+re-added it for consistency. Root cause as recorded: **Spring Boot's lenient reader
+leaves an echo compared against the path as the only refusal a plan can design**,
+and no skill said otherwise. The owner's decision was a root-cause fix here; the
+service is not changed again.
+
+- **`java-backend-api` gained `## Request bodies`**, three directives: *A request
+  body refuses every member its type does not declare*; *An identifier travels in
+  the path only*; *Each operation binds its own request type, and an update type
+  declares only what it writes*. The checks are written against the mechanism
+  `1b74507` built and the template port keeps its names — `StrictJsonBodyConverter`,
+  `BoundBody<T>`, `BanListArchTest.requestBodiesBindThroughBoundBody`,
+  `RequestBodyContractTest`, `StrictBodyEndpointIT`, and a vacuum rule for closed
+  request schemas. **Strictness is scoped to the request reader, not the global
+  Jackson flag**, and the directive says why against `async-handoff`'s tolerant
+  decode rule for messages, cited by skill and content rather than by id alone.
+- **Two tool facts were checked against the tools, 2026-09-25**: Boot 4.1.1's
+  Jackson auto-configuration disables `FAIL_ON_UNKNOWN_PROPERTIES` (bytecode), and
+  vacuum 0.30.5 core functions can assert `additionalProperties: false` on every
+  top-level request-body schema (run against the service's document before and
+  after its fix: exit 1, one error per body-taking operation, then exit 0).
+  Comparing path parameter names with request-body properties in vacuum needs a
+  custom function, not tried.
+- **Amended in the same skill**: the `PATCH` directive's "full-replace `PUT`" now
+  says the body declares only the fields the update may change; the marker ceiling
+  and status tier say the new section comes from a failure, not the 2026-07-25
+  pass; two rejected defaults added (tolerant reading, echo-and-refuse); a
+  *What is here and what is elsewhere* entry points the storage half of
+  immutability at `business-numbering`; wiring step 10 (greenfield: the template;
+  existing repo: port, and the removal is a wire change subject to the
+  breaking-change directive); three named gaps (name matching only, the undecidable
+  half of the third directive, plan-stage prose reached only by plan review).
+  **Counts removed while there**: "six rules below are ArchUnit bans", "all five
+  vacuum lints" and "all five rules it runs" each became false with this edit and
+  now name their contents instead.
+- **Left unchanged, on a read, not a grep**: `business-numbering` and
+  `primary-keys` (their immutability checks are storage-level and did not cause
+  the echo); `build-feature` (not in this pass's scope; its plan reviewer's rule that a
+  decision contradicting existing code is a major finding is what carried the
+  first feature's echo into the next three, recorded here, not changed);
+  `java-backend-rules` *JSON is Jackson* (a pick, no configuration claim to
+  contradict); `async-handoff`'s decode rule and its *do not restore "deserialization
+  is strict"* note (messages only, still true); `caching` `C-11` and
+  `caching-java` (strict parsing of cache values through the cache's serializer, a
+  different reader); `guardrails-toolchain` (names `java-backend-api` as owner of
+  contract lint and diff, still true). `README.md`'s row for the skill gained the
+  new subject.
+- **Frontmatter unchanged**: `java-backend-api` 71 tokens, set 1,842,
+  `npm run tokens:frontmatter`, 2026-09-25. **Body grew from 7,440 to 9,555
+  tokens** (`npm run tokens:sections`), the new section the largest in the skill.
+  **Firing not re-measured**: the description already names *a request or response
+  field* and was not edited.
+- **The template carries it from `d6c598e`**, "gates: strict request bodies —
+  identifiers in the path only, one request type per operation", pushed the same
+  day: the port above under the same names, `noRecordIsTheRequestBodyOfTwoHandlers`
+  for the decidable half of the third directive, the vacuum rule
+  `request-body-schemas-are-closed`, and the rule stated in constitution Article IV,
+  the article the 001 plan agent read for API shape. `node scripts/wall.mjs` green
+  there. `new-java-backend`'s `DEFAULT_REF` moved to it after a full vendored
+  scaffold from the pin ran `mvn verify` green. The port also carried
+  reference-data's `everyMemberIsAStringABooleanANumberOrReadByItsOwnDeserializer`,
+  which fails a `UUID`, date, list or nested-record member that has no deserializer
+  of its own; left as ported, flagged in the template's `GATES.md` as a choice to
+  revisit. **Not done**: no adversarial review of the new section, and no service
+  built from the new pin yet.
