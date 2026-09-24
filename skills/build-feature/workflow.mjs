@@ -44,7 +44,8 @@
 // round cap they do what converge does — apply the last round's findings and go on —
 // with one final review after that fix whose only stop is a survivor, so no fix of a
 // serious finding reaches the next stage unreviewed; its open findings are reported on
-// the return as `ended: "round-cap"`. Until that day a cap reached with blocking findings
+// the return as `ended: "round-cap"`, and the plan review's open blocking and major ones
+// are handed to the first analysis as well. Until that day a cap reached with blocking findings
 // open was needs-human, and nine of the eleven such stops on record were resolved by
 // applying the findings unchanged: these loops have no fixed point either, so a cap
 // buys a stop and not closure. The converge loop
@@ -164,6 +165,12 @@ const TIERS = {
   // taken on its own word — the parse-only `phases` row re-reads the file afterwards
   // and the loop escalates where the two disagree.
   reconcileTasks: { model: 'opus', effort: 'medium' },
+  // Runs only when a converge round offers a spec.md deferral the run has not checked
+  // yet, and answers one question per quotation: is this text in spec.md. A text search
+  // with no judgment in it, so the cheapest tier; its answer decides whether a finding
+  // is exempt from forcing, and an exemption resting on a quotation spec.md does not
+  // hold would let the assessment defer work by quoting plan.md or by inventing a line.
+  checkDeferrals: { model: 'opus', effort: 'low' },
   finish: { model: 'opus', effort: 'low' },
   // Writes one file whose whole text this script hands it, commits it, pushes it.
   // Nothing here is a judgment, so it is priced at the cheapest tier in the roster;
@@ -492,6 +499,25 @@ const S = {
       commit: { type: 'string', description: 'short sha of the commit that holds a removal, empty when nothing was committed' },
       evidence: { type: 'string', description: 'what the verdict rests on, quoted: the git status, diff and log lines you read and the tasks.md lines you saw. A person reading a handoff gets this instead of being sent to look at the file.' },
       summary: { type: 'string' },
+    },
+  },
+  deferralsChecked: {
+    type: 'object',
+    required: ['checks'],
+    properties: {
+      checks: {
+        type: 'array',
+        description: 'one entry per numbered quotation in the prompt',
+        items: {
+          type: 'object',
+          required: ['n', 'found'],
+          properties: {
+            n: { type: 'integer', description: 'the number of the quotation, as the prompt numbered it' },
+            found: { type: 'boolean', description: 'true only when the quoted text is in spec.md' },
+            line: { type: 'string', description: 'the spec.md line number and line where it was found; empty when not found' },
+          },
+        },
+      },
     },
   },
   handoff: {
@@ -832,8 +858,11 @@ const run = async (name, stage, prompt, schema, group) => {
 // record read as survivors under the labelling rule in handedFindings — wf_c65ab41b-8a6,
 // a lock protocol the review refuted again after each fix, and wf_e5ab8e1a-c53, the
 // FR-024 gap the first remediation declared as a narrowing and the fourth analysis
-// graded HIGH again — but the label is the reviewer's, and the first case holds only if
-// it takes the protocol's correctness as the one requirement both findings restate.
+// graded HIGH again — but the label is the reviewer's. On the first case's full agent
+// transcripts (read 2026-09-24), round 3 refuted R5's no-deadlock property (its re-lock
+// step deadlocks) and round 4 refuted the same property at the same place again after
+// round 3's fix, so round 4 restates a round-3 entry in the rule's plain sense; only the
+// earlier link, round 2's race proof to round 3's deadlock, needs the wider reading.
 //
 // The cap no longer stops. The rejected default is "stop at the cap": nine of the
 // eleven cap stops on record were resolved by applying the last round's findings
@@ -841,9 +870,13 @@ const run = async (name, stage, prompt, schema, group) => {
 // fourth review finds new holes as surely as a first. So after `max` ordinary fix
 // rounds the review after the last of them is applied too — the cap fix — and one
 // FINAL review reads the result. Its only stop is a survivor; its other findings are
-// not applied, since nothing would review that fix, and are returned open as
-// `ended: "round-cap"`. So no fix of a serious finding reaches the next stage
-// unreviewed. The one fix that does, as before, is the minors pass on an approve.
+// not applied here, since nothing in this loop would review that fix, and are returned
+// open as `ended: "round-cap"`. So no fix of a serious finding reaches the next stage
+// unreviewed. The one fix that does, as before, is the minors pass on an approve. The
+// final review's open blocking and major findings are not left on the return value
+// alone: the first analysis is handed them (analyzeCarry below), so a remediation
+// applies what still holds and the next analysis reads that fix — and a finding the
+// reviewer failed to label a repeat meets the survivor test a second time there.
 //
 // A fix round that reports `specChanges` ends the loop with them: the only remedy the
 // fixer could see for those findings is an edit to spec.md, which this run does not
@@ -859,6 +892,7 @@ const normText = v => String(v || '').toLowerCase().replace(/\s+/g, ' ').trim().
 const handedFindings = idOf => {
   const list = []
   const ids = {}
+  const skipped = {}
   return {
     hand(round, findings) {
       for (const f of findings) {
@@ -867,6 +901,17 @@ const handedFindings = idOf => {
         list.push({ round, f })
         ids[id] = list.length
       }
+    },
+    // What the fix agent of a round declined, as it reported it. The script cannot map
+    // a free-text entry to a finding, so a survivor carries the whole list of its round:
+    // "applied and did not take" and "declined, with this reason" are different
+    // decisions for whoever resolves the stop, and the reason exists nowhere else but
+    // the machine-local journal.
+    noteSkipped(round, list) {
+      if (Array.isArray(list) && list.filter(Boolean).length) skipped[round] = list.filter(Boolean)
+    },
+    skippedIn(round) {
+      return skipped[round] || []
     },
     roundOf(f) {
       const n = ids[idOf(f)] || (Number.isInteger(f.repeatOf) && f.repeatOf > 0 && f.repeatOf <= list.length ? f.repeatOf : 0)
@@ -884,10 +929,18 @@ const handedFindings = idOf => {
 }
 
 // The detail a survivor exit carries: the survivors first, each marked with the round
-// that handed it, then everything else the same reader reported.
-const survivorDetail = (findings, isSurvivor, roundOf) =>
-  findings.filter(isSurvivor).map(f => ({ ...f, survivedRound: roundOf(f) }))
+// that handed it and with what that round's fix agent declined, then everything else
+// the same reader reported.
+const markSurvivor = (f, handed) => {
+  const survivedRound = handed.roundOf(f)
+  const declined = handed.skippedIn(survivedRound)
+  return declined.length ? { ...f, survivedRound, skippedByThatFix: declined } : { ...f, survivedRound }
+}
+const survivorDetail = (findings, isSerious, handed) => {
+  const isSurvivor = f => isSerious(f) && handed.roundOf(f) > 0
+  return findings.filter(isSurvivor).map(f => markSurvivor(f, handed))
     .concat(findings.filter(f => !isSurvivor(f)))
+}
 
 async function reviewLoop({ kind, group, reviewer, fixer, reviewPrompt, fixPrompt, max }) {
   const handed = handedFindings(f => [normText(f.artifact), normText(f.location), normText(f.problem)].join(' | '))
@@ -902,8 +955,7 @@ async function reviewLoop({ kind, group, reviewer, fixer, reviewPrompt, fixPromp
     const survivors = serious.filter(f => handed.roundOf(f))
     log(`review-${kind} round ${round}${final ? ' (final)' : ''}: ${review.verdict}, ${blocking.length} blocking, ${serious.length - blocking.length} major, ${review.findings.length - serious.length} minor${survivors.length ? `, ${survivors.length} survived the fix round that was handed it` : ''}`)
     if (survivors.length) {
-      const isSurvivor = f => f.severity !== 'minor' && handed.roundOf(f) > 0
-      return { approved: false, ended: 'survivor', rounds: round, findings: survivorDetail(review.findings, isSurvivor, f => handed.roundOf(f)), survivors: survivors.map(f => ({ ...f, survivedRound: handed.roundOf(f) })), specChanges: [] }
+      return { approved: false, ended: 'survivor', rounds: round, findings: survivorDetail(review.findings, f => f.severity !== 'minor', handed), survivors: survivors.map(f => markSurvivor(f, handed)), specChanges: [] }
     }
     if (review.verdict === 'approve' && serious.length === 0) {
       if (review.findings.length) {
@@ -920,6 +972,7 @@ async function reviewLoop({ kind, group, reviewer, fixer, reviewPrompt, fixPromp
     handed.hand(round, review.findings)
     const capFix = round === max + 1
     const fixed = await run(fixer, `fix-${kind} ${round}${capFix ? ' (cap)' : ''}`, fixPrompt(review.findings, round, false), S.done, group)
+    handed.noteSkipped(round, fixed.skipped)
     const specChanges = specChangesOf(fixed)
     if (specChanges.length) return { approved: false, ended: 'spec-changes', rounds: round, findings: review.findings, survivors: [], specChanges }
   }
@@ -1243,6 +1296,26 @@ if (runs('tasks')) {
 // findings go on to implement open, reported as `analysis.ended: "round-cap"`. The
 // converge loop later reads the code against the spec, which is where a finding the
 // final analysis left open is met again if it is real.
+//
+// The first analysis is also handed the plan review's open blocking and major findings
+// when that loop ended at its cap. Without it they reached nothing but the return value
+// of a run that goes on to implement: /speckit-analyze checks the artifacts against each
+// other and the constitution, and a design defect such as a lock protocol that can
+// deadlock is not a question it asks. A blocking one is graded no lower than HIGH so it
+// is remediated, since the plan review's own scale already said the plan cannot stand
+// with it. Nothing here stops the run on them: the survivor test does, one round later,
+// if the remediation does not take.
+const analyzeCarry = () => {
+  const open = state.reviewPlan && state.reviewPlan.ended === 'round-cap'
+    ? state.reviewPlan.findings.filter(f => f.severity !== 'minor')
+    : []
+  if (!open.length) return ''
+  return [
+    `The plan review of this run ended at its round cap, and its final review reported the blocking and major findings below; no agent applied them. Check each against the plan artifacts as they stand now. Return every one that still holds as one of your findings, with the artifact it names, its location, a one-sentence summary and its fix as the recommendation, graded by the skill's own severity rule — except that one the plan review graded blocking is graded no lower than HIGH. Leave out one that no longer holds.`,
+    open.map((f, i) => `${i + 1}. [${f.severity}] ${f.artifact} — ${f.location}\n   Problem: ${f.problem}\n   Fix: ${f.fix}`).join('\n'),
+  ].join('\n')
+}
+
 if (runs('analyze')) {
   state.stagesRun.push('analyze')
   const P = featurePaths(state.featureDir)
@@ -1259,6 +1332,7 @@ if (runs('analyze')) {
       FEATURE_CONTEXT(),
       `The feature is ${state.featureDir}. Read-only: change nothing.`,
       'Run the analysis in full and produce its report, then instead of offering remediation return every finding as data: id, severity as the skill grades it, the artifact it lives in (spec, plan, tasks, constitution, other), the location, a one-sentence summary and the concrete recommendation. Include the coverage figure.',
+      round === 1 ? analyzeCarry() : '',
       handed.block('analysis', f => `${f.id} [${f.severity}] ${f.artifact} — ${f.location}: ${f.summary}`),
     ].filter(Boolean).join('\n'), S.analysis, 'Tasks')
     state.rounds.analyze = round
@@ -1269,7 +1343,7 @@ if (runs('analyze')) {
     if (survivors.length) {
       return await needsHuman('analyze',
         `${survivors.length} CRITICAL or HIGH analysis finding(s) survived the remediation round that was handed them: a remediation agent applied that round's findings — or declined one with its reason — and a later analysis, round ${round}, grades the same gap again. Survived: ${survivors.map(f => `${f.id} [${f.severity}] ${f.location} (handed in round ${handed.roundOf(f)})`).join('; ')}. A finding the loop has tried once and lost is usually a scope or design decision the run is not authorised to take — a requirement the plan narrows rather than meets, or a constitution question — so it is not tried again`,
-        survivorDetail(analysis.findings, f => serious(f) && handed.roundOf(f) > 0, f => handed.roundOf(f)))
+        survivorDetail(analysis.findings, serious, handed))
     }
     if (critical.length + high.length === 0) { ended = 'approved'; break }
     if (final) {
@@ -1289,6 +1363,7 @@ if (runs('analyze')) {
       analysis.findings.map(f => `${f.id} [${f.severity}] ${f.artifact} — ${f.location}: ${f.summary}\n   Recommendation: ${f.recommendation}`).join('\n'),
       `Then commit with the message "tasks: analysis round ${round}". Return done=true with the short sha and the findings you left unapplied under skipped.`,
     ].join('\n'), S.done, 'Tasks')
+    handed.noteSkipped(round, remedied.skipped)
     const specChanges = specChangesOf(remedied)
     if (specChanges.length) {
       return await needsHuman('analyze',
@@ -1494,8 +1569,9 @@ if (runs('converge')) {
   // artifact that could record a deferral — plan.md, tasks.md, research.md, GATES.md, a
   // waiver row — was written by this run or an earlier one from the spec, and the run's
   // own output is never the ground for not doing work (the resolution rule's test). A
-  // deferred finding is not forced, not counted against the floor, never a survivor, and
-  // is reported under converge.deferred.
+  // deferred finding — one whose quotation checkDeferrals found in spec.md — is not
+  // forced, not counted against the floor, never a survivor, and is reported under
+  // converge.deferred.
   const specDefers = () => `An item ${P.spec} itself defers is not a gap of this feature: a requirement, criterion, scenario or capability that spec.md says is deferred, out of this feature's scope, or left to a later feature — in its requirements, assumptions, out-of-scope text or clarifications. Append no task for it. Return it as a finding all the same, graded as usual, with \`deferredBy\` holding that spec.md text quoted verbatim with its section or line. Only spec.md counts: a deferral, scope boundary or named gap written in plan.md, tasks.md, research.md, docs/GATES.md or specs/trace-waivers.tsv was written from the spec by a run like this one and defers nothing — a finding against it gets \`deferredBy\` empty and is handled like any other. A requirement spec.md states without deferring it is never deferred.`
   const convergePrompt = (round, assessOnly) => [
     UNATTENDED,
@@ -1565,15 +1641,60 @@ if (runs('converge')) {
   const forcedList = []
   // Findings the assessment reported as deferred by spec.md, once each, with the round
   // that first reported them and the quote it gave.
-  const deferredOf = f => typeof f.deferredBy === 'string' && f.deferredBy.trim() !== ''
+  //
+  // A quotation is honoured only once a separate parse-only agent has found it in
+  // spec.md (the `checkDeferrals` row). The script cannot read the file, and the
+  // exemption is the one place the assessment's word alone would decide that work is
+  // not done: a line quoted from plan.md, or one that is not in any file, would exempt a
+  // finding from forcing and leave the run `converged` with the gap open. A quotation
+  // the check does not find is dropped and the finding is handled like any other —
+  // forced where it is above the floor — which is the rule that held before the
+  // deferral existed; it is reported under converge.deferralsRefused.
+  const quoted = f => typeof f.deferredBy === 'string' && f.deferredBy.trim() !== ''
+  const quoteKey = f => normText(f.deferredBy)
+  const quoteFound = {}
+  const deferredOf = f => quoted(f) && quoteFound[quoteKey(f)] === true
   const deferredIds = {}
   const deferredList = []
+  const refusedIds = {}
+  const refusedList = []
+  const checkDeferrals = async (findings, round) => {
+    const keys = []
+    const texts = []
+    for (const f of findings.filter(quoted)) {
+      const k = quoteKey(f)
+      if (k in quoteFound || keys.includes(k)) continue
+      keys.push(k)
+      texts.push(f.deferredBy)
+    }
+    if (!keys.length) return
+    const r = await run('checkDeferrals', `check spec deferrals ${round}`, [
+      UNATTENDED,
+      `Check each numbered quotation below against ${P.spec} and against nothing else. Each was offered as text quoted verbatim from that file, sometimes after the section or line it came from. Search and compare only: change nothing, and judge nothing about what the text means or whether it defers anything.`,
+      `For each entry, take the text inside its quotation marks — the whole entry where it has none, less any leading section or line reference — and look for it in ${P.spec} with runs of whitespace collapsed on both sides and Markdown emphasis and code marks (\`*\`, \`_\`, backticks) ignored, for example \`tr -s '[:space:]' ' ' < ${P.spec} | grep -F -- '<the text>'\`. found=true only when that text is in ${P.spec}. A text that differs in any other way, is a paraphrase or a summary, or is found only in another file is found=false. Where an entry quotes several passages, every one of them must be found.`,
+      texts.map((t, i) => `${i + 1}. ${t}`).join('\n'),
+      'Return one entry per numbered quotation, with its number, whether it was found, and the spec.md line where it was.',
+    ].join('\n'), S.deferralsChecked, 'Converge')
+    const checks = Array.isArray(r.checks) ? r.checks : []
+    keys.forEach((k, i) => {
+      const c = checks.find(x => x && x.n === i + 1)
+      quoteFound[k] = !!(c && c.found === true)
+    })
+    const refused = keys.filter(k => !quoteFound[k]).length
+    log(`converge round ${round}: ${keys.length - refused} of ${keys.length} spec.md deferral quotation(s) found in ${P.spec}${refused ? `; ${refused} not found, so those findings are handled like any other` : ''}`)
+  }
   const noteDeferred = (findings, round) => {
-    for (const f of findings.filter(deferredOf)) {
+    for (const f of findings.filter(quoted)) {
       const id = findingId(f)
-      if (deferredIds[id]) continue
-      deferredIds[id] = round
-      deferredList.push({ round, severity: f.severity, location: f.location, summary: f.summary, deferredBy: f.deferredBy })
+      if (deferredOf(f)) {
+        if (deferredIds[id]) continue
+        deferredIds[id] = round
+        deferredList.push({ round, severity: f.severity, location: f.location, summary: f.summary, deferredBy: f.deferredBy })
+      } else {
+        if (refusedIds[id]) continue
+        refusedIds[id] = round
+        refusedList.push({ round, severity: f.severity, location: f.location, summary: f.summary, deferredBy: f.deferredBy })
+      }
     }
   }
   // Exact match alone never fired: on product-catalog 004 (2026-09-20) the same
@@ -1612,7 +1733,7 @@ if (runs('converge')) {
     `The feature is ${state.featureDir}; its tasks file is ${P.tasks}.`,
     `A convergence assessment of this feature has just reported that it appended no tasks, and reported the findings below all the same. They are open work: nothing in ${P.tasks} closes them. Your only job is to append them to ${P.tasks} as one new convergence phase, one task per finding, so that the implement stage runs them. You are not assessing anything. Do not read the code to re-check a finding, do not re-grade one, do not judge one non-actionable, do not drop, merge, split or reorder them, do not add a finding of your own, and do not fix anything. Every finding below gets exactly one task, in the order given, save for the one case the next paragraphs name.`,
     `${SPEC_IS_NOT_OURS(P.spec)} No task you write asks anyone else to either: a task worded to reconcile the spec with the code is that edit at one remove. Write each task against the code, the tests, the gates, the documents or the plan.`,
-    `The assessment found none of these deferred by ${P.spec} itself, which is the only deferral that exempts a finding here: a scope boundary, named gap or deferral in plan.md, tasks.md, research.md, docs/GATES.md or specs/trace-waivers.tsv is not a reason to drop a finding or to write its task as anything but the fix.`,
+    `None of these is deferred by ${P.spec} itself — where the assessment offered a deferral for one, its quotation was not found in ${P.spec} — and that is the only deferral that exempts a finding here: a scope boundary, named gap or deferral in plan.md, tasks.md, research.md, docs/GATES.md or specs/trace-waivers.tsv is not a reason to drop a finding or to write its task as anything but the fix.`,
     NO_TASK_WAITS_ON_A_PERSON,
     `That is the one judgment this prompt leaves you. Where a finding below can be closed only by an answer from the spec's author — the only task you could write for it would wait on that answer — append nothing and commit nothing, for that finding or any other: return appended=false, \`tasks\` empty, and every such finding in \`specChanges\`, naming the requirement or section and the change the spec needs. The run stops there and goes to the author; the findings you did not name are assessed again when it restarts.`,
     'The findings, exactly as the assessment returned them:',
@@ -1669,6 +1790,7 @@ if (runs('converge')) {
     const askedR = specChangesOf(last)
     if (askedR.length) return await needsHuman('converge', specWhy(`converge round ${round}`, askedR.length), askedR, SPEC_EDIT_RESTART)
     const findings = Array.isArray(last.findings) ? last.findings : []
+    await checkDeferrals(findings, round)
     noteDeferred(findings, round)
     const live = findings.filter(f => !deferredOf(f))
     const aboveFloor = live.filter(aboveFloorSev)
@@ -1833,6 +1955,7 @@ if (runs('converge')) {
     const askedA = specChangesOf(assess)
     if (askedA.length) return await needsHuman('converge', specWhy(`the assess-only converge round ${assessRound}`, askedA.length), askedA, SPEC_EDIT_RESTART)
     const findings = Array.isArray(assess.findings) ? assess.findings : []
+    await checkDeferrals(findings, assessRound)
     noteDeferred(findings, assessRound)
     const aboveFloor = findings.filter(f => !deferredOf(f)).filter(aboveFloorSev)
     endingFindings = findings
@@ -1857,7 +1980,7 @@ if (runs('converge')) {
   }
   // The findings of whichever assessment ended the loop, never of an earlier one;
   // `forced` is every finding this run appended itself, with the round that did it.
-  state.converge = { ended, rounds: state.rounds.converge, floor: SEVERITY_FLOOR, forced: forcedList, deferred: deferredList, findings: endingFindings }
+  state.converge = { ended, rounds: state.rounds.converge, floor: SEVERITY_FLOOR, forced: forcedList, deferred: deferredList, deferralsRefused: refusedList, findings: endingFindings }
 }
 
 // ---------------------------------------------------------------------------
