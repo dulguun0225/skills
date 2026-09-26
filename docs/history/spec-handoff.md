@@ -2,6 +2,12 @@
 
 `spec-handoff-questions`, `spec-handoff-domain`, `spec-handoff-joint`, `build-feature-prepare`. They replace `spec-readiness` (2026-09-24), whose record is the third section of this file.
 
+## 2026-09-26 — a recommendation on every question, made explicit
+
+**Why.** The owner reported a run in which the agent would not give recommendations. The first version (`6e20d93`) said *Recommend nothing* in stage 2; `a614159` reversed it, but stages 2 to 4 still quoted the old rule as *one question at a time, with no recommendation* in their reversal notes, and stage 2 kept *the default is the agent supplying the fact. It lost*, which reads as a ban on the agent answering. Which version the reported run used is not known here; that machine's install was not read.
+
+**Changes.** Stages 2, 3 and 4 state the rule directly: every question row carries a recommended answer, marked a guess where no source supports it; *only you know* or *I cannot recommend* is never one; for an outside fact, the most likely answer and what changes if it is wrong. The old-rule wording is gone from the directive text; the default is named as *ask without recommending* and why it lost. A question moved to Domain+Technical keeps its recommendation. Stage 1's question template and the deferred-fact class say the same; each check line now requires a recommendation that names an answer.
+
 ## 2026-09-26 — decide first: the agent answers what it can, a person only what a person alone knows
 
 **Why.** The owner, after the leak fixes below: the handoff exists to take questions off people at plan, tasks and analyze, not to add them; AI is used to take work off people. The leak fixes still left the rule *every gap is a question for a person*. Owner's go, same day, on the proposal: the agent decides every gap it can; a person is asked only for what the agent cannot know.

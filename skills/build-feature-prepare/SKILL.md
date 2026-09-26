@@ -30,9 +30,11 @@ The default was to show it with the spec's answer as the recommendation. It lost
 
 **Apply every proposed Technical decision, each after its `Depends on: <id>` entry. Then, in one reply, show the open Technical questions in one compact table, in file order: id, the question in one plain sentence, the recommended answer, and a one-sentence reason naming its source or saying it is a guess; and below it the applied decisions, id and one plain sentence each, with no reply asked. The expert replies with only the rows he disagrees with, in either list; every other row counts as accepted. Write only what he accepted or said.**
 
-Reversed by the owner on 2026-09-26, with stages 2 and 3: one question at a time, with no recommendation, and a question per gap. On stage 2's first run it wasted the expert's time, and most questions only re-confirmed the spec. The cost accepted: a row he passes over puts the agent's text in the spec.
+**Every question row carries a recommended answer: what the agent would choose and why, marked a guess where no source supports it. "Only you know" or "I cannot recommend" is never a recommendation; for an outside fact, recommend the most likely answer and say what it would change if wrong.**
 
-(Check: every `Answer:` written is the expert's reply, a row he did not dispute, or an applied decision he did not dispute — *convention*.)
+The default is to ask without recommending. It lost (owner, 2026-09-26): the expert had to work out every answer alone. The cost accepted: a row he passes over puts the agent's text in the spec.
+
+(Check: every question row has a recommended answer that is an answer; every `Answer:` written is the expert's reply, a row he did not dispute, or an applied decision he did not dispute — *convention*.)
 
 ## Apply and record
 

@@ -25,9 +25,11 @@ The default was to show it with the spec's answer as the recommendation. It lost
 
 The default is to take each half to each person and relay. It lost: here the choice depends on the fact and the fact on the choice, which is why the question was not split.
 
-Reversed by the owner on 2026-09-26, with stage 2: one question at a time, with no recommendation, and a question per gap. On stage 2's first run it wasted the expert's time, and most questions only re-confirmed the spec. The cost accepted: a row they pass over puts the agent's answer in the spec.
+**Every question row carries a recommended answer: what the agent would choose and why, marked a guess where no source supports it. "Only you know" or "I cannot recommend" is never a recommendation; for an outside fact, recommend the most likely answer and say what it would change if wrong.**
 
-(Check: every `Answer:` written is the experts' reply or the recommendation of a row they did not dispute — *convention*.)
+The default is to ask without recommending. It lost (owner, 2026-09-26): the experts had to work out every answer alone. The cost accepted: a row they pass over puts the agent's answer in the spec.
+
+(Check: every row has a recommended answer that is an answer; every `Answer:` written is the experts' reply or the recommendation of a row they did not dispute — *convention*.)
 
 ## Apply and record the answer
 

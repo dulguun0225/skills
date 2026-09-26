@@ -32,7 +32,7 @@ Stance: refute that a plan can be written without deciding what the authors have
 **Find every gap: no answer in the spec, statements that contradict, or a case with no outcome. Before recording one, search all of `spec.md` for its answer — every requirement, scenario, edge case, entity, success criterion, assumption and `## Clarifications` entry, not only the section quoted — then the constitution and the sibling specs. An answer found anywhere, which no other text contradicts, means no entry. A "needs confirmation" or "assumed" note beside a stated value is no gap in that value.** Brackets: default section, overridden by the section rule; stopping stage.
 
 - **Markers** [D; preflight, *bespoke*]: every `[NEEDS CLARIFICATION]` and unfilled placeholder, listed first.
-- **Deferred or assumed fact** [D; review-plan to converge]: a value the spec leaves open, calls undecided, or defers ("at plan stage") with no value stated; an algorithm or standard named without a source. Decide only from a real, named source; never invent one. `wf_e68e4e48-4ed`.
+- **Deferred or assumed fact** [D; review-plan to converge]: a value the spec leaves open, calls undecided, or defers ("at plan stage") with no value stated; an algorithm or standard named without a source. Cite only a real, named source; never invent one. With none, it is an external-fact question, still with a recommended answer. `wf_e68e4e48-4ed`.
 - **Caveats on stated values** [D; graded like any other]: one decision for the whole spec, deleting each confirmation or assumption note, quoted with the value it qualifies; the values stand.
 - **Criterion without measurement conditions** [split; analyze]: load and wait (D); percentile, concurrency, warm or cold, machine (T); a multiplier's dimension; a manual-work bound is no timing gate. `wf_fbb2141f-8bf`.
 - **Search and list semantics** [split; analyze]: case, match position, blank or whitespace query, order, crossing a grouping (D); query-length and page bounds (T). `wf_bc7b0f7c-ce6`.
@@ -80,11 +80,11 @@ The default is one list for one reader, as `spec-readiness` wrote. It lost: the 
 
 ## How each entry is written
 
-**Follow the template, in the spec's language, quoting verbatim. A decision's text is the sentence the spec gains, as the author would write it. A question gives its readings and a recommended answer with a one-sentence reason, or says the recommendation is a guess.**
+**Follow the template, in the spec's language, quoting verbatim. A decision's text is the sentence the spec gains, as the author would write it. A question gives its readings and a recommended answer — the reading the agent would choose — with a one-sentence reason, marked a guess where no source supports it; never "only the expert knows".**
 
 The default was a question with no replacement sentence, so the author never signs the checker's text (owner, 2026-09-24). Reversed by the owner on 2026-09-26: the expert disputes only the rows he disagrees with, and the external facts, where an agent's text was wrong on record, stay questions.
 
-(Check: every quotation passes `grep -F` against the `spec.md` read; every entry has `Stops at:` — *convention*.)
+(Check: every quotation passes `grep -F` against the `spec.md` read; every entry has `Stops at:`; every question's `Recommended:` names an answer — *convention*.)
 
 ## Grade by what a run would do, and drop nothing
 

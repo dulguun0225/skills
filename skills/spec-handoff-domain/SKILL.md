@@ -23,9 +23,11 @@ The default was to show it with the spec's answer as the recommendation. It lost
 
 **In the expert's language and business terms, show first the open Domain questions in one compact table: id, the question in one plain sentence, the recommended answer, and a one-sentence reason naming its source or saying it is a guess. Then the proposed decisions under Domain and Domain+Technical in a second: id, the decision in one plain sentence, its source, and for a Domain+Technical row its consequence in plain words. The expert replies once, with only the rows he disagrees with; every other row counts as accepted. Write only what he accepted or said.**
 
-Reversed by the owner on 2026-09-26, after the first run: one question at a time, with no recommendation, so that an accepted answer could never be the agent's text. It wasted the expert's time, and most of the 29 questions only re-confirmed the spec. Decisions are shown, not asked, since the owner's second reversal the same day: the agent decides what it can. The cost accepted: a row he passes over puts the agent's text in the spec.
+**Every question row carries a recommended answer: what the agent would choose and why, marked a guess where no source supports it. "Only you know" or "I cannot recommend" is never a recommendation; for an outside fact, recommend the most likely answer and say what it would change if wrong.**
 
-(Check: every `Answer:` written is the expert's reply or a row he did not dispute — *convention*.)
+The default is to ask without recommending, so the spec holds only the expert's words. It lost (owner, 2026-09-26): the expert had to work out every answer alone, which is the work the handoff exists to take off him. The cost accepted: a row he passes over puts the agent's text in the spec.
+
+(Check: every question row has a recommended answer that is an answer; every `Answer:` written is the expert's reply or a row he did not dispute — *convention*.)
 
 ## Apply and record
 
@@ -35,9 +37,7 @@ Reversed by the owner on 2026-09-26, after the first run: one question at a time
 
 ## Technical input moves the entry
 
-**If the expert needs a technical fact (cost, feasibility, a platform rule) to answer a question or to dispute a decision, move it to the questions under `## Domain+Technical` with `Moved from Domain <date>: <reason>`, leave it open, go on.**
-
-The default is the agent supplying the fact. It lost: the expert cannot weigh it, and nobody checks it.
+**If the expert needs a technical fact (cost, feasibility, a platform rule) to answer a question or to dispute a decision, move it to the questions under `## Domain+Technical` with `Moved from Domain <date>: <reason>` and the agent's recommendation kept, leave it open, go on.** The technical expert confirms the fact at stage 3.
 
 ## Sign-off after the rerun
 
