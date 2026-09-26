@@ -29,7 +29,7 @@ Stance: refute that a plan can be written without deciding what the authors have
 
 ## What the reader looks for
 
-**Report every instance of each class. Raise only a real gap: no answer in the spec, statements that contradict, or a case with no outcome. Never ask to confirm what the spec states definitively; a "needs confirmation" or "assumed" note beside a stated value is not a question of its own.** Brackets: default section, overridden by the section rule; stopping stage.
+**Raise only a real gap: no answer in the spec, statements that contradict, or a case with no outcome. Before writing a question, search all of `spec.md` for its answer — every requirement, scenario, edge case, entity, success criterion, assumption and `## Clarifications` entry, not only the section quoted — then the constitution and the sibling specs. An answer found anywhere, which no other text contradicts, means no question. Never ask to confirm what the spec states definitively; a "needs confirmation" or "assumed" note beside a stated value is not a question of its own.** Brackets: default section, overridden by the section rule; stopping stage.
 
 - **Markers** [D; preflight, *bespoke*]: every `[NEEDS CLARIFICATION]` and unfilled placeholder, listed first.
 - **Deferred or assumed fact** [D; review-plan to converge]: a value the spec leaves open, calls undecided, or defers ("at plan stage") with no value stated; an algorithm or standard named without a source. Ask for the source; never supply it. `wf_e68e4e48-4ed`.
@@ -39,7 +39,7 @@ Stance: refute that a plan can be written without deciding what the authors have
 - **Unconditioned guarantee, edge case without outcome** [D+T; analyze]: "exactly once", "never", "always", "0 missing"; an edge case with no outcome. `wf_e4e27b83-bc3`.
 - **Requirements that disagree, repeat or mis-cite** [split; analyze, or review-plan if no plan realises both]: both sides (D); a repeated rule, a wrong cited id, where the intended text is plain (T). `wf_6e72f3dd-930`.
 - **Clarify residue** [D; review-plan or analyze]: text keeping a replaced reading; a decision credited to a missing clarification. `wf_115f053c-900`.
-- **Sibling-spec conflict** [D; analyze]: a contradiction, both quoted with feature prefix; a sibling's answer this spec neither follows nor departs from. `wf_a6f3b709-43a`.
+- **Sibling-spec conflict** [D; analyze]: a contradiction, both quoted with feature prefix. Where this spec is silent and a sibling decides, the sibling's answer stands; no question. `wf_a6f3b709-43a`.
 - **Constitution conflict** [T if an amendment resolves it, else D+T; review-plan]: a violated article, named; a requirement needing an amendment. `wf_cc1aa65d-148`.
 - **Contradicted header** [T; analyze]: a Branch line other than `feature/<feature directory name>`. `wf_de4bfd27-d8a`.
 
@@ -49,7 +49,9 @@ The default is to leave these to the plan. It lost: a value the run picks lives 
 
 The default is also to ask about every hedge. It lost (owner, 2026-09-26): on the first run, 29 Domain questions went to the domain expert, and most re-confirmed a value the spec stated; the first asked him to confirm a name length FR-009 states outright, raised only by an Assumptions note.
 
-(Check: no Deferred question quotes a requirement that states the value it asks for; caveats appear only in the one Caveats question — *convention*, read by a person.)
+**Before writing the file, re-read `spec.md` once per drafted question and delete every question it answers.** The owner reported the re-asking again after the rule above (2026-09-26): the class list invites a question per match, and a reader that quotes one section misses the answer in another.
+
+(Check: for each question, a search of `spec.md` for its subject finds no text that answers it; no question is answered by the constitution or a sibling spec; caveats appear only in the one Caveats question — *convention*, read by a person.)
 
 ## Which section each question goes in
 
@@ -71,7 +73,7 @@ The default is to propose the fixing edit. It lost: the author signs the checker
 
 ## Grade by what a run would do, and drop nothing
 
-**Grade by the stage that would stop, or *no stop predicted* with reason, and order by it; never by severity. Keep every question; a declined one is `left as written` with reason.**
+**Grade by the stage that would stop, or *no stop predicted* with reason, and order by it; never by severity. Keep every real gap whatever its stage; a declined one is `left as written` with reason.**
 
 The default is a severity floor. It lost: `build-feature` stops on a spec finding of any severity (`specChangesOf` filters nothing), and LOW items were in four of the eight stops.
 
@@ -79,7 +81,7 @@ The default is a severity floor. It lost: `build-feature` stops on a spec findin
 
 ## The file, and the rerun
 
-**A rerun keeps every question and `Answer:` unchanged, appends new ones at their group's end as `(added <date>)` after the highest `Q<n>`, appends a `Run` line, and reports *handoff complete* or the open D and D+T ids with their next stage. It runs after stage 3 (2 if 3 is skipped), again only if a later stage reopens the handoff; never a loop.**
+**A rerun keeps every question and `Answer:` unchanged and never raises a question on a subject an earlier question closed; a new question is only a gap the spec's changed text created, and passes the same search. It appends new ones at their group's end as `(added <date>)` after the highest `Q<n>`, appends a `Run` line, and reports *handoff complete* or the open D and D+T ids with their next stage. It runs after stage 3 (2 if 3 is skipped), again only if a later stage reopens the handoff; never a loop.**
 
 - **Spec hash:** `grep -v '^\*\*Status\*\*:' spec.md | git hash-object --stdin`; Status excluded so sign-off keeps it valid.
 - **Complete:** no `Answer: open` under D or D+T, and the last `Run` hash equals the spec hash.
@@ -104,13 +106,12 @@ Run <date>, <subagent | separate session>; spec hash <hash>; siblings read: <lis
 > <verbatim spec text> (<section>, <requirement id or line>)
 <question>
 Readings: <each; under Domain+Technical, with technical consequence>
-Already decided by: <quoted constitution or sibling text | nothing found>
 Depends on: Q<n>        (split Technical half only)
 If unanswered: <stage> stops; a later spec change restarts the run at plan
 Answer: open
 ```
 
-Later stages set `Answer: answered in spec, Session <date> (handoff: domain|joint|technical)` or `Answer: left as written: <reason>`; a moved question gains `Moved from <section> <date>: <reason>`.
+Later stages set `Answer: answered in spec, Session <date> (handoff: domain|joint|technical)`, `Answer: stated in spec: "<quote>" (<location>)` for a question this stage should not have raised, or `Answer: left as written: <reason>`; a moved question gains `Moved from <section> <date>: <reason>`.
 
 (Check: at stage 4's start the hashes match and every question has `Answer:` — *convention*; `build-feature-prepare` checks.)
 

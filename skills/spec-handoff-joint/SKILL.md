@@ -11,9 +11,17 @@ Premise and sequence: `spec-handoff-questions`. The domain and technical experts
 
 **If the file has no `Answer: open` under `## Domain+Technical`, say the stage is skipped, point to `/spec-handoff-questions`, and stop.**
 
+## Close what the spec already answers, unasked
+
+**Before showing anything, search all of `spec.md` for each open question's answer. A question the spec answers is not shown: set `Answer: stated in spec: "<quoted text>" (<requirement id or section>)` and list its id in one line of the reply.**
+
+The default was to show it with the spec's answer as the recommendation. It lost (owner, 2026-09-26): the expert was still asked what the spec already said.
+
+(Check: no shown row's recommendation is a quotation of the spec — *convention*.)
+
 ## Both present, all at once, each with a recommendation
 
-**Show every open question in one compact table, in file order: id, the question in one plain sentence, the recommended answer with its technical consequence, and a one-sentence reason naming its source or saying it is a guess. Use the experts' language and plain terms. The technical expert corrects the facts; the domain expert makes the choice. They reply with only the rows they disagree with; every other row counts as accepted. Write only what they accepted or said.**
+**Show every remaining open question in one compact table, in file order: id, the question in one plain sentence, the recommended answer with its technical consequence, and a one-sentence reason naming its source or saying it is a guess. Use the experts' language and plain terms. The technical expert corrects the facts; the domain expert makes the choice. They reply with only the rows they disagree with; every other row counts as accepted. Write only what they accepted or said.**
 
 The default is to take each half to each person and relay. It lost: here the choice depends on the fact and the fact on the choice, which is why the question was not split.
 

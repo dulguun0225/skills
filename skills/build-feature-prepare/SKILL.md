@@ -18,9 +18,17 @@ Premise and sequence: `spec-handoff-questions`. The technical expert, alone, ans
 
 The default is to start anyway. It lost: an open domain question stops the build after the domain expert has left.
 
+## Close what the spec already answers, unasked
+
+**Before showing anything, search all of `spec.md` for each open question's answer. A question the spec answers is not shown: set `Answer: stated in spec: "<quoted text>" (<requirement id or section>)` and list its id in one line of the reply.**
+
+The default was to show it with the spec's answer as the recommendation. It lost (owner, 2026-09-26): the expert was still asked what the spec already said.
+
+(Check: no shown row's recommendation is a quotation of the spec — *convention*.)
+
 ## All at once, each with a recommendation
 
-**Show every open Technical question in one compact table, in file order, each after its `Depends on: Q<n>` answer: id, the question in one plain sentence, the recommended answer, and a one-sentence reason naming its source or saying it is a guess. Where the spec already states the answer, recommend that answer. The expert replies with only the rows he disagrees with; every other row counts as accepted. Write only what he accepted or said.**
+**Show every remaining open Technical question in one compact table, in file order, each after its `Depends on: Q<n>` answer: id, the question in one plain sentence, the recommended answer, and a one-sentence reason naming its source or saying it is a guess. The expert replies with only the rows he disagrees with; every other row counts as accepted. Write only what he accepted or said.**
 
 Reversed by the owner on 2026-09-26, with stages 2 and 3: one question at a time, with no recommendation. On stage 2's first run it wasted the expert's time, and most questions only re-confirmed the spec. The cost accepted: a row he passes over puts the agent's answer in the spec.
 

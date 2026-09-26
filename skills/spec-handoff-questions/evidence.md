@@ -105,6 +105,8 @@ Narrowed 2026-09-26 by the owner, after the first run: a value the spec states i
 
 - `wf_a6f3b709-43a` C1 [HIGH]: "003 spec.md SC-009 vs specs/005-address-registry/spec.md FR-006: the owners of the two specs must decide which one yields." Taken to the owner, who narrowed 003/SC-009 on 2026-09-23.
 
+Narrowed 2026-09-26 by the owner's second report that the handoff re-asks what the spec states: silence where a sibling decides is no longer a question, and the sibling's answer stands. The one instance above is a contradiction and still falls in the class. No stop caused by silence against a sibling is on record.
+
 ### A conflict with the constitution
 
 None of the eight. The ground is the review-spec prompt ("a requirement that violates a constitution article — blocking, and say which article") and `wf_cc1aa65d-148`, whose last blocker was "three Article VII articles written by 002 about tables 003 owns" (`build-feature` evidence, 2026-09-17). Kept because the owner asked for it on 2026-09-24. This is the class with the least ground: *convention*.
@@ -146,6 +148,8 @@ What would reopen a decision here:
 - A second team, or a spec in another repository: every class comes from one team's specs in two repositories over three days.
 - A spec-kit release whose clarify or checklist reads the sibling specs: re-check the default this skill overrides.
 - A stop whose cause was a confirmation note the Caveats question listed and the expert kept: the caveat rule is wrong.
+- A build stop on a subject where this spec was silent and a sibling decided: the 2026-09-26 narrowing of the sibling class is wrong.
+- A question closed as `stated in spec` whose quoted text did not in fact answer it: the closing search is too loose.
 - A recommended answer an expert passed over and later found wrong: the finding is about the 2026-09-26 reversal in stages 2 to 4.
 
 **Not to be cited as evidence that this skill works**: the eight stops. They are the ground it was written from. One spec has been through it (`account-metadata` 002, 2026-09-26), before the caveat rule, and no build has followed.
@@ -159,6 +163,7 @@ What would reopen a decision here:
 | A fresh context finds what the writing context approved | *convention* — one observation on plans, 2026-09-16 |
 | The single-reader list sent technical questions to the domain expert, and the build stopped after his handoff | *convention* — the owner's report, 2026-09-26 |
 | Most of the first run's 29 Domain questions only re-confirmed the spec | *convention* — the owner's report, 2026-09-26; Q1 read, the rest not re-read |
+| The first run's questions were raised on subjects the spec answered in a section other than the one quoted | *uncertain* — inferred 2026-09-26 from the owner's second report and the Q1 shape; that run's file is on another machine and was not read here |
 | The class list covers what a spec lacks | *uncertain* — eight stops, one team |
 | Running this check prevents a stop | *uncertain* — run once, no build since |
 | Every directive | *convention* — decided 2026-09-24 and 2026-09-26, check is the written artifact |

@@ -11,9 +11,17 @@ Premise and sequence: `spec-handoff-questions`. The domain expert, alone, answer
 
 **If the file is missing or has no `Answer: open` under `## Domain`, say so, name the next step, and stop.**
 
+## Close what the spec already answers, unasked
+
+**Before showing anything, search all of `spec.md` for each open question's answer. A question the spec answers is not shown: set `Answer: stated in spec: "<quoted text>" (<requirement id or section>)` and list its id in one line of the reply.**
+
+The default was to show it with the spec's answer as the recommendation. It lost (owner, 2026-09-26): the expert was still asked what the spec already said.
+
+(Check: no shown row's recommendation is a quotation of the spec — *convention*.)
+
 ## All at once, each with a recommendation
 
-**Show every open Domain question in one compact table, in file order: id, the question in one plain sentence, the recommended answer, and a one-sentence reason naming its source (the spec, a sibling spec, the constitution) or saying it is a guess. Use the expert's language and business terms. Where the spec already states the answer, recommend that answer. The Caveats question is one row; accepting it deletes every note it lists and keeps the values. The expert replies with only the rows he disagrees with; every other row counts as accepted. Write only what he accepted or said.**
+**Show every remaining open Domain question in one compact table, in file order: id, the question in one plain sentence, the recommended answer, and a one-sentence reason naming its source (a sibling spec, the constitution) or saying it is a guess. Use the expert's language and business terms. The Caveats question is one row; accepting it deletes every note it lists and keeps the values. The expert replies with only the rows he disagrees with; every other row counts as accepted. Write only what he accepted or said.**
 
 Reversed by the owner on 2026-09-26, after the first run: one question at a time, with no recommendation, so that an accepted answer could never be the agent's text. It wasted the expert's time, and most of the 29 questions only re-confirmed the spec. The cost accepted: a row he passes over puts the agent's answer in the spec.
 

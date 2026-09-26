@@ -2,6 +2,24 @@
 
 `spec-handoff-questions`, `spec-handoff-domain`, `spec-handoff-joint`, `build-feature-prepare`. They replace `spec-readiness` (2026-09-24), whose record is the third section of this file.
 
+## 2026-09-26 — second report: questions the spec already answers are still asked
+
+**What happened.** The owner reported, after the revision below, that the handoff still asks what the spec already states, and that its purpose is to cut the questions a person meets at the plan and tasks stages. The run was on another machine; its `HANDOFF-QUESTIONS.md` was not read here.
+
+**Leaks found in the text, and the changes:**
+
+- Stage 1 said *report every instance of each class* beside *raise only a real gap*; the class list invites a question per match. Now: search all of `spec.md` (every section, `## Clarifications` included), the constitution and the sibling specs for the answer before writing a question; any answer, uncontradicted, means no question. Then one re-read per drafted question before the file is written, deleting what the spec answers.
+- The template's `Already decided by:` field let a question the constitution or a sibling already decided be asked anyway. Field removed; such a question is not raised.
+- The sibling class asked about a sibling's answer this spec neither follows nor departs from. Now: contradictions only; the sibling's answer stands on silence. Its evidence instance is a contradiction.
+- Stages 2, 3 and 4 said *where the spec already states the answer, recommend that answer* (2 and 4; 3 had nothing), so such questions were shown. Now each first closes them unasked with `Answer: stated in spec: "<quote>" (<location>)`, lists their ids in one line, and shows the rest.
+- The rerun could raise a question on a subject already closed. Now it raises only a gap the changed text created, through the same search.
+
+**Sweep.** `README.md` rows for all four; grep for `Already decided`, *neither follows nor departs*, *recommend that answer*: none left. Stage 1's evidence gained the sibling narrowing, two reopen conditions and one *uncertain* claim.
+
+**Cost**, `npm run tokens`, SKILL.md body per firing: 2,559, 884, 788 and 905 tokens (questions, domain, joint, prepare), from 2,359, 769, 658 and 787. Descriptions unchanged. Firing does not apply (`disable-model-invocation: true`).
+
+**Not reviewed.** No adversarial review; no run since.
+
 ## 2026-09-26 — first run, and the owner's reversal of the question flow
 
 **What happened.** First real run, the same day the skills were published: `account-metadata`, `specs/002-account-attributes`. Stage 1 wrote 46 questions: 29 Domain, 7 Domain+Technical, 10 Technical (counted in that repository's `HANDOFF-QUESTIONS.md`). Stage 2 showed them one at a time with no recommendation, as written. The owner, who was the domain expert, overrode it: he asked for a recommendation, then objected that the questions were unnecessary. The trigger was Q1, which asked him to confirm the account name's length and characters. FR-009 states both outright; the only reason for the question was an Assumptions note saying the number needs the domain expert's confirmation. By the owner's report, many other questions had the same shape.
