@@ -2,6 +2,24 @@
 
 `spec-handoff-questions`, `spec-handoff-domain`, `spec-handoff-joint`, `build-feature-prepare`. They replace `spec-readiness` (2026-09-24), whose record is the third section of this file.
 
+## 2026-09-26 — decide first: the agent answers what it can, a person only what a person alone knows
+
+**Why.** The owner, after the leak fixes below: the handoff exists to take questions off people at plan, tasks and analyze, not to add them; AI is used to take work off people. The leak fixes still left the rule *every gap is a question for a person*. Owner's go, same day, on the proposal: the agent decides every gap it can; a person is asked only for what the agent cannot know.
+
+**The decision, as written:**
+
+- **Stage 1 writes decisions and questions.** Each gap becomes a decision — the sentence `spec.md` gains, with its source (quoted spec, sibling or constitution text, or a named established practice); where no source decides, the reading that loses no data, money or legal standing and is cheapest to reverse, marked as such. A question only on four grounds: an external fact, an owners' conflict with a sibling spec, an irreversible business choice no source settles, a constitution amendment. The four grounds are this pass's wording of the owner's decision. The Caveats entry became a decision deleting the notes. Markers follow the same test. Each section now holds `### Questions` and `### Decisions`, each ordered by `Stops at:` instead of six stage headings; ids `Q<n>` and `A<n>`; decisions start `Answer: proposed`, and completeness now also needs no `proposed` under Domain or Domain+Technical.
+- **Reversed:** the 2026-09-24 rule that stage 1 writes no replacement sentence and chooses no reading. The external-fact ground keeps `wf_e68e4e48-4ed`, the one wrong recommendation on record, a question.
+- **Stage 2** shows the domain expert one reply with two tables: the open Domain questions with a recommendation each, and the proposed Domain and Domain+Technical decisions with source and, for the latter, consequence in plain words. Disputes only; the rest applied.
+- **Stage 3** only for Domain+Technical questions the agent could not decide; stage 2 applied that section's decisions.
+- **Stage 4** applies every Technical decision without asking, shows the technical expert the Technical questions with recommendations and the applied decisions as a list; disputes only.
+
+**Sweep.** `README.md` rows for all four and the stage list; `CLAUDE.md` index line; stage 1 evidence: intro, provenance row, a new section for the grounds, the Caveats and replacement-sentence passages, reopen conditions, one *uncertain* claim. `build-feature` names `build-feature-prepare`'s reopen rule, which still exists; left as is.
+
+**Cost**, `npm run tokens`, SKILL.md body per firing: 3,038, 1,009, 827 and 1,031 tokens (questions, domain, joint, prepare), from 2,559, 884, 788 and 905. Descriptions 274, 283, 304 and 293 chars, all left out of the set total. Firing does not apply (`disable-model-invocation: true`).
+
+**Not reviewed.** No adversarial review; no run of this form.
+
 ## 2026-09-26 — second report: questions the spec already answers are still asked
 
 **What happened.** The owner reported, after the revision below, that the handoff still asks what the spec already states, and that its purpose is to cut the questions a person meets at the plan and tasks stages. The run was on another machine; its `HANDOFF-QUESTIONS.md` was not read here.

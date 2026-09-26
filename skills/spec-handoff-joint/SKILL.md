@@ -1,15 +1,15 @@
 ---
 name: spec-handoff-joint
-description: Stage 3 of the spec handoff — shows the domain and technical experts together every open Domain+Technical question in HANDOFF-QUESTIONS.md as one table with a recommended answer each, and writes what they accept or say into spec.md; invoke by name (/spec-handoff-joint).
+description: Stage 3 of the spec handoff — shows the domain and technical experts together the open Domain+Technical questions in HANDOFF-QUESTIONS.md, those the agent could not decide, as one table with a recommended answer each, and writes what they accept or say into spec.md; invoke by name (/spec-handoff-joint).
 disable-model-invocation: true
 ---
 # Spec handoff, stage 3 — the questions that need both experts
 
-Premise and sequence: `spec-handoff-questions`. The domain and technical experts, together, answer `## Domain+Technical` of `<featureDir>/HANDOFF-QUESTIONS.md` (the user's feature directory, else `.specify/feature.json`'s), the handoff's one joint step. **Status: *decided, not yet validated*, 2026-09-26**, owner's decision, never run; checks *convention*.
+Premise and sequence: `spec-handoff-questions`. The domain and technical experts, together, answer the questions under `## Domain+Technical` of `<featureDir>/HANDOFF-QUESTIONS.md` (the user's feature directory, else `.specify/feature.json`'s), the handoff's one joint step; the agent decided every Domain+Technical gap it could, and stage 2 applied those decisions. **Status: *decided, not yet validated*, 2026-09-26**, owner's decision, never run; checks *convention*.
 
 ## Skip when nothing is open
 
-**If the file has no `Answer: open` under `## Domain+Technical`, say the stage is skipped, point to `/spec-handoff-questions`, and stop.**
+**If the file has no `Answer: open` among the questions under `## Domain+Technical`, say the stage is skipped, point to `/spec-handoff-questions`, and stop.**
 
 ## Close what the spec already answers, unasked
 
@@ -25,7 +25,7 @@ The default was to show it with the spec's answer as the recommendation. It lost
 
 The default is to take each half to each person and relay. It lost: here the choice depends on the fact and the fact on the choice, which is why the question was not split.
 
-Reversed by the owner on 2026-09-26, with stage 2: one question at a time, with no recommendation. On stage 2's first run it wasted the expert's time, and most questions only re-confirmed the spec. The cost accepted: a row they pass over puts the agent's answer in the spec.
+Reversed by the owner on 2026-09-26, with stage 2: one question at a time, with no recommendation, and a question per gap. On stage 2's first run it wasted the expert's time, and most questions only re-confirmed the spec. The cost accepted: a row they pass over puts the agent's answer in the spec.
 
 (Check: every `Answer:` written is the experts' reply or the recommendation of a row they did not dispute — *convention*.)
 
