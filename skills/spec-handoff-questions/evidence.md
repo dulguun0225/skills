@@ -1,6 +1,6 @@
-# Spec readiness — evidence
+# Spec handoff questions — evidence
 
-For a person deciding whether to trust the directive text. Written 2026-09-24, the date of the owner's decision and of the first read of the eight handoffs. No research pass and no refutation panel stands behind any of it.
+For a person deciding whether to trust the directive text. The reading rules and the question classes were written 2026-09-24, the date of the owner's decision and of the first read of the eight handoffs, for the single-reader skill `spec-readiness`. The split into three sections and the rerun were decided by the owner on 2026-09-26, when that skill was replaced by this one and the three stages after it. No research pass and no refutation panel stands behind any of it.
 
 ## Provenance
 
@@ -12,6 +12,8 @@ For a person deciding whether to trust the directive text. Written 2026-09-24, t
 | `build-feature`'s `workflow.mjs` before 2026-09-21 (`9e91cdf^`) | the review-spec stage's reviewer and fixer prompts | `git show` in the repository these skills distribute from |
 | `build-feature`'s `workflow.mjs` and `evidence.md` at 2026-09-24 | preflight's dirty-tree rule, `specChangesOf`, the review-spec record of 2026-09-17 | read |
 | Stock spec-kit 1.0.8 `speckit-clarify` and `speckit-checklist` skills, as installed in `reference-data` | the five-question cap; which files each loads | `grep` over the installed `SKILL.md` files |
+| The owner, 2026-09-26 | the two failures of the single-reader skill; the split, the joint step and the completeness rule | the owner's decision, *convention* |
+| Claude Code skills documentation, `code.claude.com/docs/en/skills` | the `disable-model-invocation` field | read 2026-09-26 |
 
 The eight stops, with the handoff commit each was read from:
 
@@ -28,7 +30,9 @@ The eight stops, with the handoff commit each was read from:
 
 Dates are the journal's UTC day. The 003 `RESOLUTIONS.md` dates some of the same stops a day later, in local time.
 
-## Run it after clarify, in a fresh context
+A spec change restarts the run at `plan`, and five of these eight restarts then stopped at a fresh review-plan cap (run ledger, sweep 2, 2026-09-24; moved here from `SKILL.md` on 2026-09-26, not re-counted).
+
+## Run it in a fresh context
 
 The fresh-context premise is `build-feature`'s: on 2026-09-16 two fresh-context reviews found a constitution lagging the plan, a test-property precedence error and an ArchUnit scope error that the writing context had approved (that skill's evidence, 2026-09-16). That is one observation. It is not a measurement that fresh-context review of a *spec* finds more.
 
@@ -36,7 +40,9 @@ Every one of the eight specs had been through `/speckit-clarify` before its run:
 
 The tier sentence names `build-feature`'s review-plan row as it stood on 2026-09-24. It follows that table, and the row can move.
 
-## Read the spec, the constitution and the sibling specs, and write only the list
+The subagent reads this skill by its path because of the frontmatter. The Claude Code skills documentation, read 2026-09-26, gives `disable-model-invocation: true` as "Description not in context, full skill loads when you invoke", describes it as set "to prevent Claude from automatically loading this skill", and says it "Also prevents the skill from being preloaded into subagents". *Primary-source verified*, one reader, for that date. The field is a Claude Code extension: the same page lists it outside the Agent Skills spec's fields, and says a claude.ai upload refuses a field outside the spec.
+
+## Read the spec, the constitution and the sibling specs, and write only the file
 
 The review-spec reviewer prompt, recovered from `9e91cdf^`, opened: "You are a fresh-context reviewer with no memory of how spec.md was written. Your job is to REFUTE the claim that it is a complete, faithful and testable specification of its source. Read-only: change nothing." It read the spec, `checklists/requirements.md` and the constitution in full, and required each finding to name "the exact location and the concrete edit that resolves it". **Kept:** the stance, the full reading, the exact location. **Dropped:** the source-faithfulness items (the upstream-provenance layer they checked was removed from the service repositories on 2026-09-21), the concrete edit, the fix prompt that applied findings to `spec.md` and committed `spec: review round N`, and the round loop.
 
@@ -47,6 +53,8 @@ Code and plan artifacts are left out by decision, 2026-09-24, *convention*. The 
 ## What the reader looks for
 
 The classes are the item-level causes in the eight handoffs, grouped by what the author would have had to write. The sweep-2 table summarises each stop's cause in a single cell. The handoffs hold more than one item per stop: 18 items across the eight, counted 2026-09-24 and re-countable from the table above. Every item fits a class below. No class was added without an item behind it, except the constitution class, which the owner asked for and which rests on the review-spec record instead.
+
+The default section per class is the owner's split of 2026-09-26 applied to these items by the pass that wrote this skill, *convention*. No item was re-read against it.
 
 ### Markers and placeholders the build refuses on
 
@@ -61,7 +69,7 @@ Not among the eight, because preflight already refuses on a marker (`build-featu
 
 ### A success criterion without its measurement conditions
 
-- `wf_fbb2141f-8bf` A1 [MEDIUM]: SC-004 "states 'one page of list or search in under 1 second at 1,000 companies' with no percentile, concurrency, warmth or hardware condition, so it is not assertable as written."
+- `wf_fbb2141f-8bf` A1 [MEDIUM]: SC-004 "states 'one page of list or search in under 1 second at 1,000 companies' with no percentile, concurrency, warmth or hardware condition, so it is not assertable as written." The load (1,000 companies) and the wait (1 second) are stated in business terms; what is missing is technical. It fits the owner's example of a Technical question.
 - `wf_6e72f3dd-930` C1 [HIGH]: SC-004 "must say what 'ten times those amounts' measures" — 25,500 rows under one reading, 250,000 under the other.
 - `wf_6e72f3dd-930` A3 [LOW]: SC-001 "'under 3 minutes' is not a measurable bound for this feature".
 - The review-spec prompt graded "a success criterion with no measure" major.
@@ -74,7 +82,7 @@ Not among the eight, because preflight already refuses on a marker (`build-featu
 
 ### A guarantee without its conditions, an edge case without its outcome
 
-- `wf_e4e27b83-bc3` U2 [HIGH]: "'each value appears exactly once' and '0 duplicated, 0 missing' are unqualified, but a keyset walk over the mutable key … can miss or repeat a row … and the spec's own edge case … leaves the outcome unstated."
+- `wf_e4e27b83-bc3` U2 [HIGH]: "'each value appears exactly once' and '0 duplicated, 0 missing' are unqualified, but a keyset walk over the mutable key … can miss or repeat a row … and the spec's own edge case … leaves the outcome unstated." What a user sees there is a domain choice whose readings differ in technical cost, which fits the owner's example of a Domain+Technical question.
 
 ### Requirements that disagree, repeat or cite the wrong id
 
@@ -102,6 +110,12 @@ None of the eight. The ground is the review-spec prompt ("a requirement that vio
 - `wf_de4bfd27-d8a` I2 [LOW]: "Branch reads feature/spec-v1 and Status reads 'Draft'".
 - `wf_e4e27b83-bc3` F4 [LOW]: the header "names the branch `feature/spec-03-constant-register` … and Status still reads 'Draft — Ноорог'"; applied by the session (003 `RESOLUTIONS.md`).
 
+The Status half is no longer a question since 2026-09-26: the domain expert sets Status at sign-off, and `build-feature-prepare` refuses a Draft.
+
+## Which section each question goes in
+
+The owner's decision, 2026-09-26, *convention*, on two observed failures of the single-reader skill `spec-readiness`: the domain expert was asked technical questions he could not answer, and the build stopped for spec changes after he had handed off. Neither is a run id in the ledger; both are the owner's report. The three section definitions, the examples in them and the split rule are the owner's, in his words where the directive quotes an example.
+
 ## How each question is written
 
 The fact that shows what a proposed answer can cost is `wf_e68e4e48-4ed`. The spec assumed a control-digit algorithm, the plan could not find one, and only the owner knew that none exists. By the sweep-2 record, the session's recommendations on the eight items taken to a person were all adopted, one then corrected by a fact only the owner held. That shows sessions recommend well. It does not show that a checker's proposed text is safe for the author to sign. The rule against writing the replacement sentence is the owner's decision (returns questions, never edits), made 2026-09-24, *convention*.
@@ -110,11 +124,13 @@ The fact that shows what a proposed answer can cost is `wf_e68e4e48-4ed`. The sp
 
 `workflow.mjs` at 2026-09-24: `const specChangesOf = r => (r && Array.isArray(r.specChanges) ? r.specChanges.filter(Boolean) : [])`, and every stage that returns it stops on a non-empty result. No severity is read. *Primary-source verified*, one reader. LOW items were among the spec changes of `wf_de4bfd27-d8a` (I2), `wf_bc7b0f7c-ce6` (A2), `wf_e4e27b83-bc3` (F4) and `wf_6e72f3dd-930` (A3). Whether any of those would have stopped a run on its own was not tested.
 
-## Where the list goes, and what the author does with it
+## The file, and the rerun
 
-`build-feature` preflight, `workflow.mjs` at 2026-09-24: "`git status --porcelain` must be empty (untracked files under .specify/workflows/runs/ and .claude/worktrees/ do not count). A dirty tree is a problem and you stop there". So an untracked `READINESS.md` in the feature directory is a preflight refusal. *Primary-source verified* for that date. The author works on the base branch while the build runs (owner's decision, 2026-09-21, recorded in `build-feature`).
+`build-feature` preflight, `workflow.mjs` at 2026-09-24: "`git status --porcelain` must be empty (untracked files under .specify/workflows/runs/ and .claude/worktrees/ do not count). A dirty tree is a problem and you stop there". So an untracked `HANDOFF-QUESTIONS.md` in the feature directory is a preflight refusal. *Primary-source verified* for that date. The author works on the base branch while the build runs (owner's decision, 2026-09-21, recorded in `build-feature`).
 
-The once-only second run is a decision, *convention*: the residue class exists because clarify answers left residue twice, and the loop limit exists because the review-spec loop had no fixed point.
+The completeness rule (no open Domain or Domain+Technical question, and a rerun that adds none there) is the owner's, 2026-09-26. Encoding it as the last `Run` hash against the current spec is this skill's: a rerun that added an open question leaves that question open, and a spec edited after the last run fails the hash, so the two file conditions cover it. The hash leaves out the Status line so that the sign-off edit, which the owner placed after the rerun, does not fail it. *Convention*.
+
+Preserving questions and appending on a rerun is the owner's decision, 2026-09-26. It replaces `spec-readiness`'s rule that each run replaced the file, which kept the earlier list only in git.
 
 ## What this skill does not do
 
@@ -122,7 +138,8 @@ What would reopen a decision here:
 
 - A `build-feature` stop whose cause was in the spec before the run but fits no class above: add the class, with its run id.
 - A spec that went through this check and still stopped on a class the check names: the reader missed it, and the finding is about the reading, not the class list.
-- A second author, or a spec in another repository: every class comes from one team's specs in two repositories over three days.
+- A question placed in one section that its people could not answer: the finding is about the section rule.
+- A second team, or a spec in another repository: every class comes from one team's specs in two repositories over three days.
 - A spec-kit release whose clarify or checklist reads the sibling specs: re-check the default this skill overrides.
 
 **Not to be cited as evidence that this skill works**: the eight stops. They are the ground it was written from. No spec has been through it.
@@ -132,7 +149,9 @@ What would reopen a decision here:
 | The eight stops' causes were in the spec text before the run | *primary-source verified* — one reader of the handoffs, 2026-09-24 |
 | Clarify caps at five questions; neither clarify nor checklist reads sibling specs | *primary-source verified* — spec-kit 1.0.8, 2026-09-24 |
 | `build-feature` stops on a spec change of any severity; preflight refuses on a dirty tree | *primary-source verified* — `workflow.mjs`, 2026-09-24 |
+| `disable-model-invocation: true` keeps the description out of context and the skill out of subagent preloading | *primary-source verified* — Claude Code skills documentation, 2026-09-26 |
 | A fresh context finds what the writing context approved | *convention* — one observation on plans, 2026-09-16 |
+| The single-reader list sent technical questions to the domain expert, and the build stopped after his handoff | *convention* — the owner's report, 2026-09-26 |
 | The class list covers what a spec lacks | *uncertain* — eight stops, one team |
 | Running this check prevents a stop | *uncertain* — never run |
-| Every directive | *convention* — decided 2026-09-24, check is the written artifact |
+| Every directive | *convention* — decided 2026-09-24 and 2026-09-26, check is the written artifact |

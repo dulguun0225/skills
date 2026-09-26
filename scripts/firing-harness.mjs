@@ -940,10 +940,13 @@ def publish(payload):
 }
 
 /**
- * A spec-kit project with two written specs and no plan, for the cases that ask
- * whether a spec is ready to build. Added 2026-09-24 with the `spec-readiness`
- * cases. The specs are ordinary rather than exemplary: one bound is left to the
- * plan, one criterion has no measurement conditions, one search requirement
+ * A spec-kit project with two written specs and no plan. Added 2026-09-24 with
+ * the `spec-readiness` cases, which asked whether a spec is ready to build. No
+ * case uses it since 2026-09-26: `spec-readiness` was replaced by the three
+ * `spec-handoff-*` skills and `build-feature-prepare`, whose
+ * `disable-model-invocation: true` keeps the model from loading them, so no
+ * firing case applies to them. Kept for a later spec-kit case. The specs are
+ * ordinary rather than exemplary: one bound is left to the plan, one criterion has no measurement conditions, one search requirement
  * states no semantics — the shapes that stopped real builds — so the prompt can
  * point at the files without the fixture answering it.
  */

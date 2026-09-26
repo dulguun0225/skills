@@ -19,6 +19,15 @@
 // This script implements a strict subset of frontmatter scalars and refuses
 // anything outside it as a parse error, naming the line.
 //
+// Skills with `disable-model-invocation: true` are left out of the set total,
+// added 2026-09-26. The Claude Code skills docs, read that day, give that key as
+// "Description not in context, full skill loads when you invoke", so such a
+// description does not take listing budget. It is still parsed and still held
+// to the per-description cap. The key must be the plain scalar `true` or
+// `false`: `yes`, `on` or a quoted "true" is a boolean in one YAML version and
+// a string in another, and a key the harness might read either way cannot
+// decide whether a description is counted.
+//
 // Exit 1 on any failure. It fails the build; it is not advisory.
 
 import { readFileSync } from "node:fs";
@@ -40,6 +49,8 @@ const SET_TOTAL_CAP = 8000;
 const FIXTURES = join(ROOT, "scripts", "fixtures", "description-budget");
 
 const KEY = /^([A-Za-z][A-Za-z0-9_-]*):(.*)$/;
+
+const MANUAL_ONLY_KEY = "disable-model-invocation";
 
 /**
  * Unquote a double-quoted scalar body (without its surrounding quotes).
@@ -180,6 +191,12 @@ function parseFrontmatter(text, label) {
       throw new Error(`${ctx}: key "${key}" has more than one space before its value`);
     }
 
+    if (key === MANUAL_ONLY_KEY && raw !== "true" && raw !== "false") {
+      throw new Error(
+        `${ctx}: ${MANUAL_ONLY_KEY} must be the plain scalar true or false, not ${raw.slice(0, 20)}`,
+      );
+    }
+
     fields.set(key, parseScalar(raw, ctx));
   }
 
@@ -204,13 +221,15 @@ function checkFile(path, label, { expectDirName } = {}) {
   }
 
   const chars = [...description].length;
-  return { name, description, chars };
+  const manualOnly = fields.get(MANUAL_ONLY_KEY) === "true";
+  return { name, description, chars, manualOnly };
 }
 
 // ---------------------------------------------------------------------------
-// Canary: run on every invocation, before the real check. If either canary is
-// NOT refused for the reason it exists to test, the gate is blind and every
-// PASS below is meaningless.
+// Canary: run on every invocation, before the real check. If any canary is
+// NOT refused for the reason it exists to test — or, for `manual-only`, NOT
+// read as left out of the set total — the gate is blind and every PASS below
+// is meaningless.
 // ---------------------------------------------------------------------------
 
 function runCanaries() {
@@ -269,6 +288,34 @@ function runCanaries() {
     }
   }
 
+  const badValuePath = join(FIXTURES, "manual-only-bad-value", "SKILL.md");
+  try {
+    parseFrontmatter(readFileSync(badValuePath, "utf8"), "canary/manual-only-bad-value/SKILL.md");
+    console.log(`BLIND canary/manual-only-bad-value: ${MANUAL_ONLY_KEY}: yes was NOT refused`);
+    blind = true;
+  } catch (err) {
+    if (!err.message.includes(MANUAL_ONLY_KEY)) {
+      console.log(`BLIND canary/manual-only-bad-value: refused, but not for the ${MANUAL_ONLY_KEY} reason — ${err.message}`);
+      blind = true;
+    } else {
+      console.log(`canary/manual-only-bad-value: refused as a parse error, as expected`);
+    }
+  }
+
+  const manualOnlyPath = join(FIXTURES, "manual-only", "SKILL.md");
+  try {
+    const r = checkFile(manualOnlyPath, "canary/manual-only/SKILL.md", { expectDirName: "manual-only" });
+    if (!r.manualOnly) {
+      console.log(`BLIND canary/manual-only: ${MANUAL_ONLY_KEY}: true was NOT read — it would be counted in the set total`);
+      blind = true;
+    } else {
+      console.log(`canary/manual-only: read as left out of the set total, as expected`);
+    }
+  } catch (err) {
+    console.log(`BLIND canary/manual-only: fixture failed to parse at all — ${err.message}`);
+    blind = true;
+  }
+
   if (blind) {
     console.log("\nThe gate is blind: at least one canary was not refused for the reason it tests.");
     process.exit(1);
@@ -298,9 +345,11 @@ for (const { name, dir } of skillDirs(ROOT)) {
   }
 }
 
-const total = results.reduce((n, r) => n + r.chars, 0);
+const listed = results.filter((r) => !r.manualOnly);
+const manualOnly = results.filter((r) => r.manualOnly);
+const total = listed.reduce((n, r) => n + r.chars, 0);
 if (total > SET_TOTAL_CAP) {
-  failures.push(`set total: ${total} chars across ${results.length} skill(s), over the ${SET_TOTAL_CAP}-char cap`);
+  failures.push(`set total: ${total} chars across ${listed.length} skill(s), over the ${SET_TOTAL_CAP}-char cap`);
 }
 
 console.log("");
@@ -308,8 +357,14 @@ for (const f of failures) console.log(`FAIL ${f}`);
 
 console.log(
   `\n${failures.length ? "FAIL" : "PASS"} description-budget: ${results.length} skill(s) parsed, ` +
-    `${failures.length} failure(s). Set total ${total} / ${SET_TOTAL_CAP} chars.`,
+    `${failures.length} failure(s). Set total ${total} / ${SET_TOTAL_CAP} chars over ${listed.length} skill(s).`,
 );
+if (manualOnly.length) {
+  console.log(
+    `Left out of the set total, ${MANUAL_ONLY_KEY}: true: ` +
+      `${manualOnly.map((r) => `${r.name} (${r.chars})`).join(", ")}.`,
+  );
+}
 
 if (process.argv.includes("--report")) {
   const sorted = [...results].sort((a, b) => b.chars - a.chars);
@@ -319,11 +374,12 @@ if (process.argv.includes("--report")) {
   for (const r of sorted) {
     const nameDesc = r.chars + [...r.name].length;
     const headroom = PER_DESCRIPTION_CAP - r.chars;
-    console.log(`${r.name.padEnd(pad)}  ${col(r.chars)}  ${col(nameDesc)}  ${col(headroom)}`);
+    const mark = r.manualOnly ? "  not in total" : "";
+    console.log(`${r.name.padEnd(pad)}  ${col(r.chars)}  ${col(nameDesc)}  ${col(headroom)}${mark}`);
   }
   console.log(`${"".padEnd(pad, "-")}  ${col("---")}  ${col("---")}  ${col("---")}`);
   console.log(
-    `${"total".padEnd(pad)}  ${col(total)}  ${col(total + sorted.reduce((n, r) => n + [...r.name].length, 0))}  ${col("")}`,
+    `${"total".padEnd(pad)}  ${col(total)}  ${col(total + listed.reduce((n, r) => n + [...r.name].length, 0))}  ${col("")}`,
   );
 }
 
@@ -336,6 +392,9 @@ What this check does not decide:
   - the harness's real budget, which scales with the context window and is not
     published as a constant; 400 and 8,000 here are this repo's own choice
   - skills installed from other repos sharing the same listing
+  - whether a client honours ${MANUAL_ONLY_KEY}; the set total leaves those
+    skills out on the Claude Code docs' word, read 2026-09-26, and a client
+    that lists their descriptions anyway pays more than this total says
   - full YAML — it accepts a strict subset and refuses the rest, so a valid-YAML
     description using a block scalar, an anchor or a flow collection fails
     here by design

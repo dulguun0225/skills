@@ -25,6 +25,13 @@
 // rather than pasting raw YAML, so the delimiters and the `name:`/`description:`
 // keys are this script's guess at that framing rather than a measurement of it.
 //
+// Skills with `disable-model-invocation: true` are left out of the total,
+// added 2026-09-26. The Claude Code skills docs, read that day, give that key as
+// "Description not in context, full skill loads when you invoke", so such a
+// skill pays no frontmatter per session. They are listed separately. Only the
+// plain scalar `true` counts, as in `scripts/description-budget.mjs`, which
+// refuses any other value for the key.
+//
 // A report, not a gate. Always exits 0 — except on a frontmatter shape it cannot
 // count honestly, which it names and exits 1 for.
 
@@ -36,6 +43,7 @@ import { skillDirs } from "./lib/md.mjs";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const count = (s) => encode(s).length;
+const MANUAL_ONLY_KEY = "disable-model-invocation";
 
 /**
  * Frontmatter as `key: value` pairs, one line each. Every SKILL.md here is that
@@ -62,6 +70,7 @@ function frontmatter(path) {
 }
 
 const rows = [];
+const manual = [];
 const broken = [];
 for (const { name, dir } of skillDirs(ROOT)) {
   const fm = frontmatter(join(dir, "SKILL.md"));
@@ -70,9 +79,11 @@ for (const { name, dir } of skillDirs(ROOT)) {
     continue;
   }
   const byKey = Object.fromEntries(fm.pairs.map((p) => [p.key, count(p.value)]));
-  rows.push({ name, byKey, overhead: fm.overhead, block: fm.block });
+  const manualOnly = fm.pairs.some((p) => p.key === MANUAL_ONLY_KEY && p.value === "true");
+  (manualOnly ? manual : rows).push({ name, byKey, overhead: fm.overhead, block: fm.block });
 }
 rows.sort((a, b) => b.block - a.block);
+manual.sort((a, b) => b.block - a.block);
 
 const keys = [...new Set(rows.flatMap((r) => Object.keys(r.byKey)))];
 const pad = Math.max(...rows.map((r) => r.name.length), 5);
@@ -95,6 +106,12 @@ const widest = rows[0];
 console.log(
   `\nSkills counted: ${rows.map((r) => r.name).join(", ")}.` +
     `\nLargest: ${widest.name} at ${widest.block} tokens of frontmatter.` +
+    (manual.length
+      ? `\nLeft out of the total, ${MANUAL_ONLY_KEY}: true — not in Claude Code's listing, ` +
+        `loaded only when invoked by name: ` +
+        `${manual.map((r) => `${r.name} (${r.block})`).join(", ")}; ` +
+        `${manual.reduce((n, r) => n + r.block, 0)} tokens of frontmatter.`
+      : "") +
     `\nAgainst the bodies: run \`npm run tokens\` — that is the per-firing cost, and it dwarfs this.`,
 );
 
@@ -116,6 +133,9 @@ What this count does not decide:
     own format, so the framing column is this script's guess at that cost
   - the true Claude count; o200k_base is a different tokenizer
   - what a given consumer pays, which depends on which skills they installed
+  - whether a client honours ${MANUAL_ONLY_KEY}; the total leaves those skills
+    out on the Claude Code docs' word, read 2026-09-26, and a client that lists
+    their descriptions anyway pays their frontmatter every session as well
   - whether the description matches what the skill contains; that is reading
 `);
 

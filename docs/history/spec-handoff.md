@@ -1,0 +1,97 @@
+# spec handoff — authoring record
+
+`spec-handoff-questions`, `spec-handoff-domain`, `spec-handoff-joint`, `build-feature-prepare`. They replace `spec-readiness` (2026-09-24), whose record is the second section of this file.
+
+## 2026-09-26 — the split between a domain expert and a technical expert
+
+**Why.** Owner's report and decision, 2026-09-26. `spec-readiness` wrote one list for one reader, the domain expert. Two failures: the domain expert was asked technical questions he could not answer, and the build stopped for spec changes after he had handed off. Neither is a run id in the run ledger; both are the owner's report, and the skill's evidence marks them *convention*.
+
+**The decision** (owner's, same day): each person works alone wherever possible; the only joint step is for questions that need both; the handoff is complete after stage 3 plus a rerun of stage 1.
+
+| Step | Skill | Who | Works on |
+|---|---|---|---|
+| 1 | `spec-handoff-questions` | anyone, as a fresh-context reader | writes `<featureDir>/HANDOFF-QUESTIONS.md`: `## Domain`, `## Domain+Technical`, `## Technical` |
+| 2 | `spec-handoff-domain` | domain expert alone | `## Domain` |
+| 3 | `spec-handoff-joint` | both; skipped when nothing is open | `## Domain+Technical` |
+| 1 again | `spec-handoff-questions` | anyone | the answered spec; keeps every answer, appends new questions |
+| 4 | `build-feature-prepare` | technical expert alone; refuses unless the handoff is complete | `## Technical` |
+| 5 | `build-feature`, unchanged | technical expert | the committed spec |
+
+**Carried from `spec-readiness` into stage 1:** the fresh-context reader, the refutation stance, read-only, the question classes and their eight run ids, verbatim quotation, grading by the stage that would stop, drop nothing, the `If unanswered:` line, no replacement text. The class list became one table with a default section per class.
+
+**Decided by this pass, not by the owner** (each is stated in the directive text):
+
+- **Spec hash leaves out the Status line**: `grep -v '^\*\*Status\*\*:' spec.md | git hash-object --stdin`. The owner placed sign-off (a Status edit) after the rerun; a plain `git hash-object` would then fail stage 4's hash check on every handoff.
+- **Header holds one `Run` line per run**; completeness is read from the last one. An open question is one whose line reads `Answer: open`.
+- **Each section holds the six stage groups** (preflight, review-plan, tasks, analyze, converge, no stop predicted); a rerun appends a new question at the end of its stage group, so the owner's two rules (order by stage, append on rerun) both hold.
+- **A split Technical half carries `Depends on: Q<n>`**, and stage 4 shows that answer first.
+- **Status Draft is no longer a question** in the header class; the domain expert sets Status at sign-off, and stage 4 refuses a Draft. Stage 4 also refuses an uncommitted feature directory, so the technical expert works from what the domain expert committed.
+- **On a reopen, stage 4 commits the answers it has**, with the moved question, so the domain expert receives them in writing.
+
+**Evidence.** `spec-readiness/evidence.md` moved to `spec-handoff-questions/evidence.md`, adapted: headings follow the new directive sections, the owner's 2026-09-26 decision and the Claude Code docs reading are added to provenance, and the rerun and hash are grounded. **Stages 2 to 4 ship no evidence file.** Their only ground is the owner's decision of 2026-09-26; an evidence file would restate that one sentence and carry no source. Each states its ground in its status line. The one run id they cite, `wf_e68e4e48-4ed`, is grounded in stage 1's evidence, which they name but do not link, since no link leaves a skill dir.
+
+**Status, all four:** *decided, not yet validated*, 2026-09-26. No run has taken them.
+
+### Frontmatter decision
+
+All four are invoked by name only and carry `disable-model-invocation: true`. The Claude Code skills documentation (`code.claude.com/docs/en/skills`, read 2026-09-26) gives the key's row as "Description not in context, full skill loads when you invoke", says it prevents Claude from loading the skill and "also prevents the skill from being preloaded into subagents", and, under hiding skills, "This removes the skill from Claude's context entirely." The same page lists it as a Claude Code extension outside the Agent Skills spec's fields, and says a claude.ai upload or `package_skill.py` refuses such a field with a hard error. The distribution CLI (`skills` 1.5.21) ignores it: `npm run check` lists all four.
+
+Consequence for stage 1: a dispatched reader subagent cannot load the skill through the skill tool, so the invoking context passes it the file's path.
+
+`scripts/description-budget.mjs` now leaves skills with `disable-model-invocation: true` out of the 8,000-char set total; they are still parsed and held to the 400-char cap. The key must be the plain scalar `true` or `false`. Two canaries were added: `manual-only-bad-value` (`yes`, which YAML 1.1 reads as a boolean and 1.2 as a string) must be refused, and `manual-only` must be read as left out of the total. Both were checked blind by breaking each fixture once. The *does not decide* output gained a line: the exclusion rests on the docs, and a client that lists these descriptions anyway pays more than the total says.
+
+### Cost and firing
+
+- **Frontmatter**, `npm run tokens:frontmatter`, 2026-09-26: `build-feature-prepare` 69, `spec-handoff-questions` 68, `spec-handoff-joint` 67, `spec-handoff-domain` 63 tokens; 267 tokens together, left out of the per-session total, which is 1,755 across the 23 listed skills: since 2026-09-26 the report reads `disable-model-invocation: true` and lists these separately, because by the docs their descriptions are not in context.
+- **Descriptions**, `npm run check:descriptions`: 229, 209, 215 and 190 chars, all left out of the set total, which is 7,285 / 8,000 (7,614 with `spec-readiness`).
+- **Body per firing**, `npm run tokens`: `spec-handoff-questions` 3,963, `build-feature-prepare` 1,063, `spec-handoff-domain` 909, `spec-handoff-joint` 714 (o200k_base). `spec-readiness` was 5,712.
+- **Firing: does not apply.** The model cannot invoke these skills, so no unprompted session can load them and a firing rate would measure nothing. The `spec-readiness-1` and `spec-readiness-2` cases were removed from `scripts/firing-cases.json`; the `speckit` fixture stays in `scripts/firing-harness.mjs`, unused, with its comment saying so. The 6/6 below was a rate for `spec-readiness`'s description and says nothing about these.
+
+### Sweep
+
+- `README.md`: the `spec-readiness` row replaced by four rows; step 3 of *Starting a new Java project* names the handoff sequence.
+- `BACKLOG.md`, *LOW spec findings in the build*: names `spec-handoff-questions`.
+- `build-feature/SKILL.md`: the sentence naming `/spec-readiness` and `READINESS.md` now names the handoff and `HANDOFF-QUESTIONS.md`; the *does not do* sentence says the spec is also the technical expert's for the Technical questions. Its heading *The spec is the domain expert's* was left as it is, a question for the owner.
+- `build-feature/evidence.md`: the decided-and-not-applied entry records the replacement.
+- `docs/history/runs.md` left as the historical record.
+- `CLAUDE.md` *History* list: the line is owed; not edited by the pass that did this, which was a subagent.
+- Grep for `spec-readiness`, `READINESS`, *readiness*, *sign-off*, *spec review* over `skills/`, `README.md`, `BACKLOG.md` and `docs/history/`, and a read of each hit: no other sentence says the check is `spec-readiness` or the file `READINESS.md`, outside this file, `runs.md`, the firing fixture comment and the new skills' own references to their predecessor.
+
+### Not reviewed
+
+No adversarial review has been run on the four skills.
+
+## 2026-09-24 — `spec-readiness`, replaced 2026-09-26
+
+The record of the single-reader skill as it was published. Kept unchanged below; where it names `READINESS.md`, the `spec-readiness-*` firing cases or `/spec-readiness`, it describes what existed then.
+
+**Published 2026-09-24.** Owner's decision the same day: a read-only check of a spec-kit `spec.md` that the domain expert runs after `/speckit-clarify` and before handing the spec to `/build-feature`. It returns questions for the author, never edits the spec, and ships as its own skill in this repo. The three placements the backlog row weighed were stock spec-kit, a new skill, and `build-feature`'s preflight. The owner chose the new skill; preflight was rejected because it moves the stop before plan rather than preventing it.
+
+### What the pass decided, and on what
+
+- **Classes from the handoffs, not from the backlog summary.** The eight `HANDOFF.md` files the run ledger's sweep 2 marks target **S** were read in full from git, read-only (`git show <sha>:<path>` in `reference-data` and `customer-party-adapter`). They hold 18 items (counted 2026-09-24). Each item was placed in a class, and each class is a `###` directive in the skill: deferred or assumed value, bound or fact; success criterion without measurement conditions; search, filter and list semantics; guarantee without conditions and edge case without outcome; requirements that disagree, repeat or cite the wrong id; clarify residue; sibling-spec conflict; header the build contradicts. There are two further classes without an item among the eight: markers and placeholders (already a preflight refusal) and the constitution conflict (the owner's request, grounded on the review-spec record). The 003 `RESOLUTIONS.md` supplied the citation-drift instance and the `wf_cc5b26f9-e4b` readings.
+- **The removed review-spec stage was recovered from `9e91cdf^:skills/build-feature/workflow.mjs`.** Kept: the fresh-context refutation stance, the full reading of spec, checklist and constitution, and the exact location on every finding. Dropped: the fix prompt that wrote `spec.md`, the round loop (6 → 3 → 1 blocking on `wf_cc1aa65d-148`, no fixed point), the upstream source-faithfulness items (that layer left the service repos 2026-09-21), and "the concrete edit that resolves it".
+- **Output: `<featureDir>/READINESS.md`, written by the reader and committed by the author.** A file in the feature directory rather than a chat reply, so that its absence at the build's starting commit is visible. The reader commits nothing, because the author is on the base branch. The file cannot be left untracked by accident: `build-feature` preflight requires `git status --porcelain` to be empty (verified in `workflow.mjs`, 2026-09-24). The header records the spec's `git hash-object`, so a stale list is detectable by one command.
+- **Severity: graded by predicted stop, nothing dropped.** `specChangesOf` in `workflow.mjs` filters on nothing, so `build-feature` stops on a spec-only finding of any severity. LOW items were among the spec changes of four of the eight stops. The owner's open question, whether a MEDIUM or LOW spec finding should stop a run, is answered only inside this skill's scope: nothing here stops, and every question is listed. Whether `build-feature` should stop on LOW is still the owner's question, on the backlog row.
+- **Questions carry readings, never the replacement sentence.** On `wf_e68e4e48-4ed` the assumed fact was false, and only the owner knew that.
+- **One re-run after the answers, then stop.** It catches residue of the new answers. The loop limit is there because the review-spec loop had no fixed point.
+- **`new-java-backend` not edited.** Its body does not describe the spec sequence, and its own directive bans naming a `/speckit.*` command as a next step. A sentence naming spec → clarify → spec-readiness → build-feature there would contradict it. The sequence lives in `README.md`, *Starting a new Java project*, step 3.
+
+### Cost and firing
+
+- **Frontmatter: 87 tokens** (name 3, description 77, framing 7), `npm run tokens:frontmatter`, 2026-09-24. Set total 1,842 across the twenty-four skills on that date. **Description: 329 chars**; set total 7,614 / 8,000 by `npm run check:descriptions`, up from 7,285.
+- **Body: 5,712 tokens per firing**, `npm run tokens`, o200k_base, 2026-09-24.
+- **Firing: 6/6**, cases `spec-readiness-1` and `spec-readiness-2`, three repeats each, first-move mode, `claude-opus-5-5`, Claude Code 2.1.281, linux, 2026-09-24T12:59Z, $1.08. No other skill fired in any of the six, `build-feature` included. The cases run in a new `speckit` fixture (a constitution, two specs, `.specify/feature.json`), added to `scripts/firing-harness.mjs` with the cases, so no existing baseline restarted. Not measured: explore mode, any other model, any real consumer session.
+- **Harness change on the way.** The first attempt was refused by the preflight: CLI 2.1.281 exposes `ListAgents` and `Monitor`, which `DENIED` lacked. No case session had been spent. Both were added. This is the guard of 2026-08-03 working as written.
+- **Worth loading?** It fires once per feature, at sign-off, plus once per re-run; ten features in three repositories appear in the run journals over 2026-09-17..24 (`npm run runs -- --since 2026-09-17 --json`). Against that, 87 tokens in every session is small. The trade the harvest rule asks about is unmeasured, since no spec has been through the check.
+
+### Sweep
+
+- `README.md`: row in *What is published*; step 3 of *Starting a new Java project* now names `/spec-readiness` between clarify and plan.
+- `CLAUDE.md` *History* list: the line for this file is owed. It was not written in this pass because the pass was run by a subagent, and a `CLAUDE.md` edit needs the owner.
+- Owed in files this pass was told not to touch, handed back with exact text: `build-feature/SKILL.md` (the author's step before the run) and `build-feature/evidence.md` line listing "a spec-readiness pass the author runs before sign-off" under *decided and not applied* (now published); the backlog row *Spec readiness before sign-off*.
+- Grep over `skills/*/SKILL.md`, `README.md` and `CLAUDE.md` for sentences saying no spec check exists: none outside `build-feature`. `build-feature/SKILL.md`'s status line says the run has "no spec review", which is still true of the run and is left alone.
+
+### Not reviewed
+
+No adversarial review has been run on this skill. The directive text was checked against the handoffs by the pass that wrote it. That is the shape this repo's *follow the pointer* class records failing.

@@ -265,18 +265,6 @@
       "prompt": "This ADR is from two years ago and nobody's checked it since. Is it still right?"
     },
     {
-      "id": "spec-readiness-1",
-      "skill": "spec-readiness",
-      "fixture": "speckit",
-      "prompt": "I've run clarify on the order returns spec and I'm about to kick off the build. Go over specs/001-order-returns/spec.md first and list what I still need to decide. Leave the file alone, I'll make the edits myself."
-    },
-    {
-      "id": "spec-readiness-2",
-      "skill": "spec-readiness",
-      "fixture": "speckit",
-      "prompt": "Our domain lead wrote specs/002-refund-limits/spec.md. Before anyone plans it, is it actually buildable? Tell me where the planner is going to get stuck, and don't change the spec."
-    },
-    {
       "id": "negative-1",
       "skill": null,
       "fixture": "bare",

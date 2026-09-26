@@ -1559,7 +1559,7 @@ if (runs('plan') || runs('review-plan')) {
         '- a "[NEEDS CLARIFICATION]", a template placeholder, or a research question left open — major',
         '- a decision with no stated alternative and rationale where the constitution or the project rules require one — major',
         '- a decision that the plan defers to implementation without a task-sized statement of what to build — major',
-        `- a requirement of ${P.spec} that no plan can realise because the spec contradicts itself, the constitution or the existing code — blocking, and say in the fix that the remedy is a change to the spec: ${P.spec} is the feature author's and neither you nor the agent that applies your findings edits it`,
+        `- a requirement of ${P.spec} that no plan can realise because the spec contradicts itself, the constitution or the existing code — blocking, and say in the fix that the remedy is a change to the spec: ${P.spec} belongs to the domain and technical experts who wrote it, and neither you nor the agent that applies your findings edits it`,
         '- naming, ordering, duplication — minor',
         `Each finding names the exact file and location and the concrete edit that resolves it, and no finding's fix is an edit to ${P.spec}. Verdict "fix" when any finding is blocking or major; "approve" otherwise.`,
         round > 1 ? `This is review round ${round}; earlier findings were applied. Check they were applied correctly and look for what the fix broke.` : '',
@@ -1577,7 +1577,7 @@ if (runs('plan') || runs('review-plan')) {
     })
     if (r.specChanges && r.specChanges.length) {
       return await needsHuman('review-plan',
-        `a review finding of the plan can only be resolved by changing ${P.spec}, and no stage of this run edits the spec: it is the feature author's, written before the build started. The ${r.specChanges.length} change(s) below go to that author — with /speckit-clarify or an edit to the spec — and the build restarts at ${SPEC_EDIT_RESTART} afterwards, which reads this plan against the edited spec and repairs it in place. Nothing else in the plan was left unapplied`,
+        `a review finding of the plan can only be resolved by changing ${P.spec}, and no stage of this run edits the spec: it belongs to the domain and technical experts and was written before the build started. The ${r.specChanges.length} change(s) below each go to the expert the change belongs to — a domain decision to the domain expert in writing, which reopens the spec handoff, and a technical one to the technical expert as an edit to the spec — and the build restarts at ${SPEC_EDIT_RESTART} afterwards, which reads this plan against the edited spec and repairs it in place. Nothing else in the plan was left unapplied`,
         r.specChanges, SPEC_EDIT_RESTART)
     }
     if (r.ended === 'survivor') {
@@ -1658,7 +1658,7 @@ if (runs('tasks')) {
   const specChanges = specChangesOf(generated)
   if (specChanges.length) {
     return await needsHuman('tasks',
-      `writing the tasks found ${specChanges.length} question(s) only the author of ${P.spec} can answer, and no stage of this run edits the spec: it is the feature author's, written before the build started. The change(s) below go to that author — with /speckit-clarify or an edit to the spec — and the build restarts at ${SPEC_EDIT_RESTART} afterwards, which reads the plan against the edited spec and repairs it in place`,
+      `writing the tasks found ${specChanges.length} question(s) only an expert can answer in ${P.spec}, and no stage of this run edits the spec: it belongs to the domain and technical experts and was written before the build started. The change(s) below each go to the expert the change belongs to — a domain decision to the domain expert in writing, which reopens the spec handoff, and a technical one to the technical expert as an edit to the spec — and the build restarts at ${SPEC_EDIT_RESTART} afterwards, which reads the plan against the edited spec and repairs it in place`,
       specChanges, SPEC_EDIT_RESTART)
   }
   // The open tasks are certified too (adversarial review, 2026-09-25): the update may not
@@ -1799,7 +1799,7 @@ if (runs('analyze')) {
     const specChanges = specChangesOf(remedied)
     if (specChanges.length) {
       return await needsHuman('analyze',
-        `an analysis finding can only be resolved by changing ${P.spec}, and no stage of this run edits the spec: it is the feature author's, written before the build started. The ${specChanges.length} change(s) below go to that author — with /speckit-clarify or an edit to the spec — and the build restarts at ${SPEC_EDIT_RESTART} afterwards, which reads the plan against the edited spec and repairs it in place. Every other finding of this round was applied`,
+        `an analysis finding can only be resolved by changing ${P.spec}, and no stage of this run edits the spec: it belongs to the domain and technical experts and was written before the build started. The ${specChanges.length} change(s) below each go to the expert the change belongs to — a domain decision to the domain expert in writing, which reopens the spec handoff, and a technical one to the technical expert as an edit to the spec — and the build restarts at ${SPEC_EDIT_RESTART} afterwards, which reads the plan against the edited spec and repairs it in place. Every other finding of this round was applied`,
         specChanges, SPEC_EDIT_RESTART)
     }
   }
@@ -2055,7 +2055,7 @@ if (runs('converge')) {
   // The reason every converge-stage `specChanges` exit gives — the assessment's and the
   // forced append's alike — in the words the tasks exit uses.
   const specWhy = (where, n) =>
-    `${where} found ${n} question(s) only the author of ${P.spec} can answer, and no stage of this run edits the spec or writes a task that waits on a person: it is the feature author's, written before the build started. The change(s) below go to that author — with /speckit-clarify or an edit to the spec — and the build restarts at ${SPEC_EDIT_RESTART} afterwards, which reads the plan against the edited spec and repairs it in place`
+    `${where} found ${n} question(s) only an expert can answer in ${P.spec}, and no stage of this run edits the spec or writes a task that waits on a person: it belongs to the domain and technical experts and was written before the build started. The change(s) below each go to the expert the change belongs to — a domain decision to the domain expert in writing, which reopens the spec handoff, and a technical one to the technical expert as an edit to the spec — and the build restarts at ${SPEC_EDIT_RESTART} afterwards, which reads the plan against the edited spec and repairs it in place`
 
   // A finding's identity, so the loop can tell a finding it already forced from a new
   // one. Severity, location and summary, lowercased with whitespace collapsed and a

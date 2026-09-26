@@ -113,7 +113,7 @@ applied what was small and certain; these it could not, and each names its stops
 
 | Owed | Why it is owed | Watch |
 | ---- | -------------- | ----- |
-| **LOW spec findings in the build** | Whether `build-feature` should keep stopping on a spec-only finding of any severity (`specChangesOf` filters none; LOW items rode in four of the eight spec stops of Sweep 2) or carry MEDIUM and LOW ones to the author on a `done` return. `spec-readiness` (2026-09-24) lists every question and stops nothing, so it does not decide this | The owner's floor question, in the build |
+| **LOW spec findings in the build** | Whether `build-feature` should keep stopping on a spec-only finding of any severity (`specChangesOf` filters none; LOW items rode in four of the eight spec stops of Sweep 2) or carry MEDIUM and LOW ones to the author on a `done` return. `spec-handoff-questions` (2026-09-26, replacing `spec-readiness` of 2026-09-24) lists every question and stops no build, so it does not decide this | The owner's floor question, in the build |
 
 ## Shelved
 
