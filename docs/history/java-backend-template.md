@@ -750,3 +750,19 @@ rule `request-body-schemas-are-closed`. Constitution Article IV states the rule 
 `DEFAULT_REF` moved to it after a full vendored scaffold from the pin ran `mvn verify` green. Per-session cost
 unchanged: no `description` edited.
 
+
+## 2026-09-26: any feature reads any table; only the owner writes it
+
+Template `main` at `9fff054`. `TableOwnershipTest` failed any feature naming another feature's table, reads
+included, unless it sat on `LICENSED_READERS`, which shipped empty; with `LayeringArchTest` forbidding calls into
+another feature's classes, a feature needing another's rows had no path inside the build. On the owner's
+instruction the read is allowed and the write stays with the owner: `onlyTheOwnerWritesATable` fails a method that
+starts a write and names a table its feature does not own. Method-scoped, like the versioned-update and id-ordering
+bans; ArchUnit counts a lambda toward the method declaring it, which a probe with the write inside `tx.write`
+confirmed, so a service method that reads a foreign table and writes its own is reported too and the read moves to
+its own method. Negative control over `starterfixtures.ownership`: the foreign write is the one violation, the
+foreign read and the owner's write are not. Constitution Article VI amended to match; the directive side is in
+[ai-maintainer-principles](ai-maintainer-principles.md). Wall green; `DEFAULT_REF` moved to it after a full
+vendored scaffold from the pin, against a local clone, ran `mvn verify` green. Projects already built from the
+template keep the old test until they pull the template into `backend/`. Per-session cost unchanged: no
+`description` edited.

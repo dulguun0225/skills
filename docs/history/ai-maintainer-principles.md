@@ -98,3 +98,26 @@ Two more entries restate a verdict two published directives already imply — a 
 
 - **The enumeration and token-placement checks have not been run here.**
 - **The open-set problem is named, not closed.** Two of the three enumerations — *every load-bearing dependency* and *anything subtle enough to need a safety argument* — have no proposed generator at all, and unlike the operational-surface one they may not admit of a mechanical inventory.
+
+## 2026-09-26: any module reads another's table; only the owner writes it
+
+**Owner's instruction**: stop forbidding one feature from reading another feature's data or table. The block was
+the directive *no cross-module data access*, which the Java backend template enforced as `TableOwnershipTest`,
+failing any feature that named another feature's table, reads included, unless it sat on an exemption list that
+shipped empty; its `LayeringArchTest` also forbids one feature from calling another's classes, so a feature needing
+another's rows had no path inside the build.
+
+- **Directive narrowed, not retired**: *Count the independent wills* now reads *each table written only by the
+  module that owns it*, with the read permission, the rejected default and why it lost (a read through generated
+  schema types is compile-checked, so a column change fails every reader's build), the accepted cost (the owner's
+  tables become its public surface) and the condition (reads through generated schema types; a hand-written SQL
+  string is outside it). *Wiring the gates* step 1 and the dates table follow; a *Named gaps* entry says the write
+  check sees only text that names a table. The write half was kept, not re-decided: the instruction named reads.
+- **Check**: method-scoped, the shape the template's versioned-update and id-ordering bans already use; a method
+  that reads a foreign table and writes its own is reported too, and the remedy is a separate read method.
+  *Bespoke* predicate; read permission *convention*.
+- **Sweep**: `grep` for `cross-module data`, `data access`, `table ownership`, `boundary test` across `skills/`;
+  the two sentences in this skill were the only statements of the ban. `build-feature`'s constitution admission test
+  ("a table the feature does not own") still holds, since ownership remains.
+- **Cost**: body 8,347 to 8,782 tokens (`npm run tokens:sections`, 2026-09-26). No `description` edited, so
+  per-session cost and firing are unchanged and not re-measured. No adversarial review.

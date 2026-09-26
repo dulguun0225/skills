@@ -214,6 +214,21 @@ unbeatable and N wills pushing satellites toward extraction along named triggers
 **The direction-asymmetry clause** — start as one and extract on trigger is
 routine, start as N and merge back never happens — is stated in both.
 
+**The read permission is the owner's decision of 2026-09-26, not a record.** Until
+that day the directive read *no cross-module data access*, and the Java backend
+template (`https://github.com/dulguun0225/java-backend-template`) enforced it as a
+test failing any feature that named another feature's table, reads included, unless
+the reading feature sat on an exemption list — which shipped empty, while its
+layering test also forbids one feature from calling another's classes. So a feature
+that needed another feature's rows had no path inside the build. The owner's
+instruction was to stop forbidding one feature from reading another's data or
+table. **The write half was kept, not re-decided**: the instruction named reads,
+and the grounds for a single writer — a row's invariants live in its owner's code —
+were not in question. The compile-check argument for reads holds only where reads go
+through generated schema types, which that template makes the only way to reach a
+table; the directive states the condition. **No run has measured the effect** on
+coupling or on how often a column change now touches another module — *convention*.
+
 ### One idiom, imposed mechanically
 
 **Three record fragments, all 2026-06-12..13.** The formatting record states that

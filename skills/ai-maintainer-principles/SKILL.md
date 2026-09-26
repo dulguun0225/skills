@@ -202,8 +202,20 @@ environment. **Under premise build is the review**, so moving failure off compil
 path weaken exact mechanism substituting for reviewer.
 
 What enable parallel work is **enforced ownership boundary, not network boundary**
-— typed module API, no cross-module data access, violation fail build. Agents work
-those boundaries concurrently in one repo today.
+— typed module API, each table written only by the module that owns it, violation
+fail build. Agents work those boundaries concurrently in one repo today.
+
+**Any module may read another module's table; only owner write it** (owner's
+decision, 2026-09-26). Default is no cross-module data access at all, reads
+included — rejected, cuz in one compiled codebase over one schema a read through
+generated schema types is compile-checked: owner rename or drop a column and
+compiler fail build at every reader. Ban left a module needing another's rows only an
+exemption list or the network. **Cost accepted**: owner's tables become part of
+its public surface, so a column change is a change to every reader — build list
+them. Write stay with owner cuz invariants on a row live in owner's code, and a
+foreign writer skip them where no build catch it. Condition: read go through
+generated, compile-checked schema types; a hand-written SQL string has no such
+check and permission no extend to it.
 
 **Direction asymmetric, and that why this decided early:** start as one deployable
 and extract on named trigger is routine; start as N and merge back never happen.
@@ -211,7 +223,13 @@ So record split trigger and extraction procedure at start, and let trigger fire.
 
 *Check: record state will count and name split triggers with extraction procedure;
 boundary tests exist from first commit, cuz they what keep later extraction cheap.
-Convention as enforcement — written artifact. **Convention**, 2026-06-12..13.*
+Convention as enforcement — written artifact. **Convention**, 2026-06-12..13.
+Write ownership: one owner per table in a committed map, a table with no owner row
+fail build, and a write naming another module's table fail build — off-the-shelf
+host where stack have one (ArchUnit on JVM), predicate authored per repo, and
+method-scoped, so a method that read a foreign table and write its own is reported
+too: read in a method that start no write. **Bespoke** predicate; read permission
+**convention**, owner's decision, 2026-09-26.*
 
 ### One idiom, imposed mechanically
 
@@ -434,8 +452,9 @@ Run once, in a repo adopting this skill. Record what got wired and what got skip
 with reason — skipped item with no reason read as done by next session.
 
 1. **Boundary tests from first commit** — declared module set, nesting, allowed call
-   direction, no cross-module data access. Cheap now, unaffordable later, and they
-   what make extraction cheap if a split trigger ever fire.
+   direction, each table written only by the module that owns it (reads across
+   modules allowed, *Count the independent wills*). Cheap now, unaffordable later,
+   and they what make extraction cheap if a split trigger ever fire.
 2. **Formatter with fail-on-diff, zero per-file configuration**, plus canonical-form
    rewriting where the ecosystem host it.
 3. **Zero retries in the test runner**, quarantine file with schema and expiry gate,
@@ -508,6 +527,9 @@ repo on grounds this skill's own central claim mark *uncertain*.
   half most easily applied after the fact to justify a split already wanted.
 - **Whole-program-reasoning span is not measurable either.** Check name constructs
   already rejected; nothing detect a new one.
+- **Write ownership is checked on text that name a table.** A write reaching a
+  table through a field or variable declared outside writing method, a parameter,
+  or a hand-written SQL string name none, and pass.
 - **Classification of a piece of machinery as startup-loud is unverified.** Nothing
   assert a boot-failing mechanism actually fail boot in every configuration, and
   configuration is exactly where such a claim rot.
@@ -559,13 +581,14 @@ and a reader who need that must re-verify from primary material.
 | Review substitute; zero retries and quarantine | 2026-06-14 |
 | Exit-ladder executability clause | 2026-08-01 — conversion-dated |
 | *Composite shapes a repo assembles out of these primitives*, the widened load trigger, and the two predicate-check entries in *Named gaps* | 2026-08-02 — conversion-dated, from `enforceable-rules`' composite-shape and predicate checks, run by reading. **They add no directive and promote no marker**: each resolve a shape two published directives already decide between them, or name a check that is absent. **The layer check is not applicable here** — nothing this skill governs crosses a layer; its subject is where a boundary falls, not what crosses one. **The enumeration and token-placement checks have not been run** |
+| *Count the independent wills*: any module may read another's table, only owner write it; the write-ownership check and its entry in *Named gaps* | 2026-09-26 — owner's decision, not a record. **No run has measured it** |
 
 **Enforcement markers sit beside each check**, and most are *convention* — these
 directives bind decisions taken before code exist, so their check is a written
 artifact whose absence is visible. **The ones carrying an off-the-shelf check are
 named rather than counted:** boundary tests, the formatter and canonical-form
 rewriter, the operational-surface lints, the absent-fixture grep, and the retry
-setting. The quarantine expiry gate beside that last one is **bespoke**, and its
-own check line say so.
+setting. The quarantine expiry gate beside that last one is **bespoke**, and so is
+the write-ownership predicate; each check line say so.
 
 Evidence, sources and the do-not-cite list are in `evidence.md`.
