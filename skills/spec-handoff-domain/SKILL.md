@@ -1,23 +1,23 @@
 ---
 name: spec-handoff-domain
-description: Stage 2 of the spec handoff — walks the domain expert, alone, through the Domain questions in HANDOFF-QUESTIONS.md and writes each answer into spec.md; invoke by name (/spec-handoff-domain).
+description: Stage 2 of the spec handoff — shows the domain expert, alone, every open Domain question in HANDOFF-QUESTIONS.md as one table with a recommended answer each, and writes what he accepts or says into spec.md; invoke by name (/spec-handoff-domain).
 disable-model-invocation: true
 ---
 # Spec handoff, stage 2 — the domain expert's questions
 
-Premise and sequence: `spec-handoff-questions`. The domain expert, alone, answers `## Domain` of `<featureDir>/HANDOFF-QUESTIONS.md` (the user's feature directory, else `.specify/feature.json`'s). **Status: *decided, not yet validated*, 2026-09-26**, owner's decision, never run; checks *convention*.
+Premise and sequence: `spec-handoff-questions`. The domain expert, alone, answers `## Domain` of `<featureDir>/HANDOFF-QUESTIONS.md` (the user's feature directory, else `.specify/feature.json`'s). **Status: *decided, not yet validated*, 2026-09-26**, owner's decision; run once that day under the earlier one-at-a-time rule, which the owner then reversed; checks *convention*.
 
 ## Refuse without open questions
 
 **If the file is missing or has no `Answer: open` under `## Domain`, say so, name the next step, and stop.**
 
-## One at a time, no recommendation
+## All at once, each with a recommendation
 
-**Take open Domain questions in file order; show the quoted text, question and readings in the expert's terms; wait. Recommend nothing; write only answers the expert gave.**
+**Show every open Domain question in one compact table, in file order: id, the question in one plain sentence, the recommended answer, and a one-sentence reason naming its source (the spec, a sibling spec, the constitution) or saying it is a guess. Use the expert's language and business terms. Where the spec already states the answer, recommend that answer. The Caveats question is one row; accepting it deletes every note it lists and keeps the values. The expert replies with only the rows he disagrees with; every other row counts as accepted. Write only what he accepted or said.**
 
-The default is every question at once, each with a likely answer. It lost: an answer accepted unchanged is the agent writing the spec.
+Reversed by the owner on 2026-09-26, after the first run: one question at a time, with no recommendation, so that an accepted answer could never be the agent's text. It wasted the expert's time, and most of the 29 questions only re-confirmed the spec. The cost accepted: a row he passes over puts the agent's answer in the spec.
 
-(Check: every `Answer:` written matches the expert's reply — *convention*.)
+(Check: every `Answer:` written is the expert's reply or the recommendation of a row he did not dispute — *convention*.)
 
 ## Apply and record the answer
 

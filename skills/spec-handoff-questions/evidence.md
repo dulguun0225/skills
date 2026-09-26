@@ -1,6 +1,6 @@
 # Spec handoff questions — evidence
 
-For a person deciding whether to trust the directive text. The reading rules and the question classes were written 2026-09-24, the date of the owner's decision and of the first read of the eight handoffs, for the single-reader skill `spec-readiness`. The split into three sections and the rerun were decided by the owner on 2026-09-26, when that skill was replaced by this one and the three stages after it. No research pass and no refutation panel stands behind any of it.
+For a person deciding whether to trust the directive text. The reading rules and the question classes were written 2026-09-24, the date of the owner's decision and of the first read of the eight handoffs, for the single-reader skill `spec-readiness`. The split into three sections and the rerun were decided by the owner on 2026-09-26, when that skill was replaced by this one and the three stages after it. The caveat rule, and the reversal of the later stages' one-at-a-time rule, were decided by the owner the same day, after the first run. No research pass and no refutation panel stands behind any of it.
 
 ## Provenance
 
@@ -14,6 +14,8 @@ For a person deciding whether to trust the directive text. The reading rules and
 | Stock spec-kit 1.0.8 `speckit-clarify` and `speckit-checklist` skills, as installed in `reference-data` | the five-question cap; which files each loads | `grep` over the installed `SKILL.md` files |
 | The owner, 2026-09-26 | the two failures of the single-reader skill; the split, the joint step and the completeness rule | the owner's decision, *convention* |
 | Claude Code skills documentation, `code.claude.com/docs/en/skills` | the `disable-model-invocation` field | read 2026-09-26 |
+| `account-metadata` `specs/002-account-attributes/HANDOFF-QUESTIONS.md`, the first run's output | questions per section (29 Domain, 7 Domain+Technical, 10 Technical); Q1 and the spec text it quotes | read in that repository's working tree, 2026-09-26 |
+| The owner, after that run, 2026-09-26 | most Domain questions only re-confirmed the spec; the caveat rule; one table with recommendations in stages 2 to 4 | the owner's decision, *convention* |
 
 The eight stops, with the handoff commit each was read from:
 
@@ -67,6 +69,8 @@ Not among the eight, because preflight already refuses on a marker (`build-featu
 - `wf_e68e4e48-4ed` item 1: the citizen-number Assumption says "the control-digit algorithm is confirmed at plan stage"; "no published control-digit algorithm exists". The sweep-2 table records the owner's answer: there is none.
 - `wf_cc5b26f9-e4b` (target W in the sweep, not S): T104 waited on the owner's answers to plan readings (a)–(d); the owner confirmed all of them on 2026-09-23 (003 `RESOLUTIONS.md`).
 
+Narrowed 2026-09-26 by the owner, after the first run: a value the spec states is no longer a question because a note beside it asks for confirmation. That run's Q1 quoted FR-009, which states the account name's length and characters outright, and an Assumptions note calling the number industry practice that needs the domain expert's confirmation; the note was the only reason for the question. Both instances above still fall in the narrowed class: U1's bound was recorded as unresolved and no requirement stated one, and the control-digit algorithm was deferred to plan stage with none named. The notes are gathered into one Caveats question rather than dropped, because a note left in the spec is the text U1's reviewer read as an unresolved value. No stop caused by such a note alone is on record; that ground is inference, *convention*.
+
 ### A success criterion without its measurement conditions
 
 - `wf_fbb2141f-8bf` A1 [MEDIUM]: SC-004 "states 'one page of list or search in under 1 second at 1,000 companies' with no percentile, concurrency, warmth or hardware condition, so it is not assertable as written." The load (1,000 companies) and the wait (1 second) are stated in business terms; what is missing is technical. It fits the owner's example of a Technical question.
@@ -118,7 +122,7 @@ The owner's decision, 2026-09-26, *convention*, on two observed failures of the 
 
 ## How each question is written
 
-The fact that shows what a proposed answer can cost is `wf_e68e4e48-4ed`. The spec assumed a control-digit algorithm, the plan could not find one, and only the owner knew that none exists. By the sweep-2 record, the session's recommendations on the eight items taken to a person were all adopted, one then corrected by a fact only the owner held. That shows sessions recommend well. It does not show that a checker's proposed text is safe for the author to sign. The rule against writing the replacement sentence is the owner's decision (returns questions, never edits), made 2026-09-24, *convention*.
+The fact that shows what a proposed answer can cost is `wf_e68e4e48-4ed`. The spec assumed a control-digit algorithm, the plan could not find one, and only the owner knew that none exists. By the sweep-2 record, the session's recommendations on the eight items taken to a person were all adopted, one then corrected by a fact only the owner held. That shows sessions recommend well. It does not show that a checker's proposed text is safe for the author to sign. The rule against writing the replacement sentence is the owner's decision (returns questions, never edits), made 2026-09-24, *convention*. It still holds for this stage. Since 2026-09-26 the later stages recommend an answer per question and count a row the expert does not dispute as accepted: the owner's reversal, after the first run, of their one-at-a-time, no-recommendation rule. `wf_e68e4e48-4ed` is the cost that reversal accepts, which is why each recommendation names its source or says it is a guess.
 
 ## Grade by what a run would do, and drop nothing
 
@@ -141,8 +145,10 @@ What would reopen a decision here:
 - A question placed in one section that its people could not answer: the finding is about the section rule.
 - A second team, or a spec in another repository: every class comes from one team's specs in two repositories over three days.
 - A spec-kit release whose clarify or checklist reads the sibling specs: re-check the default this skill overrides.
+- A stop whose cause was a confirmation note the Caveats question listed and the expert kept: the caveat rule is wrong.
+- A recommended answer an expert passed over and later found wrong: the finding is about the 2026-09-26 reversal in stages 2 to 4.
 
-**Not to be cited as evidence that this skill works**: the eight stops. They are the ground it was written from. No spec has been through it.
+**Not to be cited as evidence that this skill works**: the eight stops. They are the ground it was written from. One spec has been through it (`account-metadata` 002, 2026-09-26), before the caveat rule, and no build has followed.
 
 | Claim | Marker |
 |---|---|
@@ -152,6 +158,7 @@ What would reopen a decision here:
 | `disable-model-invocation: true` keeps the description out of context and the skill out of subagent preloading | *primary-source verified* — Claude Code skills documentation, 2026-09-26 |
 | A fresh context finds what the writing context approved | *convention* — one observation on plans, 2026-09-16 |
 | The single-reader list sent technical questions to the domain expert, and the build stopped after his handoff | *convention* — the owner's report, 2026-09-26 |
+| Most of the first run's 29 Domain questions only re-confirmed the spec | *convention* — the owner's report, 2026-09-26; Q1 read, the rest not re-read |
 | The class list covers what a spec lacks | *uncertain* — eight stops, one team |
-| Running this check prevents a stop | *uncertain* — never run |
+| Running this check prevents a stop | *uncertain* — run once, no build since |
 | Every directive | *convention* — decided 2026-09-24 and 2026-09-26, check is the written artifact |

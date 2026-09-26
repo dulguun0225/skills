@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 Sequence (owner, 2026-09-26): this → `spec-handoff-domain`, domain expert alone → `spec-handoff-joint`, both, if anything is open → this again → `build-feature-prepare`, technical expert alone → `build-feature`.
 
-Ground: eight `build-feature` stops caused by clarified specs ([evidence.md](evidence.md)). Each check is the written file, *convention*, contrary to this set's rule that a check fails the build. **Status: *decided, not yet validated*, 2026-09-26**; never run; no `review-by`, as nothing is *confirmed*.
+Ground: eight `build-feature` stops caused by clarified specs ([evidence.md](evidence.md)). Each check is the written file, *convention*, contrary to this set's rule that a check fails the build. **Status: *decided, not yet validated*, 2026-09-26**; run once, on 2026-09-26, before the caveat rule below; no build has followed; no `review-by`, as nothing is *confirmed*.
 
 ## Run it in a fresh context
 
@@ -29,10 +29,11 @@ Stance: refute that a plan can be written without deciding what the authors have
 
 ## What the reader looks for
 
-**Report every instance of each class.** Brackets: default section, overridden by the section rule; stopping stage.
+**Report every instance of each class. Raise only a real gap: no answer in the spec, statements that contradict, or a case with no outcome. Never ask to confirm what the spec states definitively; a "needs confirmation" or "assumed" note beside a stated value is not a question of its own.** Brackets: default section, overridden by the section rule; stopping stage.
 
 - **Markers** [D; preflight, *bespoke*]: every `[NEEDS CLARIFICATION]` and unfilled placeholder, listed first.
-- **Deferred or assumed fact** [D; review-plan to converge]: a value "to be confirmed" or "at plan stage", a working value only under Assumptions, an unsourced algorithm or standard. Ask for the source; never supply it. `wf_e68e4e48-4ed`.
+- **Deferred or assumed fact** [D; review-plan to converge]: a value the spec leaves open, calls undecided, or defers ("at plan stage") with no value stated; an algorithm or standard named without a source. Ask for the source; never supply it. `wf_e68e4e48-4ed`.
+- **Caveats on stated values** [D; graded like any other]: one question for the whole spec, quoting each confirmation or assumption note with the value it qualifies. Readings: delete the notes and keep the values, or name the values that change.
 - **Criterion without measurement conditions** [split; analyze]: load and wait (D); percentile, concurrency, warm or cold, machine (T); a multiplier's dimension; a manual-work bound is no timing gate. `wf_fbb2141f-8bf`.
 - **Search and list semantics** [split; analyze]: case, match position, blank or whitespace query, order, crossing a grouping (D); query-length and page bounds (T). `wf_bc7b0f7c-ce6`.
 - **Unconditioned guarantee, edge case without outcome** [D+T; analyze]: "exactly once", "never", "always", "0 missing"; an edge case with no outcome. `wf_e4e27b83-bc3`.
@@ -45,6 +46,10 @@ Stance: refute that a plan can be written without deciding what the authors have
 Draft Status is no question; the domain expert sets it at sign-off.
 
 The default is to leave these to the plan. It lost: a value the run picks lives in its own files, its gates cannot test against them, and a later author change restarts the run at `plan`.
+
+The default is also to ask about every hedge. It lost (owner, 2026-09-26): on the first run, 29 Domain questions went to the domain expert, and most re-confirmed a value the spec stated; the first asked him to confirm a name length FR-009 states outright, raised only by an Assumptions note.
+
+(Check: no Deferred question quotes a requirement that states the value it asks for; caveats appear only in the one Caveats question — *convention*, read by a person.)
 
 ## Which section each question goes in
 

@@ -1,6 +1,6 @@
 ---
 name: spec-handoff-joint
-description: Stage 3 of the spec handoff — walks the domain and technical experts together through the Domain+Technical questions in HANDOFF-QUESTIONS.md and writes each answer into spec.md; invoke by name (/spec-handoff-joint).
+description: Stage 3 of the spec handoff — shows the domain and technical experts together every open Domain+Technical question in HANDOFF-QUESTIONS.md as one table with a recommended answer each, and writes what they accept or say into spec.md; invoke by name (/spec-handoff-joint).
 disable-model-invocation: true
 ---
 # Spec handoff, stage 3 — the questions that need both experts
@@ -11,13 +11,15 @@ Premise and sequence: `spec-handoff-questions`. The domain and technical experts
 
 **If the file has no `Answer: open` under `## Domain+Technical`, say the stage is skipped, point to `/spec-handoff-questions`, and stop.**
 
-## Both present, one at a time, no recommendation
+## Both present, all at once, each with a recommendation
 
-**Take the open questions in file order. Show the quoted text, the question, and each reading with its technical consequence. The technical expert states the facts; the domain expert makes the choice. Recommend no reading; write no answer they did not give.**
+**Show every open question in one compact table, in file order: id, the question in one plain sentence, the recommended answer with its technical consequence, and a one-sentence reason naming its source or saying it is a guess. Use the experts' language and plain terms. The technical expert corrects the facts; the domain expert makes the choice. They reply with only the rows they disagree with; every other row counts as accepted. Write only what they accepted or said.**
 
 The default is to take each half to each person and relay. It lost: here the choice depends on the fact and the fact on the choice, which is why the question was not split.
 
-(Check: every `Answer:` written matches a reply the experts gave — *convention*.)
+Reversed by the owner on 2026-09-26, with stage 2: one question at a time, with no recommendation. On stage 2's first run it wasted the expert's time, and most questions only re-confirmed the spec. The cost accepted: a row they pass over puts the agent's answer in the spec.
+
+(Check: every `Answer:` written is the experts' reply or the recommendation of a row they did not dispute — *convention*.)
 
 ## Apply and record the answer
 

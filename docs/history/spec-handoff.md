@@ -1,6 +1,24 @@
 # spec handoff — authoring record
 
-`spec-handoff-questions`, `spec-handoff-domain`, `spec-handoff-joint`, `build-feature-prepare`. They replace `spec-readiness` (2026-09-24), whose record is the second section of this file.
+`spec-handoff-questions`, `spec-handoff-domain`, `spec-handoff-joint`, `build-feature-prepare`. They replace `spec-readiness` (2026-09-24), whose record is the third section of this file.
+
+## 2026-09-26 — first run, and the owner's reversal of the question flow
+
+**What happened.** First real run, the same day the skills were published: `account-metadata`, `specs/002-account-attributes`. Stage 1 wrote 46 questions: 29 Domain, 7 Domain+Technical, 10 Technical (counted in that repository's `HANDOFF-QUESTIONS.md`). Stage 2 showed them one at a time with no recommendation, as written. The owner, who was the domain expert, overrode it: he asked for a recommendation, then objected that the questions were unnecessary. The trigger was Q1, which asked him to confirm the account name's length and characters. FR-009 states both outright; the only reason for the question was an Assumptions note saying the number needs the domain expert's confirmation. By the owner's report, many other questions had the same shape.
+
+**The decisions** (owner's, 2026-09-26):
+
+- **`spec-handoff-questions`: raise only a real gap** — no answer, contradicting statements, a case with no outcome. A question whose answer the spec states definitively is not raised. A confirmation or assumption note beside a stated value is no question of its own; every such note goes into one *Caveats on stated values* question, which stage 2 takes as one row. The *Deferred or assumed fact* class lost "a working value only under Assumptions"; both of its evidence instances (`wf_de4bfd27-d8a` U1, `wf_e68e4e48-4ed`) had no stated value and still fall in the narrowed class.
+- **Stages 2, 3 and 4 show every open question at once**, in one compact table: the question in one plain sentence, a recommended answer, and a one-sentence reason naming its source or saying it is a guess, in the expert's language. The expert replies with only the rows he disagrees with; the rest count as accepted. Only what the expert accepted or said is written, and recorded under Clarifications as before. This replaces the one-at-a-time, no-recommendation rule written the same day, whose ground was that an answer accepted unchanged is the agent writing the spec. **Reason for the reversal:** walking the questions one by one without advice wasted the expert's time, and most only re-confirmed the spec. **Cost accepted:** a row the expert passes over puts the agent's answer in the spec; `wf_e68e4e48-4ed`, where the assumed fact was false and only the owner knew, is that cost's instance on record.
+- The owner named stages 2 and 3; stage 4 (`build-feature-prepare`) carried the same rule and was changed with them on the owner's instruction to make every dependent update.
+
+**Status lines corrected.** `spec-handoff-questions` and `spec-handoff-domain` said *never run*; both now say they ran once, before this revision. `spec-handoff-joint` and `build-feature-prepare` still have no run.
+
+**Cost**, 2026-09-26 after the edit: descriptions 209, 245, 270 and 272 chars (questions, domain, joint, prepare), all left out of the set total, which stays 7,285 / 8,000. Body per firing, `npm run tokens`, SKILL.md only: 2,359, 769, 658 and 787 tokens, from 2,114, 589, 520 and 637. Firing does not apply (`disable-model-invocation: true`).
+
+**Sweep.** `README.md` rows for all four skills. Grep over the repo for `spec-handoff`, *one at a time* and *no recommendation*: `build-feature/SKILL.md`, `build-feature/evidence.md`, `BACKLOG.md`, `CLAUDE.md` and `scripts/firing-harness.mjs` name the handoff without describing the question flow, and were left as they are.
+
+**Not reviewed.** No adversarial review of the revision.
 
 ## 2026-09-26 — the split between a domain expert and a technical expert
 

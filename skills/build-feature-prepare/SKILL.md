@@ -1,6 +1,6 @@
 ---
 name: build-feature-prepare
-description: Stage 4 of the spec handoff — refuses unless the handoff is complete, then walks the technical expert, alone, through the Technical questions in HANDOFF-QUESTIONS.md before /build-feature; invoke by name (/build-feature-prepare).
+description: Stage 4 of the spec handoff — refuses unless the handoff is complete, then shows the technical expert, alone, every open Technical question in HANDOFF-QUESTIONS.md as one table with a recommended answer each, before /build-feature; invoke by name (/build-feature-prepare).
 disable-model-invocation: true
 ---
 # Spec handoff, stage 4 — technical questions
@@ -18,11 +18,13 @@ Premise and sequence: `spec-handoff-questions`. The technical expert, alone, ans
 
 The default is to start anyway. It lost: an open domain question stops the build after the domain expert has left.
 
-## One at a time, no recommendation
+## All at once, each with a recommendation
 
-**Take open Technical questions in file order; show the quoted text, question and readings, after any `Depends on: Q<n>` answer. Recommend nothing; write only answers the expert gave.**
+**Show every open Technical question in one compact table, in file order, each after its `Depends on: Q<n>` answer: id, the question in one plain sentence, the recommended answer, and a one-sentence reason naming its source or saying it is a guess. Where the spec already states the answer, recommend that answer. The expert replies with only the rows he disagrees with; every other row counts as accepted. Write only what he accepted or said.**
 
-(Check: every `Answer:` written matches the expert's reply — *convention*.)
+Reversed by the owner on 2026-09-26, with stages 2 and 3: one question at a time, with no recommendation. On stage 2's first run it wasted the expert's time, and most questions only re-confirmed the spec. The cost accepted: a row he passes over puts the agent's answer in the spec.
+
+(Check: every `Answer:` written is the expert's reply or the recommendation of a row he did not dispute — *convention*.)
 
 ## Apply and record the answer
 
