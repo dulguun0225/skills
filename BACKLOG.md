@@ -97,23 +97,13 @@ A persistence preference is a variant of an existing rule set, not a new one.
 
 ## Observation owed — opened 2026-09-22
 
-The first sweep of the run journals is in [docs/history/runs.md](docs/history/runs.md) and closed
-what it could. These two it could not.
+The run-journal sweeps, their ledger and the reader `runs.mjs` moved to
+`dulguun0225/scalith` on 2026-09-27, with the workflow skills. This row stays
+because its subject is coverage of the skills here.
 
 | Owed | Why it is owed | Watch |
 | ---- | -------------- | ----- |
-| **A journal that says which skill invoked the run** | Every journal names `build-feature`'s script and `workflowName: build-feature`, including runs started by `converge-feature`, which calls that script. So **`converge-feature` cannot be told from `build-feature` with `from: "converge"`**, and that skill's status line now says the question is unanswerable rather than claiming the negative. The fix is one argument carrying the invoking skill's name. **The owner declined it on 2026-09-22** on the ground that it is a change to the measured system, made before the first measurement had been read — so this row is the decision's record, not a rejection of it | One line in `workflow.mjs` plus one in each skill's invocation block. It buys attribution on run 29 onward and nothing retroactively |
-| **A `GATES.md` coverage reader — phase two** | A journal names **no skill at all**, so whether `money`, `primary-keys` or any other directive reached an implement agent is invisible from it. The service repos already answer a weaker and more useful question in `backend/docs/GATES.md`, which carries `## Wired` and `## Named gaps`, cites this set's directive ids and names the test hosting each. A reader over those files gives per-directive coverage across consumer repos **for every skill here**, not just the two that run the loop. The finding that says it would pay, read off those files 2026-09-22: **`business-numbering` appears in neither repo's `GATES.md` — not wired, not listed as a gap** — while `money` and `primary-keys` appear on both sides, so a `business-numbering` violation is invisible to the wall *and* to any coverage reader that trusts the gap section | A second dependency-free reader, same shape as `runs.mjs`; reading, not spending. It reports coverage and never compliance — compliance is the consumer's wall |
-
-## Prevention owed — opened 2026-09-24
-
-Sweep 2 of [docs/history/runs.md](docs/history/runs.md) decided, for every
-`needs-human` stop on record, the earliest stage that could have prevented it. It
-applied what was small and certain; these it could not, and each names its stops. Two rows closed 2026-09-25 by the owner's decisions — a blocking finding at the plan review's final round keeps the hand-over to analysis, and a restart over an implemented feature updates `tasks.md` in place — recorded in `skills/build-feature/evidence.md` under that date.
-
-| Owed | Why it is owed | Watch |
-| ---- | -------------- | ----- |
-| **LOW spec findings in the build** | Whether `build-feature` should keep stopping on a spec-only finding of any severity (`specChangesOf` filters none; LOW items rode in four of the eight spec stops of Sweep 2) or carry MEDIUM and LOW ones to the author on a `done` return. `spec-handoff-questions` (2026-09-26, replacing `spec-readiness` of 2026-09-24) lists every question and stops no build, so it does not decide this | The owner's floor question, in the build |
+| **A `GATES.md` coverage reader — phase two** | A journal names **no skill at all**, so whether `money`, `primary-keys` or any other directive reached an implement agent is invisible from it. The service repos already answer a weaker and more useful question in `backend/docs/GATES.md`, which carries `## Wired` and `## Named gaps`, cites this set's directive ids and names the test hosting each. A reader over those files gives per-directive coverage across consumer repos **for every skill here**, not just the two that run the loop. The finding that says it would pay, read off those files 2026-09-22: **`business-numbering` appears in neither repo's `GATES.md` — not wired, not listed as a gap** — while `money` and `primary-keys` appear on both sides, so a `business-numbering` violation is invisible to the wall *and* to any coverage reader that trusts the gap section | A second dependency-free reader, same shape as scalith's `runs.mjs`; reading, not spending. It reports coverage and never compliance — compliance is the consumer's wall |
 
 ## Shelved
 

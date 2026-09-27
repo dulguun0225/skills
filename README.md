@@ -47,13 +47,6 @@ whole purpose; everything else here is in service of it.
 | `ai-maintainer-principles` | draw or move a module boundary, choose a runtime topology, decide what a build gate may be relaxed for, adopt a database, managed service or vendor API, write a retry or a subtle piece, introduce a second way to do something, migrate from an existing system, or write a repo constitution — the decisions that change answer because the maintainer is an agent: startup-loud magic allowed and runtime-silent banned, requirements needing whole-program reasoning designed out, a module sized to one session, topology by the number of independent wills, one idiom imposed mechanically, and the review substitute that stands in for a human reader. Any stack |
 | `primary-keys` | create a table, choose or change a primary key, generate an id in application code, design a human-facing number format, write an object-storage key template or a log field set, put an id in a URL, a log line, a payload or an export, write an `ORDER BY` over an id column in any language, or move tenant data between databases — rank key candidates by the surfaces the id lands on rather than by index size, the enumerable-key disclosure, the replication cost of a sequence, the computed table classification, the cost folklore that belongs to a different key and a different engine, the `ORDER BY`-on-id ban and its one pagination carve-out, and the split between the opaque key and the human-facing business number. Carries one repo's UUIDv7-everywhere verdict as its worked case, with its losers. Any engine |
 | `business-numbering` | issue a number a person reads out, quotes or types — an account, loan, voucher or document number — or write an issuer, a counter, a format or a check digit, import legacy numbers, or make any number gapless — the class catalog with a decision per class, counter rows inside the caller's transaction rather than engine sequences, gapless as a transactional property only where it earns its keep, periods from the business calendar, typed format parts against the pattern-string engine it names as the anti-pattern, Damm check digits validated at every ingress, and exhaustion that hard-fails rather than widening silently. Carries one repo's seven-class catalog as its worked case, with its rejected alternatives. Any store |
-| `new-java-backend` | create a Java backend project from nothing — one pinned script lands `dulguun0225/java-backend-template` with every gate wired, then `specify init`, and it stops there: no spec-kit command is part of it or handed on as a next step. Nothing in it is a decision; invoke it by name |
-| `spec-handoff-questions` | stage 1 of handing a clarified `spec.md` to the build, split between a domain expert with no technical knowledge and a technical expert with no domain knowledge — a fresh-context, read-only reading of the spec against itself, the constitution and the sibling specs, derived from eight real build stops whose cause was already in the spec's text; it writes `HANDOFF-QUESTIONS.md` in the feature directory in three sections, Domain, Domain+Technical and Technical. For each real gap (no answer, a contradiction, a case with no outcome) that the spec, a sibling spec or the constitution does not already answer, it writes the agent's decision with its source; it asks a person only for an outside fact no document states, a conflict with another spec's owners, an irreversible business choice no source settles, or a constitution amendment. Each entry quotes the spec and naming the build stage that would stop on it, drops nothing by severity, and never edits the spec. Run again after stages 2 and 3; that rerun keeps every entry and says whether the handoff is complete. Invoke it by name after `/speckit.clarify` |
-| `spec-handoff-domain` | stage 2 — entries the spec already answers are closed unasked; the domain expert alone sees, in one reply, the few open Domain questions with a recommended answer each and the agent's Domain and Domain+Technical decisions, and replies only to the rows he disagrees with; everything accepted goes into the spec and its Clarifications, and an entry that needs a technical fact moves to the Domain+Technical questions. The domain expert signs off after the rerun. Invoke it by name |
-| `spec-handoff-joint` | stage 3 — questions the spec already answers are closed unasked; both experts together get the Domain+Technical questions the agent could not decide in one table, each with a recommended answer, and reply only to the rows they disagree with; skipped when none is open. Invoke it by name |
-| `build-feature-prepare` | stage 4 — refuses unless the handoff is complete, then closes unasked the entries the spec already answers, applies the agent's Technical decisions, and shows the technical expert alone those decisions and the Technical questions it could not decide, each with a recommended answer; he replies only to the rows he disagrees with; an entry that needs a domain decision moves back to Domain and reopens the handoff. The technical expert commits and runs `/build-feature`. Invoke it by name |
-| `build-feature` | build one feature from a spec its domain expert already wrote, with no human gate — one Workflow script finds the feature from the checkout, makes and syncs its branch, then runs plan, tasks, analyze, implement and converge as fresh subagents on the model and effort each stage earns, reads `spec.md` and never edits it — where a run stops, the invoking session resolves what it holds a high-confidence recommendation for and restarts, that file included, rather than relaying the stop to you — puts a fresh-context refutation review where spec-kit's human gate was, and loops converge and implement until nothing converge finds is above the severity floor, `args.severityFloor`, `NONE` by default — tolerating nothing, so a long run ends at its round cap with the open findings reported; invoke it by name |
-| `converge-feature` | converge, finish or close out a feature that is already implemented — the converge ⇄ implement loop of `build-feature` alone, from `converge` to `finish`, through that skill's script, with the severity floor the loop stops at chosen per run and `NONE` by default, tolerating nothing; no script of its own, so install it **with** `build-feature`; invoke it by name |
 | `java-backend-rules` | write a query, a transaction, an in-request fan-out, a migration, a scheduled task or a test on Java, Spring Boot MVC, jOOQ and PostgreSQL — the platform, concurrency, time and nullness rules, and the banned dependencies and annotations |
 | `java-backend-api` | add or change an endpoint on that stack — the committed OpenAPI document as the single conformance oracle, error contract, strict request bodies with identifiers in the path only, pagination, versioning, temporal wire format and concurrency headers |
 | `java-backend-observability` | add a log line, a metric, a trace or an alert on that stack — the typed logging facade, unloggable domain types, context propagation across a fan-out, and what an alert is allowed to be |
@@ -106,7 +99,6 @@ behaviour decides what counts as a skill in this repo.
 | `npm run tokens:sections` | Size of each `##` section of each `SKILL.md` — where a body's cost sits (`--skill <name>` for one, `--repeated` to roll up by section name across skills, `--min 0` to fold nothing). |
 | `npm run firing` | Runs headless sessions against an isolated sandbox holding only this repo's skills, and reports which skills actually fired (`--skill <name>`, `--case <id>`, `--repeats N`, `--against <git-ref>` to A/B a frontmatter edit, `--model <name>` to pin one, `--dry-run` to price it first). Two modes: the default scores whether a skill fires as the model's first action; `--explore` allows the read and edit tools and scores whether it fires before the first code edit, which is the delivery question — the two rates are different measurements. A report, not a gate — it is stochastic and it spends money. |
 | `npm run probes` | Runs headless sessions with **no skills installed** and records what a bare agent writes for a task a directive governs — the opposite question from `firing`: not *does the skill load* but *does it need to exist* (`--model <name>`, `--case <id>`, `--repeats N`, `--budget N` USD stop, `--dry-run`). Grading is manual, against each case's written criterion. A report, not a gate — stochastic, and it spends money. |
-| `npm run runs` | Reads the Workflow run journals that `build-feature` and `converge-feature` leave behind in real service repositories, and prints one record per run (stage exit, rounds per loop, which mechanisms fired, tokens with coverage, wall-clock), a stage × tier cost table, the findings and exit reasons that recur across runs and across features, and one record per `needs-human` stop read from the service repository's git history — the `HANDOFF.md` commit and the commits between it and the next run on the feature, all git calls read-only (`--repo <abs path>` repeatable, `--since <date>`, `--until <date>` inclusive, `--run <id>`, `--json`). **The only non-synthetic measurement here** — everything above it runs against fixtures or counts text. A report, never a gate: the numbers belong to runs on one machine in repositories this one does not control. The journals are machine-local under `~/.claude/projects/` and are erased with that directory, so the sweep written into `docs/history/runs.md` is the durable record; no journal is committed. |
 | `npm run try -- <name>` | Runs one skill straight from the working tree, without installing it. |
 
 `npm run check` should list every directory under `skills/` — compare its output
@@ -213,42 +205,14 @@ list, the migration lint, the contract snapshots, the CI — so an agent's first
 session goes to domain code rather than to scaffolding it would otherwise
 regenerate, differently, every time. The template's `docs/GATES.md` maps each
 wired gate to the directive it implements and names what it does not reach.
-`new-java-backend` ships `scripts/new-backend.mjs`, which instantiates the
-template at a pinned commit in one command and stops before anything that
-touches the forge; an agent runs it rather than retyping the template's README,
-and the skill ends at the `specify init --here` commit.
-It is Node on the standard library, the runtime `npx skills add` already needs,
-so it runs the same on Linux, macOS and Windows.
+The `new-java-backend` skill in `dulguun0225/scalith` instantiates the template
+at a pinned commit in one command.
 Created 2026-09-16; record in
 [docs/history/java-backend-template.md](docs/history/java-backend-template.md).
 
-## Starting a new Java project
+## Spec-kit workflows
 
-The order is fixed, decided 2026-09-16, and the skill comes before spec-kit:
-
-1. In an empty project directory, invoke `/new-java-backend`. It asks for the
-   package, artifact name and group, lands the template in `backend/` at its
-   pinned commit, runs codegen and `mvn verify`, commits, and runs
-   `specify init --here`. It prints the forge and ruleset steps and does not run
-   them.
-2. Nothing for the constitution. Articles I–VI arrive pre-filled from the
-   template and are not re-planned; Article VII is an optional slot that starts
-   empty, nothing reads whether it is filled, and it is amended later, as a
-   commit with its reason, from the candidates a feature's plan produces.
-   `/speckit.constitution` is not a step of starting a project.
-3. `/speckit.specify` and `/speckit.clarify`, written by the feature's domain
-   expert, then the handoff: `/spec-handoff-questions`, `/spec-handoff-domain`
-   (the domain expert alone), `/spec-handoff-joint` (both, only for questions
-   that need both), `/spec-handoff-questions` again, and
-   `/build-feature-prepare` (the technical expert alone), each answer written
-   into the spec before anything plans it; then `/speckit.plan`, `/speckit.tasks`,
-   `/speckit.implement` as spec-kit documents them — or `/build-feature`, which runs everything from
-   plan onwards (plus analyze and converge) unattended, with a fresh-context
-   review where the human gate was and the spec read but never edited by the
-   run itself — where a run stops, the invoking session resolves what it holds
-   a high-confidence recommendation for, that file included, and restarts. The
-   plan's Technical Context inherits the platform from the constitution.
-
-Run spec-kit first and the constitution it writes is the one that stays: the
-scaffold never overwrites a file, so the platform articles are dropped with a
-warning and the plan re-decides the stack the template has already decided.
+The spec-kit workflow skills — `new-java-backend`, the four spec-handoff stages,
+`build-feature` and `converge-feature` — moved on 2026-09-27 to
+[`dulguun0225/scalith`](https://github.com/dulguun0225/scalith), with their run
+ledger and `npm run runs`. Their history before that date is in this repo.
