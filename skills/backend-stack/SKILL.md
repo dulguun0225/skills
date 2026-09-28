@@ -246,7 +246,7 @@ and unbuilt. **Convention**, 2026-08-01.*
 
 ## The worked case — Java, Spring Boot Web MVC, jOOQ, PostgreSQL
 
-**Verdict, dated 2026-06-11..14, marked convention.** Criterion applied once. Not a
+**Verdict, dated 2026-06-11..14, marked convention.** Criterion applied here to choose a language. Not a
 recommendation to adopt this stack, and by *A rule set is never a reason to adopt a
 stack* it cannot be read as one. **The record it come from is not published in this
 skill set**, so everything here is restated, not a pointer a reader can open.
@@ -291,7 +291,8 @@ invented here.*
 had, the dated enforcement-host census and the grep that re-runs it, the one
 competing census that exist — TypeScript, frontend, same org, role-confounded — and
 what the record does not carry: primary sources, a backend-role competing census, a
-re-open trigger per loser, and a criterion ever selected against a real alternative.
+re-open trigger per loser, and a criterion ever selected between languages — its 2026-09-28
+selection chose libraries inside Rust ([evidence.md](evidence.md)).
 
 
 ## Composite shapes an organisation assembles out of stack choices

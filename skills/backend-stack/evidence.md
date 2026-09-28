@@ -75,9 +75,14 @@ and the date says so rather than borrowing the pass's authority.
 
 - **The central claim is *uncertain*, and that is the strongest honest marker.**
   No backend has been built on a stack chosen by a competing criterion and
-  compared to one chosen this way. No candidate has ever been rejected *by* this
-  criterion — it was written after the decision it explains. A criterion that has
-  only ratified is a criterion that has not been tested. This is the second skill
+  compared to one chosen this way. No language-layer candidate has ever been
+  rejected *by* this criterion — it was written after the decision it explains. A
+  criterion that has only ratified is a criterion that has not been tested.
+  **Narrowed 2026-09-28**: it selected at the library layer on that date —
+  candidates and criterion fixed before any winner, per-layer crates for a Rust
+  stack, losers recorded with grounds and re-open triggers; per-candidate host
+  counts were not taken. That is selection within a language,
+  not between languages, and no outcome of it has been measured. This is the second skill
   in this set whose central claim is marked uncertain rather than caveated;
   `tech-decision-research` was the first, for the same reason — no outcome
   measurement.
@@ -212,7 +217,7 @@ one line per loser with the ground it lost on, and the cost this choice books.
 
 
 **Verdict, dated 2026-06-11..14, marked convention.** This section = criterion
-applied once. Not recommendation to adopt this stack, and by *A rule set is
+applied to the language choice. Not recommendation to adopt this stack, and by *A rule set is
 never a reason to adopt a stack* it cannot be read as one.
 
 ### The candidate list at the language and runtime layer
@@ -371,7 +376,7 @@ verdict as verified is reading a dated decision as research.
 The gaps that follow are none of them closable from inside this repo — absent
 primary sources, no competing census in a backend role, one recorded expectation
 pointing the other way, no re-open trigger per loser, a criterion never selected
-against a real alternative, and the rejected candidates' operational presence,
+between languages, and the rejected candidates' operational presence,
 never priced:
 
 - **Primary sources still owed, and now searched-for.** Record cite none, and
@@ -398,10 +403,11 @@ never priced:
   wrote none, so nothing say what would make Go or C# worth re-examining. Not
   invented here — inventing a trigger nobody set would be authoring the pass's
   verdict, not recording it.
-- **Criterion never selected against a real alternative.** Written after the
-  choice it explain, generalising criteria that choice stated. Criterion that
-  only ever ratified one decision has not been tested — why central claim marked
-  *uncertain*, not *convention*.
+- **Criterion never selected against a real alternative at the language layer.**
+  Written after the choice it explain, generalising criteria that choice stated.
+  Criterion that only ever ratified one decision has not been tested — why central
+  claim marked *uncertain*, not *convention*. Its selection of 2026-09-28 chose
+  libraries inside Rust, not Rust over another language, and measured no outcome.
 - **The rejected candidates' operational presence was never priced — added
   2026-08-02 by the composite-shape check.** Losers are recorded as losers of a
   ranking. **Nothing record which of them the build actually run** — a frontend
@@ -427,9 +433,10 @@ never priced:
   alternative.** No such comparison is held here. What is held is the census
   above plus one host category from the candidate list.
 
-- **That this skill's criterion has selected against anything.** It has not. The
-  candidate list is a decision the criterion was later written to describe, not a
-  decision the criterion made.
+- **That this skill's criterion has selected between languages.** It has not. The
+  Java candidate list is a decision the criterion was later written to describe,
+  not a decision the criterion made. Its selection of 2026-09-28 was between
+  libraries for a Rust stack, and no outcome of it has been measured.
 
 - **The 2026-06-11..14 pass's primary sources.** The recovered decision record
   cites none, and none are published in this skill set. **A reader who wants

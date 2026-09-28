@@ -89,6 +89,18 @@ yet worth a row.
 stricter thresholds. Those are edits to an existing skill or plan-time decisions.
 A persistence preference is a variant of an existing rule set, not a new one.
 
+## Harvest owed — Rust, opened 2026-09-28
+
+The stack and gate list are decided in [rust-backend-stack](docs/history/rust-backend-stack.md),
+status *decided, not yet validated*. No Rust skill exists yet.
+
+| Owed | Why it is owed | Watch |
+| ---- | -------------- | ----- |
+| **The operability veto** | `backend-stack` makes it a fact about this team, stated per candidate; the record could not research it, so the Rust choice is not final | Owner states it: who has run a Rust service in production, and whether the deployment target and on-call take one |
+| **Whether `money-storage` `M-10` changes** | The record measured the reopening condition `M-10`'s defaults list names for integer minor units — each of the four Rust decimal crates assessed on 2026-09-28 rounds silently somewhere — and kept `NUMERIC(p,s)` columns anyway, converting to minor units in the one mapper | Owner decision; the record does not change `M-10` |
+| **The runs the record lists as not taken** | Behaviours its gate list relies on were read or inferred, not run — among them which ban lints survive `forbid` beside the stack's own macros, and the `NUMERIC` ↔ minor-units mapper | Each is one small probe on the pinned toolchain |
+| **The Rust skills** | Counterparts of `java-backend-rules`, `java-backend-api`, `java-backend-observability` and the `-java` stack skills, and a template repository carrying the gates as `java-backend-template` does | Each harvest owes its frontmatter-token line and firing rate, per *Authoring invariants* |
+
 ## Gate owed — reopened 2026-09-16
 
 | Owed | Why it is owed | Watch |
@@ -135,7 +147,7 @@ Everything below is what each skill owes **beyond** that.
 | Skill | Owed | What it unblocks |
 | ----- | ---- | ---------------- |
 | `backend-stack` | **A re-open trigger per language-layer loser** | Nothing states what would make Go or C#/.NET worth re-examining, so the skill half-fails its own *Record the losers and their grounds* and says so. **Writing one was rejected** — inventing a trigger nobody set authors the verdict. Closes when the decision owner sets them |
-| `backend-stack` | **An enforcement-host census for a serious competitor in a backend role** | The published census was taken for one stack, so it shows Java's surface is deep and **not** that it is deeper. One competing census was recovered (TypeScript, frontend, same pass) and is **role-confounded**. Owed: a census run by someone other than the pass that wrote the Java column |
+| `backend-stack` | **An enforcement-host census for a serious competitor in a backend role** | The published census was taken for one stack, so it shows Java's surface is deep and **not** that it is deeper. One competing census was recovered (TypeScript, frontend, same pass) and is **role-confounded**. Owed: a census run by someone other than the pass that wrote the Java column. **Narrowed 2026-09-28**: a host list for Rust in a backend role exists in [rust-backend-stack](docs/history/rust-backend-stack.md), taken by a different pass — a per-defect-class gate list with tools and dates, not the grep census, and no side-by-side count against Java was taken |
 | `guardrails-toolchain` | **A primary source for any tool claim** — free-tier boundaries, licence terms, the intra-file taint limit, runtime compatibility | Unlike the shared row above, **these are re-verifiable from vendor documentation by anyone**, at the cost of an afternoon per tool. Unsourced, not unobtainable |
 | `guardrails-toolchain` | **A second completeness-critic run, on a different gate stack** | Its central claim rests on **one run with no control arm**. A second run that finds a fifth concern, or finds nothing, is the first evidence about the method |
 | `guardrails-toolchain` | **A ruling on japicmp, and only on japicmp** | Narrowed 2026-08-01: the contested part is the module-package compatibility check, where one record proposes japicmp and `java-backend-api` evaluated and dropped it, neither arguing the other's side. Closes on a case where an in-repo consumer's compile did not catch an incompatible change to a published type |
