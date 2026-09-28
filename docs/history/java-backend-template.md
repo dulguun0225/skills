@@ -2,7 +2,7 @@
 
 *Authored 2026-09-16, one session. A sibling repository, not a skill: [`dulguun0225/java-backend-template`](https://github.com/dulguun0225/java-backend-template), public, flagged as a GitHub template.*
 
-*The sections on `new-java-backend`, `build-feature` and `converge-feature` moved 2026-09-27 to `docs/history/new-java-backend.md` and `docs/history/build-feature.md` in `dulguun0225/scalith`; they are in this file's git history up to `2ab5dc4`.*
+*The sections on `new-java-backend`, `build-feature` and `converge-feature` moved 2026-09-27 to `docs/history/new-java-backend.md` and `docs/history/build-feature.md` in `dulguun0225/scalith`, which deleted its `docs/history/` in `7250299`, so they are in scalith's git history before that commit; they are in this file's git history up to `2ab5dc4`. `new-java-backend` came back 2026-09-28 without its spec-kit steps; see the section of that date at the foot of this file.*
 
 ## Why it exists
 
@@ -257,3 +257,27 @@ foreign read and the owner's write are not. Constitution Article VI amended to m
 vendored scaffold from the pin, against a local clone, ran `mvn verify` green. Projects already built from the
 template keep the old test until they pull the template into `backend/`. Per-session cost unchanged: no
 `description` edited.
+
+## 2026-09-28: `new-java-backend` returns without spec-kit; the template drops its pipeline text
+
+The owner split the three repositories by responsibility. `new-java-backend` came back to this repo from
+`dulguun0225/scalith`, taken from scalith's `HEAD` at `8e5ac51`, doing only what is not spec-kit: the script
+lands the template, renames, runs jOOQ codegen, `spotless:apply` and `mvn verify`, commits on `dev` with `main` at the same commit, and prints
+the forge steps (`gh repo create`, `gh repo edit --default-branch dev`, `node scripts/apply-ruleset.mjs`,
+`npx skills add dulguun0225/skills -g`). Removed from the script: the printed `npx skills add dulguun0225/scalith`
+and `specify init --here && specify extension disable git` lines with their comments, `specify init` from the
+header's list of what it does not do, and the constitution from the vendored-mode description. Removed from
+`SKILL.md`: `specify init`, the `git` extension, the constitution section and the instruction to run no spec-kit
+command; the skill ends at the script's `init:` commit. `DEFAULT_REF` moved from `1ddf6ee` to `52ee4d7`, the
+template commit that drops the pipeline text. The skill is model-invocable with an `evidence.md`,
+as it was here before 2026-09-27, rather than `disable-model-invocation: true` as scalith had it.
+
+Spec-kit setup in a project — `specify init --here`, disabling the `git` extension, the constitution — and the
+spec↔code traceability gate moved to scalith's `init-pipeline`. The template dropped its constitution, the
+traceability gate and its spec workflow text; the sections above that describe them are the record of what the
+template carried until then. `java-backend-api`'s *Plan-stage prose is reached only by plan review* lost its
+sentence citing the template's constitution, and `java-backend-rules`' pointer to `new-java-backend` no longer
+names scalith or spec-kit.
+
+Per-session cost: `new-java-backend` adds 58 tokens of frontmatter (`npm run tokens:frontmatter`, 2026-09-28).
+Firing: not measured.

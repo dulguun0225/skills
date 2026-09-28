@@ -47,6 +47,7 @@ whole purpose; everything else here is in service of it.
 | `ai-maintainer-principles` | draw or move a module boundary, choose a runtime topology, decide what a build gate may be relaxed for, adopt a database, managed service or vendor API, write a retry or a subtle piece, introduce a second way to do something, migrate from an existing system, or write a repo constitution — the decisions that change answer because the maintainer is an agent: startup-loud magic allowed and runtime-silent banned, requirements needing whole-program reasoning designed out, a module sized to one session, topology by the number of independent wills, one idiom imposed mechanically, and the review substitute that stands in for a human reader. Any stack |
 | `primary-keys` | create a table, choose or change a primary key, generate an id in application code, design a human-facing number format, write an object-storage key template or a log field set, put an id in a URL, a log line, a payload or an export, write an `ORDER BY` over an id column in any language, or move tenant data between databases — rank key candidates by the surfaces the id lands on rather than by index size, the enumerable-key disclosure, the replication cost of a sequence, the computed table classification, the cost folklore that belongs to a different key and a different engine, the `ORDER BY`-on-id ban and its one pagination carve-out, and the split between the opaque key and the human-facing business number. Carries one repo's UUIDv7-everywhere verdict as its worked case, with its losers. Any engine |
 | `business-numbering` | issue a number a person reads out, quotes or types — an account, loan, voucher or document number — or write an issuer, a counter, a format or a check digit, import legacy numbers, or make any number gapless — the class catalog with a decision per class, counter rows inside the caller's transaction rather than engine sequences, gapless as a transactional property only where it earns its keep, periods from the business calendar, typed format parts against the pattern-string engine it names as the anti-pattern, Damm check digits validated at every ingress, and exhaustion that hard-fails rather than widening silently. Carries one repo's seven-class catalog as its worked case, with its rejected alternatives. Any store |
+| `new-java-backend` | create a Java backend project from nothing — one pinned script lands `dulguun0225/java-backend-template` with every gate wired and green, commits it on `dev` with `main` beside it, and stops before anything that touches the forge. Nothing in it is a decision |
 | `java-backend-rules` | write a query, a transaction, an in-request fan-out, a migration, a scheduled task or a test on Java, Spring Boot MVC, jOOQ and PostgreSQL — the platform, concurrency, time and nullness rules, and the banned dependencies and annotations |
 | `java-backend-api` | add or change an endpoint on that stack — the committed OpenAPI document as the single conformance oracle, error contract, strict request bodies with identifiers in the path only, pagination, versioning, temporal wire format and concurrency headers |
 | `java-backend-observability` | add a log line, a metric, a trace or an alert on that stack — the typed logging facade, unloggable domain types, context propagation across a fan-out, and what an alert is allowed to be |
@@ -175,7 +176,7 @@ is [docs/history/skill-redundancy-audit.md](docs/history/skill-redundancy-audit.
 ## Installing from this repo
 
 ```bash
-npx skills add dulguun0225/skills -a claude-code -y
+npx skills add dulguun0225/skills -g -a claude-code -y
 ```
 
 Installing places the skills; it does not make them fire. A skill fires when
@@ -205,14 +206,16 @@ list, the migration lint, the contract snapshots, the CI — so an agent's first
 session goes to domain code rather than to scaffolding it would otherwise
 regenerate, differently, every time. The template's `docs/GATES.md` maps each
 wired gate to the directive it implements and names what it does not reach.
-The `new-java-backend` skill in `dulguun0225/scalith` instantiates the template
-at a pinned commit in one command.
+The `new-java-backend` skill instantiates the template at a pinned commit in
+one command, and stops before anything that touches the forge.
 Created 2026-09-16; record in
 [docs/history/java-backend-template.md](docs/history/java-backend-template.md).
 
 ## Spec-kit workflows
 
-The spec-kit workflow skills — `new-java-backend`, the four spec-handoff stages,
-`build-feature` and `converge-feature` — moved on 2026-09-27 to
+The spec-kit workflow skills — the four spec-handoff stages, `build-feature` and
+`converge-feature` — moved on 2026-09-27 to
 [`dulguun0225/scalith`](https://github.com/dulguun0225/scalith), with their run
 ledger and `npm run runs`. Their history before that date is in this repo.
+`new-java-backend` moved with them and came back on 2026-09-28 without its
+spec-kit steps; setting up spec-kit in a project is scalith's `init-pipeline`.
