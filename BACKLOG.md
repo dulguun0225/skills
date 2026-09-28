@@ -97,7 +97,6 @@ status *decided, not yet validated*. No Rust skill exists yet.
 | Owed | Why it is owed | Watch |
 | ---- | -------------- | ----- |
 | **The operability veto** | `backend-stack` makes it a fact about this team, stated per candidate; the record could not research it, so the Rust choice is not final | Owner states it: who has run a Rust service in production, and whether the deployment target and on-call take one |
-| **Whether `money-storage` `M-10` changes** | The record measured the reopening condition `M-10`'s defaults list names for integer minor units — each of the four Rust decimal crates assessed on 2026-09-28 rounds silently somewhere — and kept `NUMERIC(p,s)` columns anyway, converting to minor units in the one mapper | Owner decision; the record does not change `M-10` |
 | **The runs the record lists as not taken** | Behaviours its gate list relies on were read or inferred, not run — among them which ban lints survive `forbid` beside the stack's own macros, and the `NUMERIC` ↔ minor-units mapper | Each is one small probe on the pinned toolchain |
 | **The Rust skills** | Counterparts of `java-backend-rules`, `java-backend-api`, `java-backend-observability` and the `-java` stack skills, and a template repository carrying the gates as `java-backend-template` does | Each harvest owes its frontmatter-token line and firing rate, per *Authoring invariants* |
 

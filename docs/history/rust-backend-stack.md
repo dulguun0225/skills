@@ -208,7 +208,8 @@ ships to a consumer. This record is the input a later pass converts into Rust sk
   record keeps `NUMERIC(p,s)` because the ground that rejected minor units on the wire (`M-12`:
   every reader must know the exponent) applies equally to every reader of the table, and because
   keeping it leaves `M-10`, `M-31` … `M-34` and `M-43` true as published. Changing `M-10` is the
-  owner's decision, not this record's.
+  owner's decision, not this record's; the owner kept `M-10` on 2026-09-29, and `money-storage`
+  now states the ground and no longer lists weak decimal support as reopening the column type.
 - **Loser grounds and re-open triggers.** rust_decimal: silent rounding (re-open if a release adds
   exact or refusing multiplication and division). bigdecimal as the arithmetic type: silent
   division rounding, no checked division, unbounded work on large exponents (re-open if a release
@@ -545,7 +546,8 @@ runtime-silent configuration; the silent ones are serde's defaults, decimal roun
 ## Owed before the Rust skills are written
 
 - **The operability veto**, as a fact about this team.
-- **The money column decision** if `M-10` is to change; this record does not change it.
+- **The money column decision** if `M-10` is to change; this record does not change it. Closed
+  2026-09-29: the owner kept `M-10`.
 - **Runs not taken**: which ban lints survive `forbid` beside every macro the stack uses, and the
   source rule on first-party `allow` / `expect`; the serde `flatten` / `default` / enum rules; the
   axum and utoipa-axum routing-method ban;

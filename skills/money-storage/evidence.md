@@ -126,6 +126,41 @@ the repo's call — which is exactly why `M-43` requires the choice to be writte
 down beside a named maximum amount. SQL Server's "at least four decimal places"
 speaks to the **scale** only, and is cited above for that alone.
 
+**The `bigint` alternative is rejected on a stated ground — owner decision,
+2026-09-29.** Until then the defaults list called it excluded by `M-10`'s wording
+and never justified on evidence. No source on precision was found since; the
+ground is about the reader, not the digits:
+
+- **A decimal column carries its own scale; an integer column does not.** Every
+  reader of the table — SQL, reports, BI, migrations, ad-hoc queries — must
+  supply the currency's exponent. This is the ground `M-12` in `money-api` uses
+  on the wire. *Convention* — a design argument.
+- **Exponent tables disagree.** Processor tables deviate from ISO 4217 (`M-14`,
+  premise confirmed 2026-07-21, deviations named in `money-api`'s evidence), and
+  this rule set's own passes disagree on the exponent-4 currencies, above. A
+  wrong exponent moves an amount by a power of ten with no error.
+- **ISO 4217 amends minor units.** ISO 4217 Amendment 157, issued 7 November
+  2013 by SIX Interbank Clearing Ltd as the ISO 4217 Maintenance Agency: "the
+  minor unit for the Unidad de Fomento will be changed from 0 to 4 on 15 March
+  2014" (CLF, code 990). An integer row written before that date and read at the
+  new exponent is 10,000 times too small; a decimal row is unchanged.
+  (`six-group.com/dam/download/financial-information/data-center/iso-currrency/amendments/dl_currency_iso_amendment_157.pdf`,
+  read 2026-09-29.) *Primary-source verified* 2026-09-29. **Not used:** the
+  recalled example of ISK moving from 2 to 0 — no amendment for it was found, and
+  ISK appears in `money-api`'s evidence as a processor deviation, which is a
+  different claim.
+- **The argument for integers, kept.** An integer column cannot be over-scale,
+  which removes `M-30`'s silent-rounding failure mode by construction, and it
+  cannot hold a non-finite value (`M-32`). The decision is that `M-30`'s
+  real-engine integration test already gates that risk, and nothing gates the
+  reader-exponent risk.
+- **The old reopen condition no longer reopens the column type.** It was weak
+  language decimal support. That is answered by integer minor units in memory,
+  converted from `NUMERIC(p,s)` in the one read mapper (`M-37`) and back on
+  write — the shape the 2026-09-28 Rust stack record chose after measuring the
+  condition. The column type reopens only for a store with no constrained exact
+  decimal type, the trigger below.
+
 ## Computation in the query language
 
 **One claim primary-sourced; the rule is convention.** PostgreSQL documents that
@@ -230,7 +265,8 @@ one that is finished.
   statically known. That changes `M-35` from "linted where visible" to a complete
   gate.
 - **A stack whose store has no exact decimal type.** SQLite is the concrete case
-  above. The question that reopens is not how to check these rules there, but
+  above. Since 2026-09-29 this is also the only condition that reopens integer
+  minor units as a column type. The question that reopens is not how to check these rules there, but
   **whether a repo in that position may hold money at all**.
 - **A second stack names its tools.** Whatever it cannot check, or must state
   differently, is the first real evidence about which of these directives are

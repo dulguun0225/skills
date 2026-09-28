@@ -163,3 +163,21 @@ Other four:
 ### What this closed
 
 **Every cell of the incompleteness table now reads *run* or *n/a*.** The table is kept rather than deleted, because each cell records what its check found and deleting a closed row takes the findings with it — the same call the `backend-stack` candidate-list row went through. **What replaced it as owed work is stated there**: `enforceable-rules` publishes five incompleteness checks, and the two drawn from this skill set's own authoring — the enumeration check and the token-placement check — **have not been run over any published skill.**
+
+
+## `M-10` kept; the integer-minor-units exclusion given a ground, 2026-09-29
+
+**Owner decision: money columns stay `NUMERIC(p,s)`; `bigint` of minor units stays rejected as a column type.** It closes the `BACKLOG.md` row *Whether `money-storage` `M-10` changes*, opened by the 2026-09-28 Rust stack record ([rust-backend-stack](rust-backend-stack.md)), which had measured the defaults list's reopen condition — weak language decimal support — and kept the column anyway. The defaults list had called the exclusion "never justified on evidence".
+
+The ground: a decimal column carries its own scale and an integer column needs every reader to supply the exponent (`M-12`'s wire ground, applied to the table); exponent tables disagree (`M-14`, and the unreconciled exponent-4 disagreement in `money-storage/evidence.md`); ISO 4217 amends minor units — Amendment 157, SIX, 7 November 2013, CLF 0 → 4 effective 15 March 2014, *primary-source verified* 2026-09-29. The recalled ISK 2 → 0 example was not found in any amendment and is not used. The pro-integer argument stays recorded: no over-scale value (`M-30`) and no non-finite value (`M-32`) by construction, weighed against `M-30`'s real-engine test already gating that risk while nothing gates the reader-exponent risk. Weak decimal support is answered by integer minor units in memory converted in the `M-37` mapper, so it no longer reopens the column type; a store with no constrained exact decimal type still does.
+
+What changed:
+
+- `money-storage/SKILL.md` — `M-10` gains the ground as a paragraph and a dated marker clause on its check line (design argument *convention*; `M-14` premise *confirmed* 2026-07-21 as cited; CLF amendment *primary-source verified*). The defaults-list entry *Integer number of minor units as storage type* keeps its probe data and pro-integer argument, cites the decision, and replaces the reopen condition. The *Markers* section's sentence that *confirmed* appeared exactly once in the file was narrowed, since `M-10` now quotes `M-14`'s marker.
+- `money-storage/evidence.md` — the grounds with the amendment quotation and URL under *No source states a recommended precision*; the no-exact-decimal re-open trigger now says it is the only one reopening the column type.
+- `BACKLOG.md` — the row removed.
+- `rust-backend-stack.md` — two sentences narrowed to record that the owner kept `M-10`; the record is otherwise unchanged.
+
+**Cost.** `npm run tokens`, `money-storage`: 6,541 → 6,933 (+392, o200k_base), all in `SKILL.md`, paid only when the skill fires. Frontmatter unchanged — no `description` was edited, so the per-session cost and the firing rate are untouched.
+
+**Sweep.** Grep over `skills/`, `README.md`, `BACKLOG.md` and `docs/` for integer minor units, `bigint`, "never justified" and decimal support, each hit read. `money`, `money-api`, `money-java` and `java-backend-api` `SKILL.md` state no exclusion status for the column; `money-api` and `java-backend-api` reject minor units on the wire only, which the decision does not change. `skill-redundancy-audit.md` and `asdlc-port.md` record the 2026-08-11 probe as history and were left alone.
