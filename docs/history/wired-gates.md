@@ -174,3 +174,17 @@ them; `npm run check` was re-run to confirm it lists the same directories as
 **What it does not decide** is printed on every run: whether a short description
 still fires, whether a rewrite lost a trigger, the harness's real budget, and what
 other repos' skills add to the same listing.
+
+## 2026-09-29 — the repo-only filename rule stops matching inside an absolute URL
+
+`new-rust-backend` has to reach the Rust stack record, which is a file in this
+repository's history directory, and the authoring invariants allow a link leaving
+a skill dir only as an absolute URL. The dangling-pointer check's repo-only
+filename rule matched the history-directory path inside that URL and failed the
+build on the one form the invariant permits. The rule now runs on each line with
+its `http` and `https` URLs removed. **Shown still failing** by one injected line,
+reverted: a bare history path and `BACKLOG.md` were each reported, the URL beside
+them was not. The case it gives up is printed with the rest of what the check does
+not decide: an absolute URL into this repository is not checked against the files
+here, so a renamed history file leaves it dangling. Record:
+[rust-backend-template](rust-backend-template.md).

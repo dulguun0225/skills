@@ -48,6 +48,7 @@ whole purpose; everything else here is in service of it.
 | `primary-keys` | create a table, choose or change a primary key, generate an id in application code, design a human-facing number format, write an object-storage key template or a log field set, put an id in a URL, a log line, a payload or an export, write an `ORDER BY` over an id column in any language, or move tenant data between databases — rank key candidates by the surfaces the id lands on rather than by index size, the enumerable-key disclosure, the replication cost of a sequence, the computed table classification, the cost folklore that belongs to a different key and a different engine, the `ORDER BY`-on-id ban and its one pagination carve-out, and the split between the opaque key and the human-facing business number. Carries one repo's UUIDv7-everywhere verdict as its worked case, with its losers. Any engine |
 | `business-numbering` | issue a number a person reads out, quotes or types — an account, loan, voucher or document number — or write an issuer, a counter, a format or a check digit, import legacy numbers, or make any number gapless — the class catalog with a decision per class, counter rows inside the caller's transaction rather than engine sequences, gapless as a transactional property only where it earns its keep, periods from the business calendar, typed format parts against the pattern-string engine it names as the anti-pattern, Damm check digits validated at every ingress, and exhaustion that hard-fails rather than widening silently. Carries one repo's seven-class catalog as its worked case, with its rejected alternatives. Any store |
 | `new-java-backend` | create a Java backend project from nothing — one pinned script lands `dulguun0225/java-backend-template` with every gate wired and green, commits it on `dev` with `main` beside it, and stops before anything that touches the forge. Nothing in it is a decision |
+| `new-rust-backend` | create a Rust backend project from nothing — one pinned script lands `dulguun0225/rust-backend-template` (axum, sqlx, PostgreSQL) with every gate wired and green, commits it on `dev` with `main` beside it, and stops before anything that touches the forge. No Rust rules skill exists yet; it says where the rules are read meanwhile |
 | `java-backend-rules` | write a query, a transaction, an in-request fan-out, a migration, a scheduled task or a test on Java, Spring Boot MVC, jOOQ and PostgreSQL — the platform, concurrency, time and nullness rules, and the banned dependencies and annotations |
 | `java-backend-api` | add or change an endpoint on that stack — the committed OpenAPI document as the single conformance oracle, error contract, strict request bodies with identifiers in the path only, pagination, versioning, temporal wire format and concurrency headers |
 | `java-backend-observability` | add a log line, a metric, a trace or an alert on that stack — the typed logging facade, unloggable domain types, context propagation across a fan-out, and what an alert is allowed to be |
@@ -210,6 +211,16 @@ The `new-java-backend` skill instantiates the template at a pinned commit in
 one command, and stops before anything that touches the forge.
 Created 2026-09-16; record in
 [docs/history/java-backend-template.md](docs/history/java-backend-template.md).
+
+**A greenfield Rust backend starts from
+[`dulguun0225/rust-backend-template`](https://github.com/dulguun0225/rust-backend-template)**,
+the same arrangement for the stack chosen in
+[docs/history/rust-backend-stack.md](docs/history/rust-backend-stack.md): axum,
+sqlx and PostgreSQL, with every gate of that record wired, shown failing by a
+canary or a negative fixture, and green. The `new-rust-backend` skill lands it
+at a pinned commit. No Rust rules skill exists yet; until one does, the record
+and the template's `docs/GATES.md` carry the rules. Created 2026-09-29; record in
+[docs/history/rust-backend-template.md](docs/history/rust-backend-template.md).
 
 ## Spec-kit workflows
 

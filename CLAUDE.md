@@ -138,7 +138,8 @@ Per-skill records: what each authoring pass decided, its sweeps, its adversarial
 - [java-backend](docs/history/java-backend.md) — `java-backend-rules`, `java-backend-api`, `java-backend-observability`; the Spring Data JDBC ban and pin-creation directive
 - [method-skills](docs/history/method-skills.md) — `tech-decision-research`, `enforceable-rules`; the marker vocabularies split between them
 - [backend-stack](docs/history/backend-stack.md) — the stack argument, its candidate list and competing census
-- [rust-backend-stack](docs/history/rust-backend-stack.md) — 2026-09-28: the Rust stack and gate list chosen by `backend-stack`'s criterion before any Rust skill exists; the input to that harvest
+- [rust-backend-stack](docs/history/rust-backend-stack.md) — 2026-09-28: the Rust stack and gate list chosen by `backend-stack`'s criterion before any Rust skill existed; the input to the Rust template and the Rust rules harvest
+- [rust-backend-template](docs/history/rust-backend-template.md) — 2026-09-29: the sibling template repo carrying that record's gates, the runs it owed, and `new-rust-backend`, which lands it
 - [guardrails-toolchain](docs/history/guardrails-toolchain.md) — what makes a gate adoptable
 - [ai-maintainer-principles](docs/history/ai-maintainer-principles.md) — system shape under an agent maintainer
 - [primary-keys](docs/history/primary-keys.md) — no adversarial review run on it

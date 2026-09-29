@@ -24,8 +24,12 @@ const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const NEVER_SHIPS = /\b([PB]-\d+)\b/g;
 
 // Files that exist in this repository and in no installed skill dir. A skill
-// citing one sends its reader to a file they do not have.
+// citing one sends its reader to a file they do not have. An absolute URL is
+// not such a citation: every reader can open it, and the authoring rule allows
+// a link that leaves the skill dir only in that form. So the match runs on the
+// line with its URLs removed.
 const REPO_ONLY_FILES = /\b(BACKLOG\.md|DECISIONS\.md|docs\/history[^\s)]*)/g;
+const URL_TEXT = /\bhttps?:\/\/[^\s)>`]+/g;
 
 // A rule id is cited in code ticks and defined in bold — `M-35` against
 // `**M-35 — ...**`. Requiring the ticks is what separates this set's own
@@ -66,7 +70,7 @@ for (const { name, dir } of skills) {
         failures.push(`${at} cites \`${m[1]}\` — numbering no installed skill dir carries`);
       }
 
-      for (const m of line.matchAll(REPO_ONLY_FILES)) {
+      for (const m of line.replace(URL_TEXT, "").matchAll(REPO_ONLY_FILES)) {
         failures.push(`${at} names \`${m[1]}\` — a file of this repository, not of the skill dir`);
       }
 
@@ -131,6 +135,8 @@ What this check does not decide:
   - whether a cited id is the RIGHT id for the sentence citing it
   - whether prose names a repository file without a path or a link — a skill may
     legitimately tell a reader to write their own CLAUDE.md or README.md
+  - whether an absolute URL resolves; one into this repository is not checked
+    against the files here, so a renamed history file leaves it dangling
   - any of the five incompleteness checks — all five are about absence
   - whether the marker table is honest, or whether a rule marked off-the-shelf
     has its gate wired

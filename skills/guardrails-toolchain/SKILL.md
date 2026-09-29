@@ -540,8 +540,17 @@ are wired there, step 5 for its two generated artifacts (the jOOQ tree and the
 OpenAPI document), and the mechanical half of step 2 — tool, gate, host, and the
 directive each implements — is its `docs/GATES.md`. Steps 1, 6, 7 and 8 and the
 licence-and-caveat half of step 2 stay the repo's to write, and that file says so
-by name. (Check: the template's named-gaps table carries a row per unwired step
-here; a step absent from both tables is the finding — *convention*, 2026-09-16.)
+by name. **A Rust repo starts from `dulguun0225/rust-backend-template`, landed by
+`new-rust-backend`.** Step 3 is wired there through cargo-deny's licence check, the
+vulnerability half of step 4 through cargo-deny's advisories with every action
+SHA-pinned, step 5 for the OpenAPI document (regenerated twice) and the `.sqlx`
+query metadata (regenerated once and compared), and the mechanical half of step 2 is
+its `docs/GATES.md`. Steps 1, 6, 7 and 8 and the licence-and-caveat half of step 2
+stay the repo's, **and unlike the Java template's, its gap table has no row for
+them**; nor does it wire or name a secrets or image scan (2026-09-29). (Check, per template: its
+named-gaps table carries a row per unwired step here; a step absent from both tables
+is the finding, and the Rust template has that finding open — *convention*,
+2026-09-16, Rust 2026-09-29.)
 
 ## Composite shapes a repo assembles out of gates
 

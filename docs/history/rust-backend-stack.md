@@ -15,8 +15,14 @@ ships to a consumer. This record is the input a later pass converts into Rust sk
   separately from the language.
 - **The criterion selected here; it did not ratify.** The candidate list and the criterion were
   fixed in the research question before any winner was named; `backend-stack`'s evidence
-  records no earlier selection by this criterion (2026-09-28). **It is still not an outcome**: no Rust backend has been built on this choice.
+  records no earlier selection by this criterion (2026-09-28). **It is still not an outcome**: no Rust service has run on this choice. A template carrying its gates was built and ran green on 2026-09-29 ([rust-backend-template](rust-backend-template.md)); that shows the gates can be wired, not how a service fares under them.
 - **Status tier: decided, not yet validated.** Researched and decided, no production use.
+- **The runs this record lists as not taken were taken on 2026-09-29**, on rustc and clippy 1.98.1
+  and PostgreSQL 18.6, while building `dulguun0225/rust-backend-template`. Results are in that
+  template's `docs/GATES.md`, *Runs the record owed*, summarised in
+  [rust-backend-template](rust-backend-template.md). Where a line below marks one of those
+  behaviours *not run* or *uncertain*, that section supersedes it; the lines are left as the
+  record of what this pass knew.
 - **No operability veto.** Owner, 2026-09-29: no one writes code, so whether anyone on the team has
   run a Rust service is not a question here. Deleted from this record and from `BACKLOG.md`.
 - **`review-by`: 2027-03-28.** Six months, because crate releases and maintainer status moved
@@ -544,19 +550,14 @@ runtime-silent configuration; the silent ones are serde's defaults, decimal roun
 
 ## Owed before the Rust skills are written
 
-- **The money column decision** if `M-10` is to change; this record does not change it. Closed
-  2026-09-29: the owner kept `M-10`.
-- **Runs not taken**: which ban lints survive `forbid` beside every macro the stack uses, and the
-  source rule on first-party `allow` / `expect`; the serde `flatten` / `default` / enum rules; the
-  axum and utoipa-axum routing-method ban;
-  `anyhow` confinement by `disallowed-types`; the `NUMERIC` ↔ minor-units mapper; squawk's exit
-  code; `wildcard_enum_match_arm` over a foreign `#[non_exhaustive]` enum; tower-http 0.7 with
-  axum 0.8.9.
+Closed on 2026-09-29 and removed from this list: the money column decision (the owner kept `M-10`;
+[money](money.md)), the runs not taken and the template repository (both in
+[rust-backend-template](rust-backend-template.md)).
+
 - **Unresearched**: a pure-Rust Kafka client; a production service holding funds on axum + sqlx
   (none verified); LLM circumvention of Rust lints.
-- **The skills themselves**: the Rust counterparts of `java-backend-rules`, `java-backend-api`,
-  `java-backend-observability` and the `-java` stack skills, and a template repository carrying
-  the gates, as `java-backend-template` does for Java.
+- **The rules skills**: the Rust counterparts of `java-backend-rules`, `java-backend-api`,
+  `java-backend-observability` and the `-java` stack skills.
 
 ## Sources
 

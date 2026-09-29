@@ -265,6 +265,18 @@
       "prompt": "This ADR is from two years ago and nobody's checked it since. Is it still right?"
     },
     {
+      "id": "new-rust-backend-1",
+      "skill": "new-rust-backend",
+      "fixture": "bare",
+      "prompt": "Set up a Rust service in this empty directory: a REST API for parcel tracking, backed by Postgres. Call it parcel_tracker."
+    },
+    {
+      "id": "new-rust-backend-2",
+      "skill": "new-rust-backend",
+      "fixture": "bare",
+      "prompt": "We're writing the shipping quotes API in Rust, axum and sqlx. Get the Cargo workspace and CI in place so we can start on handlers."
+    },
+    {
       "id": "negative-1",
       "skill": null,
       "fixture": "bare",

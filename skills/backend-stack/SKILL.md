@@ -6,8 +6,9 @@ description: How to choose a backend stack for an agent-written repo. ALWAYS loa
 
 **This skill argue the choice.** Every other stack-shaped skill here —
 `java-backend-rules`, `java-backend-api`, `java-backend-observability`,
-`money-java`, `caching-java`, `async-handoff-java` — assume choice already made,
-state rules that follow. This one say *why* one stack beat another, on criterion
+`money-java`, `caching-java`, `async-handoff-java`, and the scaffold skills
+`new-java-backend` and `new-rust-backend` — assume choice already made, state rules
+or land template that follow. This one say *why* one stack beat another, on criterion
 that only apply when no human read code.
 
 **Two halves on purpose.** Criterion portable, and criterion is payload: it
@@ -340,7 +341,11 @@ downstream of that one**. Install it alongside.
   markers, and premise-specificity test that decide whether a rule earn context
   space at all.
 - **`java-backend-rules`, `java-backend-api`, `java-backend-observability`** —
-  what follow from worked case, once chosen.
+  what follow from worked case, once chosen. **`new-java-backend`** land its
+  template.
+- **`new-rust-backend`** — land template for Rust stack this criterion chose at
+  library layer on 2026-09-28. No Rust rules skill yet; that skill say where rules
+  are read meanwhile.
 - **`guardrails-toolchain`** — once stack picked, which tool may occupy a host
   and what disqualify one, plus four defect classes a host count never reach.
   **Frontend census in [evidence.md](evidence.md) is that skill's map read from
