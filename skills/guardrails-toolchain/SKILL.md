@@ -542,12 +542,15 @@ directive each implements — is its `docs/GATES.md`. Steps 1, 6, 7 and 8 and th
 licence-and-caveat half of step 2 stay the repo's to write, and that file says so
 by name. **A Rust repo starts from `dulguun0225/rust-backend-template`, landed by
 `new-rust-backend`.** Step 3 is wired there through cargo-deny's licence check, step
-4 through cargo-deny's advisories and a gitleaks secrets scan with every action
-SHA-pinned, step 5 for the OpenAPI document (regenerated twice) and the `.sqlx`
-query metadata (regenerated once and compared), and the mechanical half of step 2 is
-its `docs/GATES.md`. The image scan is a named gap there, and steps 1, 6, 7 and 8
-and the licence-and-caveat half of step 2 stay the repo's, each with a row in its
-gap table (2026-09-29). (Check, per template: its named-gaps table carries a row per
+4 through cargo-deny's advisories, a gitleaks secrets scan and a trivy scan of the
+built image, failing on HIGH and CRITICAL whether fixed or not, with every action
+SHA-pinned and trivy pinned by version to a release whose checksums mise checks
+against their sigstore bundle, step 5 for the OpenAPI document (regenerated twice)
+and the `.sqlx` query metadata (regenerated once and compared), and the mechanical
+half of step 2 is its `docs/GATES.md`. The licences of the image's packages and the
+integrity of trivy's database are named gaps there, and steps 1, 6, 7 and 8 and the
+licence-and-caveat half of step 2 stay the repo's, each with a row in its gap table
+(2026-09-29). (Check, per template: its named-gaps table carries a row per
 unwired step here; a step absent from both tables is the finding — *convention*,
 2026-09-16, Rust 2026-09-29.)
 
