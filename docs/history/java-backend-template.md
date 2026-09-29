@@ -281,3 +281,36 @@ names scalith or spec-kit.
 
 Per-session cost: `new-java-backend` adds 58 tokens of frontmatter (`npm run tokens:frontmatter`, 2026-09-28).
 Firing: not measured.
+
+## 2026-09-29: every mise tool pinned by checksum
+
+Owner-approved the same day, beside the Rust template's change ([rust-backend-template](rust-backend-template.md) has the mechanism in full).
+Template commit `20d913a`; `DEFAULT_REF` moved to it from `52ee4d7`.
+
+`mise.toml` and `project-root/mise.toml` gained `[tool_config] locked = true` and `lockfile_platforms` for Linux
+x64 and arm64, macOS x64 and arm64, and Windows x64, and each has a `mise.lock`, written with mise 2026.9.7, the
+template's CI pin, in lock format 2. The checksums are what each source publishes: sha256 for Node, osv-scanner
+and vacuum, sha512 for Maven, and SHA-1 for the Liberica JDK, the only digest BellSoft's release API gives; mise
+2026.9.16 records the same SHA-1 *(run)*. A lock written by 2026.9.16 for a new file is format 3, which 2026.9.7
+rejects *(run)*, so the lock must not be regenerated from scratch with a newer mise until CI's pin moves.
+
+`scripts/check-mise-lock.mjs`, the same script as the Rust template's with its own exemption list, runs first in
+the wall, with the same eighteen fixtures; `scripts/_toml.mjs` is the Rust template's TOML reader. Its one
+exemption accepts the JDK's SHA-1, and fails when the lock records a stronger digest; the SHA-1 is a named gap in
+`docs/GATES.md`, as is mise itself. With mise 2026.9.7: a changed digit in the linux-x64 checksum of osv-scanner
+(sha256), Maven (sha512) and the JDK (SHA-1) each failed `mise install`, exit 1, and a `vacuum` pin moved without
+`mise lock` was refused *(run)*. Renovate's `ignorePaths` now skips `scripts/fixtures/`, whose `mise.toml` files
+its mise manager would otherwise update. The Java template has no suppression inventory, so nothing else lists
+the lock.
+
+The wall first failed on osv-scanner: three jackson-databind advisories published 2026-09-28 (GHSA-gx83-3vf8-gh7j,
+GHSA-q4xh-88c3-wmh7, GHSA-wjgm-6hv5-3cvf) cover Jackson 3.1.5 and 2.21.5, the versions Spring Boot 4.1.1
+manages. Commit `5009fb8` overrides them to 3.1.7 and 2.21.7, the newest patch on each line, as the Tomcat
+override does; a project already built from the template carries the advisories until it pulls the template
+or moves the pins itself.
+
+Wall green locally; GitHub Actions run 36521068269 on `20d913a` passed, `backend` in 1 min 47 s, mise-action
+running `mise install --locked`. The scaffold from the GitHub URL at the new pin, vendored with verification:
+`mvn verify` green, clean tree after the `init:` commit; the template's wall, run afterwards in `backend/`, green,
+with the lock checked there and at the project root *(run)*. Per-session cost unchanged: no `description`
+edited.

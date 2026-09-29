@@ -12,6 +12,8 @@ The formatter step, 2026-09-21: the first project an agent created with this ski
 
 The `dev`/`main` branch model, 2026-09-28: a service works on `dev` and `main` takes pull requests from `dev` only, so the script makes `dev` with `git init -b dev` and `main` at the same commit after the `init:` commit.
 
+The tool lock, 2026-09-29: `DEFAULT_REF` moved from `52ee4d7` to `20d913a526adaab68f7b91320c23111d462a8a20`, which records every tool the template's `mise.toml` pins in a committed `mise.lock` with a checksum for Linux x64 and arm64, macOS x64 and arm64, and Windows x64 — sha256 for Node, osv-scanner and vacuum, sha512 for Maven, SHA-1 for the Liberica JDK, the only digest BellSoft publishes — and whose wall refuses a lock out of date with `mise.toml` or an entry without an accepted checksum. `mise install` refused a changed digit in the osv-scanner, Maven and JDK checksums when run by hand with mise 2026.9.7, the template's CI pin. The same move brings Jackson 3.1.7 and 2.21.7 over Spring Boot 4.1.1's 3.1.5 and 2.21.5, because three jackson-databind advisories published 2026-09-28 failed the template's osv-scanner step. From the GitHub URL at the new pin, vendored with verification: `mvn verify` green and a clean tree after the `init:` commit; the template's wall, run afterwards in `backend/`, green, with the lock checked there and at the project root. The template's GitHub Actions run 36521068269 on `20d913a` passed, `backend` in 1 min 47 s, its mise-action running `mise install --locked`.
+
 ## Stop where the script stops
 
 The boundary is the script's own, stated in its header: creating the forge repository, pushing, applying the ruleset and installing the skills each have side effects outside the directory, so they are printed and not done.
