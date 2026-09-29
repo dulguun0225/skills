@@ -536,23 +536,28 @@ with no record become skipped item nobody remember choosing.
 
 **A Java repo on the stack `java-backend-rules` binds starts from
 `dulguun0225/java-backend-template`** rather than from this list. Steps 3 and 4
-are wired there, step 5 for its two generated artifacts (the jOOQ tree and the
-OpenAPI document), and the mechanical half of step 2 — tool, gate, host, and the
-directive each implements — is its `docs/GATES.md`. Steps 1, 6, 7 and 8 and the
-licence-and-caveat half of step 2 stay the repo's to write, and that file says so
-by name. **A Rust repo starts from `dulguun0225/rust-backend-template`, landed by
-`new-rust-backend`.** Step 3 is wired there through cargo-deny's licence check, step
-4 through cargo-deny's advisories, a gitleaks secrets scan and a trivy scan of the
-built image, failing on HIGH and CRITICAL whether fixed or not, with every action
-SHA-pinned and trivy pinned by version to a release whose checksums mise checks
-against their sigstore bundle, step 5 for the OpenAPI document (regenerated twice)
-and the `.sqlx` query metadata (regenerated once and compared), and the mechanical
-half of step 2 is its `docs/GATES.md`. The licences of the image's packages and the
-integrity of trivy's database are named gaps there, and steps 1, 6, 7 and 8 and the
-licence-and-caveat half of step 2 stay the repo's, each with a row in its gap table
-(2026-09-29). (Check, per template: its named-gaps table carries a row per
-unwired step here; a step absent from both tables is the finding — *convention*,
-2026-09-16, Rust 2026-09-29.)
+are wired there, osv-scanner and every other tool mise installs pinned by checksum
+per platform in a committed `mise.lock` the wall holds to `mise.toml` (the JDK by
+SHA-1, the only digest its vendor publishes, a named gap there; 2026-09-29), step 5
+for its two generated artifacts (the jOOQ tree and the OpenAPI document), and the
+mechanical half of step 2 — tool, gate, host, and the directive each implements — is
+its `docs/GATES.md`. Steps 1, 6, 7 and 8 and the licence-and-caveat half of step 2
+stay the repo's to write, and that file says so by name. **A Rust repo starts from
+`dulguun0225/rust-backend-template`, landed by `new-rust-backend`.** Step 3 is wired
+there through cargo-deny's licence check, step 4 through cargo-deny's advisories, a
+gitleaks secrets scan and a trivy scan of the built image, failing on HIGH and
+CRITICAL whether fixed or not, with every action SHA-pinned and trivy, like every
+tool mise installs there, pinned by sha256 per platform in a committed `mise.lock`
+that the wall refuses when it is out of date with `mise.toml` or an entry lacks a
+checksum (sqlx-cli, built from source, and cargo-mutants on arm64, which has no
+release build, carry none, each a named gap), step 5 for the OpenAPI document
+(regenerated twice) and the `.sqlx` query metadata (regenerated once and compared),
+and the mechanical half of step 2 is its `docs/GATES.md`. The licences of the image's
+packages and the integrity of trivy's database are named gaps there, and steps 1, 6,
+7 and 8 and the licence-and-caveat half of step 2 stay the repo's, each with a row in
+its gap table (2026-09-29). (Check, per template: its named-gaps table carries a row
+per unwired step here; a step absent from both tables is the finding —
+*convention*, 2026-09-16, Rust 2026-09-29.)
 
 ## Composite shapes a repo assembles out of gates
 

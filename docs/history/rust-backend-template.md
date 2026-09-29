@@ -78,3 +78,59 @@ The review had left the container image scan in the template's *Not reached* tab
 **Cost.** Local, 32 cores, Docker 29.8.1: the wall green in 106 s with no trivy database and no service image (the image step 83 s: the database download in the canary's 29 s, the release build 53 s, the scan 1 s), and 24 s warm, up from 18 s. Any change to a file the build context holds rebuilds the image in about a minute here, since the `Dockerfile` has no cache mount. GitHub Actions run 36515259994 on `c5a2590` passed, `backend` in 4 min 4 s against 3 min 12 s on `c7e4ce2`, the wall 134 s of it and the image step 100 s (canary with the database download 16 s, build 84 s), with no trivy cache; the day's cache was saved at its end.
 
 **Here.** `new-rust-backend`: `DEFAULT_REF`, `SKILL.md` and `evidence.md`. `guardrails-toolchain`'s Rust sentence: step 4 now names the trivy scan, its pin, and the two new gaps; the licence paragraph under *Licences gate deny-by-default* was left, since the image's licences are still not read. Swept and left: `BACKLOG.md`, `README.md` and the [stack record](rust-backend-stack.md) never called the image scan missing. The scaffold, from the GitHub URL at the new pin, vendored with verification: wall green in 227 s, the image build 148 s of it, 232 s in all, clean tree after the `init:` commit *(run)*. Frontmatter unchanged: no description was edited.
+
+## 2026-09-29, later: every mise tool pinned by checksum
+
+Owner-approved the same day. `guardrails-toolchain` step 4 says every scanner is pinned by digest; the template
+pinned its tools by version in `mise.toml` and nothing in the repository held their bytes, so a replaced release
+artifact would have installed silently. *The image scan*'s "the pin is a version, not a hash in the repository"
+held until this section. Template commit `5cdc93a`.
+
+**The mechanism, run with mise 2026.9.16, the version the template's CI pins.** `mise lock` writes `mise.lock`;
+no setting enables it, and `mise install` uses a lock that exists. `mise install` refused an artifact whose
+recorded checksum had one changed digit — trivy in the template's lock, gitleaks (aqua backend) and squawk
+(github backend) in a scratch one — exit 1, naming the expected and the actual sha256. With
+`[tool_config] locked = true` in `mise.toml` it refused a tool at a version the lock lacks; without it, the same
+install took the new version and rewrote the lock. An entry with its checksum line removed installed unverified,
+and mise wrote the computed checksum back. `jdx/mise-action` adds `--locked` when a lock is present (read from its
+source at the pinned SHA; the run's log says so). *(run)*
+
+**Lock format.** 2026.9.16 writes format 3 for a new lock, which 2026.9.15 and 2026.9.7 reject; `mise lock`
+keeps an existing lock's format. The lock was written with 2026.9.7 as format 2, which 2026.9.7, 2026.9.15 and
+2026.9.16 read *(run)*, so a developer's older mise and the Java template's CI pin can read it. Its checksums and
+urls equal those of a separate 2026.9.16 run. Writing the five platforms took about fourteen minutes on this
+machine: `mise lock` downloads each artifact to verify its provenance before recording it.
+
+**The gate.** `scripts/check-mise-lock.mjs`, the wall's first step, reads `mise.toml` with the `mise.lock` beside
+it here, in `project-root/` while the template carries it, and at the project root when vendored. It refuses a
+listed tool with no entry at its exact version and options, an entry `mise.toml` does not list or a second
+version of one, a platform among linux-x64, linux-arm64, macos-x64, macos-arm64 and windows-x64 without a url or
+a sha256, sha512 or blake3 checksum, a missing lock, `locked` or `lockfile_platforms` unset, and a declared
+exemption that no longer applies. Eighteen fixtures under `scripts/fixtures/mise-lock/`, each refused by its rule
+alone, every run; the stale lock is `stale--version`, the missing checksum `checksum`.
+
+**Exemptions, each a row in *Not reached*.** `cargo:sqlx-cli`: mise's cargo backend records no artifact; cargo
+checks each crate it downloads against the crates.io index. cargo-mutants on linux-arm64 and macos-arm64: 27.1.0
+publishes x86_64 builds only, so there is nothing to record or install there. Not in the lock at all: the Rust
+toolchain, which rustup checks against its channel manifest, and mise itself, which `jdx/mise-action` checks
+against the release's minisign-signed `SHASUMS256.txt`.
+
+**The suppression inventory hashes `mise.lock`.** Until now the inventory left out every file Renovate moves, so
+a pin move would not fail it; `mise.lock` is the exception, because it holds the checksum each tool installs
+against. The cost: a Renovate pull request that moves a mise pin fails the inventory until
+`node scripts/check-suppressions.mjs --write` is pushed to it. Renovate's mise manager refreshes the lock itself:
+its `updateArtifacts` runs `mise lock <tool>`, under `MISE_SAFE=1` when the mise it runs is 2026.7.12 or newer
+(read from `lib/modules/manager/mise/artifacts.ts` on Renovate's `main`, 2026-09-29). `MISE_SAFE=1 mise lock
+gitleaks` after moving the pin, on an untrusted config holding `[tool_config]` and `[settings]`, refreshed all
+five platforms *(run)*; Renovate itself was not run. GitLab CI's mise cache now keys on `mise.lock`.
+
+**Verification.** The wall green locally in 230 s. GitHub Actions run 36521097208 on `5cdc93a` passed, `backend`
+in 4 min 30 s, mise-action running `mise install --locked`. The scaffold from the GitHub URL at the new pin,
+vendored with verification: wall green in 182 s, the lock checked in `backend/` and at the project root, 187 s
+in all, clean tree after the `init:` commit *(run)*.
+
+**Here.** `new-rust-backend`: `DEFAULT_REF`, `SKILL.md` (the pinned commit carries the lock; sqlx-cli's checksum
+among the gaps) and `evidence.md` (*The tool lock*). `guardrails-toolchain`'s template paragraph: trivy "pinned by
+version to a release whose checksums mise checks" narrowed to the lock, with its two exemptions, and the Java
+sentence given the same. Swept and left: `README.md`, `BACKLOG.md` and `CLAUDE.md` say nothing of how the
+templates pin tools. Frontmatter unchanged: no description was edited.
