@@ -11,15 +11,14 @@ ships to a consumer. This record is the input a later pass converts into Rust sk
   defect classes its build can refuse to ship; name the build-failing host and tool for each
   defect class — the host list is taken for Rust as one candidate, not per library candidate;
   prefer the design where the wrong call cannot be written; price corpus gravity;
-  operability is a veto, not the criterion; record every loser with its ground and a re-open
-  trigger; date each enforcement tool separately from the language.
+  record every loser with its ground and a re-open trigger; date each enforcement tool
+  separately from the language.
 - **The criterion selected here; it did not ratify.** The candidate list and the criterion were
   fixed in the research question before any winner was named; `backend-stack`'s evidence
   records no earlier selection by this criterion (2026-09-28). **It is still not an outcome**: no Rust backend has been built on this choice.
 - **Status tier: decided, not yet validated.** Researched and decided, no production use.
-- **The operability veto is not recorded.** Whether anyone on this team has run a Rust service in
-  production, and whether the deployment target and on-call can take one, is a fact about the
-  team that this pass could not research. The choice below is final only once that veto is stated.
+- **No operability veto.** Owner, 2026-09-29: no one writes code, so whether anyone on the team has
+  run a Rust service is not a question here. Deleted from this record and from `BACKLOG.md`.
 - **`review-by`: 2027-03-28.** Six months, because crate releases and maintainer status moved
   within this pass's own window (cargo-mutants' README changed six weeks before it). Past that
   date every *confirmed* marker here reads as *convention*.
@@ -545,7 +544,6 @@ runtime-silent configuration; the silent ones are serde's defaults, decimal roun
 
 ## Owed before the Rust skills are written
 
-- **The operability veto**, as a fact about this team.
 - **The money column decision** if `M-10` is to change; this record does not change it. Closed
   2026-09-29: the owner kept `M-10`.
 - **Runs not taken**: which ban lints survive `forbid` beside every macro the stack uses, and the
