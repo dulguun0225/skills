@@ -21,8 +21,8 @@
 // unverified tree and says so.
 //
 // Node, standard library only, 22 or newer: the runtime `npx skills add` already needed to install this skill,
-// so it runs the same on Linux, macOS and Windows. Needs git; verification also needs rustup's cargo and a
-// running Docker, and runs the wall through mise when mise is on PATH (the template's mise.toml pins its tools).
+// so it runs the same on Linux, macOS and Windows. Needs git; verification also needs rustup's cargo, mise (the
+// template's mise.toml pins the tools the wall runs) and a running Docker.
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -30,7 +30,7 @@ import { parseArgs } from 'node:util';
 
 const TEMPLATE_URL = process.env.TEMPLATE_URL || 'https://github.com/dulguun0225/rust-backend-template.git';
 // The pinned template commit. Move it deliberately, in a commit that says which gate change it brings in.
-const DEFAULT_REF = 'e230ed905a0a753d04ba911289009006a69a103c';
+const DEFAULT_REF = 'c7e4ce213431dae1ea61791729ab6786c66c77bf';
 
 const [major] = process.versions.node.split('.').map(Number);
 if (major < 22) die(`node ${process.versions.node} is too old; this script needs 22 or newer`);
@@ -90,14 +90,19 @@ const dir = opts.dir || `./${name}`;
 if (!ok('git', ['--version'])) die('git not on PATH');
 if (verify) {
   if (!ok('cargo', ['--version'])) die('cargo not on PATH; install rustup (it reads the template\'s rust-toolchain.toml), or pass --skip-verify');
+  if (!ok('mise', ['--version'])) die('mise not on PATH; the wall runs the tools the template\'s mise.toml pins. Install mise, or pass --skip-verify');
   if (!ok('docker', ['info'])) die('docker is not running; the wall starts a PostgreSQL container. Start it, or pass --skip-verify');
 }
-if (fs.existsSync(dir) && fs.readdirSync(dir).length > 0) die(`${dir} exists and is not empty`);
+if (fs.existsSync(dir)) {
+  if (!fs.statSync(dir).isDirectory()) die(`${dir} exists and is not a directory`);
+  if (fs.readdirSync(dir).length > 0) die(`${dir} exists and is not empty`);
+}
 
 // 1. project root with one empty commit: `git subtree add` refuses a repository that has no HEAD. The branch is
 // dev, where a service works; main is made at the end, at the same commit, and takes pull requests from dev only.
-// Until the template is in place there is nothing worth keeping, so a failure before then removes the
-// directory this run created; after it, the tree is left for inspection and said so.
+// Until the template is in place and renamed there is nothing worth keeping, so a failure before then (a name
+// init.mjs refuses included) removes everything this run created; after it, the tree is left for inspection and
+// said so.
 const madeDir = !fs.existsSync(dir);
 fs.mkdirSync(dir, { recursive: true });
 process.chdir(dir);
@@ -131,9 +136,9 @@ try {
     service = absDir;
   }
 
-  keep = true;
   // 4. rename, and in vendored mode lift project-root/ to here. The template owns this script; it is not copied.
   run(process.execPath, [path.join('scripts', 'init.mjs'), '--name', name, ...(mode === 'standalone' ? ['--standalone'] : [])], { cwd: service });
+  keep = true;
 
   // 5. format and run the wall: the template's definition of done. The rename moves no Rust line past
   // rustfmt's width, so `cargo fmt` changes nothing today; it runs anyway, so a future template whose rename
@@ -141,14 +146,10 @@ try {
   let verified = 'unverified: --skip-verify';
   if (verify) {
     run('cargo', ['fmt', '--all'], { cwd: service });
-    if (ok('mise', ['--version'])) {
-      // Trusted for these two calls only, through the environment, so no trust entry is written anywhere.
-      const env = { ...process.env, MISE_TRUSTED_CONFIG_PATHS: service, MISE_YES: '1' };
-      run('mise', ['install'], { cwd: service, env });
-      run('mise', ['exec', '--', 'node', path.join('scripts', 'wall.mjs')], { cwd: service, env });
-    } else {
-      run(process.execPath, [path.join('scripts', 'wall.mjs')], { cwd: service });
-    }
+    // Trusted for these two calls only, through the environment, so no trust entry is written anywhere.
+    const env = { ...process.env, MISE_TRUSTED_CONFIG_PATHS: service, MISE_YES: '1' };
+    run('mise', ['install'], { cwd: service, env });
+    run('mise', ['exec', '--', 'node', path.join('scripts', 'wall.mjs')], { cwd: service, env });
     verified = 'wall green';
   }
 
@@ -160,7 +161,7 @@ try {
   next.push(`gh repo edit <org>/${name} --default-branch dev     # work happens on dev; main takes pull requests from dev only`);
   if (mode === 'vendored') next.push('node scripts/apply-ruleset.mjs     # main: pull requests from dev, with the checks; dev: direct pushes, no deletion, no force-push');
   next.push('npx skills add dulguun0225/skills -g -a claude-code -y     # the engineering-decision skills');
-  if (!verify) next.push(`(cd ${mode === 'vendored' ? 'backend' : '.'} && mise install && cargo fmt --all && node scripts/wall.mjs)   # skipped above; run before the first push`);
+  if (!verify) next.push(`(cd ${mode === 'vendored' ? 'backend' : '.'} && mise trust && mise install && cargo fmt --all && mise exec -- node scripts/wall.mjs)   # skipped above; run before the first push`);
   console.log(`created ${dir} (${mode}): name ${name}, template ${sha} — ${verified}`);
   console.log("next, each outside this directory's control and so not done here:");
   for (const n of next) console.log(`  ${n}`);
@@ -170,10 +171,11 @@ try {
     console.error(`failed (${e.message}); ${absDir} left in place for inspection`);
   } else if (madeDir) {
     fs.rmSync(absDir, { recursive: true, force: true });
-    console.error(`failed (${e.message}) before the template was in place; removed ${absDir}`);
+    console.error(`failed (${e.message}) before the template was in place and renamed; removed ${absDir}`);
   } else {
-    fs.rmSync(path.join(absDir, '.git'), { recursive: true, force: true });
-    console.error(`failed (${e.message}) before the template was in place; removed ${absDir}/.git`);
+    // The directory was empty before this run, so everything in it is this run's.
+    for (const entry of fs.readdirSync(absDir)) fs.rmSync(path.join(absDir, entry), { recursive: true, force: true });
+    console.error(`failed (${e.message}) before the template was in place and renamed; emptied ${absDir}`);
   }
   process.exit(1);
 }

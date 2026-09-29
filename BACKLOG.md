@@ -99,7 +99,6 @@ status *decided, not yet validated*. Its gates are wired in
 | Owed | Why it is owed | Watch |
 | ---- | -------------- | ----- |
 | **The Rust rules skills** | Counterparts of `java-backend-rules`, `java-backend-api`, `java-backend-observability` and the `-java` stack skills. Until they exist, a Rust rule is read from the record and the template's `docs/GATES.md` | Each harvest owes its frontmatter-token line and firing rate, per *Authoring invariants* |
-| **The Rust template's gap rows** | Its gap table has no row for `guardrails-toolchain`'s steps it leaves to the repo, which the Java template's carries, and neither wires nor names a secrets or image scan | A template commit, then a `DEFAULT_REF` move in `new-rust-backend` |
 
 ## Gate owed — reopened 2026-09-16
 
