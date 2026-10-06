@@ -288,6 +288,42 @@ the ceilings must stay inline). The composite tables added 2026-08-02 have had n
 such measurement and are the next candidates for one — a read-through against the
 directives they sit beside, not a purge.
 
+## Later evidence, 2026-10-06 — the AGENTS.md study
+
+**One primary source now bears on the 2026-08-03 owner decision that delivery
+happens in frontmatter or hooks only, never by copying text into a consumer's
+`CLAUDE.md`.** *Primary-source verified*, 2026-10-06 — one reader, no panel.
+Gloaguen, Mündler-Sasahara, Müller, Raychev and Vechev, *Evaluating AGENTS.md: Are
+Repository-Level Context Files Helpful for Coding Agents?*, arXiv 2602.11988
+**v3, revised 2026-09-29**, read at https://arxiv.org/abs/2602.11988 and
+https://arxiv.org/html/2602.11988v3. It reached this repo through an external
+research guide reviewed the same day, which cited v2 (2026-06-23); every claim
+below was re-read in v3.
+
+- **Always-loaded context files did not significantly change task success.**
+  LLM-generated files: −0.5% on SWE-bench Lite and −2% on the authors' CTXbench,
+  p = 87% and 37%. Developer-written files (CTXbench only): +2.4%, p = 21%.
+- **They raised inference cost significantly**: 20% and 23% for LLM-generated
+  files, up to 19% for developer-written ones. The abstract's *over 20% on average*
+  is the aggregate; the developer-written arm alone stays under it.
+- **Agents followed the instructions in them**, and the paper attributes the extra
+  steps and cost to that — more testing and exploration, tools named in the file
+  used far more often.
+- **Python only.** The guide's v2 summary said *primarily Python tasks*; v3's limitations
+  section states the evaluation is focused on Python, and both benchmarks are
+  Python repositories (300 and 138 tasks). Four agent-and-model pairs: Claude Code
+  with Sonnet-4.5, Codex with GPT-5.2 and with GPT-5.1 mini, Qwen Code with
+  Qwen3-30b-coder. One outcome, issue resolution by tests.
+
+**What it supports here, and what it does not.** It prices the route the owner
+rejected: a file pasted into every session is paid in every session and followed,
+whether or not the task needed it — the cost the copy-paste `CLAUDE.md` was
+retired for, which cost 2 above names as *the disease it cured*. **It does not show the skills mechanism is better**: conditional loading
+was not tested, rules of the kind this set ships were not isolated, and the paper's
+own conclusion keeps context files for *non-standard coding practices*, which is
+what these rules are. Read it as support for the cost half of the decision, not as
+a measurement of the alternative.
+
 ## Incidental findings
 
 - **`scripts/frontmatter-tokens.mjs` is broken**: unescaped backticks inside the

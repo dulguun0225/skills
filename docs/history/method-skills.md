@@ -76,3 +76,14 @@ Rest, no generalise: status-tier gloss read "decided and in use" in both skills,
 - ~~**Two mechanisable checks described and unbuilt** — including here.~~ **Closed 2026-08-02: both wired, `npm run gates`** — see [wired-gates](wired-gates.md). The skill's gap 2 and its re-open trigger were rewritten the same day, in `SKILL.md` and in `evidence.md` both, which is the sweep the wiring pass owed and did not run. What is left of the gap: the skill ships no script a reader installs, the corpus's own `ci/check_packs.py` is still unpublished, and nothing runs the pair automatically. **The wiring produced a finding against the rule it enforces** — the evidence files organised by research pass anchor to nothing, and are declared in the gate by name. Both sides of that ratio moved three times on 2026-08-02: 9 of 17 at wiring, 12 of 20 once three java skills gained evidence files, 13 of 20 once `guardrails-toolchain`'s worked case moved into its own and left the exemption list. `npm run check:evidence-order` is the number.
 - **The research protocol + the corpus README gain no row, hit no rule conflict.** Neither have instantiation table, so nothing to write into corpus and nothing to decide — same clean case as two packs. **Conflict stood for money-grade + event-broker-discipline instantiation tables, last decision Milestone 1 left open; closed 2026-08-01 when corpus deleted.**
 
+
+### 2026-10-06: an external measurement for one clause of the premise-specificity test
+
+`enforceable-rules/evidence.md` gained a section anchored to *The premise-specificity test*: Gloaguen et al.,
+*Evaluating AGENTS.md*, arXiv 2602.11988 v3 (2026-09-29), *primary-source verified* 2026-10-06, one reader. It
+supports *advice in agent context window not free* — always-loaded context files raised inference cost by 20% and 23% (LLM-generated)
+and up to 19% (developer-written) with no significant change in task success, and their instructions were followed — and **does not support the *skim* half**,
+since the paper finds context-file length had no significant effect. Limits stated there: Python only, four
+agent-and-model pairs, issue resolution as the one outcome, always-loaded files rather than conditional loading.
+`SKILL.md` unchanged, so firing and per-session cost are unchanged. Source of the citation: an external guide reviewed
+2026-10-06, recorded in [java-backend](java-backend.md).

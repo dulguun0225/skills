@@ -75,6 +75,39 @@ recognisable; one reading "the principle about not being silently wrong" is a
 paraphrase that will drift. The mitigation is the instruction to treat the names
 as ids that happen to be readable, and it is weaker than a number.
 
+## The premise-specificity test
+
+**One external measurement bears on one clause, added 2026-10-06 — *primary-source
+verified*, one reader, no panel.** The clause: *advice in agent context window not
+free: displace rules doing work, and rule set long enough to skim enforce nothing.*
+The source: Gloaguen, Mündler-Sasahara, Müller, Raychev and Vechev, *Evaluating
+AGENTS.md: Are Repository-Level Context Files Helpful for Coding Agents?*, arXiv
+2602.11988 **v3, revised 2026-09-29**, read 2026-10-06 at
+https://arxiv.org/abs/2602.11988 (full text https://arxiv.org/html/2602.11988v3).
+
+- **Not free — supported.** Repository context files fed whole into every session
+  did not significantly change task success: LLM-generated files moved the
+  resolution rate by −0.5% and −2% (p = 87% and 37%, two-sided), developer-written
+  ones by +2.4% (p = 21%). Inference cost rose significantly — 20% and 23% for
+  LLM-generated files, up to 19% for developer-written ones.
+- **The cost is the instructions being followed.** The paper's trace analysis
+  finds instructions in context files are well followed — a tool the file names is
+  used far more often than when it does not — and attributes the extra steps and
+  cost to that. Advice in context is acted on, so it spends steps; that is the
+  *displace* half, measured as cost rather than as a lost rule.
+- **The *skim* half is not supported.** Its Appendix B finds context-file length
+  had no significant effect on the results. Nothing in this study shows a long
+  rule set enforcing less than a short one.
+- **Limits, stated by the paper or read off its setup.** Python only — SWE-bench
+  Lite (300 tasks, 11 repositories) and the authors' CTXbench (138 tasks, 12
+  repositories with developer-committed context files); four agent-and-model pairs
+  — Claude Code with Sonnet-4.5, Codex with GPT-5.2 and with GPT-5.1 mini, Qwen
+  Code with Qwen3-30b-coder; one outcome, issue resolution by tests, with
+  efficiency and security named as untested. It measures always-loaded files, not
+  conditionally loaded skills, and its own conclusion keeps context files for
+  *non-standard coding practices* — which is what this skill's rules are. **Read it
+  as a price on always-loaded text, not as evidence that rules in context fail.**
+
 ## The eight principles
 
 **All eight are stated in the source as following from the premise, with no
