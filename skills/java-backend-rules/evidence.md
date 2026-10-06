@@ -358,6 +358,211 @@ shape is only as strong as this claim.
   copying it here would present one product's call as researched guidance.
   Sources: the `jacoco.org` check-mojo and changes pages.
 
+### The module boundary is enforced by ArchUnit, not by package naming
+
+**Added 2026-10-06, owner's decision, convention.** The directive came out of a
+review of an external research guide, *Software architecture for LLM coding
+agents* (dated 2026-09-22, not published here), whose rule *a folder name alone
+provides no enforcement* names the default this directive overrides, and from a
+gap in this skill set: `ai-maintainer-principles` requires boundary tests for
+declared modules, nesting and call direction, and no Java skill named their
+host. The guide's §7 led with Spring Modulith's `verify()`, listed ArchUnit beside
+it as suitable for module encapsulation, and advised preferring "the module system
+or existing checks when they already enforce the desired property"; **the owner
+chose ArchUnit** on the one-idiom ground the directive states.
+
+- **The ArchUnit API — primary-source verified (2026-10-06).** The user guide,
+  *Slices* and *Modularization Rules* sections,
+  `https://www.archunit.org/userguide/html/000_Index.html`, documents
+  `SlicesRuleDefinition.slices().matching("..myapp.(*)..").should().beFreeOfCycles()`
+  and `ModuleRuleDefinition.modules().definedByPackages(..)`, which "follows the
+  same semantics as `slices().matching(..)`". The signatures the directive uses —
+  `beFreeOfCycles()`, `onlyDependOnEachOtherThroughClassesThat()`,
+  `respectTheirAllowedDependencies(AllowedModuleDependencies, ModuleDependencyScope)`,
+  `AllowedModuleDependencies.allow().fromModule(..).toModules(..)` and
+  `ModuleDependencyScope.consideringOnlyDependenciesBetweenModules()` — were read
+  from the `archunit-1.5.0` jar with `javap`, the version
+  `dulguun0225/java-backend-template` pins. The user guide's own allowed-dependency
+  example uses a repo-defined annotation and `onlyDependOnEachOtherThroughPackagesDeclaredIn`,
+  which exists only for modules defined by annotation; the directive uses the
+  package-defined form so module names bind to package names with no
+  declaration beside them.
+- **What each rule reports — primary-source verified by one local run
+  (2026-10-06).** The code block in the directive was compiled against ArchUnit
+  1.5.0 on JDK 25 and run over two fixture trees of the same shape. Over the
+  clean one — `orders` reaching only `inventory.api`, both reaching `platform` —
+  all three rules and the slices cycle rule pass. Over the violating one —
+  `orders.internal` holding `inventory.internal.Stock`, and `inventory.internal`
+  holding `orders.api.Orders` — every rule reports: the cycle
+  `inventory -> orders -> inventory`, the three references into
+  `inventory.internal`, and `Module Dependency [inventory -> orders]`. **Over an
+  import matching no class, every rule throws** the empty-should
+  `AssertionError`. **Over the violating tree with the pattern one level too
+  shallow** (`com.example.(*)..`, so one module), **the cycle and API-only rules
+  pass with no violation and no empty-should error** — the ground for the
+  violating-fixture requirement. One run, one author, no panel.
+- **What the rules do not see, and the strictest map — primary-source verified by
+  a second local run (2026-10-06, the adversarial review).** Same ArchUnit 1.5.0
+  jar, JDK 25. Pass with no violation under all three rules and the slices cycle
+  rule: a class directly in the base package referencing `inventory.internal.Stock`
+  (it belongs to no module); and a new module package with no cross-module edge.
+  Under the shallow pattern the map rule passes too, beside the cycle and API-only
+  rules above. A map naming a module that matches no package passes over the
+  clean tree. `allow().fromModule("orders").toModules("platform")
+  .fromModule("inventory").toModules("platform")` — no feature-to-feature edge —
+  reports `orders -> inventory` over the clean tree, so the strictest map is
+  expressible in the modules API; a map with no edge at all, written
+  `allow().fromModule("platform").toModules()` because `allow()` alone does not
+  compile, reports `inventory -> platform`, so it refuses the shared tier. A copy
+  of the template's `featuresDoNotDependOnEachOther` at `20d913a` passes a feature
+  `feedback` depending on `greeting` and reports `billing` doing the same, since
+  its filter is `getDescription().contains("db")`; over one feature slice it passes, and over
+  an empty import it throws the empty-should error.
+- **The empty-should guard — primary-source verified (2026-10-06).** The user
+  guide states a rule whose should-clause receives no class fails by default,
+  and that `ArchRule.allowEmptyShould(true)` per rule or
+  `archRule.failOnEmptyShould=false` in `archunit.properties` turns that off.
+  `async-handoff-java` records the same guard and its one-line override, and
+  states that it applies to every ArchUnit gate in a repo, not to broker rules
+  alone.
+- **Spring Modulith's verification — primary-source verified (2026-10-06).**
+  The reference, version 2.1.1,
+  `https://docs.spring.io/spring-modulith/reference/verification.html`, states
+  that `ApplicationModules.of(Application.class).verify()` checks: no cycles on
+  the application module level; efferent module access via API packages only,
+  "all references to types that reside in application module internal packages
+  are rejected", with dependencies into internals of open application modules
+  allowed; and, optionally, explicitly allowed dependencies declared through
+  `@ApplicationModule(allowedDependencies = …)`. It throws on any violation.
+  The `spring-modulith-core` 2.1.1 POM on Maven Central declares
+  `com.tngtech.archunit:archunit` 1.4.2 at compile scope.
+- **Why ArchUnit won — convention (2026-10-06).** Not on capability: both
+  express the three rules. Modulith adds a dependency carrying a second ArchUnit
+  version line and its own declaration idiom, where ArchUnit already hosts this
+  skill's ban list — `ai-maintainer-principles` *One idiom, imposed mechanically*. No run
+  compared the two in a repo, and a repo already carrying Modulith for its event
+  publication registry keeps the idiom ground and loses the dependency ground.
+- **The template state — read 2026-10-06.** `dulguun0225/java-backend-template`
+  at `20d913a`: `LayeringArchTest.featuresDoNotDependOnEachOther` uses
+  `slices().matching(BASE + ".(*)..")` with platform and generated packages
+  excluded and `notDependOnEachOther()`, and `platformDependsOnNoFeature` refuses
+  a platform-to-feature dependency — the strictest map, in the slices idiom. The
+  feature rule's only feature package is `greeting`. `BanListNegativeControlTest`
+  evaluates only the `ArchRule` fields of `BanListArchTest`, so no fixture proves
+  the layering rules fire, and the `docs/GATES.md` row for them cites
+  *java-backend-rules package confinement*, a heading this skill does not have.
+  The template owed the fixtures; the next two bullets record how that closed.
+- **The by-consequence claim, corrected — read 2026-10-06 against the template's
+  review.** As first written, the directive said the no-feature-edge map meets
+  the three rules by consequence. **False as stated**: a review of the
+  template's negative controls found that nothing constrained the generated jOOQ
+  tree's own references, so a generated class naming a feature, or naming a
+  platform class while the platform tier reads the tree — what a jOOQ forced
+  type's converter does — closes a module cycle through the tree and passes every
+  feature-edge and platform rule. Template commit
+  `f161b43ce49e64cbff989857f1095c85be669b15` (*gates: the generated tree names
+  nothing outside it*) records the finding and adds
+  `generatedTreeDependsOnNothingOutsideIt`. The claim holds only where every
+  module's outgoing dependencies are constrained, the generated tree included,
+  the shared tier depends on no feature, and dependencies between shared-tier
+  modules run one direction; the directive now says so, and names the template's
+  rules as an instance of it.
+- **The template state at `f161b43` — read and run 2026-10-06.**
+  `LayeringArchTest` holds four rules, each a static factory over a base package:
+  `platformDependsOnNoFeature` (the platform tier depends on nothing in the base
+  package but itself and the generated tree), `generatedTreeDependsOnNothingOutsideIt`,
+  `featuresDoNotDependOnEachOther` (feature slices compared by whole name,
+  `Slice.getNamePart(1)`, not by description substring) and
+  `controllersLiveInFeaturePackages` (any class meta-annotated with `@Controller`).
+  Reflection finds every method returning an `ArchRule` or a subtype and fails one
+  that is not a static factory taking the base package;
+  `everyLayeringRuleHoldsOverTheMainCode` runs each over the main code and
+  `everyLayeringRuleReportsTheFixtureTree` fails any that reports nothing over
+  the test-only tree `starterfixtures.layering`, whose generated-tree stand-ins
+  and the platform and feature classes reading them form the cycles above. Four
+  further tests pin each rule to exactly its fixtures, so the other three rules
+  are asserted to report neither generated-tree fixture. The template's
+  `docs/GATES.md` row cites this directive, records the owner's decision that the
+  no-feature-edge map stays, and lists what the rules do not reach: an undeclared
+  module set, a base-package class's reference into a feature and a feature's into
+  it, a reference with no type in the bytecode (reflection, a bean by name, an
+  inlined compile-time constant), and a foreign-table write, which
+  `TableOwnershipTest` owns. Vendored from the GitHub URL at that pin, all six
+  `LayeringArchTest` tests ran green inside `mvn verify`.
+- **Two references the rules do not see — primary-source verified by a third
+  local run (2026-10-06).** ArchUnit 1.5.0, JDK 25 (`javac` 25.0.4.1). A class
+  returning another package's `static final int` and `static final String`
+  constants is not reported by a `dependOnClassesThat` rule into that package,
+  while a class calling a static method there is: `javac` inlines the value, and
+  no bytecode instruction names the declaring class — `javap -v` shows the
+  constant pool keeping an unreferenced class entry for it, and the run shows
+  ArchUnit does not count that entry as a dependency. And a
+  feature module's internal class calling a class directly in the base package
+  passes the cycle, `api`-only and map rules of the directive's code block, since
+  that class belongs to no module.
+- **Correction, and the template's three rules — read and run 2026-10-06.** The
+  `f161b43` bullet above says the template's `docs/GATES.md` "records the owner's
+  decision that the no-feature-edge map stays", and the directive called that map
+  the strictest legitimate one. **The record was an error**: the strict map was
+  the assistant's call, made in a task brief and mislabelled as the owner's
+  decision — in that `docs/GATES.md` row, in the message of template commit
+  `e3db6bf`, and in this skill's history. **The owner's decision, the same day:
+  the ban on every feature-to-feature dependency is too strict as the template's
+  permanent rule**, because a spec-kit spec can need one feature to call another,
+  such as orders reserving stock from inventory; under the ban such a spec cannot
+  pass the build without an edit to the boundary test. The generated-tree ban was
+  the owner's explicit decision and stays. Template
+  commit `a61aecd` (local and unpushed at writing, under review; it landed
+  unchanged, with its review after it, next bullet) replaces `featuresDoNotDependOnEachOther` with the directive's
+  three rules — `modulesAreFreeOfCycles` over every direct child of the base
+  package, `featuresReachAnotherFeatureOnlyThroughItsApi` (the callee's `api`
+  package itself) and `featureDependenciesAreInTheAllowedMap` over
+  `ALLOWED_FEATURE_DEPENDENCIES`, one `caller -> callee` line per edge, empty —
+  and adds `basePackageDependsOnNoFeature`, owner-approved. Every factory takes a
+  `Layout`, the base package and its map, and the fixture tree is read with a map
+  of its own. **Each new assertion was seen to fail under a temporary break of its
+  rule** (ArchUnit 1.5.0, JDK 25): the cycle rule restricted to the shared tier
+  missed the `orders`–`inventory` cycle the fixture map allows both ways; the
+  `api` rule accepting any package of the callee went silent, and comparing
+  against a wrong package reported the clean `billing` edge; the map rule waiving
+  edges into an `api` package went silent; dropping `billing -> greeting` or
+  `inventory -> orders` from the fixture map made the map rule report them; the
+  base-package rule pointed at the platform tier went silent; and a substring
+  feature filter silenced both feature-name fixtures. Probes, then reverted: a
+  feature's reference into a base-package class and a map line naming no package
+  both pass at `a61aecd` (the second closed by the review in the next bullet); a
+  malformed main-map line fails the build; an array of another
+  feature's internal type is reported. `node scripts/wall.mjs` green at the
+  template root. In the directive, the strictest-map paragraph is gone; what
+  stays true — the rules must reach the generated tree, by listing the shared tier
+  in the map or by rules of its own — stays, and the blanket ban is the named
+  loser.
+- **The review of `a61aecd`, and the pin — read and run 2026-10-06.** An
+  adversarial review of that commit landed as template commit
+  `20ba55c7e4facd226d9aea160f409650710741d1`, pushed to `main` with it as a
+  fast-forward; `new-java-backend` pins it. Three holes, each closed with a
+  fixture or test: **a map line no dependency takes passed**, a line naming a
+  feature that does not exist among them, so a typo or a line left after the last
+  call stood as a permission no code had asked for — `featureDependenciesAreInTheAllowedMap`
+  now reports each such line once every class is checked, and a repeated line
+  throws like the other malformed forms; **a subpackage of `api` was refused but no
+  fixture held it**, so widening the comparison to a prefix passed every test —
+  `PartnerPlatformCallsGreetingApiSubpackage` now holds it; and **the reflection
+  tests took any violation in the fixture tree as proof**, so a new rule could pass
+  on another rule's fixture, the shape of the substring escape before `e3db6bf`,
+  and a rule built inside a test method escaped both — `everyLayeringRuleIsAFactoryWithATestOfItsOwn`
+  reads the test class's own bytecode and requires every rule to be built in a
+  factory and every factory to be called by a test of its own. Each new assertion
+  failed under a temporary break of its rule. Its `docs/GATES.md` row now states
+  the boundary-test edit as a mechanism, not as a run that happened, since no
+  record of such a run was found, and marks as the template's reading, not the
+  owner's words: the `Money`-converter consequence of the generated-tree ban, a
+  subpackage of `api` being internal, and an untaken map line failing. Template
+  wall green locally; GitHub Actions run 37430316888 on `20ba55c`. Vendored from
+  the GitHub URL at that pin under `com.acme.pinproof`, all eleven
+  `LayeringArchTest` tests ran green inside `mvn verify`, the fixture map and the
+  empty main map surviving the rename.
+
 ## Do not cite
 
 Each of these was examined and either failed, or says something narrower than it
@@ -494,3 +699,13 @@ claim is, what marker it carries, and the date it was taken.
 | `CrudRepository.save()` picks INSERT-versus-UPDATE from in-memory id state | **uncertain** — verify before citing | 2026-09-01 |
 | Pin created at newest supported LTS and newest Boot GA at adoption | convention, no research pass | 2026-09-01 |
 | WebFlux paradigm ban, Flyway rule, Jackson pick | convention, no evidence note | 2026-06-11..14 (inferred) |
+| Module boundary enforced by ArchUnit, Spring Modulith rejected on idiom | convention, owner's decision | 2026-10-06 |
+| ArchUnit 1.5.0 modules API, the three rules' reports, the shallow-pattern pass | primary-source verified (user guide, `javap`, one local run) | 2026-10-06 |
+| Spring Modulith `verify()` rules, open modules, ArchUnit 1.4.2 dependency | primary-source verified | 2026-10-06 |
+| Base-package classes, an edgeless new module and a map naming no module pass; the no-feature-edge map refuses a feature edge; the template's substring filter at `20d913a` passed `feedback` | primary-source verified (a second local run) | 2026-10-06 |
+| The no-feature-edge map meets the three rules by consequence only with every module, the generated tree included, constrained, the shared tier depending on no feature and one way inside itself | convention, from the template review recorded in `java-backend-template` `f161b43` | 2026-10-06 |
+| An inlined compile-time constant and a feature's reference into the base package pass | primary-source verified (a third local run) | 2026-10-06 |
+| "The no-feature-edge map stays" as the owner's decision | **error** — the assistant's call, recorded as the owner's; corrected | 2026-10-06 |
+| The ban on every feature-to-feature edge rejected as the shipped form; an edge is one map line | convention, owner's decision | 2026-10-06 |
+| The template's three rules over an empty feature map and its base-package rule, each fixture failing under a break of its rule; a feature's reference into the base package and a map line naming no package pass (the second at `a61aecd` only) | primary-source verified (local runs on template `a61aecd`, unpushed) | 2026-10-06 |
+| Template `20ba55c`: a map line no dependency takes fails, one naming no feature among them; a reference into a subpackage of `api` is reported; every layering rule is built in a factory with a test of its own | primary-source verified (local runs, each assertion failing under a break of its rule; CI run 37430316888; vendored under a renamed package) | 2026-10-06 |

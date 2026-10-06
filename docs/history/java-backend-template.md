@@ -314,3 +314,68 @@ running `mise install --locked`. The scaffold from the GitHub URL at the new pin
 `mvn verify` green, clean tree after the `init:` commit; the template's wall, run afterwards in `backend/`, green,
 with the lock checked there and at the project root *(run)*. Per-session cost unchanged: no `description`
 edited.
+
+## 2026-10-06: the module-boundary gate, with a violating fixture per rule
+
+Template commits `e3db6bf` and `f161b43`, pushed to `main` directly on the owner's instruction, a fast-forward
+with no pull request; `DEFAULT_REF` moved from `20d913a` to `f161b43ce49e64cbff989857f1095c85be669b15`.
+`LayeringArchTest` now wires `java-backend-rules` *The module boundary is enforced by ArchUnit, not by package
+naming* in its strictest form: four rules as static factories over a base package, a test-only fixture tree with a
+negative control per rule, reflection tests that fail on a silent factory and run every factory over the main
+code, whole-slice-name feature matching, a controller rule over meta-annotated `@Controller`, and
+`generatedTreeDependsOnNothingOutsideIt`, which keeps the generated jOOQ tree from naming platform classes too —
+an owner decision, so a converter for `Money` is a committed map change. The review that found the generated-tree
+gap and the directive correction it forced are in [java-backend](java-backend.md).
+
+GitHub Actions run 37424988191 on `f161b43` passed, `backend` in 1 min 22 s. The scaffold from the GitHub URL at
+the new pin, vendored with verification into a fresh `/tmp` directory, removed afterwards: `mvn verify` green, all
+six `LayeringArchTest` tests among it; clean tree after the `init:` commit; the template's wall, run afterwards in
+`backend/`, green, with the lock checked there and at the project root *(run)*. Per-session cost unchanged: no
+`description` edited.
+
+## 2026-10-06, later: the three module-boundary rules replace the feature-edge ban
+
+**Correction.** The section above calls the ban on every feature-to-feature dependency the directive's strictest
+form, and [java-backend](java-backend.md), the template's `docs/GATES.md` and the message of template commit `e3db6bf`
+recorded it as the owner's decision. It was the assistant's call, made in a task brief and mislabelled as the
+owner's. The generated tree naming nothing outside itself was the owner's explicit decision and
+stays.
+
+**The owner's decision**: the ban is too strict as the template's permanent rule, because a spec-kit spec can need one
+feature to call another, such as orders reserving stock from inventory; under the ban such a spec cannot pass the
+build without an edit to the boundary test.
+
+Template commit `a61aecd` on `main`, local and not pushed at writing, awaiting review; `DEFAULT_REF` stays at `f161b43`
+until the review moves it, which it did, below. `LayeringArchTest` replaces `featuresDoNotDependOnEachOther` with `modulesAreFreeOfCycles`
+(every direct child of the base package, the shared tier included), `featuresReachAnotherFeatureOnlyThroughItsApi`
+and `featureDependenciesAreInTheAllowedMap` over `ALLOWED_FEATURE_DEPENDENCIES`, a text block of `caller -> callee`
+lines that ships empty, so an edge is a one-line change; and adds `basePackageDependsOnNoFeature`, owner-approved,
+which main code passes. Every factory takes a `Layout`, the base package and its map; the fixture tree is read with
+`FIXTURE_ALLOWED_FEATURE_DEPENDENCIES` and gains features `orders` and `inventory` (a cycle allowed both ways),
+`greeting.api`, and `RootCallsFeature`; each new assertion was seen to fail under a temporary break of its rule
+*(run)*. `docs/GATES.md`'s layering row records the decision, the correction and how to add an edge; `README.md`,
+`CLAUDE.md`, the base `package-info` and `TableOwnershipTest`'s comment follow. `node scripts/wall.mjs` green at the
+template root, and `pom.xml`, `mise.*` and `project-root/` untouched *(run)*. Per-session cost unchanged: no
+`description` edited.
+
+## 2026-10-06, later: the review of `a61aecd`, and the pin at `20ba55c`
+
+An adversarial review of `a61aecd` landed as template commit `20ba55c7e4facd226d9aea160f409650710741d1`; both were
+pushed to `main` directly on the owner's instruction, a fast-forward from `f161b43` with no pull request, and
+`DEFAULT_REF` moved from `f161b43` to `20ba55c`. Found and fixed there: a map line no dependency takes passed, a line
+naming a feature that does not exist among them — `featureDependenciesAreInTheAllowedMap` now reports it once every
+class is checked, and a repeated line throws like the other malformed forms; the `api` rule refused a subpackage of
+`api` with no fixture holding it, so a prefix comparison passed every test — `PartnerPlatformCallsGreetingApiSubpackage`
+now holds it; the reflection tests accepted any fixture violation as a rule's proof and missed a rule built inside a
+test method — `everyLayeringRuleIsAFactoryWithATestOfItsOwn` reads the test class's bytecode and requires a factory
+and a test of its own for each rule. Each new assertion failed under a temporary break of its rule *(run)*. The
+`docs/GATES.md` row stated the boundary-test edit as a run that happened, with no record of one, and placed the
+`Money`-converter sentence inside the owner's decision; it now states the mechanism, and marks the converter
+consequence, the internal `api` subpackage and the taken-line requirement as the template's reading rather than the
+owner's words. Directive side: [java-backend](java-backend.md).
+
+GitHub Actions run 37430316888 on `20ba55c` passed, `backend` in 1 min 27 s. The scaffold from the GitHub URL at the
+new pin, vendored with verification into a fresh `/tmp` directory, removed afterwards: `mvn verify` green, all eleven
+`LayeringArchTest` tests among it under `com.acme.pinproof`; clean tree after the `init:` commit; the template's wall,
+run afterwards in `backend/`, green, with the lock checked there and at the project root *(run)*. Per-session cost
+unchanged: no `description` edited.

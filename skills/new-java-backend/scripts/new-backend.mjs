@@ -30,7 +30,7 @@ import { parseArgs } from 'node:util';
 
 const TEMPLATE_URL = process.env.TEMPLATE_URL || 'https://github.com/dulguun0225/java-backend-template.git';
 // The pinned template commit. Move it deliberately, in a commit that says which gate change it brings in.
-const DEFAULT_REF = '20d913a526adaab68f7b91320c23111d462a8a20';
+const DEFAULT_REF = '20ba55c7e4facd226d9aea160f409650710741d1';
 
 const [major] = process.versions.node.split('.').map(Number);
 if (major < 22) die(`node ${process.versions.node} is too old; this script needs 22 or newer`);

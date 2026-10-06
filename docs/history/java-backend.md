@@ -213,3 +213,370 @@ service is not changed again.
   of its own; left as ported, flagged in the template's `GATES.md` as a choice to
   revisit. **Not done**: no adversarial review of the new section, and no service
   built from the new pin yet.
+
+
+## The module-boundary directive, 2026-10-06
+
+**Where it came from.** An external research guide, *Software architecture for LLM
+coding agents* (version 1.0, dated 2026-09-22), was reviewed on 2026-10-06 as an
+untracked file at the repo root and is deleted after the review; it is not
+published anywhere here, so every source below is carried by URL. **Owner's
+decision: not shipped as a skill.** Three things were taken from it and one
+backlog topic opened:
+
+- **This directive** — its rule *a folder name alone provides no enforcement*, and
+  its §7, which leads with Spring Modulith `ApplicationModules.of(..).verify()`
+  (https://docs.spring.io/spring-modulith/reference/verification.html) and lists
+  ArchUnit (https://www.archunit.org/userguide/html/000_Index.html) beside it as
+  suitable for module encapsulation. The owner chose ArchUnit.
+- **The AGENTS.md study** it cited as S1 — Gloaguen et al., arXiv 2602.11988
+  (https://arxiv.org/abs/2602.11988), cited by the guide at v2 and read here at v3
+  (2026-09-29) — now evidence in `enforceable-rules/evidence.md` *The
+  premise-specificity test* and in [premise-review](premise-review.md).
+- **Its §9 evaluation method**, added to the `ai-maintainer-principles` row
+  *A second repo built to these directives* in `BACKLOG.md`.
+- **A candidate topic**, *invariant-concurrency*, from its R6 and §6 stock
+  example, which names the gap and does not choose between a conditional update
+  and a lock; its PostgreSQL sources
+  (https://www.postgresql.org/docs/18/transaction-iso.html,
+  https://www.postgresql.org/docs/18/explicit-locking.html) are on the row.
+
+**Rejected, with the reason each lost:**
+
+- **As a skill.** Its trigger — drawing module boundaries, structuring a repo for
+  agents — is `ai-maintainer-principles`' trigger; a second description on the same
+  moment spends the listing budget `check:descriptions` guards for no new firing;
+  and its rules, R1 to R8, carry *evidence of completion* lines, not named checks
+  with enforcement markers, so by `enforceable-rules` none of them is a rule.
+- **Conflicts with published directives.** *Ordinary framework conventions are
+  acceptable* (its R5) against *No silent runtime behaviour* and this skill's ban
+  list; an outbox as one option among durable publication mechanisms (R6) against
+  `async-handoff`, which makes the outbox row the only application path; the
+  stock example's conditional update or lock, whose analysis §6 says applies to
+  *payment capture* too, against `money-storage` `M-35` (no arithmetic on money in the query language)
+  and `M-38` (money effects appended, never updated in place); and review by a
+  person as a backstop (R8) against the shared premise that no human reads the
+  code line by line.
+- **Its §8 templates** — an architecture document, a module contract and an
+  agent-instructions file to copy into a repo — are the copy-paste delivery route
+  the 2026-08-03 owner decision rejected; frontmatter or hooks only.
+
+**The directive.** `java-backend-rules` gained *The module boundary is enforced by
+ArchUnit, not by package naming* under *Evidence toolchain*: no cycle between
+modules, cross-module references only into the target's `api` package (a
+whitelist, so a package not named `internal` is not an escape), and the
+allowed-dependency map where a repo declares one (made required by the review
+below), all three in ArchUnit's
+`modules()` API, each with a committed violating fixture asserted to fire.
+Spring Modulith's `verify()` is the named loser, on the second-idiom ground
+`ai-maintainer-principles` *One idiom, imposed mechanically* states, not on
+capability. Also added: wiring item 12, named gap 12 (bytecode type references
+only; reflection, bean lookup by name, broker messages and writes through the
+shared generated jOOQ tier pass), a marker-ceiling bullet, an evidence section and
+three ledger rows. **Marker**: the directive is *convention*, owner's decision; its
+tool facts are *primary-source verified* — the first use of that marker in this
+skill, whose 2026-07-25 pass wrote *confirmed* for the same kind of single-reader
+check. Status tier unchanged, *decided, not yet validated*.
+
+**What was run, not only read.** The rule code was compiled against ArchUnit 1.5.0
+(the template's pin) on JDK 25 and run over a clean and a violating fixture: all
+rules green over the first, each reporting over the second, every rule throwing the
+empty-should error over an empty import — and **with the module pattern one level
+too shallow, the cycle and `api`-only rules passed over the violating tree with no
+error**, which is why the negative-control requirement is stated in full rather
+than cited from `async-handoff`, whose `E-25` does not resolve for a consumer
+installing this skill alone. `spring-modulith-core` 2.1.1's POM declares ArchUnit
+1.4.2 at compile scope. The nested sub-module form (`app.inventory.(*)..`) was not
+run.
+
+**Sweep, read rather than grepped.** `ai-maintainer-principles` wiring step 1 now
+names this host for the module half and *Where the rest of this lives* mentions
+it; nothing there had claimed no host existed. `new-java-backend`'s opening
+paragraph and `README.md` (the `new-java-backend` skill-table row and the
+greenfield paragraph) said the template carries every build-enforceable gate; each
+now excepts this one (reworded by the review below). `README.md`'s `java-backend-rules` row gained the subject. `java-backend-api` and
+`java-backend-observability` say nothing about module boundaries and were left
+alone; `money-java` `M-2` names ArchUnit for its own money-package boundary,
+consistent, left alone; `guardrails-toolchain`'s template paragraph makes no
+every-gate claim, left alone. **The template was read, not edited**:
+`dulguun0225/java-backend-template` at `20d913a` bans every feature-to-feature
+dependency in `LayeringArchTest` and has no violating fixture for it, so
+`BACKLOG.md` *Template owed* carries the wiring and the `new-java-backend`
+re-pin after it.
+
+**Cost.** Per firing, `npm run tokens`, 2026-10-06: `java-backend-rules`
+11,721 → 12,985 tokens; the sweep added 95 to `ai-maintainer-principles`
+(8,781 → 8,876) and 31 to `new-java-backend` (1,535 → 1,566). **Per session,
+unchanged**: no `description` was edited; `npm run tokens:frontmatter` reads 97 for
+`java-backend-rules` and 1,651 for the set, the same before and after. **Firing
+not re-measured** — no description changed, and whether an agent drawing a module
+boundary in a Java repo loads this skill rather than only
+`ai-maintainer-principles` is unmeasured. No adversarial review ran in this pass;
+one ran the same day, below.
+
+**Adversarial review, same day, before commit.** One reviewer, the whole diff, with
+the repo's recurring defect classes as the checklist; every cited file and heading
+opened, the arXiv paper, the Modulith reference and POM and the ArchUnit user guide
+re-read, and the rules re-run on ArchUnit 1.5.0 with JDK 25 over new fixtures.
+Found and fixed:
+
+- **The map was optional and the directive claimed to host a requirement that makes
+  it mandatory.** *Where repo declare one* left call direction undeclared, while the
+  directive cited `ai-maintainer-principles` requiring allowed call direction from
+  the first commit. The map is now required; the strictest legitimate map — no
+  feature-to-feature edge, shared tier only — is named as satisfying all three rules
+  by consequence, so the template's stricter `LayeringArchTest` meets the directive
+  rather than reading as stale beside it. *Empty allowed map* was wrong under the
+  directive's own shared-tier rule: a map with no edge refuses the shared tier too,
+  and `AllowedModuleDependencies.allow()` alone does not compile (run).
+- **"Not wired in the template" was overstated.** The template refuses every
+  feature-to-feature and platform-to-feature dependency; what it lacks is the
+  violating fixture, and its rule is vacuous today (one feature package) and has a
+  substring filter that lets a feature named `feedback` through (run). The check
+  line, *Wiring the gates*, `new-java-backend`, both `README.md` sentences and the
+  `BACKLOG.md` row now say so; the `README.md` and `new-java-backend` sentences had
+  also kept *every gate*, which the template's own not-wired table contradicts, and
+  now point at it.
+- **Flattering host claim.** `ai-maintainer-principles` step 1 said the Java
+  directive hosts *the module half*; it hosts call direction and asserts neither the
+  declared module set nor nesting. Named gap 12 now states three runs that pass every
+  rule: a base-package class reaching another module's internals, an edgeless new
+  module, a map naming a module that no longer exists.
+- **Smaller.** *Every other architecture rule the Java skills name* (a superlative;
+  Error Prone hosts several) narrowed to the ban list, in `SKILL.md` and
+  `evidence.md`; *the guide's own allowed-dependency example* was the ArchUnit user
+  guide's, not the external guide's, which has no ArchUnit code; the external guide
+  was said to offer the two tools *as equals* where its §7 leads with Modulith; the
+  `async-handoff-java` guard was said to cover *its own rules* where it states every
+  ArchUnit gate; [premise-review](premise-review.md) quoted the guide's *primarily
+  Python* as *mostly*.
+
+Checked and left: the arXiv figures (−0.5% and −2%, two-sided p = 87% and 37%;
++2.4%, p = 21%; cost 20%, 23%, up to 19%, significant; Appendix B on length; Python
+focus; the four agent-and-model pairs), the Modulith 2.1.1 rules and its ArchUnit
+1.4.2 compile dependency, the ArchUnit signatures, `async-handoff` `E-25` as the
+source of the fixture requirement, `money-java` `M-2`, the `java-backend-api`, `money-api`
+and `money-storage` pointers on the `BACKLOG.md` rows, and the authoring pass's token
+figures. **Cost after the review**, `npm run tokens`, 2026-10-06: `java-backend-rules`
+13,254, `ai-maintainer-principles` 8,895, `new-java-backend` 1,580; frontmatter
+unchanged at 97 and 1,651. Firing still not measured.
+
+**Closed later the same day: the template wires the directive, and the
+by-consequence claim is corrected.** The `BACKLOG.md` row *Template owed —
+opened 2026-10-06* is removed with its section, and its finding with it.
+
+- **What the template fixed.** `dulguun0225/java-backend-template` `main` moved
+  from `20d913a` to `f161b43ce49e64cbff989857f1095c85be669b15` in two commits,
+  `e3db6bf` and `f161b43`. `LayeringArchTest`'s rules became static factories over
+  a base package, each run over the main code and over a test-only fixture tree,
+  `starterfixtures.layering`, with a negative control per rule and reflection tests
+  that fail on a factory reporting nothing; the feature filter compares whole slice
+  names, closing the `feedback` escape; the controller rule matches any class
+  meta-annotated with `@Controller` and requires a feature package; and
+  `generatedTreeDependsOnNothingOutsideIt` keeps the generated jOOQ tree from naming
+  anything outside it. Its `docs/GATES.md` layering row now cites this directive
+  and lists what the rules do not reach.
+- **The review that found the jOOQ-tree gap.** A review of the template's layering
+  negative controls, run at `e3db6bf`, found that nothing constrained the generated
+  tree's own references: a generated class naming a feature, or a platform class
+  the platform tier reads back, closed a module cycle through the tree and passed
+  every rule. The same review found the reflection skipping a factory declared as
+  `SliceRule`. **Here, it made this directive's sentence that the strictest map
+  meets the three rules by consequence false as stated.** The directive now states
+  what the claim requires — every module's outgoing dependencies constrained, the
+  generated tree included; the shared tier depending on no feature; dependencies
+  between shared-tier modules running one direction — and names the template's
+  rules as an instance. Mirrored in `evidence.md` with a ledger row.
+- **Owner's decisions, 2026-10-06.** The no-feature-edge map stays. **The generated
+  jOOQ tree stays banned from depending on platform classes**, so a converter for a
+  platform type such as `Money` arrives as a committed map change — confirmed by
+  the owner explicitly, not the reviewer's call. Both template commits were pushed
+  to `main` directly, a fast-forward with no pull request, on the owner's
+  instruction; CI run 37424988191 on `f161b43` passed.
+- **Vendoring result.** `new-java-backend`'s `DEFAULT_REF` moved to `f161b43`;
+  vendored from the GitHub URL into a fresh `/tmp` directory, removed afterwards:
+  `mvn verify` green with all six `LayeringArchTest` tests, a clean tree after the
+  `init:` commit, and the template's wall green in `backend/`. Commands in
+  `new-java-backend/evidence.md`; the pin in
+  [java-backend-template](java-backend-template.md).
+- **Narrowed back, read rather than grepped.** In `java-backend-rules`: the
+  directive's check line, the *Wiring the gates* template pointer and wiring item
+  12. In `new-java-backend`: its opening paragraph. In `README.md`: the
+  `new-java-backend` skill-table row and the greenfield paragraph. Each now says
+  the gate is wired in the strictest form with a violating fixture per rule; none
+  says every gate is wired, since the template's `docs/GATES.md` still carries
+  gates it does not wire. A grep for *without the violating*, *lacks*, *owes*,
+  *unproven* and *module-boundary test* over `README.md`, `BACKLOG.md`, `skills/`
+  and `docs/` found no other sentence denying the gate;
+  `ai-maintainer-principles` names the host without a template claim, left alone.
+- **Named gap 12 checked against the template's not-reached list.** Added: an
+  inlined compile-time constant, and a module's reference into a class directly
+  in the base package — each run on ArchUnit 1.5.0 and JDK 25 (a class reading
+  another package's `static final` constants is not reported, a static call is; a
+  feature's internal class calling a base-package class passes the cycle,
+  `api`-only and map rules). Stated with it: the template's platform rule refuses
+  the platform tier's reference into the base package, and no rule there refuses a
+  feature's. The undeclared module set, the base-package class's reference into a
+  module and the foreign-table write were already there.
+- **Cost.** Per firing, `npm run tokens`, 2026-10-06, before and after this step:
+  `java-backend-rules` 13,254 → 13,524; `new-java-backend` 1,580 → 1,597.
+  **Per session, unchanged**: no `description` was edited, and
+  `npm run tokens:frontmatter` printed identical output before and after — 97 for
+  `java-backend-rules`, 58 for `new-java-backend`, 1,651 for the set. **Firing not
+  re-measured.**
+- **Adversarial review of this step, 2026-10-06.** Read against `LayeringArchTest`
+  and `docs/GATES.md` at `f161b43`, GitHub Actions run 37424988191 and the
+  vendoring transcript. **The by-consequence sentence holds**, and the template is
+  an instance of it: `generatedTreeDependsOnNothingOutsideIt` refuses the generated
+  tree's reference into the platform tier while the platform rule allows the
+  reverse, so the shared tier runs one way; a class directly in the base package
+  belongs to no module in the template and in the directive's code block alike, and
+  named gap 12 states both directions of that. Named gap 12 and the template's
+  not-reached list match both ways. Run 37424988191 is a `push` to `main` with
+  head `f161b43`, `backend` 06:39:47 to 06:41:09 UTC, success. The vendoring
+  transcript shows `mise trust -q . ..` refused as a usage error (`mise trust`
+  takes one file) before the wall; the script and this skill run no `mise`
+  command, and mise 2026.10.2 applied the template's `mise.toml` in a fresh
+  untrusted `/tmp` directory (`node` 24.21.0, `vacuum` 0.30.5), so the wall ran on
+  the pinned tools and the evidence entry stands without it. Fixed: the marker
+  ceiling's *one local run*, where the evidence records the second and third
+  runs too (counting); the check line's
+  *exactly classes*, where the feature rule's test asserts slice pairs, now
+  *exactly fixtures* (follow the pointer); and the evidence bullet and ledger row
+  that stated the template's substring filter in the present tense, now dated to
+  `20d913a`. Per firing, `java-backend-rules` 13,524 → 13,527; per session
+  unchanged, no `description` edited.
+
+**Correction, later 2026-10-06: the no-feature-edge map was never the owner's
+decision.** The bullet *Owner's decisions, 2026-10-06* above records "the
+no-feature-edge map stays" as the owner's. **It was the assistant's call,
+mislabelled**: the strict map was chosen in an assistant's task brief and written
+down as the owner's decision, here, in the template's `docs/GATES.md` layering row,
+and in the message of template commit `e3db6bf`. The other half of that bullet
+stands: **the generated jOOQ tree naming nothing outside itself is the owner's
+explicit decision**, and stays.
+
+- **The owner's decision.** A blanket ban on feature-to-feature dependencies is too
+  strict as the template's permanent rule, because a spec-kit spec can need one
+  feature to call another, such as orders reserving stock from inventory; under the
+  ban such a spec cannot pass the build without an edit to the boundary test. The
+  template's boundary is the
+  directive's three rules — no cycle between modules, a feature reaching another
+  only through that feature's `api` package, every feature-to-feature dependency
+  listed in one committed map that starts empty — and adding an edge is one map
+  line in the commit that needs it. A class directly in the base package depending
+  on no feature was approved the same day.
+- **What the template changed.** Commit `a61aecd`, local and unpushed at writing,
+  under review, so the SHA that lands may differ (it landed unchanged, with its
+  review `20ba55c` after it, below); record in
+  [java-backend-template](java-backend-template.md). `DEFAULT_REF` not moved.
+- **What the directive changed.** The *strictest legitimate map … by consequence*
+  paragraph described no shipped form and is cut. What was true in it stays, in
+  general form: the rules must reach every module's outgoing dependencies, the
+  generated tree included — by listing the shared tier in the map, as the code
+  block does, or by rules of its own beside a feature-only map, as the template
+  does — and a map with no edge in the first form refuses the shared tier. The
+  blanket ban is now the named loser, with the owner's reason. The directive says
+  how an edge is added in the template, so a consumer agent adds a map line instead
+  of rewriting the gate. The check line names each of the template's rules and
+  states that `new-java-backend`'s pin, `f161b43`, still carries the ban; wiring
+  item 12 and the *Wiring the gates* pointer follow; named gap 12 now records the
+  base-package half closed in the template, a feature's reference into the base
+  package still passing there, nothing checking what a module puts in its `api`
+  package, and a cycle inside one module passing. `evidence.md` carries a dated
+  correction bullet and three ledger rows, one marking the mislabelled record an
+  error.
+- **Sweep, read.** `README.md` (the `new-java-backend` skill-table row and the
+  greenfield paragraph) and `new-java-backend`'s opening paragraph each said the
+  template's test is in "the strictest form `java-backend-rules` allows"; each now
+  says it is wired with a fixture per rule and points at the directive's check line
+  for the form each pin carries, so the sentence survives the re-pin.
+  `ai-maintainer-principles` wiring step 1 names the three rules and a committed
+  map with no template claim, left alone. `new-java-backend/evidence.md`'s
+  `f161b43` entry is a dated record of that pin and left alone. A grep for
+  *strictest*, *no-feature-edge*, *feature-to-feature*, *each other* and
+  `LayeringArchTest` over `README.md`, `BACKLOG.md`, `CLAUDE.md` and `skills/`
+  found no other sentence describing the template's boundary as the strict map.
+- **Cost.** Per firing, `npm run tokens`, 2026-10-06, before (reconstructed from
+  the pre-edit text, matching the 13,527 recorded above) and after:
+  `java-backend-rules` 13,527 → 13,873; `new-java-backend` 1,597 → 1,614. **Per
+  session, unchanged**: no `description` edited; `npm run tokens:frontmatter` reads
+  97 for `java-backend-rules`, 58 for `new-java-backend`, 1,651 for the set.
+  **Firing not re-measured.** No adversarial review had run on this correction
+  when it was written; one ran the same day, below.
+
+**Review of template `a61aecd`, the pin, and the correction above, later 2026-10-06.**
+One adversarial reviewer: the template diff `f161b43..a61aecd`, then this repo's
+uncommitted diff with *Recurring defect classes* as the checklist, every cited
+template file opened at the commit that landed.
+
+- **Template, found and fixed in `20ba55c7e4facd226d9aea160f409650710741d1`**,
+  pushed to `main` with `a61aecd` as a fast-forward, no pull request, on the
+  owner's instruction; GitHub Actions run 37430316888 on it passed. A map line no
+  dependency takes passed, one naming a feature that does not exist among them; a
+  reference into a subpackage of `api` was refused with no fixture holding it; the
+  reflection tests took any fixture violation as a rule's proof and missed a rule
+  built inside a test method. Each is now held by a fixture or a test, each seen to
+  fail under a break of its rule. Record:
+  [java-backend-template](java-backend-template.md).
+- **The assistant's calls in that review, not the owner's**: an untaken map line
+  fails, which holds the owner's *one line in the commit that needs it* in both
+  directions and leaves the line to go with the last call; a subpackage of `api` is
+  internal, matching the directive code block's `*.api`. The template's
+  `docs/GATES.md` marks both as its reading, not the owner's words.
+- **This repo, found and fixed.**
+  - *A claim about another file, from memory*: the directive said the template
+    shipped the ban "from 2026-10-06 until that decision". It shipped it from its
+    first commit, `829a895`, 2026-09-16 (`git log -S featuresDoNotDependOnEachOther`
+    in the template).
+  - *An event stated without a record*: "under the ban the build fails and the
+    implementing agent has to rewrite the boundary test to get through", in the
+    directive, `evidence.md`, this file and
+    [java-backend-template](java-backend-template.md), each inside the owner's
+    decision. The owner's recorded words are that the ban is too strict because a
+    spec-kit spec can need one feature to call another; no record of an agent
+    rewriting the test was found in this repo, `scalith` or the template. Each now
+    states the mechanism: such a spec cannot pass the build without an edit to the
+    boundary test.
+  - *Attribution*: the evidence correction bullet said the strict map was "chosen
+    in an assistant's task brief"; it now says plainly it was the assistant's call,
+    mislabelled as the owner's. **The `Money`-converter sentence is the assistant's
+    wording too** — "arrives as a committed map change" in the bullet *Owner's
+    decisions, 2026-10-06* above, "a committed change to
+    `generatedTreeDependsOnNothingOutsideIt`" in the template and the directive
+    since: a consequence of the owner's generated-tree ban, not the owner's words.
+  - *Directive looser than the template*: the template refuses a reference into a
+    subpackage of `api`, and now a map line no code takes; the directive said
+    neither, and *Wiring the gates* lets a directive win over the template where
+    they disagree, which reads as licence to loosen it. The directive now names both
+    as stricter forms that satisfy it.
+  - *Pin sentences*: the check line carried `a61aecd` as local and `f161b43` as the
+    pin, and the *Wiring the gates* pointer "the template commit after `f161b43`";
+    both now name `20ba55c`, and the check line says pins up to `f161b43` carry the
+    ban. Named gap 12 records the stale-map half closed in the template; the
+    general modules-API form still passes a map naming a module that no longer
+    exists, as run.
+- **Pin.** `DEFAULT_REF` moved from `f161b43` to `20ba55c`. Vendored from the
+  GitHub URL into a fresh `/tmp` directory, removed afterwards: `mvn verify` green
+  with all eleven `LayeringArchTest` tests under `com.acme.pinproof`, the empty main
+  map and the fixture map intact after the rename; a clean tree after the `init:`
+  commit, `dev` and `main` at it; the template's wall green in `backend/`. Commands
+  in `new-java-backend/evidence.md`.
+- **Sweep, read.** A grep for *rewrite the boundary*, *after `f161b43`*, *under
+  review at writing*, *still pin*, *naming no package* and *under its `api`
+  package* over `README.md`, `BACKLOG.md`, `CLAUDE.md`, `skills/` and `docs/`; each
+  hit read. Left as dated records: the `f161b43` pin entry in
+  `new-java-backend/evidence.md`, which the new entry beside it corrects, and the
+  evidence bullet on `a61aecd`'s probes, now marked as closed. `README.md`'s
+  greenfield paragraph and skill-table row and `new-java-backend`'s opening
+  paragraph point at the directive's check line for the form each pin carries, so
+  they stay true across the re-pin, and were left alone; `ai-maintainer-principles`
+  step 1 makes no template claim. `scalith`'s constitution Article VI, which banned
+  every feature-to-feature dependency and is read as binding by `build-feature`'s
+  plan step, is amended in that repo the same day.
+- **Cost.** Per firing, `npm run tokens`, 2026-10-06: `java-backend-rules` 13,873 →
+  13,999; `new-java-backend` 1,614, unchanged. **Per session, unchanged**: no
+  `description` edited; `npm run tokens:frontmatter` reads 97 for
+  `java-backend-rules`, 58 for `new-java-backend`, 1,651 for the set. **Firing not
+  re-measured.**
+

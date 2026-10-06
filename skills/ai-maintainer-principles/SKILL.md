@@ -454,7 +454,13 @@ with reason — skipped item with no reason read as done by next session.
 1. **Boundary tests from first commit** — declared module set, nesting, allowed call
    direction, each table written only by the module that owns it (reads across
    modules allowed, *Count the independent wills*). Cheap now, unaffordable later,
-   and they what make extraction cheap if a split trigger ever fire.
+   and they what make extraction cheap if a split trigger ever fire. **On Java
+   stack allowed call direction has a named host**: `java-backend-rules` *The
+   module boundary is enforced by ArchUnit, not by package naming* — cycles,
+   references only into a module's `api` package, a committed allowed-dependency
+   map, each with a violating fixture. Declared module set and nesting it no
+   assert, and its named gaps say so. Table-ownership half stay the predicate in
+   *Count the independent wills*.
 2. **Formatter with fail-on-diff, zero per-file configuration**, plus canonical-form
    rewriting where the ecosystem host it.
 3. **Zero retries in the test runner**, quarantine file with schema and expiry gate,
@@ -558,7 +564,7 @@ repo on grounds this skill's own central claim mark *uncertain*.
   the requirement that premises be recorded with it. **Defines the four confidence
   markers** every claim here is graded in.
 - **`java-backend-rules`** — one stack's runtime-silent ban list, with a check per
-  banned mechanism.
+  banned mechanism, and that stack's module-boundary test.
 
 ## Markers, dates, and what they mean
 

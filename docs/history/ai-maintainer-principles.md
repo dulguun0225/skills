@@ -121,3 +121,17 @@ another's rows had no path inside the build.
   ("a table the feature does not own") still holds, since ownership remains.
 - **Cost**: body 8,347 to 8,782 tokens (`npm run tokens:sections`, 2026-09-26). No `description` edited, so
   per-session cost and firing are unchanged and not re-measured. No adversarial review.
+
+## 2026-10-06: the Java host for the module boundary test
+
+- **What changed**: *Wiring the gates* step 1 now names `java-backend-rules` *The module boundary is enforced by
+  ArchUnit, not by package naming* as the Java host for allowed call direction (cycles, references only into a
+  module's `api` package, a committed allowed-dependency map, each with a violating fixture), and says that host
+  asserts neither the declared module set nor nesting; the table-ownership half stays this skill's predicate. The
+  authoring pass wrote *the module half*; the same day's adversarial review narrowed it, since the Java rules leave
+  the module set and nesting unasserted. *Where the rest of this lives* mentions it. No directive here changed. Record:
+  [java-backend](java-backend.md), 2026-10-06.
+- **Backlog**: the row *A second repo built to these directives* gained an outcome-measurement method taken from an
+  external guide reviewed the same day, aimed at this skill's *Named gaps* line on no outcome measured anywhere.
+- **Cost**: `npm run tokens` 8,781 to 8,876 tokens, 2026-10-06; 8,895 after the review's narrowing. No `description` edited, so per-session cost is
+  unchanged; firing not re-measured.
