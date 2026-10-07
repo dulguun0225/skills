@@ -400,3 +400,20 @@ directory, removed afterwards: `mvn verify` green, `StrictBodyEndpointIT` among 
 tree after the `init:` commit; the template's wall, run afterwards in `backend/`, green *(run)*. `java-backend-api`'s check line, *Wiring the gates* step
 10 and status-tier sentence, its evidence and re-open trigger, and `README.md`'s template paragraph, which said the
 template lacked the refusal, corrected in the same commit. Per-session cost unchanged: no `description` edited.
+
+## 2026-10-07, later: the four refusal directives, and the pin at `86d9d95`
+
+Template commit `86d9d9511385204533fd89b86ee02c0dd6d86dbf`, pushed to `main` before this pin moved, carries the four
+`java-backend-api` directives of skills `54604d5` ([java-backend](java-backend.md)): non-body inputs named by `in` and
+`name`; `validation.invalid-value` (`expected`), `validation.unknown-value` (`allowed`), `validation.required`, and
+`allowed` on `validation.unknown-field`; a 100-entry cap with `errorsOmitted`; the body limit
+`api.request-body.max-size`, default 64KB, 413 `request.too-large` with `params.max`; multipart off, so 415; the
+`DeclaredInputCheck` interceptor for exact forms and undeclared or repeated query parameters and headers, chosen
+after strict converters were refused by a run, since Spring retries a refused value with its lenient property
+editors; 400 and 413 declared on every operation that can answer them.
+
+`DEFAULT_REF` moved from `3689ca6` to `86d9d95`. GitHub Actions run 37567889700 on `86d9d95` passed, `backend` in
+1 min 51 s. The scaffold from the GitHub URL at the new pin, vendored with verification into a fresh scratch
+directory, removed afterwards: `mvn verify` green, clean tree after the `init:` commit, the template's wall, run afterwards in `backend/`, green *(run)*. `README.md`'s sentence that the scaffold skills pin the commits
+before these directives narrowed to the Rust pin; `new-java-backend`'s opening paragraph names what the pin brings
+in. Per-session cost unchanged: no `description` edited.
