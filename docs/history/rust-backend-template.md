@@ -154,3 +154,15 @@ check's own command, online. A pin to `626180d` was committed here and rewritten
 cache, `backend` in 4 min 58 s. The scaffold from the GitHub URL at the new pin, vendored with verification into a
 fresh scratch directory, removed afterwards: wall green in 141 s, clean tree after the `init:` commit *(run)*.
 Per-session cost unchanged: no `description` edited.
+
+## 2026-10-07, later: inputs named by `in` and `name`, the body limit configured, and a declared break
+
+`5b52936` builds `java-backend-api`'s four directives of that day ([java-backend](java-backend.md)): `web::params`
+with `StrictPath`, `StrictQuery` and `StrictHeaders`; `allowed` on `validation.unknown-field`; the 100-entry cap
+with `errorsOmitted`; `REQUEST_BODY_MAX_BYTES` replacing the `BODY_LIMIT` constant, every 413 carrying `max`;
+response codes declaring params in `wire_errors!`. The document change is breaking for oasdiff, so
+`scripts/openapi.mjs` now passes a breaking change only where a commit between the base and HEAD declares each
+error-level finding in an `OpenAPI-break` trailer, and runs its judge's canaries every time; `docs/GATES.md` names
+the gap that the trailer cannot tell a released document from an unreleased one. Shown refusing without the
+trailers; wall green with no base and with base `b6e9f07`; Actions run 37569786578 green, `backend` in
+12 min 54 s. `new-rust-backend` still pins `b6e9f07`.

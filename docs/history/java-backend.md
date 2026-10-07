@@ -669,3 +669,27 @@ at a constant 65,536 bytes refused without the maximum; its `docs/GATES.md` name
   right; `async-handoff`'s unknown-field tolerance is a decoder rule, out of scope.
 - **Cost.** Per firing, `npm run tokens`, 2026-10-07: `java-backend-api` 10,173 → 12,418. **Per session, unchanged**:
   no `description` edited. **Firing not re-measured.**
+
+## Both templates carry the four, and a declared break lands the error-entry change, 2026-10-07, later
+
+`java-backend-template` `86d9d95` (Actions run 37567889700, green) and `rust-backend-template` `5b52936` carry the
+four directives of the entry above, and `netos/notification-hub` `a5b3b89` ports the Java one. The check lines,
+the status tier, *Wiring the gates* step 11, `enforceable-rules`' caller-input check line and `README.md` lost their
+*built in neither* sentences; the scaffold skills' pins did not move and `README.md` says so.
+
+- **A gate refused after a real attempt, and the decision was the principal's.** The Rust wall runs oasdiff
+  1.32.1 against each push's base, and the error entry's `oneOf` was refused as `response-property-one-of-added`
+  on both operations against `b6e9f07`; the Java template runs no contract diff, which is why it passed.
+  **Decided: a break made on purpose to a document no consumer binds yet passes only where a commit in the
+  compared range declares each error-level finding in an `OpenAPI-break: <id> <METHOD> <path>` trailer.** It
+  covers that range and nothing after, so it needs no cleanup and reaches the release pull request of a service
+  too. `java-backend-api` *Breaking-change diff where a contract crosses the build boundary* gains the paragraph and
+  says where each template runs the diff; `evidence.md` steelmans the losers — a red run on the trunk, an
+  allowance in the script, an exception file keyed to one base and the document's hash — and adds a re-open trigger
+  for a released document a gate can read. **Gap stated**: nothing tells a released document from an unreleased
+  one.
+- **Run**: before the trailers, `scripts/openapi.mjs b6e9f07` refused both findings; the wall green with no base
+  and with base `b6e9f07` (313 s, mutants 69 caught, 98 unviable); Actions run 37569786578 on `5b52936` green,
+  `backend` in 12 min 54 s, its log showing both findings accepted as declared by `5b52936`.
+- **Cost.** Per firing, `npm run tokens`, 2026-10-07: `java-backend-api` 12,418 → 13,050. **Per session,
+  unchanged.** **Firing not re-measured.**

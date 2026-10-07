@@ -225,11 +225,12 @@ at a pinned commit. No Rust rules skill exists yet; until one does, the record
 and the template's `docs/GATES.md` carry the rules. Created 2026-09-29; record in
 [docs/history/rust-backend-template.md](docs/history/rust-backend-template.md).
 
-**Neither template yet carries the four `java-backend-api` directives decided
-on 2026-10-07** — *A refusal names its input*, *A refused input gets one code
+**Both templates carry the four `java-backend-api` directives decided on
+2026-10-07** — *A refusal names its input*, *A refused input gets one code
 wherever it travels*, *An undeclared member's refusal lists the members
-allowed*, *A request body has a size limit, refused with its maximum*; each
-directive's check line says what each template does today.
+allowed*, *A request body has a size limit, refused with its maximum* — from
+`java-backend-template` `86d9d95` and `rust-backend-template` `5b52936`. The
+scaffold skills still pin the commits before them, `3689ca6` and `b6e9f07`.
 
 ## Spec-kit workflows
 

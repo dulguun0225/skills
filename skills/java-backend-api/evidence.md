@@ -105,6 +105,32 @@ the founding pass, which did not cover this area at all.
   it into noise; the do-not-cite entry stands, because the tool still requires
   nothing of the kind.
 
+- **A declared break for a document no consumer binds yet — decided
+  2026-10-07, policy convention.** Found when `rust-backend-template` built the
+  four directives of that day: its wall runs oasdiff 1.32.1 against each push's
+  base, and the error-entry `oneOf` was refused as
+  `response-property-one-of-added`, level 3 in its `--format json` report, on
+  `POST /api/greetings` and `GET /api/greetings/{id}` (run 2026-10-07); a
+  properties-plus-`oneOf`-of-required-lists shape was refused as
+  `response-property-became-optional` instead (the implementer's run, not
+  re-run here). The template's document has no consumer, so the break is a
+  template change that each service takes as its own. Candidates, steelmanned:
+  **one red run on the trunk** — honest about the break and costs nothing to
+  build; rejected, because a red trunk teaches that red is normal and the next
+  real refusal reads the same. **An allowance in the gate's script, or a
+  committed exception file keyed to one base commit and the resulting
+  document's hash** — inventoried by the suppression list like every other
+  gate file; rejected, because the file outlives the change it was written for
+  and needs a cleanup commit, a renamed document (`scripts/init.mjs` retitles it
+  in every service) makes it stale at once, and in a service the release pull
+  request compares against the last release, a different base, so a key on one
+  base commit refuses the same break again there. **A trailer on the commit that
+  makes the change** covers exactly the commits in the compared range, so it
+  covers the release pull request too and nothing after it. Git reads it with
+  `%(trailers:key=…,valueonly)` (git 2.43.0, run). The gap left: nothing tells a
+  released document from an unreleased one, so the trailer could also wave
+  through a break the directive sends to a new major version.
+
 - **A JVM binary-compatibility differ — confirmed tool, dropped for this rule
   set.** japicmp is Apache-2.0, diffs two jars for source and binary
   compatibility, and its `breakBuildOn{Binary,Source}IncompatibleModifications`
@@ -677,6 +703,10 @@ inference, and each is labelled.
 - **The body limit** — reopen on a Jackson minor change (re-run the
   `StreamReadConstraints` defaults; a default `maxDocumentLength` would become a
   second limit with a different refusal) and on a Tomcat or axum line change.
+- **The declared break** — reopen when a repository records which document is
+  released in a form a gate can read (a tag, a released copy committed beside
+  the document); the diff then runs against it and a declaration against a
+  released document can be refused.
 - **The entry cap** — reopen when a legitimate caller is shown to need more than
   100 entries from one refusal to fix one request.
 - **A limit per operation** — reopen when one operation's largest legal request
