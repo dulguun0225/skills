@@ -134,3 +134,23 @@ among the gaps) and `evidence.md` (*The tool lock*). `guardrails-toolchain`'s te
 version to a release whose checksums mise checks" narrowed to the lock, with its two exemptions, and the Java
 sentence given the same. Swept and left: `README.md`, `BACKLOG.md` and `CLAUDE.md` say nothing of how the
 templates pin tools. Frontmatter unchanged: no description was edited.
+
+## 2026-10-07: the duplicate member at any depth, typed field params, and the pin at `b6e9f07`
+
+Template commits `aacc689`, `626180d`, `4bb47f4` and `b6e9f07`, pushed to `main` before this pin moved. `aacc689`
+moves the runtime base image's digest: the wall's image scan refused `libssl3t64` 3.5.7-1~deb13u2 for CVE-2026-75804
+and CVE-2026-84782, fixed in deb13u3. `626180d` closes the gap `java-backend-api` *A member given twice is refused*
+recorded the same day against `5cdc93a` — the reader refused a repeated top-level member only, and kept one of two
+values of a repeated nested one — and declares each field code's params as typed fields carried in the field error
+and in the catalog snapshot. Directive side: [java-backend](java-backend.md).
+
+**The intermediate commits failed on the forge, and why.** Run 37560089618 on `626180d`: cargo-deny refused
+`yoke-derive` 0.8.3 as yanked — a yank after `5cdc93a`, whose lock holds the same version; a local wall passed the
+same step against a cached index. `4bb47f4` moves the crate to 0.8.4; its run 37560854932 failed because the lock
+canary ran offline and needed a warm cargo index, which a cold runner lacks. `b6e9f07` runs the canary with the
+check's own command, online. A pin to `626180d` was committed here and rewritten to `b6e9f07` before it was pushed.
+
+`DEFAULT_REF` moved from `5cdc93a` to `b6e9f07`. GitHub Actions run 37561471844 on `b6e9f07` passed on a cold cargo
+cache, `backend` in 4 min 58 s. The scaffold from the GitHub URL at the new pin, vendored with verification into a
+fresh scratch directory, removed afterwards: wall green in 141 s, clean tree after the `init:` commit *(run)*.
+Per-session cost unchanged: no `description` edited.
