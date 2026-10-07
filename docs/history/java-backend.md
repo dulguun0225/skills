@@ -602,3 +602,12 @@ undeclared member refused but said nothing of a declared member sent twice, whic
   directive's check line and `README.md` say so until it is.
 - **Cost.** Per firing, `npm run tokens`, 2026-10-07: `java-backend-api` 9,589 → 10,194. **Per session, unchanged**:
   no `description` edited. **Firing not re-measured.** No adversarial review.
+
+## The duplicate-member refusal reaches the Java template, 2026-10-07, later
+
+The entry above recorded the template change as not done. Template commit `3689ca6` carries it, and
+`new-java-backend` pins it ([java-backend-template](java-backend-template.md)). `java-backend-api`'s check line now
+names `3689ca6` and the Rust template's `626180d`, which refuses a repeat at any depth too; *Wiring the gates* step 10
+says the template carries all of it again; the status-tier sentence says the refusal is built and run in both
+templates; the evidence keeps the dated read of `20ba55c` and records the closure beside it; the re-open trigger
+for the template carrying it is removed, the Jackson one kept. `README.md`'s template paragraph loses the exception.

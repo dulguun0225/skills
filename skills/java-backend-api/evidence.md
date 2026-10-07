@@ -355,6 +355,16 @@ inference, and each is labelled.
   member as `validation.duplicate-member` in `crates/web/src/body.rs`; the Java
   code takes that name. Nested objects there are not checked for repeats.
 
+  **Both closed the same day, 2026-10-07.** `java-backend-template` `3689ca6`:
+  a first pass over the body's tokens in `StrictJsonBodyConverter` records
+  `validation.duplicate-member` at the pointer of every member repeated in one
+  object, at any depth, declared or not, and returns the body unbound; the
+  endpoint sweep sends every member twice and a repeat inside an undeclared
+  object. `STRICT_DUPLICATE_DETECTION` was rejected there on the ground above.
+  `rust-backend-template` `626180d`: the reader reads values itself and records
+  a repeated member at any depth before any value is built. Both pinned by the
+  scaffold skills the same day.
+
 ## Versioning and change
 
 - **A header or date versioning pipeline was rejected on a confirmed
@@ -506,10 +516,9 @@ inference, and each is labelled.
   line change (re-run the closed-schema rule against a document known to fail),
   or on a second observed failure of the same shape in a repo that has the gates —
   the name-matching gap is the likeliest route.
-- **The duplicate-member refusal** — reopen when `dulguun0225/java-backend-template`
-  carries it (drop the exception in *Wiring the gates* step 10), and on a Jackson
-  minor change (re-run the last-wins read, since a default that starts refusing
-  duplicates changes what the strict reader answers).
+- **The duplicate-member refusal** — reopen on a Jackson minor change (re-run
+  the last-wins read, since a default that starts refusing duplicates changes
+  what the strict reader answers).
 
 ## Markers, dates, and what they mean
 

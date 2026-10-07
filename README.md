@@ -201,8 +201,7 @@ from these skills; it starts from
 [`dulguun0225/java-backend-template`](https://github.com/dulguun0225/java-backend-template)**,
 a GitHub template where the gates the Java skills name as build-enforceable are
 wired and green, except those its `docs/GATES.md` lists as not wired, each with
-its reason, and `java-backend-api`'s duplicate-member refusal, added 2026-10-07
-and not in the template yet (`gh repo create <org>/<name> --template
+its reason (`gh repo create <org>/<name> --template
 dulguun0225/java-backend-template`). Its module-boundary test is there, each
 rule with the violating fixture that directive requires, since 2026-10-06; that
 directive's check line says which form each template commit carries. The skills carry the decisions and their

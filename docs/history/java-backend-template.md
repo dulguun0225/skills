@@ -379,3 +379,24 @@ new pin, vendored with verification into a fresh `/tmp` directory, removed after
 `LayeringArchTest` tests among it under `com.acme.pinproof`; clean tree after the `init:` commit; the template's wall,
 run afterwards in `backend/`, green, with the lock checked there and at the project root *(run)*. Per-session cost
 unchanged: no `description` edited.
+
+## 2026-10-07: the duplicate-member refusal and typed field params, and the pin at `3689ca6`
+
+Template commit `3689ca697ea9d8f9febdf048e55c409f504907d6`, pushed to `main` before this pin moved, closes the gap
+the same day's `java-backend-api` directive *A member given twice is refused* recorded against `20ba55c`
+([java-backend](java-backend.md)). A first pass over the body's tokens in `StrictJsonBodyConverter` records
+`validation.duplicate-member` at every member repeated in one object, at any depth, declared or not, and returns the
+body unbound; `StreamReadFeature.STRICT_DUPLICATE_DETECTION` was rejected there because it fails the read as a
+malformed body at the first repeat. Each field code names its own params record; the catalog snapshot lists every
+`(code, status, param names)` triple; `BanListArchTest.fieldErrorsAreBuiltFromTheirParams` keeps main code from
+building a field error without them. Edge errors (a path variable of the wrong type, 405, 415) name what is allowed
+without quoting the value; 413 is `request.too-large`; an unmapped client-error status is the catch-all 500. Gaps the
+template's `docs/GATES.md` records: no machine-readable field entry for a path, query or header input; no
+allowed-members param on `validation.unknown-field`; no body size limit while the reader buffers the body.
+
+`DEFAULT_REF` moved from `20ba55c` to `3689ca6`. GitHub Actions run 37560076038 on `3689ca6` passed, `backend` in
+1 min 51 s. The scaffold from the GitHub URL at the new pin, vendored with verification into a fresh scratch
+directory, removed afterwards: `mvn verify` green, `StrictBodyEndpointIT` among it, under `com.acme.pinproof`; clean
+tree after the `init:` commit; the template's wall, run afterwards in `backend/`, green *(run)*. `java-backend-api`'s check line, *Wiring the gates* step
+10 and status-tier sentence, its evidence and re-open trigger, and `README.md`'s template paragraph, which said the
+template lacked the refusal, corrected in the same commit. Per-session cost unchanged: no `description` edited.
