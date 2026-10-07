@@ -230,8 +230,7 @@ and the template's `docs/GATES.md` carry the rules. Created 2026-09-29; record i
 wherever it travels*, *An undeclared member's refusal lists the members
 allowed*, *A request body has a size limit, refused with its maximum* — from
 `java-backend-template` `86d9d95` and `rust-backend-template` `5b52936`.
-`new-java-backend` pins `86d9d95`; `new-rust-backend` still pins the commit
-before, `b6e9f07`.
+The scaffold skills pin those commits.
 
 ## Spec-kit workflows
 

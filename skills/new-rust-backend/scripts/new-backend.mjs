@@ -30,7 +30,7 @@ import { parseArgs } from 'node:util';
 
 const TEMPLATE_URL = process.env.TEMPLATE_URL || 'https://github.com/dulguun0225/rust-backend-template.git';
 // The pinned template commit. Move it deliberately, in a commit that says which gate change it brings in.
-const DEFAULT_REF = 'b6e9f071355e7686aaf9eb75110a7f52596aef9c';
+const DEFAULT_REF = '5b529364af409c91eb16751e9beba144f5ddb1f4';
 
 const [major] = process.versions.node.split('.').map(Number);
 if (major < 22) die(`node ${process.versions.node} is too old; this script needs 22 or newer`);

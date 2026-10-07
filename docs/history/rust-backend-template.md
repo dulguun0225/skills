@@ -166,3 +166,21 @@ error-level finding in an `OpenAPI-break` trailer, and runs its judge's canaries
 the gap that the trailer cannot tell a released document from an unreleased one. Shown refusing without the
 trailers; wall green with no base and with base `b6e9f07`; Actions run 37569786578 green, `backend` in
 12 min 54 s. `new-rust-backend` still pins `b6e9f07`.
+
+## 2026-10-07, later: the four refusal directives, the declared OpenAPI break, and the pin at `5b52936`
+
+Template commit `5b529364af409c91eb16751e9beba144f5ddb1f4`, pushed to `main` before this pin moved, carries the four
+`java-backend-api` directives of skills `54604d5` and the declared-break rule of skills `f06a5cd`
+([java-backend](java-backend.md)): `StrictPath`, `StrictQuery` and `StrictHeaders` refusing by `in` and `name` with
+`required`, `invalid-value` (`expected`), `unknown-value` (`allowed`), `unknown-field` (`allowed`) and
+`duplicate-member` for a repeated query parameter; `allowed` on an undeclared body member; the 100-entry cap with
+`errorsOmitted`; `REQUEST_BODY_MAX_BYTES`, default 65,536, 413 with `params.max`; 400 and 413 declared per operation;
+and `scripts/openapi.mjs`, which passes an error-level oasdiff finding only when an `OpenAPI-break` trailer in the
+compared range declares it — `5b52936` declares the two `response-property-one-of-added` findings its own error-entry
+change makes.
+
+`DEFAULT_REF` moved from `b6e9f07` to `5b52936`. GitHub Actions run 37569786578 on `5b52936` passed, `backend` in
+12 min 54 s. The scaffold from the GitHub URL at the new pin, vendored with verification into a fresh scratch
+directory, removed afterwards: wall green in 118 s, clean tree after the `init:` commit *(run)*. `README.md`'s sentence that `new-rust-backend` still pinned the
+commit before these directives now says both scaffold skills pin them; `new-rust-backend`'s opening paragraph names
+what the pin brings in. Per-session cost unchanged: no `description` edited.
