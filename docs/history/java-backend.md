@@ -611,3 +611,61 @@ names `3689ca6` and the Rust template's `626180d`, which refuses a repeat at any
 says the template carries all of it again; the status-tier sentence says the refusal is built and run in both
 templates; the evidence keeps the dated read of `20ba55c` and records the closure beside it; the re-open trigger
 for the template carrying it is removed, the Jackson one kept. `README.md`'s template paragraph loses the exception.
+
+## Inputs outside the body, the members allowed and the body limit, 2026-10-07, later
+
+**Three gaps both templates met the same day, decided under the owner's caller-input decision recorded in
+[method-skills](method-skills.md).** `java-backend-template` `3689ca6` listed two as named gaps — a path variable,
+query parameter or header named in `detail` prose only, and `validation.unknown-field` carrying no allowed members —
+and said in its strict-body row that nothing bounds a JSON body while the reader buffers it whole.
+`rust-backend-template` `b6e9f07` answered a wrong path segment as a bare `validation.bad-request`, and bounded bodies
+at a constant 65,536 bytes refused without the maximum; its `docs/GATES.md` names neither of the first two.
+
+- **Frame, written before candidates.** Weights: verification (each refusal provable against the committed
+  document), exactness (a caller fixes its request from the error alone), operability (memory per request, response
+  amplification); corpus depth barely bears. Premises: agent-written services, no human reads the code, machine
+  clients, one committed OpenAPI document, one error vocabulary shared by both templates. Struck as decided: the
+  problem shape, the one advice, the catalog and its snapshot, typed params per code, the strict reader, the
+  duplicate-member refusal. Owner: the principle is the owner's, quoted in `java-backend-api/evidence.md`; the
+  shapes were **delegated**.
+- **Decided, as four directives in `java-backend-api`.** Under *Errors*: *A refusal names its input* — a body member
+  by `pointer`, any other input by OpenAPI's `in` and `name`, never both; a rule over several members at the
+  pointer of the object holding them; params as `params` beside the code, on the problem too for a response code;
+  the entry schema, `errorsOmitted` and each operation's 400 and 413 declared; at most 100 entries recorded. *A
+  refused input gets one code wherever it travels* — `validation.required` only for a name not in the request,
+  `validation.invalid-value` (`expected`: the schema's `format`, else its `type`) for text or a value that does not
+  parse, blank included, `validation.unknown-value` (`allowed`) outside an enumeration, `validation.unknown-field`
+  (`allowed`) for an undeclared query parameter, `validation.duplicate-member` for a repeated query parameter or
+  single-valued header; RFC 9562's UUID form, untrimmed; an undeclared header never refused; `validation.bad-request`
+  left to a 400 no input code describes. Under *Request bodies*: *An undeclared member's refusal lists the members
+  allowed* — `params.allowed`, sorted, from the type. *A request body has a size limit, refused with its maximum* —
+  65,536 bytes unless one configuration value says otherwise; every 413 carries `params.max` in bytes; size the
+  value from the largest legal request times six, RFC 8259 §7.
+- **Defaults named** in the overrides list: prose or nothing for an input outside the body (with first-wins and
+  lenient UUID parsing), and no request-body limit.
+- **Facts, each read or run 2026-10-07**, in `java-backend-api/evidence.md` under *Errors* and *Request bodies*:
+  RFC 9457 §3 and §3.2, OpenAPI 3.1.1's Parameter Object, JSON:API 1.1's error `source` (prior art), RFC 9110 §5.1
+  and §15.5.14, RFC 8259 §7, RFC 9562 §4, Tomcat 11's `maxPostSize`, nginx's `client_max_body_size`, axum 0.8.9's
+  `DefaultBodyLimit`, jackson-core 3.1.5's `StreamReadConstraints` defaults by a run, and `UUID.fromString` on
+  JDK 25 by a run. The audit's own runs — Spring 7.0.9 on blank and repeated inputs, Jackson on base64 UUIDs, integer
+  overflow and enum values — are recorded as the audit's, not re-run. Two do-not-cite rows and four re-open triggers.
+- **Panel: one hostile audit by a fresh principal-tier agent, two lenses with a planted canary each** — a claim that
+  Tomcat's `maxPostSize` caps a JSON body, and a param named `maxBytes` against the Rust catalog's
+  one-lower-case-word rule. **Both caught.** The audit reshaped the draft: the blank and repeated cases, the
+  enumeration code, the UUID form, the record-time cap, the entry schema and declared statuses, and `max` on every
+  413 came from it. Not taken: a limit per operation (recorded as the loser, with a trigger). No steelman duel, no
+  refutation vote.
+- **Not done here: the templates.** Each directive's check line says what each template does today; *Wiring the
+  gates* gains step 11; `README.md` names the four directives neither template carries. Named gaps 12 (one failing
+  input per response where the framework stops at the first) and 13 (a value inside its type but above a declared
+  maximum has no code) added; the ungated list gains the first.
+- **For the downstream service, not recorded in any skill**: `netos/notification-hub` FR-013 accepts a subject and
+  body of 1,048,576 bytes, so its limit is at least six times that plus the addresses; its specs also state no bound
+  on an SMS text or on unused template variables, which any body limit contradicts until a spec states one.
+- **Sweep, read.** Grep over `skills/`, `README.md` and `BACKLOG.md` for *pointer*, *RFC 6901*, *validation.*,
+  *unknown-field*, *too-large*, *413*, *body limit*, *allowed value*, *query parameter*, *path variable*; each hit
+  read. Outside `java-backend-api` the error shape is stated only in `enforceable-rules`' caller-input paragraph,
+  amended ([method-skills](method-skills.md)); `money-java` `api.md` names a body member's pointer only, still
+  right; `async-handoff`'s unknown-field tolerance is a decoder rule, out of scope.
+- **Cost.** Per firing, `npm run tokens`, 2026-10-07: `java-backend-api` 10,173 → 12,418. **Per session, unchanged**:
+  no `description` edited. **Firing not re-measured.**

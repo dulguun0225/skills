@@ -160,9 +160,14 @@ three examples are refusals written into an agent-built service's feature specs
 the same week. **It adds no ground to the principle**; it names an input channel
 the principle already covered by its premise argument, because the instances
 were scattered across rule sets and nothing tied them to it. **No run has measured
-the effect** — *convention*. One tool fact stands behind one instance and is
-recorded where that instance lives: Jackson binds the last of two equal keys with
-no error, run 2026-10-07, in `java-backend-api/evidence.md`.
+the effect** — *convention*. The tool facts behind its instances are recorded
+where each instance lives, in `java-backend-api/evidence.md`: Jackson binds the
+last of two equal keys with no error, run 2026-10-07, and the reads and runs
+behind the four directives decided later that day — the non-body entry, one code
+per refused input, the members allowed, the body limit. **The *Check* line's
+reading that no instance asserts the allowed value was stale within the hour**:
+both templates' commits of that day assert `max` on `validation.too-long` and
+`expected` on `validation.wrong-type`; corrected the same day.
 
 ## The three inherited incompleteness checks
 

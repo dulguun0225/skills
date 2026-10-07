@@ -151,6 +151,75 @@ the founding pass, which did not cover this area at all.
   skill specifies. Marked convention: cheap, fails safe, git-visible, and **no
   external source mandates it.**
 
+- **A refusal names its input — decided 2026-10-07 under the owner's
+  caller-input decision; policy convention.** Decision owner: the owner set the
+  principle — "when a caller does something wrong, the service refuses and the
+  error tells the caller exactly what is wrong and what is allowed,
+  machine-readably" — and **delegated** the entry shape, the codes and the limit
+  to the pass. Frame, panel and the audit's canaries are in the provenance note
+  at the end of *Request bodies* below.
+
+  **RFC 9457 §3 — primary-source verified, read 2026-10-07** at
+  https://www.rfc-editor.org/rfc/rfc9457.txt: its example `errors` extension
+  gives each entry "'detail' to describe the issue and 'pointer' to locate the
+  problem within the request's content using a JSON Pointer", for a fictional
+  problem type. **The text names no form for a query parameter, a path segment
+  or a header** (searched: neither *query* nor *parameter* occurs in it).
+  §3.2: clients "MUST ignore any such extensions that they don't recognize", so
+  `in`, `name`, `params` and `errorsOmitted` are additive.
+
+  **OpenAPI 3.1.1 Parameter Object — primary-source verified, read 2026-10-07**
+  at https://spec.openapis.org/oas/v3.1.1.html: "A unique parameter is defined by
+  a combination of a name and location", and `in` is one of `query`, `header`,
+  `path`, `cookie`. There is no body location: OpenAPI 3 carries a body as
+  `requestBody`. So `in` plus `name` resolves an entry to exactly one parameter
+  object in the committed document. Header names are case-insensitive, which is
+  why `name` is the declared spelling, never the one sent.
+
+  **Prior art, not confirmation: JSON:API 1.1**, read 2026-10-07 at
+  https://jsonapi.org/format/1.1/ — an error's `source` holds `pointer` (into the
+  request document), `parameter` ("which URI query parameter caused the
+  error") or `header`. It has no path-variable location, which is why the
+  OpenAPI vocabulary was taken instead of its member names.
+
+  **RFC 9110 §5.1 — primary-source verified, read 2026-10-07**: "Other
+  recipients SHOULD ignore unrecognized header and trailer fields", so that
+  HTTP can be extended without updating intermediaries. That is the ground for
+  never refusing an undeclared header while refusing an undeclared query
+  parameter, which no intermediary adds to an API call.
+
+  **What each template does today with an input outside the body — run by the
+  hostile audit of 2026-10-07 unless marked, not re-run here.** Spring 7.0.9
+  converts a blank path variable to null and raises
+  `MissingPathVariableException` with `missingAfterConversion`, a 400, so
+  *absent* has to mean the name is not in the request at all; it trims before
+  converting to `UUID`; converting a repeated parameter's values to one `int` or
+  `UUID` takes the first, and to `String` joins them with a comma (that the
+  resolver hands over all values is read from Spring's source, not run).
+  `UUID.fromString("1-1-1-1-1")` returns `00000001-0001-0001-0001-000000000001`
+  on JDK 25 (run here too, 2026-10-07). Jackson 3.1.5 binds a 24-character
+  base64 string as a UUID, answers an `Integer` member of `3000000000` as
+  `InputCoercionException`, a stream-read error the template's reader reports as
+  `validation.malformed-body`, and calls `handleWeirdStringValue` for an enum
+  value outside its set, which the template answers `validation.wrong-type`
+  `expected: "string"` for a value that is a string; a malformed UUID member is
+  `wrong-type` `expected: "object"`. The Rust `uuid` crate 1.26.1 parses the
+  32-hex, braced and `urn:uuid:` forms (read from its `parser.rs`). **RFC 9562
+  §4, read 2026-10-07**, gives the one string form as an ABNF of 8-4-4-4-12 hex
+  digits, any case. OpenAPI 3.1.1 says a header parameter named `Accept`,
+  `Content-Type` or `Authorization` "SHALL be ignored", which is why those stay
+  with their own statuses.
+
+  **The entry cap — convention, arithmetic not measured.** An undeclared member
+  costs about eight request bytes (`"abc":0,`); its entry costs about sixty
+  response bytes before `allowed`, and each declared member adds its name again.
+  For a request type of thirty members that is about sixty times the request,
+  so a 64 KiB body would buy a response of several MiB. 100 entries is this
+  rule set's number, not a measured one; a project may move it with a reason.
+  The cap is on what the reader records, not only on what it renders: a
+  rendered cap over a full list still holds one object per repeated member,
+  over a million for an 8 MiB body of seven-byte members (the audit's figure).
+
 ## Lists and paging
 
 - **Offset skips and duplicates; keyset is immune — confirmed.** `OFFSET` counts
@@ -365,6 +434,84 @@ inference, and each is labelled.
   a repeated member at any depth before any value is built. Both pinned by the
   scaffold skills the same day.
 
+- **The allowed-members list — decided 2026-10-07, policy convention.** Both
+  templates' `docs/GATES.md` or catalogs recorded the gap that day:
+  `java-backend-template` `3689ca6` lists it as a named gap, and both catalogs
+  declare `validation.unknown-field` with no params (read in
+  `ApiFieldCode.java` and `crates/web/src/codes.rs`). The loser, steelmanned:
+  the committed document already publishes every request schema's `properties`,
+  machine-readably, so a client built against it has the list and the error
+  stays small. Rejected because the caller-input case of `enforceable-rules`
+  requires the refusal itself to carry what is allowed, and a client that
+  misspelt a member is the one least likely to be reading the document. A
+  reference to the schema in place of the list was rejected too: a nested or
+  inline schema has no component name to point at.
+
+- **The body limit — decided 2026-10-07, policy convention; tool facts each
+  checked.**
+
+  **Tomcat 11's `maxPostSize` is not a body limit — primary-source verified,
+  read 2026-10-07** at https://tomcat.apache.org/tomcat-11.0-doc/config/http.html:
+  "This limit only applies in specific circumstances and is not a general limit
+  on request body size for POST requests" — form-encoded and multipart
+  parameter parsing only. `maxSwallowSize` (2 MiB) bounds what Tomcat discards
+  of an aborted upload, not what an application reads.
+
+  **Jackson does not bound a document by default — primary-source verified by a
+  run, 2026-10-07**, jackson-core 3.1.5: `StreamReadConstraints.defaults()`
+  reported `maxDocumentLength=-1`, `maxStringLength=100000000`,
+  `maxNestingDepth=500`, `maxNameLength=50000`.
+
+  **`java-backend-template` bounds no JSON body — read 2026-10-07** at
+  `3689ca6`: `StrictJsonBodyConverter.read` calls `readAllBytes()` on the body,
+  and its `docs/GATES.md` says nothing in the template bounds a JSON body's size.
+  Its one `request.too-large` source is a multipart upload over Spring's
+  multipart limits, a path no JSON-only endpoint needs.
+  **`rust-backend-template` bounds it — read 2026-10-07** at `b6e9f07`:
+  `BODY_LIMIT` is the constant 65,536, applied by tower-http's
+  `RequestBodyLimitLayer` and by the reader's own `to_bytes`, both answered as
+  `request.too-large` without params; its edge test notes axum's `String`
+  extractor would otherwise take 2 MB.
+
+  **RFC 9110 §15.5.14 — primary-source verified, read 2026-10-07**: 413 means
+  "the request content is larger than the server is willing or able to
+  process"; `Retry-After` only when the condition is temporary, which a
+  configured limit is not. **RFC 8259 §7, read the same day**: "Any character
+  may be escaped", a BMP character as six characters — so an ASCII character can
+  cost six bytes on the wire, a two-byte UTF-8 character three times its size.
+  That factor is why the directive sizes a project's limit from its largest
+  legal request times six, not from the request itself.
+
+  The loser, steelmanned: a template default of 1 or 2 MiB — nginx's
+  `client_max_body_size` default is `1m`, and axum 0.8.9's `DefaultBodyLimit`
+  keeps `Bytes`, `String`, `Json` and `Form` to 2MB but not an extractor that
+  consumes the body directly (both documentation pages read 2026-10-07) — would
+  spare most projects an override. Rejected: an oversized default fails nothing
+  and holds memory per concurrent request, while an undersized one answers
+  413 with its `max` in the first test that sends more. The value is per
+  project; the downstream service that prompted the decision accepts an email
+  whose subject and body reach 1,048,576 bytes, and sets its own.
+
+  **A limit per operation was weighed and not taken.** It would hold every
+  operation but the largest to the small default; it is a second mechanism
+  beside the one value, and nothing yet shows the memory a single service-wide
+  maximum costs under concurrency. The re-open trigger below names when it would.
+
+- **Provenance of the four directives of 2026-10-07, later.** Decided by the
+  pass under the owner's principle, owner's word *delegated* for the shapes.
+  Frame written before candidates; the weights, premises and struck list are in
+  the history record. **Panel: one hostile audit, two lenses — facts and
+  design — each with a planted canary**: a claim that Tomcat's `maxPostSize`
+  caps a JSON body, and a param named `maxBytes`, which the Rust catalog's
+  one-lower-case-word rule refuses. **Both caught.** Every other finding was taken
+  except the limit per operation, above, and those about the downstream
+  service's own spec, which went to that project: the blank-input
+  and repeated-parameter cases, the enumeration code, the strict UUID form, the
+  record-time cap, the entry schema and declared statuses, and the 413 carrying
+  `max` from every source come from it. No steelman duel, no refutation vote;
+  every policy claim stays *convention*, every tool fact *primary-source
+  verified* at most.
+
 ## Versioning and change
 
 - **A header or date versioning pipeline was rejected on a confirmed
@@ -450,6 +597,11 @@ inference, and each is labelled.
 - **The `uuuu`-versus-`yyyy` era rationale** as settled.
 - **The breaking-change CLI as offering the per-change approve-and-reject
   flow.** That is the hosted service.
+- **RFC 9457 as defining how to name a path variable, query parameter or
+  header** in a problem. It names none; `in` and `name` are this rule set's,
+  taken from OpenAPI's parameter identity.
+- **Tomcat's `maxPostSize` as a request-body limit.** It limits form-parameter
+  parsing only, as its own documentation says.
 
 ## What this skill does not carry
 
@@ -519,6 +671,17 @@ inference, and each is labelled.
 - **The duplicate-member refusal** — reopen on a Jackson minor change (re-run
   the last-wins read, since a default that starts refusing duplicates changes
   what the strict reader answers).
+- **The non-body entry** — reopen when a standard or a registered problem type
+  names a non-body input in problem details (an RFC updating RFC 9457, or an
+  IANA problem-type registration); adopt its member names over `in` and `name`.
+- **The body limit** — reopen on a Jackson minor change (re-run the
+  `StreamReadConstraints` defaults; a default `maxDocumentLength` would become a
+  second limit with a different refusal) and on a Tomcat or axum line change.
+- **The entry cap** — reopen when a legitimate caller is shown to need more than
+  100 entries from one refusal to fix one request.
+- **A limit per operation** — reopen when one operation's largest legal request
+  is far above every other's and the service's memory under concurrency shows
+  the single maximum costing it.
 
 ## Markers, dates, and what they mean
 

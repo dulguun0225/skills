@@ -116,3 +116,17 @@ which field, why, and the allowed values or limit.
   duplicate-member refusal it lacks.
 - **Cost.** Per firing, `npm run tokens`, 2026-10-07: `enforceable-rules` 7,548 → 7,887. **Per session, unchanged**:
   no `description` edited. **Firing not re-measured.** No adversarial review.
+
+### 2026-10-07, later: the caller-input case's instances and a stale check sentence
+
+- **Instances added** to *Fail loud, never silently wrong*'s caller-input paragraph, from `java-backend-api`'s four
+  directives of that afternoon ([java-backend](java-backend.md)): the undeclared member refused with the members
+  allowed, an input outside the body named by location and name and never trimmed or resolved first-wins, an
+  oversize body refused with its maximum.
+- **A stale sentence corrected.** The *Check* line said no listed instance asserts that the allowed value travels in
+  the error, read 2026-10-07 at 09:46. Within the hour `java-backend-template` `3689ca6` and `rust-backend-template`
+  `626180d` asserted `max` on `validation.too-long` and `expected` on `validation.wrong-type` on the wire. The line now
+  names those two as asserted, the four decided ones as built nowhere, and the rest as convention. An absence claim
+  decayed the same day it was written; the template commits did not sweep the skill that made it.
+- **Cost.** Per firing, `npm run tokens`, 2026-10-07: `enforceable-rules` 7,887 → 7,964. **Per session, unchanged.**
+  **Firing not re-measured.**
