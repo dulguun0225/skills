@@ -325,6 +325,36 @@ inference, and each is labelled.
   Both halves change stakes under the absent reader, so the rules clear the test
   rather than being kept as cheap-and-safe.
 
+- **The duplicate-member refusal is the owner's decision of 2026-10-07**, an
+  instance of the caller-input case `enforceable-rules` added that day to *Fail
+  loud, never silently wrong*: contradictory or ambiguous input is refused with a
+  field-level, catalogued error, never resolved by picking one value. Policy
+  *convention*; no failure in a service was observed behind it.
+
+  **Jackson binds the last of two equal keys with no error — primary-source
+  verified by a run, 2026-10-07**, Jackson 3.1.5 (`tools.jackson.databind`)
+  with a default `JsonMapper`: `{"name":"first","name":"second","n":1}` read
+  into a record gave `name=second`, the same body into a bean with a public
+  field gave `second`, `StreamReadFeature.STRICT_DUPLICATE_DETECTION` reported
+  disabled, and with it enabled the read threw
+  `tools.jackson.core.exc.StreamReadException: Duplicate Object property "name"`.
+  The template pins Jackson 3.1.7 (`jackson-bom.version`); 3.1.5 is what the local
+  repository held. Re-run on a Jackson minor change.
+
+  **RFC 8259 §4 — primary-source verified, read 2026-10-07** at
+  https://www.rfc-editor.org/rfc/rfc8259.txt: "The names within an object SHOULD
+  be unique", and when they are not "the behavior of software that receives such
+  an object is unpredictable. Many implementations report the last name/value
+  pair only."
+
+  **That `dulguun0225/java-backend-template` does not carry it — read
+  2026-10-07** at `20ba55c`: `StrictJsonBodyConverter` has no duplicate check
+  for a declared member, and `StrictJsonBodyConverterTest.aMemberRepeatedIsNamedOnce`
+  asserts one `validation.unknown-field` for an undeclared member sent twice.
+  `dulguun0225/rust-backend-template` at `5cdc93a` refuses a repeated top-level
+  member as `validation.duplicate-member` in `crates/web/src/body.rs`; the Java
+  code takes that name. Nested objects there are not checked for repeats.
+
 ## Versioning and change
 
 - **A header or date versioning pipeline was rejected on a confirmed
@@ -476,6 +506,10 @@ inference, and each is labelled.
   line change (re-run the closed-schema rule against a document known to fail),
   or on a second observed failure of the same shape in a repo that has the gates —
   the name-matching gap is the likeliest route.
+- **The duplicate-member refusal** — reopen when `dulguun0225/java-backend-template`
+  carries it (drop the exception in *Wiring the gates* step 10), and on a Jackson
+  minor change (re-run the last-wins read, since a default that starts refusing
+  duplicates changes what the strict reader answers).
 
 ## Markers, dates, and what they mean
 
@@ -516,3 +550,6 @@ claim is, what marker it carries, and the date it was taken.
 | Strict request reading, identifier in path only, one request type per operation | convention — from one observed failure, no research pass | 2026-09-25 |
 | Why the plan agent wrote the echo (lenient reader plus refusal requirement) | uncertain — inferred, the agent's reasoning is not recorded | 2026-09-25 |
 | Global Jackson flag would reach the outbound HTTP client | uncertain — inferred, not verified | 2026-09-25 |
+| Jackson 3.1.5 binds the last of two equal keys, `STRICT_DUPLICATE_DETECTION` off by default | primary-source verified (run) | 2026-10-07 |
+| RFC 8259 §4: names SHOULD be unique; receivers of duplicates behave unpredictably | primary-source verified | 2026-10-07 |
+| A member given twice is refused, field-level, neither value bound | convention — owner's decision, no failure observed | 2026-10-07 |

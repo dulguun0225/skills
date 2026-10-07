@@ -14,6 +14,7 @@ the whole payload.
 | ---- | ----- | ----- |
 | 2026-07-21 | the founding pass — the wire rules, `M-12` … `M-14` | full |
 | 2026-07-25 | the API-contract pass, which verified **only** the rules added that day — `M-15` … `M-19` | scoped |
+| 2026-10-07 | an owner's decision, not a pass — `M-13`'s given-twice clause | none |
 
 **An internal decision record and an internal guardrails document made several
 of the same calls.** That is prior art throughout — a repo that made the same
@@ -64,6 +65,18 @@ only; the 2026-07-25 pass recorded that exponent 4 is **not** CLF-only and
 names UYW as well. Nothing in `SKILL.md` depends on which is right — `M-14`
 says to read the counterparty's table, not to derive the exponent — but a rule
 that ever does depend on it needs this re-checked first.
+
+**A money field given twice is refused — owner's decision, 2026-10-07,
+*convention*.** It is an instance of the caller-input case `enforceable-rules`
+added that day to *Fail loud, never silently wrong*: contradictory input is
+refused with a field-level, catalogued error, never resolved by picking one
+value. No research pass and no observed failure stand behind it. The ground is
+RFC 8259 §4, read 2026-10-07: names within an object SHOULD be unique, and
+software receiving duplicates behaves unpredictably — many implementations
+report the last pair only — so which of two amounts a parser keeps is a
+property of the parser, not of the request. In the Java stack the parser keeps
+the last one by default; the run is recorded in `java-backend-api`'s
+`evidence.md`.
 
 ## Idempotency
 

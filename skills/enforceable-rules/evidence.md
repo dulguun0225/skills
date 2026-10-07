@@ -149,6 +149,21 @@ Counting these as three independent instances double-counts the erasure case. **
 than the principle's**, and a reader who trusts only one thing in `SKILL.md`
 should trust that clause.
 
+**The caller-input case under *Fail loud, never silently wrong* is the owner's
+decision of 2026-10-07, not a record.** Its wording: when a calling service
+sends contradictory, ambiguous or invalid input — two values for one variable,
+an idempotency key reused with a different request body, a line break in an
+email subject — the service refuses the request instead of guessing, picking one
+value or silently correcting it, and the error tells the caller exactly what is
+wrong and what is allowed: which field, why, the allowed values or limit. The
+three examples are refusals written into an agent-built service's feature specs
+the same week. **It adds no ground to the principle**; it names an input channel
+the principle already covered by its premise argument, because the instances
+were scattered across rule sets and nothing tied them to it. **No run has measured
+the effect** — *convention*. One tool fact stands behind one instance and is
+recorded where that instance lives: Jackson binds the last of two equal keys with
+no error, run 2026-10-07, in `java-backend-api/evidence.md`.
+
 ## The three inherited incompleteness checks
 
 Each was recorded in the source because **a shipped rule set failed it**, and

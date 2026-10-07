@@ -87,3 +87,32 @@ since the paper finds context-file length had no significant effect. Limits stat
 agent-and-model pairs, issue resolution as the one outcome, always-loaded files rather than conditional loading.
 `SKILL.md` unchanged, so firing and per-session cost are unchanged. Source of the citation: an external guide reviewed
 2026-10-06, recorded in [java-backend](java-backend.md).
+
+### 2026-10-07: a caller's input is a named case of *Fail loud, never silently wrong*
+
+**Owner's decision**: when a calling service sends contradictory, ambiguous or invalid input — two values for one
+variable, an idempotency key reused with a different request body, a line break in an email subject — the service
+refuses the request instead of guessing, picking one value or silently correcting it, and the error tells the caller
+which field, why, and the allowed values or limit.
+
+- **Principle amended, premise argument kept verbatim.** `enforceable-rules` *Fail loud, never silently wrong* gains a
+  paragraph naming caller input as a case: refused, never resolved by picking one value, last-wins or first-wins, or by
+  trimming, replacing or coercing; the refusal a field-level, catalogued error carrying what is allowed. It lists the
+  instances already published — `java-backend-api`'s undeclared member, over-cap `limit`, cursor, strict dates and error
+  catalog, `money-api` `M-17` — and the two added the same day. The *Check:* line now says the caller-input case is
+  checked per listed instance only, that a shape no rule set names is resolved however the framework default resolves
+  it, and that no listed instance's test asserts the allowed value in the error (read 2026-10-07). `evidence.md` records
+  the decision under *The eight principles* as *convention*, unmeasured.
+- **Instances added where a rule set lacked one** — duplicate JSON keys in a request body. `java-backend-api` gains
+  *A member given twice is refused* (`validation.duplicate-member`, neither value bound) with a defaults entry naming
+  Jackson's last-wins; `money-api` `M-13` gains a given-twice clause; `money-java` `api.md` carries its Java half and a
+  wiring line. Records: [java-backend](java-backend.md), [money](money.md). No Rust rules skill exists to amend;
+  `dulguun0225/rust-backend-template` already refuses a repeated top-level member.
+- **Sweep, read.** Grep for *fail loud*, *silently wrong*, *duplicate*, *last-wins*, *strict reader*, *carries all*
+  and the field codes over `README.md`, `BACKLOG.md`, `CLAUDE.md`, `skills/` and `docs/`; each hit read.
+  `async-handoff`'s decoder rules tolerate unknown members on purpose and say nothing on duplicates — out of this
+  decision's scope (a request body), left alone. `README.md`'s template paragraph, which said the template wires every
+  build-enforceable gate the Java skills name save those its `docs/GATES.md` lists, narrowed to name the
+  duplicate-member refusal it lacks.
+- **Cost.** Per firing, `npm run tokens`, 2026-10-07: `enforceable-rules` 7,548 → 7,887. **Per session, unchanged**:
+  no `description` edited. **Firing not re-measured.** No adversarial review.

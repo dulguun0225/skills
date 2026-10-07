@@ -580,3 +580,25 @@ template file opened at the commit that landed.
   `java-backend-rules`, 58 for `new-java-backend`, 1,651 for the set. **Firing not
   re-measured.**
 
+
+## A member given twice is refused, 2026-10-07
+
+**An instance of the owner's decision recorded in [method-skills](method-skills.md)**: contradictory caller input is
+refused with a field-level, catalogued error, never resolved by picking one value. `java-backend-api` required an
+undeclared member refused but said nothing of a declared member sent twice, which Jackson binds last-wins.
+
+- **Directive added** under *Request bodies*: a member that appears twice in one object, declared or not, is refused —
+  400 `validation.failed`, a `validation.duplicate-member` entry at its pointer — and neither value is bound. The
+  defaults list gains *Last-wins on a repeated member*. The code name is the Rust template's, so both stacks share one
+  catalog entry. *Wiring the gates* step 10 lists the code and no longer says the template carries all of it; the marker
+  ceiling and status-tier sentences name the amendment.
+- **Facts, each run or read 2026-10-07.** Jackson 3.1.5 with a default `JsonMapper` binds the last of two equal keys
+  into a record and a bean, `STRICT_DUPLICATE_DETECTION` off; with it on, the read throws `StreamReadException`, which
+  the template's reader answers as `validation.malformed-body` with line and column — so that flag is rejected as the
+  whole mechanism. RFC 8259 §4 quoted. `dulguun0225/java-backend-template` at `20ba55c` has no duplicate check for a
+  declared member; `dulguun0225/rust-backend-template` at `5cdc93a` refuses a repeated top-level member. All in
+  `java-backend-api/evidence.md` under *Request bodies*, with ledger rows and a re-open trigger.
+- **Not done here: the template change.** The refusal and its endpoint-sweep case are not in the Java template; the
+  directive's check line and `README.md` say so until it is.
+- **Cost.** Per firing, `npm run tokens`, 2026-10-07: `java-backend-api` 9,589 → 10,194. **Per session, unchanged**:
+  no `description` edited. **Firing not re-measured.** No adversarial review.

@@ -23,7 +23,11 @@ document, jOOQ, PostgreSQL.
   Jackson, `required` fires **only** for creator properties, so the required
   marker on a setter-bound field is decoration. Either a deserialization test
   posting a missing amount, or an Error Prone pattern over the DTO shapes.
-  (Bespoke.)
+  A money field given twice binds the last value by default in Jackson
+  (`StreamReadFeature.STRICT_DUPLICATE_DETECTION` off); the gate is the strict
+  request reader's duplicate-member refusal, `java-backend-api` *A member given
+  twice is refused*, plus a deserialization test posting the amount twice and
+  asserting `validation.duplicate-member` at its pointer. (Bespoke.)
 - **`M-14` — spec and review.** The counterparty's published exponent table is
   a committed value in this repo, not a lookup derived from
   `java.util.Currency`. Deriving it from `Currency.getDefaultFractionDigits()`
@@ -88,8 +92,9 @@ repo:
 2. **vacuum rulesets** — the `Idempotency-Key` requirement (`M-17`) and the
    `If-Match` requirement keyed off the money tag (`M-18`). Off-the-shelf host,
    bespoke rulesets, gating CI on the exit code.
-3. **The parse-rejection tests** for `M-12` and `M-15`, and the
-   missing-amount deserialization test for `M-13` and `M-16`.
+3. **The parse-rejection tests** for `M-12` and `M-15`, the
+   missing-amount deserialization test for `M-13` and `M-16`, and the
+   given-twice test for `M-13`.
 4. **The idempotency tests** — same-transaction and replay (`M-17`).
 5. **The money case set** added to the conformance-fuzz job (`M-19`), booted
    with Testcontainers against one synthetic tenant, `deterministic = true`

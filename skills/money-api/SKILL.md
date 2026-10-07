@@ -42,7 +42,8 @@ Eight directives, `M-12` … `M-19`. Each say **kind** of check need. No tool na
 *Parse test; `M-19` probe it. Convention, 2026-07-21.*
 
 **M-13 — Fields that carry money are required.** Missing amount fail deserialization, never default. Defaulted amount = wrong number no later check can tell apart from real one.
-*Parse test or compiler or linter check. Convention, 2026-07-21.*
+**Money field given twice in one object fail deserialization too, never last-wins or first-wins** — refused with coded error naming the field. Instance of `enforceable-rules`' *Fail loud, never silently wrong*, caller-input case: two amounts in one request = contradiction, and picked one = wrong number nobody see.
+*Parse test or compiler or linter check. Convention, 2026-07-21; given-twice clause owner decision 2026-10-07, parse test posting money field twice, asserting coded refusal naming it.*
 
 **M-14 — Converting to a counterparty's minor units uses that counterparty's published exponent table, never an ISO 4217 assumption.** Processor tables deviate from ISO for specific currencies, so ISO-derived exponent silently multiply or divide amount by ten or hundred for exactly those currencies.
 *Spec-and-review. Premise — processor tables deviate — confirmed 2026-07-21, deviations named in [evidence.md](evidence.md); rule built on it is convention.*

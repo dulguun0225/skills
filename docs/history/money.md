@@ -181,3 +181,19 @@ What changed:
 **Cost.** `npm run tokens`, `money-storage`: 6,541 → 6,933 (+392, o200k_base), all in `SKILL.md`, paid only when the skill fires. Frontmatter unchanged — no `description` was edited, so the per-session cost and the firing rate are untouched.
 
 **Sweep.** Grep over `skills/`, `README.md`, `BACKLOG.md` and `docs/` for integer minor units, `bigint`, "never justified" and decimal support, each hit read. `money`, `money-api`, `money-java` and `java-backend-api` `SKILL.md` state no exclusion status for the column; `money-api` and `java-backend-api` reject minor units on the wire only, which the decision does not change. `skill-redundancy-audit.md` and `asdlc-port.md` record the 2026-08-11 probe as history and were left alone.
+
+
+## `M-13` gains a given-twice clause, 2026-10-07
+
+**An instance of the owner's decision recorded in [method-skills](method-skills.md)**: contradictory caller input is
+refused, never resolved by picking one value. `M-13` required a money field present; it now also fails deserialization
+when the field appears twice in one object, refused with a coded error naming the field, never last-wins or first-wins.
+The clause is dated on `M-13`'s check line and keeps `M-13`'s id — no new directive, so no id was added to the family.
+
+- `money-api/SKILL.md` — the clause and its check: a parse test posting the money field twice.
+- `money-api/evidence.md` — a passes-table row (an owner's decision, no panel) and the ground under *The wire format*:
+  RFC 8259 §4, read 2026-10-07, which leaves duplicate names to each parser.
+- `money-java/api.md` — `M-13`'s Java half names Jackson's last-wins default and points at `java-backend-api` *A member
+  given twice is refused* as the gate; wiring step 3 gains the given-twice test.
+- **Cost.** Per firing, `npm run tokens`, 2026-10-07: `money-api` 2,432 → 2,530; `money-java` 9,651 → 9,747, all in
+  `api.md`. **Per session, unchanged**: no `description` edited. **Firing not re-measured.**
