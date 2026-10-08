@@ -63,6 +63,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { fileExists, skillDirs } from "./lib/md.mjs";
+import { auxModelSet, modelSet, modelStamp, sessionUsage, usageFields, usageLines } from "./lib/session-usage.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const TIMEOUT_MS = 300_000;
@@ -160,7 +161,7 @@ if (args.dryRun) {
 }
 
 const work = mkdtempSync(join(tmpdir(), "firing-harness-"));
-const stamp = { model: null, cli: null };
+const stamp = { cli: null };
 let runSeq = 0;
 try {
   for (const v of variants) {
@@ -189,7 +190,7 @@ try {
       const fired = await runOne(box, c.prompt);
       const line = verdict(c, fired);
       console.log(`  ${symbol(line.status)} ${c.id}${args.repeats > 1 ? `#${i + 1}` : ""}`.padEnd(30) + describe(c, fired));
-      return { case: c, run: i, fired: fired.skills, text: fired.text, cost: fired.cost, error: fired.error, ...line };
+      return { case: c, run: i, fired: fired.skills, text: fired.text, cost: fired.cost, error: fired.error, ...usageFields(fired), ...line };
     });
   }
 
@@ -200,7 +201,12 @@ try {
       JSON.stringify(
         {
           ran: new Date().toISOString(),
-          model: stamp.model,
+          // Read per session; see lib/session-usage.mjs. `model` is the primary
+          // model (several joined if sessions differed); each result carries
+          // its own `model`, `models` and `auxModels`.
+          model: modelStamp(variants.flatMap((v) => v.results)),
+          models: modelSet(variants.flatMap((v) => v.results)),
+          auxModels: auxModelSet(variants.flatMap((v) => v.results)),
           cli: stamp.cli,
           host: process.platform,
           mode: args.explore ? "explore" : "first-move",
@@ -297,6 +303,8 @@ function parseSession(stdout, stderr) {
   let text = "";
   let cost = 0;
   let error = null;
+  let initModel = null;
+  let result = null;
   for (const line of stdout.split("\n")) {
     if (!line.startsWith("{")) continue;
     let ev;
@@ -317,7 +325,9 @@ function parseSession(stdout, stderr) {
       // Which model read the descriptions, and which CLI injected them. A
       // firing rate without both is not comparable to a rate from any other
       // machine, so record them from the session rather than from the operator.
-      stamp.model ??= ev.model;
+      // The model is kept per session: a run-wide stamp from the first session
+      // could not show a run that changed model part-way.
+      initModel = ev.model ?? null;
       stamp.cli ??= ev.claude_code_version;
     }
     for (const block of ev?.message?.content ?? []) {
@@ -343,12 +353,13 @@ function parseSession(stdout, stderr) {
     }
     if (ev.error) error = ev.error;
     if (typeof ev.total_cost_usd === "number") cost = ev.total_cost_usd;
+    if (ev.type === "result") result = ev;
   }
   if (!stdout.trim()) error = error ?? (stderr.trim().split("\n").pop() || "no output");
   if (unexpected.length && !error) {
     error = `used tools this mode does not permit: ${unexpected.join(", ")}. The deny list is incomplete — add them to DENIED. Every rate in this run is void.`;
   }
-  return { skills, lateSkills, unexpected, exposed, text, cost, error };
+  return { skills, lateSkills, unexpected, exposed, text, cost, error, ...sessionUsage(result, initModel) };
 }
 
 /**
@@ -408,7 +419,7 @@ working \`claude\` in your terminal is not sufficient on its own:
     dir is the difference.`);
     process.exit(1);
   }
-  console.log(`Preflight ok. model=${stamp.model ?? "unknown"} cli=${stamp.cli ?? "unknown"} platform=${process.platform} mode=${args.explore ? "explore" : "first-move"} turns=${MAX_TURNS} tools=${PERMITTED.join("+")}`);
+  console.log(`Preflight ok. model=${probe.model ?? "unknown"} cli=${stamp.cli ?? "unknown"} platform=${process.platform} mode=${args.explore ? "explore" : "first-move"} turns=${MAX_TURNS} tools=${PERMITTED.join("+")}`);
   // Which auth reached the child, since the rest of the operator's environment
   // deliberately does not. A run that authenticated by copied credentials and
   // one that authenticated by an inherited key are not obviously the same run.
@@ -1047,7 +1058,7 @@ function report(variants, cases) {
     const errs = v.results.filter((r) => r.status === "error");
     const cost = v.results.reduce((a, r) => a + (r.cost ?? 0), 0);
     const lateNote = args.explore ? `, ${late.length} late` : "";
-    console.log(`\n=== ${v.label} [${stamp.model ?? "?"} / cli ${stamp.cli ?? "?"} / ${args.explore ? "explore" : "first-move"}]: ${pass}/${v.results.length} fired as expected${lateNote}, ${forb.length} forbidden, ${errs.length} error, $${cost.toFixed(2)} ===`);
+    console.log(`\n=== ${v.label} [${modelSet(v.results).join("+") || "?"} / cli ${stamp.cli ?? "?"} / ${args.explore ? "explore" : "first-move"}]: ${pass}/${v.results.length} fired as expected${lateNote}, ${forb.length} forbidden, ${errs.length} error, $${cost.toFixed(2)} ===`);
     for (const r of late) console.log(`  LATE      ${r.case.id.padEnd(30)} ${r.case.skill} fired after the first Write/Edit`);
     for (const r of miss) console.log(`  MISS      ${r.case.id.padEnd(30)} wanted ${r.case.skill}, got ${r.fired.join(", ") || "nothing"}`);
     for (const r of forb) console.log(`  FORBIDDEN ${r.case.id.padEnd(30)} ${r.violated.join(", ")} fired`);
@@ -1067,8 +1078,13 @@ function report(variants, cases) {
     for (const [id, skill, before, after] of rows) console.log(`  ${id.padEnd(30)} ${skill.padEnd(28)} ${before} -> ${after}`);
   }
 
+  const sessions = variants.flatMap((v) => v.results);
+  const models = modelSet(sessions);
+  console.log("");
+  for (const l of usageLines(sessions, args.model)) console.log(l);
+
   console.log(`
-Every rate above is for ${stamp.model ?? "an unrecorded model"} under CLI ${stamp.cli ?? "unknown"} on ${process.platform}.
+Every rate above is for ${models.length ? models.join(" + ") : "an unrecorded model"} under CLI ${stamp.cli ?? "unknown"} on ${process.platform}.
 Carry that stamp with any number you write down: a rate measured on another
 machine, model or CLI version is a different measurement, not a later one.
 
@@ -1116,7 +1132,7 @@ function strip(v) {
     // loading a skill — the diagnostic every miss needs and the console line
     // cannot carry. Truncated: a session that answers the task at length is
     // legible from its opening, and 88 full transcripts is a log, not a report.
-    results: v.results.map((r) => ({ id: r.case.id, skill: r.case.skill, run: r.run, status: r.status, fired: r.fired, cost: r.cost, error: r.error, text: (r.text ?? "").slice(0, 4000) })),
+    results: v.results.map((r) => ({ id: r.case.id, skill: r.case.skill, run: r.run, status: r.status, fired: r.fired, cost: r.cost, error: r.error, ...usageFields(r), text: (r.text ?? "").slice(0, 4000) })),
   };
 }
 

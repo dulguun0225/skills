@@ -28,6 +28,7 @@ import { copyFileSync, chmodSync, mkdirSync, mkdtempSync, readdirSync, readFileS
 import { homedir, tmpdir } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { auxModelSet, modelSet, modelStamp, sessionUsage, usageFields, usageLines } from "./lib/session-usage.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const TIMEOUT_MS = 480_000;
@@ -193,7 +194,7 @@ if (args.dryRun) {
 
 mkdirSync(args.out, { recursive: true });
 const work = mkdtempSync(join(tmpdir(), "redundancy-probes-"));
-const stamp = { model: null, cli: null };
+const stamp = { cli: null };
 let spent = 0;
 const skipped = [];
 
@@ -222,10 +223,11 @@ try {
     const written = snapshot(box, new Set(Object.keys(files)));
     const result = {
       case: c.id, skill: c.skill, directive: c.directive, criterion: c.criterion,
-      rep, model: stamp.model, effort: args.effort ?? "(cli default)", cli: stamp.cli, ran: new Date().toISOString(),
+      rep, model: session.model, effort: args.effort ?? "(cli default)", cli: stamp.cli, ran: new Date().toISOString(),
       prompt: c.prompt, fixtureFiles: Object.keys(files),
       writtenFiles: written, finalText: session.text,
       cost: session.cost, error: session.error, unexpected: session.unexpected,
+      ...usageFields(session),
     };
     writeFileSync(join(args.out, `${c.id}#${rep}.json`), JSON.stringify(result, null, 2));
     console.log(`  ${session.error ? "!" : "."} ${c.id}#${rep}`.padEnd(32) + `$${session.cost.toFixed(2)} total=$${spent.toFixed(2)}${session.error ? " ERROR: " + session.error : ""}`);
@@ -233,12 +235,14 @@ try {
   });
 
   const done = results.filter(Boolean);
-  console.log(`\n${done.length}/${runs.length} sessions run, $${spent.toFixed(2)} spent, model=${stamp.model} cli=${stamp.cli}.`);
+  const models = modelSet(done);
+  console.log(`\n${done.length}/${runs.length} sessions run, $${spent.toFixed(2)} spent, model=${models.join(" + ") || "not reported"} cli=${stamp.cli}.`);
+  for (const l of usageLines(done, args.model)) console.log(l);
   if (skipped.length) console.log(`Budget stop: NOT run (do not read absence as compliance): ${skipped.join(", ")}`);
   writeFileSync(join(args.out, "summary.json"), JSON.stringify({
-    ran: new Date().toISOString(), model: stamp.model, effort: args.effort ?? "(cli default)", cli: stamp.cli, host: process.platform,
+    ran: new Date().toISOString(), model: modelStamp(done), models, auxModels: auxModelSet(done), effort: args.effort ?? "(cli default)", cli: stamp.cli, host: process.platform,
     maxTurns: MAX_TURNS, permitted: PERMITTED, repeats: args.repeats, spentUsd: spent,
-    sessions: done.map((r) => ({ case: r.case, rep: r.rep, cost: r.cost, error: r.error })),
+    sessions: done.map((r) => ({ case: r.case, rep: r.rep, cost: r.cost, error: r.error, ...usageFields(r) })),
     budgetSkipped: skipped,
   }, null, 2));
 } finally {
@@ -291,13 +295,15 @@ function parseSession(stdout, stderr) {
   let text = "";
   let cost = 0;
   let error = null;
+  let initModel = null;
+  let result = null;
   for (const line of stdout.split("\n")) {
     if (!line.startsWith("{")) continue;
     let ev;
     try { ev = JSON.parse(line); } catch { continue; }
     if (ev.subtype === "init") {
       if (Array.isArray(ev.tools)) exposed = ev.tools;
-      stamp.model ??= ev.model;
+      initModel = ev.model ?? null;
       stamp.cli ??= ev.claude_code_version;
     }
     for (const block of ev?.message?.content ?? []) {
@@ -308,12 +314,13 @@ function parseSession(stdout, stderr) {
     }
     if (ev.error) error = ev.error;
     if (typeof ev.total_cost_usd === "number") cost = ev.total_cost_usd;
+    if (ev.type === "result") result = ev;
   }
   if (!stdout.trim()) error = error ?? (stderr.trim().split("\n").pop() || "no output");
   if (unexpected.length && !error) {
     error = `used tools this mode does not permit: ${unexpected.join(", ")}. Add them to DENIED; this session's evidence is void.`;
   }
-  return { text, cost, error, unexpected };
+  return { text, cost, error, unexpected, ...sessionUsage(result, initModel) };
 }
 
 async function preflight(cfgDir) {
@@ -328,7 +335,7 @@ async function preflight(cfgDir) {
     console.error(`Preflight failed: prompt not reaching the model intact. Got: ${JSON.stringify(probe.text.slice(0, 200))}`);
     process.exit(1);
   }
-  console.log(`Preflight ok. model=${stamp.model} cli=${stamp.cli} platform=${process.platform} turns=${MAX_TURNS} tools=${PERMITTED.join("+")}`);
+  console.log(`Preflight ok. model=${probe.model ?? "unknown"} cli=${stamp.cli} platform=${process.platform} turns=${MAX_TURNS} tools=${PERMITTED.join("+")}`);
 }
 
 /** Everything in the sandbox after the run, fixture files included (they may

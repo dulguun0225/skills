@@ -265,6 +265,15 @@ one-liners so demotion is pure addition. **What the exercise actually bought is 
 tokens**: every trim-class directive now states inline whether it is measured instinct or an
 instinct-override, with the model tier and date.
 
+## Addendum 2026-10-08 — usage recorded per probe session
+
+`npm run probes` now keeps, per session, the four token counts, turns, duration
+and the model that ran, from the CLI's `result` event, and prints them at the end
+of a run; before, it kept `total_cost_usd` only. Same change as the firing
+harness, recorded with what prompted it in
+[firing-harness](firing-harness.md), 2026-10-08. Probe sessions still run to
+completion, because grading reads the files they write.
+
 ## What this audit does not decide
 
 - Verdicts are **model-relative and dated**: measured on `claude-sonnet-5` and `claude-opus-5`, CLI 2.1.227, 2026-08-11. A directive redundant here may bind on a weaker deployed model; re-check on deployment-model change.

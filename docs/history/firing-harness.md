@@ -653,6 +653,48 @@ and these numbers read as a firing result for two days. **A firing report is
 plausible by construction — some cases pass, some miss — so plausibility is not
 evidence that the run happened.**
 
+### Per-session usage and model recorded, 2026-10-08
+
+**Until this date a run kept one number per session, `total_cost_usd`, and
+stamped the model from the first session's `init` event only.** A cost review
+that day (the `claude-api` skill's `cost-optimize` pass) could not split any
+recorded run into cache reads, cache writes, uncached input, output or turns,
+because the `result` event carrying them was discarded. And a model stamp read
+from one session is a configuration flag believed for the rest: the shape of the
+section above.
+
+Both scripts now keep, per session, the four token counts from `result.usage`,
+`num_turns`, `duration_ms`, and the model that ran — the `result.modelUsage` key
+with the most output tokens, falling back to `init.model`. The other keys are
+recorded as background models (Claude Code calls a small model alongside the
+main one). A run prints mean and p90 of each count, the cache-read share of
+input, and the model set, and warns when sessions ran different main models or
+one differs from `--model`. Shared code: `scripts/lib/session-usage.mjs`.
+Verdicts and how sessions are launched and stopped are unchanged.
+
+Found by the same review, and owed in [BACKLOG.md](../../BACKLOG.md):
+
+- **The CLI on the development machine is logged into a claude.ai Team
+  subscription**, so `total_cost_usd` there is a computed figure, not a charge;
+  what a run spends is usage and rate limits. Every dollar figure in this file is
+  that computed figure.
+- **The account's default model on CLI 2.1.294 is `claude-opus-5-5`** (one
+  session, 2026-10-08). Both sealed baselines are `claude-opus-5`, so an unpinned
+  run today measures a different model from the baseline.
+
+Checked: `node --check`, `npm run gates`, a synthetic transcript with and
+without `usage`/`modelUsage`, and one real session on CLI 2.1.294 whose `result`
+event parsed to all four counts and `claude-opus-5-5`. No firing or probe run
+has been taken with it yet.
+
+**Not decided: stopping a session once its verdict is fixed.** Verdicts count
+every `Skill` call in the session, so stopping at the first tool call would turn
+a later fire into a miss. Stopping right after the target skill fires changes no
+positive verdict, but drops the unpermitted-tool error check for the rest of that
+session. A miss, a negative pass, LATE against MISS and every error are final
+only at session end. How much of a session follows the target fire is unmeasured;
+the first run with the recording above answers it.
+
 ## What this file does not decide
 
 - **Whether 43/44 is good.** There is nothing to compare it against — no prior
